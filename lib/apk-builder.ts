@@ -859,7 +859,7 @@ public class MainActivity extends Activity {
       job.stageIndex = 8;
       job.progress = 95;
 
-      const publicReleaseUrl = `https://github.com/appforge/releases/releases/download/${slug}-v${versionName}/${canonicalFileName}`;
+      const publicReleaseUrl = `https://github.com/${process.env.DISTRIBUTION_REPO || 'PDFly-source/appmintly-releases'}/releases/download/${slug}-v${versionName}/${canonicalFileName}`;
       const backendDownloadUrl = `/api/download-apk/${canonicalFileName}`;
 
       const apkMetadataRecord = {

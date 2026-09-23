@@ -5,3 +5,12 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Android signing material must never be committed
+*.keystore
+*.jks
+*.p12
+*.pem
+
+# Build output
+dist/

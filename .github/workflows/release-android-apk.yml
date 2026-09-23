@@ -1,0 +1,349 @@
+name: Production APK Release
+run-name: Release ${{ inputs.app_name }} v${{ inputs.version_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: Application label (for example Studyria)
+        required: true
+        type: string
+      package_id:
+        description: Android package identifier (must match marketplace metadata)
+        required: true
+        type: string
+      version_name:
+        description: Android version name (x.y.z)
+        required: true
+        type: string
+      source_url:
+        description: HTTPS launch URL (the exact URL verified on device)
+        required: true
+        type: string
+      icon_url:
+        description: Optional HTTPS icon URL
+        required: false
+        type: string
+      theme_color:
+        description: Optional theme color
+        required: false
+        type: string
+      background_color:
+        description: Optional background color
+        required: false
+        type: string
+      release_tag:
+        description: Optional release tag (defaults to <slug>-v<x.y.z>)
+        required: false
+        type: string
+      distribution_repo:
+        description: Public APK distribution repository (owner/name)
+        required: true
+        default: PDFly-source/appmintly-releases
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.package_id }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: ${{ inputs.app_name }}
+  PACKAGE_ID: ${{ inputs.package_id }}
+  VERSION_NAME: ${{ inputs.version_name }}
+  SOURCE_URL: ${{ inputs.source_url }}
+  ICON_URL: ${{ inputs.icon_url }}
+  THEME_COLOR: ${{ inputs.theme_color }}
+  BACKGROUND_COLOR: ${{ inputs.background_color }}
+  DISTRIBUTION_REPO: ${{ inputs.distribution_repo }}
+  SIGNING_MODE: release
+  APK_ARTIFACT_ONLY: '1'
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android 30 and Build Tools 33.0.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "$ANDROID_SDK_ROOT"
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -x "$SDKMANAGER"
+          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --install 'platforms;android-30' 'build-tools;33.0.2'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick zip unzip
+
+      - name: Verify compiler and Android toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -version
+          test -x "$JAVA_HOME/bin/javac"
+          test -f "$ANDROID_SDK_ROOT/platforms/android-30/android.jar"
+          for tool in aapt zipalign apksigner; do
+            test -x "$ANDROID_SDK_ROOT/build-tools/33.0.2/$tool"
+          done
+
+      - name: Verify required production secrets exist
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=0
+          check() {
+            local name="$1" hint="$2" value="$3"
+            if [[ -z "$value" ]]; then
+              echo "MISSING SECRET: $name — $hint" >&2
+              missing=1
+            fi
+          }
+          check ANDROID_KEYSTORE_BASE64 'base64 of the production keystore file' "$ANDROID_KEYSTORE_BASE64"
+          check KEYSTORE_PASSWORD 'password of the production keystore' "$KEYSTORE_PASSWORD"
+          check KEY_ALIAS 'release key alias inside the production keystore' "$KEY_ALIAS"
+          check KEY_PASSWORD 'password of the release key' "$KEY_PASSWORD"
+          check DISTRIBUTION_REPO_TOKEN 'fine-grained PAT with Contents:write on the public distribution repository' "$DISTRIBUTION_TOKEN"
+          if [[ "$missing" -ne 0 ]]; then
+            echo '' >&2
+            echo 'Production release aborted: required GitHub Actions secrets are missing.' >&2
+            echo 'Add them under: Repository -> Settings -> Secrets and variables -> Actions -> Secrets -> New repository secret' >&2
+            exit 1
+          fi
+
+      - name: Prepare compiler and production signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/android-build"
+          curl --fail --location --silent --show-error \
+            'https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.2.42/r8-8.2.42.jar' \
+            -o "$RUNNER_TEMP/android-build/r8.jar"
+          test -s "$RUNNER_TEMP/android-build/r8.jar"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-build/signing.keystore"
+          test -s "$RUNNER_TEMP/android-build/signing.keystore"
+          # Fail now if the keystore/alias/password combination is invalid.
+          keytool -list -keystore "$RUNNER_TEMP/android-build/signing.keystore" \
+            -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+          echo "ANDROID_JAR=$ANDROID_SDK_ROOT/platforms/android-30/android.jar" >> "$GITHUB_ENV"
+          echo "R8_JAR=$RUNNER_TEMP/android-build/r8.jar" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/build-tools/33.0.2" >> "$GITHUB_PATH"
+
+      - name: Compile production-signed APK
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          export KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
+          APP_FILE="${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          test -s "dist/apk/$APP_FILE"
+          test -s dist/apk/validation.json
+          file "dist/apk/$APP_FILE"
+          echo "APP_FILE=$APP_FILE" >> "$GITHUB_ENV"
+
+      - name: Independent release validation of the signed binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="dist/apk/$APP_FILE"
+
+          # 1. Exists and is a real binary archive
+          test -s "$APK"
+          file "$APK" | grep -Ei 'zip archive|android'
+
+          # 2. ZIP/APK integrity
+          unzip -t "$APK" >/dev/null
+
+          # 3. Zip alignment
+          zipalign -c -v 4 "$APK" >/dev/null
+
+          # 4. Manifest, package id, version name and version code
+          BADGING="$(aapt dump badging "$APK")"
+          echo "$BADGING" | grep -E "^package: name='$PACKAGE_ID'"
+          BADGE_VERSION_NAME="$(echo "$BADGING" | sed -n "s/^package: name='[^']*' versionCode='\([0-9]*\)' versionName='\([^']*\)'.*/\2/p")"
+          BADGE_VERSION_CODE="$(echo "$BADGING" | sed -n "s/^package: name='[^']*' versionCode='\([0-9]*\)'.*/\1/p")"
+          if [[ "$BADGE_VERSION_NAME" != "$VERSION_NAME" ]]; then
+            echo "Version mismatch: APK reports '$BADGE_VERSION_NAME', expected '$VERSION_NAME'" >&2
+            exit 1
+          fi
+          test -n "$BADGE_VERSION_CODE"
+          echo "Package: $PACKAGE_ID | versionName: $BADGE_VERSION_NAME | versionCode: $BADGE_VERSION_CODE"
+
+          # 5. Signature must verify and must be a production key, never a debug key
+          CERTS="$(apksigner verify --print-certs "$APK")" || { echo 'apksigner verification FAILED' >&2; exit 1; }
+          if echo "$CERTS" | grep -Eiq 'CN=Android Debug|CN=AppForge Debug|CN=Debug'; then
+            echo 'FATAL: APK is signed with a DEBUG certificate. Production releases must use the production keystore.' >&2
+            exit 1
+          fi
+          apksigner verify -v "$APK" | grep -E 'Verified using v[0-9]+ scheme' || true
+
+          # 6. Cross-check against the build validator output
+          node -e '
+            const v = require("./dist/apk/validation.json");
+            if (v.signingMode !== "release") { console.error("validation.json is not a release build"); process.exit(1); }
+            if (v.fileName !== process.env.APP_FILE) { console.error("validation.json file name mismatch"); process.exit(1); }
+            if (!v.validation || v.validation.valid !== true) { console.error("Build validator did not pass"); process.exit(1); }
+            if (v.validation.packageId !== process.env.PACKAGE_ID) { console.error("Validator package id mismatch"); process.exit(1); }
+            if (v.validation.versionName !== process.env.VERSION_NAME) { console.error("Validator version mismatch"); process.exit(1); }
+            console.log("Cross-checked validation.json: OK");
+          '
+
+          # 7. Final checksum and size from the actual signed binary
+          SHA256="$(sha256sum "$APK" | cut -d' ' -f1)"
+          SIZE="$(stat -c%s "$APK")"
+          test "${#SHA256}" -eq 64
+          test "$SIZE" -gt 45000
+          echo "SHA256=$SHA256" >> "$GITHUB_ENV"
+          echo "SIZE=$SIZE" >> "$GITHUB_ENV"
+          echo "Validated $APP_FILE: $SIZE bytes, SHA-256 $SHA256"
+
+      - name: Publish APK to the public distribution repository
+        shell: bash
+        env:
+          DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          API="https://api.github.com/repos/$DISTRIBUTION_REPO"
+          AUTH="Authorization: Bearer $DISTRIBUTION_TOKEN"
+          ACCEPT="Accept: application/vnd.github+json"
+          SLUG="$(echo "$APP_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g')"
+          TAG="${{ inputs.release_tag }}"
+          if [[ -z "$TAG" ]]; then TAG="${SLUG}-v${VERSION_NAME}"; fi
+          APK="dist/apk/$APP_FILE"
+
+          # Locate or create the release (immutable tag per version)
+          CODE="$(curl -s -o /tmp/release.json -w '%{http_code}' -H "$AUTH" -H "$ACCEPT" "$API/releases/tags/$TAG")"
+          if [[ "$CODE" != "200" ]]; then
+            echo "Creating release $TAG in $DISTRIBUTION_REPO"
+            curl -sf -H "$AUTH" -H "$ACCEPT" -X POST "$API/releases" -d @- > /tmp/release.json <<JSON
+          {
+            "tag_name": "$TAG",
+            "target_commitish": "main",
+            "name": "$APP_NAME $VERSION_NAME",
+            "body": "Production release of $APP_NAME $VERSION_NAME.\n\n- Package: $PACKAGE_ID\n- Version: $VERSION_NAME\n- File: $APP_FILE\n- SHA-256: $SHA256\n- Size: $SIZE bytes"
+          }
+          JSON
+          fi
+          RELEASE_ID="$(node -e 'console.log(require("/tmp/release.json").id)')"
+          test -n "$RELEASE_ID"
+
+          # Replace an existing asset with the same name so re-runs stay idempotent
+          ASSET_ID="$(node -e 'const r=require("/tmp/release.json");const a=(r.assets||[]).find(x=>x.name===process.env.APP_FILE);console.log(a?a.id:"")')"
+          if [[ -n "$ASSET_ID" ]]; then
+            echo "Replacing existing release asset $APP_FILE"
+            curl -sf -H "$AUTH" -X DELETE "$API/releases/assets/$ASSET_ID"
+            sleep 2
+          fi
+
+          # Upload the real APK binary with the Android package MIME type
+          UPLOAD_URL="$(node -e 'console.log(require("/tmp/release.json").upload_url.split("{")[0])')"
+          curl -sf -H "$AUTH" -H "Content-Type: application/vnd.android.package-archive" \
+            -X POST --data-binary @"$APK" "${UPLOAD_URL}?name=$APP_FILE" > /tmp/asset.json
+          node -e 'const a=require("/tmp/asset.json");if(!a.id){console.error("Asset upload failed");process.exit(1)};console.log("Asset id: "+a.id+" state: "+a.state)'
+
+          PUBLIC_URL="https://github.com/$DISTRIBUTION_REPO/releases/download/$TAG/$APP_FILE"
+          echo "PUBLIC_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Published $APP_FILE to $PUBLIC_URL"
+
+      - name: Verify anonymous public download is byte-for-byte identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="$PUBLIC_URL"
+
+          # Anonymous GET (no token) must return the real APK
+          CODE="$(curl -sL -o /tmp/downloaded.apk -w '%{http_code}' "$URL")"
+          if [[ "$CODE" != "200" ]]; then
+            echo "FATAL: public download returned HTTP $CODE for $URL" >&2
+            exit 1
+          fi
+
+          # MIME type must be the Android package archive type, not HTML or text
+          CT="$(curl -sIL "$URL" | tr -d '\r' | awk 'tolower($1)=="content-type:"{print $2}' | tail -n1)"
+          echo "Public Content-Type: $CT"
+          case "$CT" in
+            application/vnd.android.package-archive*) ;;
+            *) echo "FATAL: public download does not serve application/vnd.android.package-archive" >&2; exit 1 ;;
+          esac
+
+          # Downloaded bytes must match the published binary exactly
+          DL_SHA="$(sha256sum /tmp/downloaded.apk | cut -d' ' -f1)"
+          if [[ "$DL_SHA" != "$SHA256" ]]; then
+            echo "FATAL: downloaded SHA-256 $DL_SHA != published SHA-256 $SHA256" >&2
+            exit 1
+          fi
+          cmp "dist/apk/$APP_FILE" /tmp/downloaded.apk
+
+          # No HTML masquerading as an APK
+          if head -c 1 /tmp/downloaded.apk | grep -q '<'; then
+            echo 'FATAL: downloaded file starts with HTML, not a ZIP/APK binary' >&2
+            exit 1
+          fi
+          echo "Anonymous public download verified: $URL ($SIZE bytes, SHA-256 $SHA256)"
+
+      - name: Update marketplace catalog metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/update-apk-release-metadata.mjs \
+            --package-id "$PACKAGE_ID" \
+            --file-name "$APP_FILE" \
+            --url "$PUBLIC_URL" \
+            --sha256 "$SHA256" \
+            --size "$SIZE" \
+            --version "$VERSION_NAME" \
+            --tag "$RELEASE_TAG"
+          git config user.name "appmintly-release-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet data/apps.json; then
+            echo "Catalog metadata already up to date"
+          else
+            git add data/apps.json
+            git commit -m "release: $APP_NAME $VERSION_NAME production APK published and verified ($RELEASE_TAG)"
+            git push
+          fi
+
+      - name: Release summary
+        shell: bash
+        run: |
+          {
+            echo "## Production release published"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| App | $APP_NAME |"
+            echo "| Package | $PACKAGE_ID |"
+            echo "| Version | $VERSION_NAME |"
+            echo "| Release tag | $RELEASE_TAG |"
+            echo "| Public URL | $PUBLIC_URL |"
+            echo "| SHA-256 | \`$SHA256\` |"
+            echo "| Size | $SIZE bytes |"
+          } >> "$GITHUB_STEP_SUMMARY"
