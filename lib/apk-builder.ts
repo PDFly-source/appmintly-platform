@@ -741,7 +741,7 @@ public class MainActivity extends Activity {
 
       // 4b. Compile Dalvik bytecode (.dex) with D8
       await execPromise(
-        `java -cp "${r8Jar}" com.android.tools.r8.D8 --output "${dexDir}" --lib "${androidJar}" "${path.join(classesDir, pkgPath, 'MainActivity.class')}"`,
+        `java -cp "${r8Jar}" com.android.tools.r8.D8 --output "${dexDir}" --lib "${androidJar}" "${path.join(classesDir, pkgPath)}"/*.class`,
         { env: buildEnv }
       );
 
