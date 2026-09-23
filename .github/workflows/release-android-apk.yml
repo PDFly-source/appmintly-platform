@@ -196,7 +196,19 @@ jobs:
           test -n "$BADGE_VERSION_CODE"
           echo "Package: $PACKAGE_ID | versionName: $BADGE_VERSION_NAME | versionCode: $BADGE_VERSION_CODE"
 
-          # 5. Signature must verify and must be a production key, never a debug key
+          # 5. DEX must exist and contain the FULL MainActivity class set (D8 multi-class fix)
+          unzip -p "$APK" classes.dex > /tmp/classes.dex
+          test -s /tmp/classes.dex
+          DEX_PATH="$(echo "$PACKAGE_ID" | tr '.' '/')"
+          for cls in 'MainActivity' 'MainActivity$1' 'MainActivity$2' 'MainActivity$3'; do
+            if ! grep -a -q "L${DEX_PATH}/${cls};" /tmp/classes.dex; then
+              echo "FATAL: classes.dex is missing ${DEX_PATH}/${cls}. The D8 multi-class fix has regressed." >&2
+              exit 1
+            fi
+          done
+          echo "DEX check passed: MainActivity + all listener inner classes are packaged"
+
+          # 6. Signature must verify and must be a production key, never a debug key
           CERTS="$(apksigner verify --print-certs "$APK")" || { echo 'apksigner verification FAILED' >&2; exit 1; }
           if echo "$CERTS" | grep -Eiq 'CN=Android Debug|CN=AppForge Debug|CN=Debug'; then
             echo 'FATAL: APK is signed with a DEBUG certificate. Production releases must use the production keystore.' >&2
@@ -302,9 +314,18 @@ jobs:
           fi
           cmp "dist/apk/$APP_FILE" /tmp/downloaded.apk
 
-          # No HTML masquerading as an APK
-          if head -c 1 /tmp/downloaded.apk | grep -q '<'; then
-            echo 'FATAL: downloaded file starts with HTML, not a ZIP/APK binary' >&2
+          # Content-Disposition must be an attachment of the real APK file
+          CD="$(curl -sIL "$URL" | tr -d '\r' | awk 'tolower($1)=="content-disposition:"{$1="";print}' | tail -n1 | xargs)"
+          echo "Public Content-Disposition: $CD"
+          if [[ "$CD" != attachment* ]]; then
+            echo 'FATAL: public download is not served as an attachment' >&2
+            exit 1
+          fi
+
+          # No HTML masquerading as an APK: first bytes must be the ZIP magic PK
+          MAGIC="$(head -c 2 /tmp/downloaded.apk | od -An -tx1 | tr -d ' \n')"
+          if [[ "$MAGIC" != "504b" ]]; then
+            echo "FATAL: downloaded file is not a ZIP/APK binary (magic: $MAGIC)" >&2
             exit 1
           fi
           echo "Anonymous public download verified: $URL ($SIZE bytes, SHA-256 $SHA256)"
