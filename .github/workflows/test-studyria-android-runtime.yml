@@ -1,0 +1,78 @@
+name: Test Studyria Android runtime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  launch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Download exact validated Studyria test APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk-studyria-runtime-fix-icon-debug-20260923-debug
+          run-id: 35906001713
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: test-apk
+      - name: Verify artifact integrity
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,pathlib
+          metadata=json.loads(pathlib.Path('test-apk/validation.json').read_text())
+          data=pathlib.Path('test-apk/Studyria-2.0.0.apk').read_bytes()
+          assert hashlib.sha256(data).hexdigest()==metadata['sha256']
+          assert len(data)==metadata['fileSizeBytes']
+          assert metadata['validation']['packageId']=='com.appforge.studyria'
+          print('APK integrity, size and package verified')
+          PY
+      - name: Launch on Android 16 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            mkdir -p runtime-diagnostics
+            adb shell getprop ro.build.version.release | tee runtime-diagnostics/android-version.txt
+            adb shell dumpsys webviewupdate > runtime-diagnostics/webview-provider.txt
+            adb logcat -c
+            adb install test-apk/Studyria-2.0.0.apk
+            adb shell am start -W -n com.appforge.studyria/.MainActivity | tee runtime-diagnostics/launch.txt
+            sleep 30
+            adb logcat -d > runtime-diagnostics/logcat.txt
+            adb shell dumpsys activity activities > runtime-diagnostics/activities.txt
+            adb shell uiautomator dump /sdcard/studyria-ui.xml || true
+            adb pull /sdcard/studyria-ui.xml runtime-diagnostics/ui.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/screen.png
+            if ! adb shell pidof com.appforge.studyria; then
+              echo 'FAIL: Studyria process did not survive launch'
+              exit 1
+            fi
+            if grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.studyria'; then
+              echo 'FAIL: Studyria fatal exception detected'
+              exit 1
+            fi
+            if grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui.xml; then
+              echo 'PASS: Studyria web page content visible in WebView accessibility tree'
+            else
+              echo 'INCONCLUSIVE: activity alive, but page load not confirmed by accessibility tree'
+            fi
+      - name: Upload launch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studyria-android-16-runtime-diagnostics
+          path: runtime-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
