@@ -1,0 +1,160 @@
+name: Build Android APK
+run-name: APK build ${{ inputs.build_id || 'manual' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: Application label (for example Studyria)
+        required: true
+        type: string
+      source_url:
+        description: HTTPS launch URL
+        required: true
+        type: string
+      package_id:
+        description: Android package identifier
+        required: true
+        type: string
+      version_name:
+        description: Android version name (x.y.z)
+        required: true
+        type: string
+      icon_url:
+        description: Optional HTTPS icon URL
+        required: false
+        type: string
+      theme_color:
+        description: Optional theme color
+        required: false
+        type: string
+      background_color:
+        description: Optional background color
+        required: false
+        type: string
+      build_id:
+        description: Request correlation ID
+        required: false
+        type: string
+      signing_mode:
+        description: Release requires signing secrets; debug is test-only
+        required: true
+        default: release
+        type: choice
+        options: [release, debug]
+
+permissions:
+  contents: read
+
+env:
+  APP_NAME: ${{ inputs.app_name }}
+  SOURCE_URL: ${{ inputs.source_url }}
+  PACKAGE_ID: ${{ inputs.package_id }}
+  VERSION_NAME: ${{ inputs.version_name }}
+  ICON_URL: ${{ inputs.icon_url }}
+  THEME_COLOR: ${{ inputs.theme_color }}
+  BACKGROUND_COLOR: ${{ inputs.background_color }}
+  BUILD_ID: ${{ inputs.build_id }}
+  SIGNING_MODE: ${{ inputs.signing_mode }}
+  APK_ARTIFACT_ONLY: '1'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 30 and Build Tools 33.0.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager --install 'platforms;android-30' 'build-tools;33.0.2'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick zip unzip
+      - name: Verify compiler and Android toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -version
+          javac -version
+          echo "JAVA_HOME=$JAVA_HOME"
+          test -x "$JAVA_HOME/bin/javac"
+          test -f "$ANDROID_SDK_ROOT/platforms/android-30/android.jar"
+          for tool in aapt zipalign apksigner; do
+            test -x "$ANDROID_SDK_ROOT/build-tools/33.0.2/$tool"
+            echo "Verified: $tool at $ANDROID_SDK_ROOT/build-tools/33.0.2/$tool"
+          done
+          command -v convert
+          command -v unzip
+      - name: Prepare compiler and signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test "$SIGNING_MODE" = release -o "$SIGNING_MODE" = debug
+          mkdir -p "$RUNNER_TEMP/android-build"
+          curl --fail --location --silent --show-error \
+            'https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.2.42/r8-8.2.42.jar' \
+            -o "$RUNNER_TEMP/android-build/r8.jar"
+          test -s "$RUNNER_TEMP/android-build/r8.jar"
+          if [[ "$SIGNING_MODE" == release ]]; then
+            if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$KEYSTORE_PASSWORD" || -z "$KEY_ALIAS" || -z "$KEY_PASSWORD" ]]; then
+              echo 'Release signing requires ANDROID_KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD GitHub Actions secrets' >&2
+              exit 1
+            fi
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-build/signing.keystore"
+            test -s "$RUNNER_TEMP/android-build/signing.keystore"
+          else
+            echo 'DEBUG SIGNING ONLY: not a production release; regenerated key cannot upgrade an existing installation.'
+            KEYSTORE_PASSWORD="$(openssl rand -hex 24)"
+            KEY_PASSWORD="$KEYSTORE_PASSWORD"
+            KEY_ALIAS=appforge-debug
+            keytool -genkeypair -noprompt -keystore "$RUNNER_TEMP/android-build/signing.keystore" \
+              -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 30 \
+              -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+              -dname 'CN=AppForge Debug, O=APPFORGE, C=IN'
+            for name in KEYSTORE_PASSWORD KEY_PASSWORD KEY_ALIAS; do
+              echo "::add-mask::${!name}"
+              echo "DEBUG_$name=${!name}" >> "$GITHUB_ENV"
+            done
+          fi
+          echo "ANDROID_JAR=$ANDROID_SDK_ROOT/platforms/android-30/android.jar" >> "$GITHUB_ENV"
+          echo "R8_JAR=$RUNNER_TEMP/android-build/r8.jar" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/build-tools/33.0.2" >> "$GITHUB_PATH"
+      - name: Compile, sign and validate real APK
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ "$SIGNING_MODE" == debug ]]; then
+            export KEYSTORE_PASSWORD="$DEBUG_KEYSTORE_PASSWORD" KEY_PASSWORD="$DEBUG_KEY_PASSWORD" KEY_ALIAS="$DEBUG_KEY_ALIAS"
+          else
+            export KEYSTORE_PASSWORD="$RELEASE_KEYSTORE_PASSWORD" KEY_PASSWORD="$RELEASE_KEY_PASSWORD" KEY_ALIAS="$RELEASE_KEY_ALIAS"
+          fi
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
+          test -s "dist/apk/${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          file "dist/apk/${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          sha256sum "dist/apk/${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+      - name: Upload private validated APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-${{ inputs.build_id || github.run_id }}-${{ inputs.signing_mode }}
+          path: dist/apk/
+          if-no-files-found: error
+          retention-days: 30

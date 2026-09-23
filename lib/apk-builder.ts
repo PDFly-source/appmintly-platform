@@ -49,7 +49,7 @@ export interface BuildJob {
   packageId: string;
   buildMode: 'twa' | 'webview';
   status: BuildState;
-  currentStep: (typeof BUILD_STAGES)[number] | 'Build failed';
+  currentStep: (typeof BUILD_STAGES)[number] | 'Build failed' | 'Validated artifact (not publicly published)';
   stageIndex: number;
   progress: number;
   stepsCompleted: string[];
@@ -252,28 +252,19 @@ export async function checkJavaToolchainPreflight(): Promise<ToolchainPreflightR
  * Ensures Android SDK jar, D8/R8 compiler, and signing keystore exist.
  */
 export async function ensureAndroidToolchain(): Promise<void> {
-  const toolchainDir = '/opt/android-toolchain';
-  const androidJar = path.join(toolchainDir, 'android.jar');
-  const r8Jar = path.join(toolchainDir, 'r8.jar');
-  const keystore = path.join(toolchainDir, 'appforge-release.keystore');
-
-  if (!fs.existsSync(toolchainDir)) {
-    await fs.promises.mkdir(toolchainDir, { recursive: true });
+  const requiredFiles = [process.env.ANDROID_JAR, process.env.R8_JAR, process.env.ANDROID_KEYSTORE_PATH];
+  if (requiredFiles.some(file => !file || !fs.existsSync(file))) {
+    throw new Error('Android toolchain incomplete: ANDROID_JAR, R8_JAR, and ANDROID_KEYSTORE_PATH must point to existing files.');
   }
-
-  if (!fs.existsSync(androidJar)) {
-    console.log('[ApkBuilder] Provisioning Android platform 30 android.jar...');
-    await execPromise(`curl -L -s -o "${androidJar}" https://raw.githubusercontent.com/Sable/android-platforms/master/android-30/android.jar`);
+  if (!process.env.ANDROID_SDK_ROOT || !fs.existsSync(process.env.ANDROID_SDK_ROOT)) {
+    throw new Error('ANDROID_SDK_ROOT is missing or invalid.');
   }
-
-  if (!fs.existsSync(r8Jar)) {
-    console.log('[ApkBuilder] Provisioning Android R8 compiler jar from Google Maven...');
-    await execPromise(`curl -L -s -o "${r8Jar}" https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.2.42/r8-8.2.42.jar`);
+  if (!process.env.KEYSTORE_PASSWORD || !process.env.KEY_ALIAS || !process.env.KEY_PASSWORD) {
+    throw new Error('Signing credentials missing: KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD are required.');
   }
-
-  if (!fs.existsSync(keystore)) {
-    console.log('[ApkBuilder] Provisioning APPFORGE release keystore via keytool...');
-    await execPromise(`keytool -genkeypair -v -keystore "${keystore}" -alias appforge -keyalg RSA -keysize 2048 -validity 10000 -storepass appforge_release_secret -keypass appforge_release_secret -dname "CN=AppForge, OU=Mobile, O=AppForge, L=Assam, ST=Assam, C=IN"`);
+  for (const tool of ['aapt', 'zipalign', 'apksigner', 'unzip', 'convert']) {
+    try { await execPromise(`command -v ${tool}`); }
+    catch { throw new Error(`Android build tool missing on PATH: ${tool}`); }
   }
 }
 
@@ -295,6 +286,9 @@ export function getBuildJob(buildId: string): BuildJob | undefined {
  * 10. Ready to download
  */
 export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
+  if (process.env.APK_ARTIFACT_ONLY !== '1' || !process.env.GITHUB_ACTIONS) {
+    throw new Error('APK compilation must run in the configured GitHub Actions Android runner.');
+  }
   const eligibility = checkApkEligibility(options);
   if (!eligibility.eligible) {
     throw new Error(eligibility.reason || 'App is not eligible for APK generation');
@@ -735,9 +729,9 @@ public class MainActivity extends Activity {
       job.stageIndex = 3;
       job.progress = 45;
 
-      const androidJar = '/opt/android-toolchain/android.jar';
-      const r8Jar = '/opt/android-toolchain/r8.jar';
-      const keystore = '/opt/android-toolchain/appforge-release.keystore';
+      const androidJar = process.env.ANDROID_JAR!;
+      const r8Jar = process.env.R8_JAR!;
+      const keystore = process.env.ANDROID_KEYSTORE_PATH!;
 
       // 4a. Compile Java classes
       await execPromise(
@@ -780,7 +774,7 @@ public class MainActivity extends Activity {
 
       const signedApk = path.join(buildDir, 'signed.apk');
       await execPromise(
-        `apksigner sign --ks "${keystore}" --ks-pass pass:appforge_release_secret --key-pass pass:appforge_release_secret --out "${signedApk}" "${alignedApk}"`,
+        `apksigner sign --ks "${keystore}" --ks-key-alias "$KEY_ALIAS" --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD --out "${signedApk}" "${alignedApk}"`,
         { env: buildEnv }
       );
 
@@ -793,6 +787,8 @@ public class MainActivity extends Activity {
       job.currentStep = 'Validating APK';
       job.stageIndex = 5;
       job.progress = 70;
+
+      await execPromise(`zipalign -c -v 4 "${signedApk}"`, { env: buildEnv });
 
       // Rigorous server-side verification: structure, badging, signatures
       const validationResult = await validateApkBinary(signedApk, {
@@ -830,6 +826,20 @@ public class MainActivity extends Activity {
 
       const publicApksDir = path.join(process.cwd(), 'public', 'downloads', 'apks');
       await fs.promises.mkdir(publicApksDir, { recursive: true });
+
+      // Only the validated artifact is staged. GitHub Actions uploads it separately.
+      // No catalog/download URL is published for a private Actions artifact.
+      if (process.env.APK_ARTIFACT_ONLY === '1') {
+        const targetApkPath = path.join(publicApksDir, canonicalFileName);
+        await fs.promises.copyFile(signedApk, targetApkPath);
+        job.stepsCompleted.push('Uploading APK');
+        job.status = 'completed';
+        job.currentStep = 'Validated artifact (not publicly published)';
+        job.progress = 100;
+        job.completedAt = new Date().toISOString();
+        await fs.promises.rm(buildDir, { recursive: true, force: true });
+        return;
+      }
 
       // Save both canonical filename (e.g. PDFMiniFly-2.1.0.apk) and slug alias
       const targetApkPath = path.join(publicApksDir, canonicalFileName);

@@ -1,29 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getBuildJob } from '@/lib/apk-builder';
+import { NextResponse } from 'next/server';
+import { readAndroidBuild } from '@/lib/github-apk-build';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ buildId: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ buildId: string }> }) {
   const { buildId } = await params;
-
-  if (!buildId) {
-    return NextResponse.json(
-      { success: false, error: 'Missing buildId parameter' },
-      { status: 400 }
-    );
+  if (!/^[0-9a-f-]{36}$/.test(buildId)) {
+    return NextResponse.json({ success: false, error: 'Invalid build ID' }, { status: 400 });
   }
-
-  const job = getBuildJob(buildId);
-  if (!job) {
-    return NextResponse.json(
-      { success: false, error: 'Build job not found or expired' },
-      { status: 404 }
-    );
+  try {
+    const state = await readAndroidBuild(buildId);
+    return NextResponse.json({ success: true, job: { buildId, ...state } });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 502 });
   }
-
-  return NextResponse.json({
-    success: true,
-    job,
-  });
 }

@@ -1,108 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runApkBuild, getBuildJob, checkApkEligibility, validatePackageId, generatePackageId } from '@/lib/apk-builder';
+import crypto from 'node:crypto';
+import { validatePackageId, generatePackageId } from '@/lib/apk-builder';
+import { requestAndroidBuild } from '@/lib/github-apk-build';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      appId,
-      slug,
-      name,
-      shortName,
-      version = '1.0.0',
-      launchUrl,
-      iconUrl,
-      themeColor = '#17191C',
-      backgroundColor = '#FFFDF8',
-      buildMode = 'webview',
-      packageId,
-      authorized = false,
-    } = body;
-
-    if (!authorized) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Distribution Authorization is required. You must check "I own/control this application or have permission to distribute it."',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!launchUrl || !launchUrl.startsWith('https://')) {
-      return NextResponse.json(
-        { success: false, error: 'A secure HTTPS launch URL is required to build an Android APK.' },
-        { status: 400 }
-      );
-    }
-
-    if (!name || !slug) {
-      return NextResponse.json(
-        { success: false, error: 'App name and slug are required.' },
-        { status: 400 }
-      );
-    }
-
-    const resolvedPkg = packageId || generatePackageId(slug);
-    const pkgValidation = validatePackageId(resolvedPkg);
-    if (!pkgValidation.valid) {
-      return NextResponse.json(
-        { success: false, error: pkgValidation.error || 'Invalid package ID syntax.' },
-        { status: 400 }
-      );
-    }
-
-    const job = await runApkBuild({
-      appId: appId || slug,
-      slug,
-      name,
-      shortName,
-      version,
-      launchUrl,
-      iconUrl,
-      themeColor,
-      backgroundColor,
-      buildMode,
-      packageId: resolvedPkg,
-      authorized: true,
+    const { name, slug, version, launchUrl, packageId, iconUrl, themeColor, backgroundColor, buildMode, authorized } = body;
+    if (!authorized || !name || !slug || !version || !launchUrl) throw new Error('Authorization, app name, slug, version and HTTPS URL are required.');
+    if (buildMode && buildMode !== 'webview') throw new Error('Only the existing Mode B WebView engine is supported by this Actions build.');
+    if (typeof name !== 'string' || name.length > 80 || !/^[a-z0-9-]{1,60}$/.test(slug) ||
+        !/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid app name, slug or numeric version.');
+    const url = new URL(launchUrl);
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('A secure public HTTPS launch URL is required.');
+    const pkg = packageId || generatePackageId(slug);
+    if (!validatePackageId(pkg).valid) throw new Error('Invalid Android package ID.');
+    const buildId = crypto.randomUUID();
+    await requestAndroidBuild({
+      app_name: name, source_url: url.href, package_id: pkg, version_name: version,
+      icon_url: typeof iconUrl === 'string' ? iconUrl : '',
+      theme_color: typeof themeColor === 'string' ? themeColor : '',
+      background_color: typeof backgroundColor === 'string' ? backgroundColor : '',
+      build_id: buildId,
     });
-
-    return NextResponse.json({
-      success: true,
-      buildId: job.buildId,
-      status: job.status,
-      job,
-    });
+    return NextResponse.json({ success: true, buildId, status: 'queued',
+      job: { buildId, status: 'queued', currentStep: 'Waiting for GitHub Actions runner', progress: 5 } });
   } catch (err: any) {
-    console.error('API /api/build-apk error:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Failed to start APK build.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: err.message }, { status: 503 });
   }
-}
-
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const buildId = searchParams.get('buildId');
-
-  if (!buildId) {
-    return NextResponse.json(
-      { success: false, error: 'Missing buildId parameter' },
-      { status: 400 }
-    );
-  }
-
-  const job = getBuildJob(buildId);
-  if (!job) {
-    return NextResponse.json(
-      { success: false, error: 'Build job not found or expired' },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    job,
-  });
 }

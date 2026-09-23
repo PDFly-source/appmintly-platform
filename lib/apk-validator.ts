@@ -90,6 +90,7 @@ export async function validateApkBinary(
   let metaInfPresent = false;
 
   try {
+    await execPromise(`unzip -tqq "${apkFilePath}"`);
     const { stdout: zipList } = await execPromise(`unzip -l "${apkFilePath}"`);
     manifestPresent = zipList.includes('AndroidManifest.xml');
     dexPresent = zipList.includes('classes.dex');

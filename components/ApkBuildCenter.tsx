@@ -129,7 +129,7 @@ export function ApkBuildCenter({
 
       const buildId = data.buildId;
 
-      // Poll status every 700ms
+      // Poll the GitHub Actions run, not the AI Studio process
       const pollTimer = setInterval(async () => {
         try {
           const pollRes = await fetch(`/api/build-apk/${buildId}`);
@@ -150,8 +150,12 @@ export function ApkBuildCenter({
                 });
               }
 
-              await onCatalogRefresh();
-              toast(`APK for ${form.name} generated & signed successfully!`, 'success');
+              if (pollData.job.apkUrl && pollData.job.apkMetadata) {
+                await onCatalogRefresh();
+                toast(`APK for ${form.name} published successfully!`, 'success');
+              } else {
+                toast('APK validated as a private GitHub Actions artifact. Public download is not yet published.', 'info');
+              }
             } else if (pollData.job.status === 'failed') {
               clearInterval(pollTimer);
               setIsBuilding(false);
@@ -162,7 +166,7 @@ export function ApkBuildCenter({
         } catch (pollErr) {
           console.error('Build polling error:', pollErr);
         }
-      }, 700);
+      }, 5000);
     } catch (err: any) {
       setIsBuilding(false);
       setBuildError(err.message || 'Build initialization failed');
@@ -515,8 +519,7 @@ export function ApkBuildCenter({
                   'Validating APK',
                   'Calculating SHA-256',
                   'Uploading APK',
-                  'Publishing release',
-                  'Ready to download',
+                  'Validated artifact (not publicly published)',
                 ].map((stepName, stepIdx) => {
                   const isDone = (buildJob.stepsCompleted || []).includes(stepName);
                   const isCurrent = buildJob.currentStep === stepName && buildJob.status !== 'failed';
