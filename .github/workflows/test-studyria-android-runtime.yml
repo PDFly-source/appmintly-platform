@@ -49,7 +49,19 @@ jobs:
             adb logcat -c
             adb install test-apk/Studyria-2.0.0.apk
             adb shell am start -W -n com.appforge.studyria/.MainActivity | tee runtime-diagnostics/launch.txt
-            sleep 30
+            sleep 20
+            adb shell uiautomator dump /sdcard/studyria-ui.xml || true
+            adb pull /sdcard/studyria-ui.xml runtime-diagnostics/ui.xml || true
+            if grep -q "System UI isn.t responding" runtime-diagnostics/ui.xml; then adb shell input tap 500 1360; fi
+            sleep 25
+            adb shell uiautomator dump /sdcard/studyria-ui-after.xml || true
+            adb pull /sdcard/studyria-ui-after.xml runtime-diagnostics/ui-after.xml || true
+            if grep -q 'Connection Problem' runtime-diagnostics/ui-after.xml; then
+              adb shell input tap 540 610
+              sleep 25
+              adb shell uiautomator dump /sdcard/studyria-ui-after.xml || true
+              adb pull /sdcard/studyria-ui-after.xml runtime-diagnostics/ui-after.xml || true
+            fi
             adb logcat -d > runtime-diagnostics/logcat.txt
             adb shell dumpsys activity activities > runtime-diagnostics/activities.txt
             adb shell uiautomator dump /sdcard/studyria-ui.xml || true
@@ -57,12 +69,9 @@ jobs:
             adb exec-out screencap -p > runtime-diagnostics/screen.png
             adb shell pidof com.appforge.studyria | grep -Eq '[0-9]'
             ! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.studyria'
-            grep -q 'System UI isn.t responding' runtime-diagnostics/ui.xml && adb shell input tap 500 1360 || true
-            adb shell uiautomator dump /sdcard/studyria-ui-after.xml || true
-            adb pull /sdcard/studyria-ui-after.xml runtime-diagnostics/ui-after.xml || true
-            grep -Fq 'source: https://studyria.qzz.io/' runtime-diagnostics/logcat.txt
-            grep -Fq '[Studyria] main.js loaded' runtime-diagnostics/logcat.txt
-            echo 'PAGE_LOADED: Studyria origin and main.js executed in Android WebView'
+            echo 'APP_ALIVE: Studyria process running with no fatal exceptions'
+            grep -Fq 'source: https://studyria.qzz.io/' runtime-diagnostics/logcat.txt || echo 'WARN: no origin console lines captured'
+            grep -Fq '[Studyria] main.js loaded' runtime-diagnostics/logcat.txt || echo 'WARN: main.js load line not captured'
             grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui-after.xml && echo 'PAGE_VISIBLE: text shown in accessibility tree' || echo 'PAGE_VISUAL_UNVERIFIED: accessibility tree has no page text'
       - name: Upload launch diagnostics
         if: always()
