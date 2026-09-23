@@ -1,0 +1,78 @@
+name: Check Application Updates
+
+on:
+  schedule:
+    # Run every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Inspect Registered URLs & Manifests
+        id: check
+        run: |
+          node -e '
+          const fs = require("fs");
+          const apps = JSON.parse(fs.readFileSync("./data/apps.json", "utf8"));
+          console.log(`Checking ${apps.length} registered applications in catalog...`);
+
+          async function checkApp(app) {
+            const targetUrl = app.pwaUrl || app.webUrl || app.url;
+            if (!targetUrl || !targetUrl.startsWith("https://")) {
+              console.log(`- ${app.name}: Skipped (non-web / APK format)`);
+              return;
+            }
+            try {
+              const res = await fetch(targetUrl, {
+                headers: { "User-Agent": "APPFORGE-HealthChecker/1.0" },
+                signal: AbortSignal.timeout(8000)
+              });
+              if (!res.ok) {
+                console.log(`! ${app.name} returned HTTP ${res.status}`);
+                return;
+              }
+              const html = await res.text();
+              const manifestMatch = html.match(/rel=["\x27]manifest["\x27]\s+href=["\x27]([^"\x27]+)["\x27]/i)
+                || html.match(/href=["\x27]([^"\x27]+\.webmanifest)["\x27]/i);
+              
+              if (manifestMatch) {
+                const manifestUrl = new URL(manifestMatch[1], targetUrl).toString();
+                const mRes = await fetch(manifestUrl, { signal: AbortSignal.timeout(5000) });
+                if (mRes.ok) {
+                  const mData = await mRes.json();
+                  const remoteVer = mData.version;
+                  if (remoteVer && remoteVer !== app.version) {
+                    console.log(`* UPDATE DETECTED for ${app.name}: current catalog = ${app.version}, remote manifest = ${remoteVer}`);
+                  } else {
+                    console.log(`✓ ${app.name}: Verified (v${app.version})`);
+                  }
+                }
+              } else {
+                console.log(`✓ ${app.name}: Online (no manifest tag)`);
+              }
+            } catch (err) {
+              console.log(`! ${app.name} check failed: ${err.message}`);
+            }
+          }
+
+          async function runAll() {
+            for (const app of apps) {
+              await checkApp(app);
+            }
+          }
+          runAll();
+          '

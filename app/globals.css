@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-paper-cream: #F8F2E7;
+  --color-warm-ivory: #FFFDF8;
+  --color-forge-dark: #17191C;
+  --color-forge-green: #16A765;
+  --color-forge-blue: #1976F3;
+  --color-forge-red: #E52B32;
+  --color-forge-yellow: #F7B928;
+  --color-forge-orange: #F39A18;
+  --color-forge-gold: #D89A25;
+  --color-soft-border: #E8DED0;
+  --color-muted-text: #6F6F6F;
+}
+
+:root {
+  --paper-cream: #F8F2E7;
+  --warm-ivory: #FFFDF8;
+  --forge-dark: #17191C;
+  --forge-green: #16A765;
+  --forge-blue: #1976F3;
+  --forge-red: #E52B32;
+  --forge-yellow: #F7B928;
+  --forge-orange: #F39A18;
+  --forge-gold: #D89A25;
+  --soft-border: #E8DED0;
+  --muted-text: #6F6F6F;
+}
+
+body {
+  background-color: var(--paper-cream);
+  color: var(--forge-dark);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom subtle scrollbars for carousel and lists */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d8cebe;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bfb29e;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

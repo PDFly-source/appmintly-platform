@@ -1,0 +1,30 @@
+[
+  {
+    "id": "editor-spotlight",
+    "title": "Editor's Spotlight",
+    "description": "Hand-picked independent software and PWAs verified for performance, privacy, and design.",
+    "categorySlug": "all",
+    "appIds": ["pdfminifly", "lifesync", "pixelforge-studio", "vaultguard-apk", "retroblast-84"]
+  },
+  {
+    "id": "pwa-powerhouses",
+    "title": "Offline-First PWAs",
+    "description": "Progressive Web Apps that install directly into your system launcher and work seamlessly offline.",
+    "categorySlug": "tools",
+    "appIds": ["pdfminifly", "pixelforge-studio", "codenova-ide"]
+  },
+  {
+    "id": "privacy-sovereignty",
+    "title": "Private & Local-First",
+    "description": "Zero-telemetry tools that never upload personal documents or sensitive records to third-party clouds.",
+    "categorySlug": "utilities",
+    "appIds": ["pdfminifly", "vaultguard-apk", "zenith-finance", "mindflow-notes"]
+  },
+  {
+    "id": "android-essentials",
+    "title": "Direct Android APKs",
+    "description": "Clean, unbloated standalone Android packages available for verified direct download.",
+    "categorySlug": "utilities",
+    "appIds": ["vaultguard-apk", "chronopulse-apk"]
+  }
+]
