@@ -60,7 +60,10 @@ jobs:
             grep -q 'System UI isn.t responding' runtime-diagnostics/ui.xml && adb shell input tap 500 1360 || true
             adb shell uiautomator dump /sdcard/studyria-ui-after.xml || true
             adb pull /sdcard/studyria-ui-after.xml runtime-diagnostics/ui-after.xml || true
-            grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui-after.xml && echo 'PAGE_VISIBLE: Studyria content shown in WebView' || echo 'PAGE_INCONCLUSIVE: page content not visible in accessibility tree'
+            grep -Fq 'source: https://studyria.qzz.io/' runtime-diagnostics/logcat.txt
+            grep -Fq '[Studyria] main.js loaded' runtime-diagnostics/logcat.txt
+            echo 'PAGE_LOADED: Studyria origin and main.js executed in Android WebView'
+            grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui-after.xml && echo 'PAGE_VISIBLE: text shown in accessibility tree' || echo 'PAGE_VISUAL_UNVERIFIED: accessibility tree has no page text'
       - name: Upload launch diagnostics
         if: always()
         uses: actions/upload-artifact@v4
