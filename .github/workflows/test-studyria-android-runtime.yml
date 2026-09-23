@@ -55,19 +55,12 @@ jobs:
             adb shell uiautomator dump /sdcard/studyria-ui.xml || true
             adb pull /sdcard/studyria-ui.xml runtime-diagnostics/ui.xml || true
             adb exec-out screencap -p > runtime-diagnostics/screen.png
-            if ! adb shell pidof com.appforge.studyria; then
-              echo 'FAIL: Studyria process did not survive launch'
-              exit 1
-            fi
-            if grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.studyria'; then
-              echo 'FAIL: Studyria fatal exception detected'
-              exit 1
-            fi
-            if grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui.xml; then
-              echo 'PASS: Studyria web page content visible in WebView accessibility tree'
-            else
-              echo 'INCONCLUSIVE: activity alive, but page load not confirmed by accessibility tree'
-            fi
+            adb shell pidof com.appforge.studyria | grep -Eq '[0-9]'
+            ! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.studyria'
+            grep -q 'System UI isn.t responding' runtime-diagnostics/ui.xml && adb shell input tap 500 1360 || true
+            adb shell uiautomator dump /sdcard/studyria-ui-after.xml || true
+            adb pull /sdcard/studyria-ui-after.xml runtime-diagnostics/ui-after.xml || true
+            grep -Eiq 'ADRE|APSC|PDF Study Platform' runtime-diagnostics/ui-after.xml && echo 'PAGE_VISIBLE: Studyria content shown in WebView' || echo 'PAGE_INCONCLUSIVE: page content not visible in accessibility tree'
       - name: Upload launch diagnostics
         if: always()
         uses: actions/upload-artifact@v4
