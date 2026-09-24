@@ -458,7 +458,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         { dir: mipmapMdpi, canvas: 108 },
         { dir: mipmapHdpi, canvas: 162 },
         { dir: mipmapXhdpi, canvas: 216 },
-        { dir: mipmapXhdpi, canvas: 324 },
+        { dir: mipmapXxhdpi, canvas: 324 },
         { dir: mipmapXxxhdpi, canvas: 432 },
       ];
       for (const d of adaptiveForegroundDensities) {
