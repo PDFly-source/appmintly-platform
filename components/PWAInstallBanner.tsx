@@ -21,7 +21,7 @@ export const PWAInstallBanner: React.FC = () => {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-[#17191C] via-[#23272C] to-[#17191C] text-white px-4 py-2.5 shadow-md border-b border-white/10 relative z-40">
+      <div className="bg-gradient-to-r from-inkbg via-[#23272C] to-inkbg text-white px-4 py-2.5 shadow-md border-b border-white/10 relative z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs md:text-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             <AppMintlyLogo variant="mark" size="xs" />
@@ -67,23 +67,23 @@ export const PWAInstallBanner: React.FC = () => {
 
       {showIOSGuide && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-2xl bg-[#FFFDF8] p-6 shadow-2xl border border-[#E8DED0] text-[#17191C]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E8DED0]">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl border border-line text-ink">
+            <div className="flex items-center justify-between pb-3 border-b border-line">
               <div className="flex items-center gap-2">
                 <AppMintlyLogo variant="mark" size="xs" />
                 <h3 className="font-bold text-base">Install on iPhone / iPad</h3>
               </div>
               <button
                 onClick={() => setShowIOSGuide(false)}
-                className="text-[#6F6F6F] hover:text-[#17191C] p-1"
+                className="text-mut hover:text-ink p-1"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm text-[#17191C]/80">
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-[#E8DED0]">
+            <div className="mt-4 space-y-3 text-sm text-ink/80">
+              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1976F3] text-xs font-bold text-white">
                   1
                 </span>
@@ -92,7 +92,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-[#E8DED0]">
+              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#16A765] text-xs font-bold text-white">
                   2
                 </span>
@@ -101,7 +101,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-[#E8DED0]">
+              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E52B32] text-xs font-bold text-white">
                   3
                 </span>

@@ -1,6 +1,41 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * AppMintly semantic design tokens.
+ * Light and dark share one token contract; components use these
+ * semantic utilities (bg-page, bg-card, text-ink, text-mut, border-line,
+ * bg-inkbg) so both themes stay consistent without per-component hexes.
+ */
+:root {
+  --c-page: #F8F2E7;
+  --c-card: #FFFDF8;
+  --c-ink: #17191C;
+  --c-inkbg: #17191C;
+  --c-mut: #6F6F6F;
+  --c-line: #E8DED0;
+}
+
+.dark {
+  --c-page: #131519;
+  --c-card: #1B1E24;
+  --c-ink: #EDE9E1;
+  --c-inkbg: #262A31;
+  --c-mut: #98A0AA;
+  --c-line: #323744;
+}
+
+@theme inline {
+  --color-page: var(--c-page);
+  --color-card: var(--c-card);
+  --color-ink: var(--c-ink);
+  --color-inkbg: var(--c-inkbg);
+  --color-mut: var(--c-mut);
+  --color-line: var(--c-line);
+}
+
 @theme {
   --color-paper-cream: #F8F2E7;
   --color-warm-ivory: #FFFDF8;
@@ -30,8 +65,8 @@
 }
 
 body {
-  background-color: var(--paper-cream);
-  color: var(--forge-dark);
+  background-color: var(--c-page);
+  color: var(--c-ink);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   margin: 0;
@@ -65,3 +100,13 @@ body {
   scrollbar-width: none;
 }
 
+
+
+/* Theme surface transition — lightweight, disabled for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  body,
+  .bg-page,
+  .bg-card {
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+}

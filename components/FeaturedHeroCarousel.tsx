@@ -40,7 +40,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-[#17191C] text-white shadow-xl border border-[#17191C]/20">
+    <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-xl border border-ink/20">
       {/* Background Banner Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -48,8 +48,8 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           alt={current.name}
           className="w-full h-full object-cover opacity-30 filter brightness-75 scale-105 transition-all duration-700 ease-out"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#17191C] via-[#17191C]/85 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17191C] via-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-inkbg via-inkbg/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-inkbg via-transparent to-black/30" />
       </div>
 
       {/* Content Container */}

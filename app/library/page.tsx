@@ -95,21 +95,21 @@ export default function LibraryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] text-xs font-bold text-[#17191C] mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-card border border-line text-xs font-bold text-ink mb-2">
             <Bookmark className="w-3.5 h-3.5 text-[#E52B32]" />
             <span>Local Browser Library</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-[#17191C] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-ink tracking-tight">
             My Local Library
           </h1>
-          <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm text-mut mt-1 max-w-xl">
             Saved favorites, recently launched apps, and downloaded APK history stored on your device. No account or remote database needed.
           </p>
         </div>
 
         <button
           onClick={handleClearData}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#FFFDF8] hover:bg-[#E52B32]/10 text-xs font-bold text-[#6F6F6F] hover:text-[#E52B32] border border-[#E8DED0] transition self-start sm:self-auto cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card hover:bg-[#E52B32]/10 text-xs font-bold text-mut hover:text-[#E52B32] border border-line transition self-start sm:self-auto cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Clear Local Data</span>
@@ -117,13 +117,13 @@ export default function LibraryPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E8DED0] mb-8 pb-3 overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-2 border-b border-line mb-8 pb-3 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('favorites')}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition shrink-0 ${
             activeTab === 'favorites'
-              ? 'bg-[#17191C] text-white shadow-xs'
-              : 'bg-[#FFFDF8] text-[#17191C] border border-[#E8DED0] hover:bg-[#F8F2E7]'
+              ? 'bg-inkbg text-white shadow-xs'
+              : 'bg-card text-ink border border-line hover:bg-page'
           }`}
         >
           <Bookmark className={`w-3.5 h-3.5 ${activeTab === 'favorites' ? 'fill-white' : 'text-[#E52B32]'}`} />
@@ -137,8 +137,8 @@ export default function LibraryPage() {
           onClick={() => setActiveTab('opened')}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition shrink-0 ${
             activeTab === 'opened'
-              ? 'bg-[#17191C] text-white shadow-xs'
-              : 'bg-[#FFFDF8] text-[#17191C] border border-[#E8DED0] hover:bg-[#F8F2E7]'
+              ? 'bg-inkbg text-white shadow-xs'
+              : 'bg-card text-ink border border-line hover:bg-page'
           }`}
         >
           <Clock className="w-3.5 h-3.5 text-[#1976F3]" />
@@ -152,8 +152,8 @@ export default function LibraryPage() {
           onClick={() => setActiveTab('downloaded')}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition shrink-0 ${
             activeTab === 'downloaded'
-              ? 'bg-[#17191C] text-white shadow-xs'
-              : 'bg-[#FFFDF8] text-[#17191C] border border-[#E8DED0] hover:bg-[#F8F2E7]'
+              ? 'bg-inkbg text-white shadow-xs'
+              : 'bg-card text-ink border border-line hover:bg-page'
           }`}
         >
           <Download className="w-3.5 h-3.5 text-[#16A765]" />
@@ -175,15 +175,15 @@ export default function LibraryPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 px-4 bg-[#FFFDF8] rounded-3xl border border-[#E8DED0]">
-              <Bookmark className="w-12 h-12 text-[#E8DED0] mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-[#17191C]">No favorites saved yet</h3>
-              <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+            <div className="text-center py-16 px-4 bg-card rounded-3xl border border-line">
+              <Bookmark className="w-12 h-12 text-line mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-ink">No favorites saved yet</h3>
+              <p className="text-xs text-mut mt-1 max-w-sm mx-auto">
                 Click the bookmark icon on any application to save it to your local library for quick access.
               </p>
               <Link
                 href="/explore"
-                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold hover:bg-[#E52B32] transition"
+                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition"
               >
                 <span>Browse Catalog</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -201,22 +201,22 @@ export default function LibraryPage() {
               {opened.map(({ app, timestamp, timeText }) => (
                 <div
                   key={`${app.id}-${timestamp}`}
-                  className="flex items-center justify-between p-4 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] hover:border-[#17191C]/30 transition"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-card border border-line hover:border-ink/30 transition"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <img
                       src={app.icon}
                       alt={app.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-[#17191C]/10 shrink-0"
+                      className="w-12 h-12 rounded-xl object-cover border border-ink/10 shrink-0"
                     />
                     <div className="min-w-0">
                       <Link
                         href={`/app/${app.slug}`}
-                        className="font-bold text-sm text-[#17191C] hover:text-[#1976F3] transition truncate block"
+                        className="font-bold text-sm text-ink hover:text-[#1976F3] transition truncate block"
                       >
                         {app.name}
                       </Link>
-                      <div className="flex items-center gap-2 text-[11px] text-[#6F6F6F] mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-mut mt-0.5">
                         <span>{app.type}</span>
                         <span>•</span>
                         <span>Opened {timeText}</span>
@@ -226,7 +226,7 @@ export default function LibraryPage() {
 
                   <Link
                     href={`/app/${app.slug}`}
-                    className="shrink-0 px-3.5 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#17191C] hover:text-white text-xs font-bold text-[#17191C] transition border border-[#E8DED0]"
+                    className="shrink-0 px-3.5 py-1.5 rounded-full bg-page hover:bg-inkbg hover:text-white text-xs font-bold text-ink transition border border-line"
                   >
                     Open
                   </Link>
@@ -234,15 +234,15 @@ export default function LibraryPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 px-4 bg-[#FFFDF8] rounded-3xl border border-[#E8DED0]">
-              <Clock className="w-12 h-12 text-[#E8DED0] mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-[#17191C]">No recently opened apps</h3>
-              <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+            <div className="text-center py-16 px-4 bg-card rounded-3xl border border-line">
+              <Clock className="w-12 h-12 text-line mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-ink">No recently opened apps</h3>
+              <p className="text-xs text-mut mt-1 max-w-sm mx-auto">
                 Apps you launch from AppMintly will appear here automatically.
               </p>
               <Link
                 href="/explore"
-                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold hover:bg-[#E52B32] transition"
+                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition"
               >
                 <span>Discover Apps</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -260,22 +260,22 @@ export default function LibraryPage() {
               {downloaded.map(({ app, timestamp, timeText }) => (
                 <div
                   key={`${app.id}-${timestamp}`}
-                  className="flex items-center justify-between p-4 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] hover:border-[#17191C]/30 transition"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-card border border-line hover:border-ink/30 transition"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <img
                       src={app.icon}
                       alt={app.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-[#17191C]/10 shrink-0"
+                      className="w-12 h-12 rounded-xl object-cover border border-ink/10 shrink-0"
                     />
                     <div className="min-w-0">
                       <Link
                         href={`/app/${app.slug}`}
-                        className="font-bold text-sm text-[#17191C] hover:text-[#1976F3] transition truncate block"
+                        className="font-bold text-sm text-ink hover:text-[#1976F3] transition truncate block"
                       >
                         {app.name}
                       </Link>
-                      <div className="flex items-center gap-2 text-[11px] text-[#6F6F6F] mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-mut mt-0.5">
                         <span>{app.size}</span>
                         <span>•</span>
                         <span>Downloaded {timeText}</span>
@@ -293,15 +293,15 @@ export default function LibraryPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 px-4 bg-[#FFFDF8] rounded-3xl border border-[#E8DED0]">
-              <Download className="w-12 h-12 text-[#E8DED0] mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-[#17191C]">No APK downloads yet</h3>
-              <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+            <div className="text-center py-16 px-4 bg-card rounded-3xl border border-line">
+              <Download className="w-12 h-12 text-line mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-ink">No APK downloads yet</h3>
+              <p className="text-xs text-mut mt-1 max-w-sm mx-auto">
                 Android APKs downloaded from AppMintly will appear in this local history ledger.
               </p>
               <Link
                 href="/explore?type=Android+APK"
-                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold hover:bg-[#E52B32] transition"
+                className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition"
               >
                 <span>Browse APKs</span>
                 <ArrowRight className="w-3.5 h-3.5" />

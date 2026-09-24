@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/lib/ToastContext';
+import { ThemeProvider, THEME_INIT_SCRIPT } from '@/lib/theme-context';
 import { CatalogProvider } from '@/lib/CatalogContext';
 import { Navbar } from '@/components/Navbar';
 import { BottomNav } from '@/components/BottomNav';
@@ -64,13 +65,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <link rel="icon" href={`${BASE_PATH}/favicon.ico`} sizes="any" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="min-h-screen bg-[#F8F2E7] text-[#17191C] font-sans antialiased selection:bg-[#E52B32]/20 selection:text-[#E52B32]">
+      <body className="min-h-screen bg-page text-ink font-sans antialiased selection:bg-[#E52B32]/20 selection:text-[#E52B32]">
         {/* Sitewide structured data: marketplace Organization + WebSite */}
         <script
           type="application/ld+json"
@@ -106,6 +108,7 @@ export default function RootLayout({
             }),
           }}
         />
+        <ThemeProvider>
         <ToastProvider>
           <CatalogProvider>
             <div className="flex min-h-screen flex-col">
@@ -119,6 +122,7 @@ export default function RootLayout({
             </div>
           </CatalogProvider>
         </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

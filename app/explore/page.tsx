@@ -173,10 +173,10 @@ function ExploreContent() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-4xl font-black text-[#17191C] tracking-tight">
+        <h1 className="text-2xl sm:text-4xl font-black text-ink tracking-tight">
           Explore App Catalog
         </h1>
-        <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-xl">
+        <p className="text-xs sm:text-sm text-mut mt-1 max-w-xl">
           Search and filter verified Android APKs, web applications, educational portals, and utilities.
         </p>
       </div>
@@ -184,18 +184,18 @@ function ExploreContent() {
       {/* Global Search Bar */}
       <div className="mb-6 space-y-3">
         <div className="relative flex items-center">
-          <Search className="w-5 h-5 text-[#6F6F6F] absolute left-4 pointer-events-none" />
+          <Search className="w-5 h-5 text-mut absolute left-4 pointer-events-none" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name, description, tags, features, or developer..."
-            className="w-full rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] focus:border-[#1976F3] focus:ring-1 focus:ring-[#1976F3] pl-12 pr-12 py-3.5 text-sm sm:text-base text-[#17191C] placeholder-[#6F6F6F] shadow-2xs transition focus:outline-hidden"
+            className="w-full rounded-2xl bg-card border border-line focus:border-[#1976F3] focus:ring-1 focus:ring-[#1976F3] pl-12 pr-12 py-3.5 text-sm sm:text-base text-ink placeholder-mut shadow-2xs transition focus:outline-hidden"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-4 p-1.5 rounded-full text-[#6F6F6F] hover:text-[#17191C] hover:bg-[#F8F2E7] transition cursor-pointer"
+              className="absolute right-4 p-1.5 rounded-full text-mut hover:text-ink hover:bg-page transition cursor-pointer"
               aria-label="Clear search query"
             >
               <X className="w-4 h-4" />
@@ -204,13 +204,13 @@ function ExploreContent() {
         </div>
 
         {/* Suggestion Tags */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs text-[#6F6F6F]">
-          <span className="font-semibold text-[#17191C]">Suggested:</span>
+        <div className="flex items-center gap-1.5 flex-wrap text-xs text-mut">
+          <span className="font-semibold text-ink">Suggested:</span>
           {popularTags.map((tag) => (
             <button
               key={tag}
               onClick={() => setQuery(tag)}
-              className="px-2.5 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:border-[#17191C]/40 text-[#17191C] transition cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-card border border-line hover:border-ink/40 text-ink transition cursor-pointer"
             >
               #{tag}
             </button>
@@ -219,10 +219,10 @@ function ExploreContent() {
       </div>
 
       {/* Controls Bar: Types, Category, Originals, Sort */}
-      <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-2xl p-4 mb-8 shadow-2xs space-y-4">
+      <div className="bg-card border border-line rounded-2xl p-4 mb-8 shadow-2xs space-y-4">
         {/* Row 1: App Formats / Types */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
-          <span className="text-xs font-black uppercase text-[#6F6F6F] shrink-0 mr-1">
+          <span className="text-xs font-black uppercase text-mut shrink-0 mr-1">
             Format:
           </span>
           {appTypes.map((t) => {
@@ -234,8 +234,8 @@ function ExploreContent() {
                 onClick={() => setSelectedType(t.value)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${
                   active
-                    ? 'bg-[#17191C] text-white shadow-2xs'
-                    : 'bg-[#F8F2E7] text-[#17191C] hover:bg-[#E8DED0]'
+                    ? 'bg-inkbg text-white shadow-2xs'
+                    : 'bg-page text-ink hover:bg-line'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -246,15 +246,15 @@ function ExploreContent() {
         </div>
 
         {/* Row 2: Category Filter & Sort Dropdown & Originals Toggle */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#E8DED0]/60">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-line/60">
           <div className="flex flex-wrap items-center gap-3">
             {/* Category select */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-[#6F6F6F]">Category:</span>
+              <span className="font-bold text-mut">Category:</span>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-[#F8F2E7] border border-[#E8DED0] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                className="bg-page border border-line rounded-xl px-3 py-1.5 text-xs font-semibold text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
               >
                 <option value="all">All Categories</option>
                 {CATEGORIES.map((cat) => (
@@ -267,12 +267,12 @@ function ExploreContent() {
 
             {/* Publisher select */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-[#6F6F6F]">Publisher:</span>
+              <span className="font-bold text-mut">Publisher:</span>
               <select
                 value={selectedPublisher}
                 onChange={(e) => setSelectedPublisher(e.target.value)}
                 aria-label="Filter by publisher"
-                className="bg-[#F8F2E7] border border-[#E8DED0] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                className="bg-page border border-line rounded-xl px-3 py-1.5 text-xs font-semibold text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
               >
                 <option value="all">All Publishers</option>
                 {PUBLISHERS.map((p) => (
@@ -289,7 +289,7 @@ function ExploreContent() {
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
                 filterOriginals
                   ? 'bg-[#F7B928]/20 border-[#F7B928] text-[#8C6000]'
-                  : 'bg-[#F8F2E7] border-[#E8DED0] text-[#17191C] hover:bg-[#E8DED0]'
+                  : 'bg-page border-line text-ink hover:bg-line'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" />
@@ -300,11 +300,11 @@ function ExploreContent() {
           <div className="flex items-center gap-3">
             {/* Sort order */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold text-[#6F6F6F]">Sort:</span>
+              <span className="font-bold text-mut">Sort:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-[#F8F2E7] border border-[#E8DED0] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                className="bg-page border border-line rounded-xl px-3 py-1.5 text-xs font-semibold text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
               >
                 <option value="newest">Latest Release</option>
                 <option value="updated">Recently Updated</option>
@@ -327,8 +327,8 @@ function ExploreContent() {
 
       {/* Results Header */}
       <div className="flex items-center justify-between mb-5">
-        <p className="text-xs sm:text-sm font-semibold text-[#6F6F6F]">
-          Showing <span className="text-[#17191C] font-black">{filteredApps.length}</span>{' '}
+        <p className="text-xs sm:text-sm font-semibold text-mut">
+          Showing <span className="text-ink font-black">{filteredApps.length}</span>{' '}
           {filteredApps.length === 1 ? 'application' : 'applications'}
         </p>
       </div>
@@ -342,19 +342,19 @@ function ExploreContent() {
         </div>
       ) : (
         /* Empty State */
-        <div className="text-center py-16 sm:py-24 px-4 bg-[#FFFDF8] rounded-3xl border border-[#E8DED0]">
+        <div className="text-center py-16 sm:py-24 px-4 bg-card rounded-3xl border border-line">
           <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8" />
           </div>
-          <h3 className="text-lg sm:text-xl font-black text-[#17191C] tracking-tight">
+          <h3 className="text-lg sm:text-xl font-black text-ink tracking-tight">
             No apps found
           </h3>
-          <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-mut mt-1 max-w-sm mx-auto">
             Try another search or clear your filters to explore the entire catalog.
           </p>
           <button
             onClick={clearAllFilters}
-            className="mt-5 px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+            className="mt-5 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition shadow-xs cursor-pointer"
           >
             Clear All Filters
           </button>
@@ -366,7 +366,7 @@ function ExploreContent() {
 
 export default function ExplorePage() {
   return (
-    <Suspense fallback={<div className="max-w-7xl mx-auto px-6 py-12 text-sm text-[#6F6F6F]">Loading catalog...</div>}>
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-6 py-12 text-sm text-mut">Loading catalog...</div>}>
       <ExploreContent />
     </Suspense>
   );

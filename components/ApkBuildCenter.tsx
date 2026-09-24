@@ -492,20 +492,20 @@ export function ApkBuildCenter({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+      <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2">
               <span className="p-2 rounded-2xl bg-[#16A765]/15 text-[#16A765]">
                 <Smartphone className="w-5 h-5" />
               </span>
-              <h3 className="text-xl font-black text-[#17191C] tracking-tight">
+              <h3 className="text-xl font-black text-ink tracking-tight">
                 Android App Build Pipeline
               </h3>
             </div>
-            <p className="text-xs text-[#6F6F6F] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-xs text-mut mt-1.5 max-w-2xl leading-relaxed">
               Generate an official, signed, standalone Android APK directly from{' '}
-              <strong className="text-[#17191C]">{form.name || 'your application'}</strong>. The resulting binary installs as a native Android launcher app with its own icon, identity, and splash branding.
+              <strong className="text-ink">{form.name || 'your application'}</strong>. The resulting binary installs as a native Android launcher app with its own icon, identity, and splash branding.
             </p>
           </div>
 
@@ -514,7 +514,7 @@ export function ApkBuildCenter({
               type="button"
               onClick={handleRefreshMetadata}
               disabled={isCheckingUpdates}
-              className="px-3.5 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-1.5 rounded-full bg-page hover:bg-line text-xs font-bold text-ink border border-line transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdates ? 'animate-spin text-[#1976F3]' : ''}`} />
               <span>Refresh Web Metadata</span>
@@ -529,7 +529,7 @@ export function ApkBuildCenter({
               <Flame className="w-5 h-5 text-[#8C6000] shrink-0" />
               <div>
                 <p className="font-black text-xs text-[#8C6000]">NEW VERSION DETECTED</p>
-                <p className="text-xs text-[#17191C] mt-0.5">
+                <p className="text-xs text-ink mt-0.5">
                   Remote web app published version <strong>v{detectedVersion}</strong> (Current catalog: v{form.version}).
                 </p>
               </div>
@@ -537,7 +537,7 @@ export function ApkBuildCenter({
             <button
               type="button"
               onClick={handleApplyNewVersion}
-              className="px-4 py-2 rounded-xl bg-[#17191C] hover:bg-[#8C6000] text-white text-xs font-bold transition cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-inkbg hover:bg-[#8C6000] text-white text-xs font-bold transition cursor-pointer"
             >
               Update to v{detectedVersion} &amp; Rebuild
             </button>
@@ -545,15 +545,15 @@ export function ApkBuildCenter({
         )}
 
         {/* Configuration Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[#E8DED0]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-line">
           {/* Section 1: Authorization & Package ID */}
           <div className="space-y-4">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F] flex items-center gap-1.5">
+            <h4 className="text-xs font-black uppercase tracking-wider text-mut flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-[#16A765]" />
               <span>1. Distribution Authorization</span>
             </h4>
 
-            <div className="p-4 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] space-y-3">
+            <div className="p-4 rounded-2xl bg-page border border-line space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -562,10 +562,10 @@ export function ApkBuildCenter({
                   className="w-4 h-4 rounded-md accent-[#16A765] mt-0.5"
                 />
                 <div className="text-xs">
-                  <span className="font-bold text-[#17191C]">
+                  <span className="font-bold text-ink">
                     I own/control this application or have permission to distribute it.
                   </span>
-                  <p className="text-[#6F6F6F] text-[11px] leading-relaxed mt-1">
+                  <p className="text-mut text-[11px] leading-relaxed mt-1">
                     AppMintly operates as a verified app marketplace. Direct APK wrappers will only be compiled for authorized first-party web apps, PWAs, and tools.
                   </p>
                 </div>
@@ -573,7 +573,7 @@ export function ApkBuildCenter({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-[#17191C] block mb-1">
+              <label className="text-xs font-bold text-ink block mb-1">
                 Android Package ID (Application ID) *
               </label>
               <div className="relative">
@@ -583,17 +583,17 @@ export function ApkBuildCenter({
                   onChange={(e) => handlePackageIdChange(e.target.value)}
                   placeholder="com.appmintly.myapp"
                   data-build-field="packageId"
-                  className={`w-full bg-[#F8F2E7] border rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 ${
+                  className={`w-full bg-page border rounded-2xl px-4 py-2.5 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 ${
                     packageIdError
                       ? 'border-[#E52B32] focus:ring-[#E52B32]'
-                      : 'border-[#E8DED0] focus:ring-[#16A765]'
+                      : 'border-line focus:ring-[#16A765]'
                   }`}
                 />
               </div>
               {packageIdError ? (
                 <p className="text-[11px] text-[#E52B32] mt-1 font-semibold">{packageIdError}</p>
               ) : (
-                <p className="text-[11px] text-[#6F6F6F] mt-1">
+                <p className="text-[11px] text-mut mt-1">
                   Unique Android package syntax: lowercase, dot-separated identifier.
                 </p>
               )}
@@ -602,7 +602,7 @@ export function ApkBuildCenter({
 
           {/* Section 2: Build Mode */}
           <div className="space-y-4">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F] flex items-center gap-1.5">
+            <h4 className="text-xs font-black uppercase tracking-wider text-mut flex items-center gap-1.5">
               <Settings className="w-4 h-4 text-[#1976F3]" />
               <span>2. Build Strategy Mode</span>
             </h4>
@@ -614,12 +614,12 @@ export function ApkBuildCenter({
                 className={`p-4 rounded-2xl border cursor-pointer transition ${
                   buildMode === 'webview'
                     ? 'bg-[#16A765]/10 border-[#16A765]'
-                    : 'bg-[#F8F2E7] border-[#E8DED0] hover:border-[#17191C]/30'
+                    : 'bg-page border-line hover:border-ink/30'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs text-[#17191C]">
+                    <span className="font-extrabold text-xs text-ink">
                       MODE B — Native WebView Engine
                     </span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#16A765]/20 text-[#16A765]">
@@ -634,7 +634,7 @@ export function ApkBuildCenter({
                     className="accent-[#16A765]"
                   />
                 </div>
-                <p className="text-[11px] text-[#6F6F6F] mt-1.5 leading-relaxed">
+                <p className="text-[11px] text-mut mt-1.5 leading-relaxed">
                   Hardened origin-confined native Android WebView. Safe Browsing enabled, DOM storage, download listeners, file upload support, no native API leakage. Only allowed origin: configured application host.
                 </p>
               </div>
@@ -645,12 +645,12 @@ export function ApkBuildCenter({
                 className={`p-4 rounded-2xl border cursor-pointer transition ${
                   buildMode === 'twa'
                     ? 'bg-[#1976F3]/10 border-[#1976F3]'
-                    : 'bg-[#F8F2E7] border-[#E8DED0] hover:border-[#17191C]/30'
+                    : 'bg-page border-line hover:border-ink/30'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs text-[#17191C]">
+                    <span className="font-extrabold text-xs text-ink">
                       MODE A — Trusted Web Activity (TWA)
                     </span>
                   </div>
@@ -662,8 +662,8 @@ export function ApkBuildCenter({
                     className="accent-[#1976F3]"
                   />
                 </div>
-                <p className="text-[11px] text-[#6F6F6F] mt-1.5 leading-relaxed">
-                  Uses Chrome Custom Tabs TWA architecture. Requires full HTTPS, valid Web App Manifest, Service Worker, and remote <code className="font-mono text-[#17191C]">.well-known/assetlinks.json</code> domain verification.
+                <p className="text-[11px] text-mut mt-1.5 leading-relaxed">
+                  Uses Chrome Custom Tabs TWA architecture. Requires full HTTPS, valid Web App Manifest, Service Worker, and remote <code className="font-mono text-ink">.well-known/assetlinks.json</code> domain verification.
                 </p>
               </div>
             </div>
@@ -671,15 +671,15 @@ export function ApkBuildCenter({
         </div>
 
         {/* Section 3: Build Pipeline Execution UI */}
-        <div className="pt-4 border-t border-[#E8DED0] space-y-4">
+        <div className="pt-4 border-t border-line space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+              <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                 3. APK Generation &amp; Release Signing
               </h4>
-              <p className="text-xs text-[#6F6F6F] mt-0.5">
-                Target: <code className="font-mono text-[#17191C]">{packageIdInput}</code> • Version{' '}
-                <strong className="text-[#17191C]">{form.version}</strong>
+              <p className="text-xs text-mut mt-0.5">
+                Target: <code className="font-mono text-ink">{packageIdInput}</code> • Version{' '}
+                <strong className="text-ink">{form.version}</strong>
               </p>
             </div>
 
@@ -687,7 +687,7 @@ export function ApkBuildCenter({
               type="button"
               onClick={handleStartBuild}
               disabled={isBuilding || !authorized || !!packageIdError}
-              className="px-6 py-3 rounded-2xl bg-[#17191C] hover:bg-[#16A765] text-white text-xs font-black shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+              className="px-6 py-3 rounded-2xl bg-inkbg hover:bg-[#16A765] text-white text-xs font-black shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
             >
               <Cpu className={`w-4 h-4 ${isBuilding ? 'animate-spin' : ''}`} />
               <span>{isBuilding ? 'Building APK...' : isApkReady ? 'Rebuild Android APK' : 'Generate Android APK'}</span>
@@ -696,8 +696,8 @@ export function ApkBuildCenter({
 
           {/* Live Build Progress — REAL GitHub Actions run states only */}
           {buildJob && (
-            <div className="bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl p-5 space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between text-xs font-bold text-[#17191C] gap-2">
+            <div className="bg-page border border-line rounded-2xl p-5 space-y-4 animate-in fade-in">
+              <div className="flex items-center justify-between text-xs font-bold text-ink gap-2">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full animate-ping ${buildJob.state === 'FAILED' ? 'bg-[#E52B32]' : 'bg-[#16A765]'}`} />
                   <span>Production Build: {buildJob.state === 'QUEUED' ? 'QUEUED — waiting for a GitHub Actions runner' : buildJob.state === 'BUILDING' ? 'BUILDING — compiling, signing and validating on GitHub Actions' : buildJob.state === 'SUCCESS' ? 'SUCCESS — APK built, signed and published' : 'FAILED'}</span>
@@ -707,7 +707,7 @@ export function ApkBuildCenter({
                     href={buildJob.runUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3 py-1 rounded-full bg-white border border-[#E8DED0] hover:bg-[#E8DED0] text-[#17191C] text-[10px] font-bold transition flex items-center gap-1 shrink-0"
+                    className="px-3 py-1 rounded-full bg-white border border-line hover:bg-line text-ink text-[10px] font-bold transition flex items-center gap-1 shrink-0"
                   >
                     <ExternalLink className="w-3 h-3" />
                     <span>View run on GitHub</span>
@@ -729,7 +729,7 @@ export function ApkBuildCenter({
                           ? 'bg-[#E52B32]/10 text-[#E52B32] border-[#E52B32]/40'
                           : active
                           ? 'bg-[#16A765] text-white border-[#16A765]'
-                          : 'bg-white/50 text-[#6F6F6F] border-[#E8DED0]'
+                          : 'bg-white/50 text-mut border-line'
                       }`}
                     >
                       {st}
@@ -744,7 +744,7 @@ export function ApkBuildCenter({
               </div>
 
               {buildJob.state === 'BUILDING' && (
-                <p className="text-[11px] text-[#6F6F6F]">
+                <p className="text-[11px] text-mut">
                   The run updates in near real time; you can follow every step on GitHub. This page only reports what the build service actually observes.
                 </p>
               )}
@@ -757,7 +757,7 @@ export function ApkBuildCenter({
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold">APK Build Failed</p>
-                <p className="text-[#17191C]/80 mt-0.5">{buildError}</p>
+                <p className="text-ink/80 mt-0.5">{buildError}</p>
               </div>
             </div>
           )}
@@ -771,10 +771,10 @@ export function ApkBuildCenter({
                     <CheckCircle2 className="w-5 h-5" />
                   </span>
                   <div>
-                    <h5 className="font-extrabold text-sm text-[#17191C]">
+                    <h5 className="font-extrabold text-sm text-ink">
                       Production Android APK Ready
                     </h5>
-                    <p className="text-xs text-[#6F6F6F]">
+                    <p className="text-xs text-mut">
                       {currentApk.packageId} • Version {currentApk.versionName} (Code: {currentApk.versionCode})
                     </p>
                   </div>
@@ -784,7 +784,7 @@ export function ApkBuildCenter({
                   <button
                     type="button"
                     onClick={handleDownloadVerifiedApk}
-                    className="px-4 py-2 rounded-xl bg-[#17191C] hover:bg-[#16A765] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-4 py-2 rounded-xl bg-inkbg hover:bg-[#16A765] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download APK</span>
@@ -793,7 +793,7 @@ export function ApkBuildCenter({
                   <Link
                     href={`/app/${form.slug}`}
                     target="_blank"
-                    className="px-4 py-2 rounded-xl bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-page hover:bg-line text-ink text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>View App Listing</span>
@@ -802,16 +802,16 @@ export function ApkBuildCenter({
               </div>
 
               {/* Technical Specifications */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-[#E8DED0]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-line">
                 <div>
-                  <span className="text-[#6F6F6F] block text-[11px]">Artifact Size:</span>
-                  <span className="font-mono font-bold text-[#17191C]">
+                  <span className="text-mut block text-[11px]">Artifact Size:</span>
+                  <span className="font-mono font-bold text-ink">
                     {(currentApk.fileSizeBytes / 1024).toFixed(1)} KB ({currentApk.fileSizeBytes.toLocaleString()} bytes)
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[#6F6F6F] block text-[11px]">Signature Status:</span>
+                  <span className="text-mut block text-[11px]">Signature Status:</span>
                   <span className="font-bold text-[#16A765] flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Signed (v1, v2, v3 schemes)</span>
@@ -819,8 +819,8 @@ export function ApkBuildCenter({
                 </div>
 
                 <div>
-                  <span className="text-[#6F6F6F] block text-[11px]">Build Strategy:</span>
-                  <span className="font-bold text-[#17191C] uppercase text-[11px]">
+                  <span className="text-mut block text-[11px]">Build Strategy:</span>
+                  <span className="font-bold text-ink uppercase text-[11px]">
                     {currentApk.buildMode === 'twa' ? 'Trusted Web Activity' : 'Native WebView Engine'}
                   </span>
                 </div>
@@ -828,17 +828,17 @@ export function ApkBuildCenter({
 
               {/* SHA-256 Checksum */}
               {currentApk.sha256 && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#F8F2E7] border border-[#E8DED0] text-xs gap-3">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-page border border-line text-xs gap-3">
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <span className="text-[#6F6F6F] text-[11px] font-bold shrink-0">SHA-256:</span>
-                    <span className="font-mono text-[#17191C] text-[11px] truncate">
+                    <span className="text-mut text-[11px] font-bold shrink-0">SHA-256:</span>
+                    <span className="font-mono text-ink text-[11px] truncate">
                       {currentApk.sha256}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleCopySha(currentApk.sha256)}
-                    className="p-1 rounded-md hover:bg-white text-[#17191C] shrink-0 cursor-pointer"
+                    className="p-1 rounded-md hover:bg-white text-ink shrink-0 cursor-pointer"
                     title="Copy Checksum"
                   >
                     {copiedSha ? <Check className="w-3.5 h-3.5 text-[#16A765]" /> : <Copy className="w-3.5 h-3.5" />}
@@ -850,11 +850,11 @@ export function ApkBuildCenter({
         </div>
 
         {/* Step Navigation Buttons */}
-        <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+        <div className="flex justify-between pt-4 border-t border-line">
           <button
             type="button"
             onClick={onPrev}
-            className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Previous: Icon Manager</span>
@@ -862,7 +862,7 @@ export function ApkBuildCenter({
           <button
             type="button"
             onClick={onNext}
-            className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <span>Next: Screenshots</span>
             <ArrowRight className="w-3.5 h-3.5" />

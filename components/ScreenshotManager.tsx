@@ -108,14 +108,14 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   };
 
   return (
-    <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+    <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E8DED0] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
         <div>
-          <h3 className="text-base font-black text-[#17191C]">
+          <h3 className="text-base font-black text-ink">
             Screenshots &amp; App Previews ({screenshots.length}/10)
           </h3>
-          <p className="text-xs text-[#6F6F6F]">
+          <p className="text-xs text-mut">
             Upload or import authentic screenshots showing real app interface. No stock photos.
           </p>
         </div>
@@ -123,7 +123,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-2 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+          className="px-4 py-2 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
         >
           <Upload className="w-3.5 h-3.5" />
           <span>Upload Screenshots</span>
@@ -152,7 +152,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                 type="button"
                 onClick={() => handleImportManifestScreenshot(url)}
                 disabled={screenshots.includes(url)}
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#1976F3]/30 hover:border-[#1976F3] text-[11px] font-bold text-[#17191C] disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-white border border-[#1976F3]/30 hover:border-[#1976F3] text-[11px] font-bold text-ink disabled:opacity-50 transition shrink-0 cursor-pointer flex items-center gap-1.5"
               >
                 {screenshots.includes(url) ? (
                   <Check className="w-3 h-3 text-[#16A765]" />
@@ -177,11 +177,11 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           }}
           placeholder="https://.../screenshot1.png"
           aria-label="Screenshot URL (must be https)"
-          className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+          className="flex-1 bg-page border border-line rounded-2xl px-4 py-2.5 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
         />
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-2xl bg-[#F8F2E7] hover:bg-[#E8DED0] border border-[#E8DED0] text-xs font-bold text-[#17191C] transition cursor-pointer shrink-0"
+          className="px-5 py-2.5 rounded-2xl bg-page hover:bg-line border border-line text-xs font-bold text-ink transition cursor-pointer shrink-0"
         >
           Add URL
         </button>
@@ -194,10 +194,10 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
 
       {/* Thumbnail Gallery & Management */}
       {screenshots.length === 0 ? (
-        <div className="p-8 text-center bg-[#F8F2E7] rounded-3xl border-2 border-dashed border-[#E8DED0] space-y-2">
-          <ImageIcon className="w-8 h-8 text-[#6F6F6F] mx-auto" />
-          <h4 className="font-bold text-sm text-[#17191C]">No screenshots attached yet</h4>
-          <p className="text-xs text-[#6F6F6F] max-w-sm mx-auto">
+        <div className="p-8 text-center bg-page rounded-3xl border-2 border-dashed border-line space-y-2">
+          <ImageIcon className="w-8 h-8 text-mut mx-auto" />
+          <h4 className="font-bold text-sm text-ink">No screenshots attached yet</h4>
+          <p className="text-xs text-mut max-w-sm mx-auto">
             Real screenshots help users understand what the application does before installing.
           </p>
         </div>
@@ -209,13 +209,13 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
               <div
                 key={idx}
                 className={`relative rounded-2xl border overflow-hidden bg-white shadow-2xs group flex flex-col justify-between transition-all ${
-                  isCover ? 'border-[#1976F3] ring-2 ring-[#1976F3]/20' : 'border-[#E8DED0]'
+                  isCover ? 'border-[#1976F3] ring-2 ring-[#1976F3]/20' : 'border-line'
                 }`}
               >
                 {/* Image preview */}
                 <div
                   onClick={() => setPreviewModalUrl(url)}
-                  className="h-44 bg-[#17191C] flex items-center justify-center overflow-hidden cursor-pointer relative"
+                  className="h-44 bg-inkbg flex items-center justify-center overflow-hidden cursor-pointer relative"
                 >
                   <img
                     src={url}
@@ -223,7 +223,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                     className="w-full h-full object-contain group-hover:scale-102 transition-transform duration-200"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="p-2 rounded-full bg-white text-[#17191C] shadow-md">
+                    <span className="p-2 rounded-full bg-white text-ink shadow-md">
                       <Eye className="w-4 h-4" />
                     </span>
                   </div>
@@ -236,13 +236,13 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                 </div>
 
                 {/* Footer Controls */}
-                <div className="p-2.5 bg-[#FFFDF8] border-t border-[#E8DED0] flex items-center justify-between gap-1 text-xs">
+                <div className="p-2.5 bg-card border-t border-line flex items-center justify-between gap-1 text-xs">
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => handleMoveLeft(idx)}
-                      className="p-1 rounded-lg text-[#6F6F6F] hover:text-[#17191C] hover:bg-[#F8F2E7] disabled:opacity-30 transition cursor-pointer"
+                      className="p-1 rounded-lg text-mut hover:text-ink hover:bg-page disabled:opacity-30 transition cursor-pointer"
                       title="Move left"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
@@ -251,7 +251,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                       type="button"
                       disabled={idx >= screenshots.length - 1}
                       onClick={() => handleMoveRight(idx)}
-                      className="p-1 rounded-lg text-[#6F6F6F] hover:text-[#17191C] hover:bg-[#F8F2E7] disabled:opacity-30 transition cursor-pointer"
+                      className="p-1 rounded-lg text-mut hover:text-ink hover:bg-page disabled:opacity-30 transition cursor-pointer"
                       title="Move right"
                     >
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -263,7 +263,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSetCover(url)}
-                        className="px-2 py-1 rounded-lg text-[11px] font-bold text-[#6F6F6F] hover:text-[#1976F3] hover:bg-[#1976F3]/10 transition cursor-pointer"
+                        className="px-2 py-1 rounded-lg text-[11px] font-bold text-mut hover:text-[#1976F3] hover:bg-[#1976F3]/10 transition cursor-pointer"
                       >
                         Set as Cover
                       </button>
@@ -271,7 +271,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleDelete(idx)}
-                      className="p-1 rounded-lg text-[#6F6F6F] hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition cursor-pointer"
+                      className="p-1 rounded-lg text-mut hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition cursor-pointer"
                       title="Delete screenshot"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

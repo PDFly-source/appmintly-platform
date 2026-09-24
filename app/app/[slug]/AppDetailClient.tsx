@@ -94,20 +94,20 @@ export default function AppDetailPage() {
         <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
           <Info className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black text-[#17191C]">Application Not Found</h1>
-        <p className="text-sm text-[#6F6F6F] mt-2">
+        <h1 className="text-2xl font-black text-ink">Application Not Found</h1>
+        <p className="text-sm text-mut mt-2">
           The requested application is not present in the AppMintly content registry.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold hover:bg-[#E52B32] transition"
+            className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition"
           >
             Explore Apps
           </Link>
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-full bg-[#FFFDF8] border border-[#E8DED0] text-[#17191C] text-xs font-bold hover:bg-white transition"
+            className="px-5 py-2.5 rounded-full bg-card border border-line text-ink text-xs font-bold hover:bg-white transition"
           >
             Back to Home
           </Link>
@@ -251,12 +251,12 @@ export default function AppDetailPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#F8F2E7] text-[#17191C] pb-24 sm:pb-16">
+    <div className="min-h-screen bg-page text-ink pb-24 sm:pb-16">
       {/* Navigation breadcrumb */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-3">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6F6F6F] hover:text-[#17191C] transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-mut hover:text-ink transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Marketplace</span>
@@ -265,7 +265,7 @@ export default function AppDetailPage() {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
         {/* 1. TOP HERO SECTION (App Store Style) */}
-        <section className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-10 shadow-xs relative overflow-hidden">
+        <section className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-8">
             {/* App Icon */}
             <AppIcon
@@ -281,7 +281,7 @@ export default function AppDetailPage() {
             <div className="flex-1 min-w-0 text-center md:text-left space-y-3">
               <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
                 {getPublicTypeBadge()}
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#F8F2E7] text-[#17191C] border border-[#E8DED0]">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-page text-ink border border-line">
                   {app.category}
                 </span>
                 {app.original && (
@@ -297,10 +297,10 @@ export default function AppDetailPage() {
               </div>
 
               <div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#17191C] tracking-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-ink tracking-tight">
                   {app.name}
                 </h1>
-                <p className="text-sm sm:text-base font-semibold text-[#6F6F6F] mt-1 flex items-center gap-1.5">
+                <p className="text-sm sm:text-base font-semibold text-mut mt-1 flex items-center gap-1.5">
                   {resolveDeveloper(app).slug ? (
                     <Link
                       href={`/publisher/${resolveDeveloper(app).slug}`}
@@ -315,13 +315,13 @@ export default function AppDetailPage() {
                 </p>
               </div>
 
-              <p className="text-sm sm:text-base text-[#17191C]/80 max-w-2xl leading-relaxed pt-1">
+              <p className="text-sm sm:text-base text-ink/80 max-w-2xl leading-relaxed pt-1">
                 {app.shortDescription || app.description}
               </p>
 
               {/* Version & Metadata Row */}
-              <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-semibold text-[#6F6F6F] pt-1 flex-wrap">
-                <span className="bg-[#F8F2E7] px-2.5 py-1 rounded-md border border-[#E8DED0]/80">
+              <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-semibold text-mut pt-1 flex-wrap">
+                <span className="bg-page px-2.5 py-1 rounded-md border border-line/80">
                   Version {app.version}
                 </span>
                 <span>•</span>
@@ -334,7 +334,7 @@ export default function AppDetailPage() {
               <div className="flex items-center justify-center md:justify-start gap-3 pt-4 flex-wrap">
                 <button
                   onClick={handleGetApp}
-                  className="px-8 py-3.5 rounded-full bg-[#17191C] hover:bg-[#16A765] text-white text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
+                  className="px-8 py-3.5 rounded-full bg-inkbg hover:bg-[#16A765] text-white text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>{getPrimaryCtaText()}</span>
@@ -343,7 +343,7 @@ export default function AppDetailPage() {
                 {(app.webUrl || app.pwaUrl || app.url || app.launchUrl) && (
                   <button
                     onClick={handleOpenDirect}
-                    className="px-6 py-3.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] text-sm font-bold border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-6 py-3.5 rounded-full bg-page hover:bg-line text-ink text-sm font-bold border border-line transition flex items-center gap-1.5 cursor-pointer"
                     title="Launch app directly in new browser tab"
                   >
                     <span>Open on Web</span>
@@ -353,7 +353,7 @@ export default function AppDetailPage() {
 
                 <button
                   onClick={handleFavoriteClick}
-                  className="p-3.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
+                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer"
                   title={favorite ? 'Remove from Library' : 'Save to Library'}
                   aria-label="Save to Library"
                 >
@@ -364,7 +364,7 @@ export default function AppDetailPage() {
 
                 <button
                   onClick={handleShareClick}
-                  className="p-3.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
+                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer"
                   title="Share App"
                   aria-label="Share App"
                 >
@@ -379,15 +379,15 @@ export default function AppDetailPage() {
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#16A765] shrink-0" />
                       <div>
-                        <span className="font-extrabold text-[#17191C]">
+                        <span className="font-extrabold text-ink">
                           Verified Android APK Package
                         </span>
-                        <span className="text-[#6F6F6F] ml-2 font-mono text-[11px]">
+                        <span className="text-mut ml-2 font-mono text-[11px]">
                           {app.apk?.packageId || `com.appmintly.${app.slug}`}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] font-semibold text-[#6F6F6F]">
+                    <div className="flex items-center gap-2 text-[11px] font-semibold text-mut">
                       <span className="px-2 py-0.5 rounded-md bg-white border border-[#16A765]/30 text-[#16A765]">
                         v{app.version} ({app.apk?.versionCode || 20000})
                       </span>
@@ -405,10 +405,10 @@ export default function AppDetailPage() {
 
         {/* 2. SCREENSHOTS GALLERY (App Store Style) */}
         {validScreenshots.length > 0 && (
-          <section className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+          <section className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black text-[#17191C]">Screenshots &amp; Preview</h2>
-              <span className="text-xs text-[#6F6F6F] font-semibold">
+              <h2 className="text-lg font-black text-ink">Screenshots &amp; Preview</h2>
+              <span className="text-xs text-mut font-semibold">
                 Tap image to view full screen
               </span>
             </div>
@@ -419,7 +419,7 @@ export default function AppDetailPage() {
                 <div
                   key={idx}
                   onClick={() => setSelectedScreenshotIndex(idx)}
-                  className="shrink-0 snap-start rounded-2xl overflow-hidden border border-[#E8DED0] bg-[#17191C] shadow-2xs hover:shadow-md hover:border-[#17191C]/40 transition-all cursor-pointer group relative max-w-[320px] sm:max-w-[420px]"
+                  className="shrink-0 snap-start rounded-2xl overflow-hidden border border-line bg-inkbg shadow-2xs hover:shadow-md hover:border-ink/40 transition-all cursor-pointer group relative max-w-[320px] sm:max-w-[420px]"
                 >
                   <img
                     src={url}
@@ -428,7 +428,7 @@ export default function AppDetailPage() {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="p-2 rounded-full bg-white/90 text-[#17191C] shadow-md">
+                    <span className="p-2 rounded-full bg-white/90 text-ink shadow-md">
                       <Maximize2 className="w-4 h-4" />
                     </span>
                   </div>
@@ -441,26 +441,26 @@ export default function AppDetailPage() {
         {/* 3. ABOUT THIS APP & KEY FEATURES */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main Description */}
-          <section className="lg:col-span-8 bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <section className="lg:col-span-8 bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div>
-              <h2 className="text-xl font-black text-[#17191C] mb-3">About this app</h2>
-              <p className="text-sm sm:text-base text-[#17191C]/85 leading-relaxed whitespace-pre-line">
+              <h2 className="text-xl font-black text-ink mb-3">About this app</h2>
+              <p className="text-sm sm:text-base text-ink/85 leading-relaxed whitespace-pre-line">
                 {app.description}
               </p>
             </div>
 
             {/* Features Checklist */}
             {app.features && app.features.length > 0 && (
-              <div className="border-t border-[#E8DED0] pt-6">
-                <h3 className="text-base font-black text-[#17191C] mb-3">Key Features</h3>
+              <div className="border-t border-line pt-6">
+                <h3 className="text-base font-black text-ink mb-3">Key Features</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {app.features.map((feature, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-2.5 p-3 rounded-2xl bg-[#F8F2E7]/70 border border-[#E8DED0]"
+                      className="flex items-start gap-2.5 p-3 rounded-2xl bg-page/70 border border-line"
                     >
                       <CheckCircle2 className="w-4 h-4 text-[#16A765] shrink-0 mt-0.5" />
-                      <span className="text-xs sm:text-sm font-semibold text-[#17191C]">
+                      <span className="text-xs sm:text-sm font-semibold text-ink">
                         {feature}
                       </span>
                     </div>
@@ -471,16 +471,16 @@ export default function AppDetailPage() {
 
             {/* What's New / Release Notes */}
             {app.releaseNotes && app.releaseNotes.length > 0 && (
-              <div className="border-t border-[#E8DED0] pt-6">
+              <div className="border-t border-line pt-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     What’s New in Version {app.version}
                   </h3>
-                  <span className="text-xs font-semibold text-[#6F6F6F]">
+                  <span className="text-xs font-semibold text-mut">
                     {app.lastUpdated || app.releaseDate}
                   </span>
                 </div>
-                <ul className="space-y-2 text-xs sm:text-sm text-[#17191C]/85">
+                <ul className="space-y-2 text-xs sm:text-sm text-ink/85">
                   {app.releaseNotes.map((note, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <span className="text-[#1976F3] font-bold">•</span>
@@ -494,15 +494,15 @@ export default function AppDetailPage() {
 
           {/* Sidebar: App Information (App Store Specs) */}
           <section className="lg:col-span-4 space-y-6">
-            <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
-              <h2 className="text-base font-black text-[#17191C] border-b border-[#E8DED0] pb-3">
+            <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+              <h2 className="text-base font-black text-ink border-b border-line pb-3">
                 App Information
               </h2>
 
               <dl className="space-y-3.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Developer</dt>
-                  <dd className="font-semibold text-[#17191C] text-right flex items-center justify-end gap-1">
+                  <dt className="text-mut font-bold">Developer</dt>
+                  <dd className="font-semibold text-ink text-right flex items-center justify-end gap-1">
                     {resolveDeveloper(app).slug ? (
                       <Link
                         href={`/publisher/${resolveDeveloper(app).slug}`}
@@ -518,24 +518,24 @@ export default function AppDetailPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Category</dt>
-                  <dd className="font-semibold text-[#17191C]">{app.category}</dd>
+                  <dt className="text-mut font-bold">Category</dt>
+                  <dd className="font-semibold text-ink">{app.category}</dd>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Latest Version</dt>
-                  <dd className="font-mono font-bold text-[#17191C]">v{app.version}</dd>
+                  <dt className="text-mut font-bold">Latest Version</dt>
+                  <dd className="font-mono font-bold text-ink">v{app.version}</dd>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Platform</dt>
-                  <dd className="font-semibold text-[#17191C]">
+                  <dt className="text-mut font-bold">Platform</dt>
+                  <dd className="font-semibold text-ink">
                     {app.type === 'Android APK' ? 'Android Device' : 'Web & Desktop'}
                   </dd>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Installation</dt>
+                  <dt className="text-mut font-bold">Installation</dt>
                   <dd className="font-semibold text-[#16A765]">
                     {app.type === 'Android APK'
                       ? 'Android Package (.apk)'
@@ -546,15 +546,15 @@ export default function AppDetailPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Last Updated</dt>
-                  <dd className="font-semibold text-[#17191C]">{app.lastUpdated || app.releaseDate}</dd>
+                  <dt className="text-mut font-bold">Last Updated</dt>
+                  <dd className="font-semibold text-ink">{app.lastUpdated || app.releaseDate}</dd>
                 </div>
 
                 {app.apk?.sha256 && (
                   <div className="pt-1">
-                    <dt className="text-[#6F6F6F] font-bold mb-1">SHA-256 Checksum</dt>
+                    <dt className="text-mut font-bold mb-1">SHA-256 Checksum</dt>
                     <dd className="flex items-center gap-1.5">
-                      <code className="font-mono text-[10px] leading-tight break-all bg-[#F8F2E7] border border-[#E8DED0] rounded-lg px-2 py-1.5 text-[#17191C] flex-1">
+                      <code className="font-mono text-[10px] leading-tight break-all bg-page border border-line rounded-lg px-2 py-1.5 text-ink flex-1">
                         {app.apk.sha256}
                       </code>
                       <button
@@ -563,7 +563,7 @@ export default function AppDetailPage() {
                           toast('SHA-256 checksum copied', 'success');
                         }}
                         aria-label="Copy SHA-256 checksum"
-                        className="shrink-0 px-2 py-1.5 rounded-lg bg-[#17191C] text-white text-[10px] font-bold hover:bg-[#E52B32] transition cursor-pointer"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-white text-[10px] font-bold hover:bg-[#E52B32] transition cursor-pointer"
                       >
                         Copy
                       </button>
@@ -573,33 +573,33 @@ export default function AppDetailPage() {
 
                 {app.apk?.enabled && (
                   <div className="flex items-center justify-between">
-                    <dt className="text-[#6F6F6F] font-bold">Version Code</dt>
-                    <dd className="font-mono font-semibold text-[#17191C]">{app.apk.versionCode}</dd>
+                    <dt className="text-mut font-bold">Version Code</dt>
+                    <dd className="font-mono font-semibold text-ink">{app.apk.versionCode}</dd>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <dt className="text-[#6F6F6F] font-bold">Privacy &amp; Data</dt>
+                  <dt className="text-mut font-bold">Privacy &amp; Data</dt>
                   <dd className="font-semibold text-[#16A765]">No Cloud Tracking</dd>
                 </div>
               </dl>
 
               {/* Technical Lifecycle Notice */}
-              <div className="p-3.5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-[11px] text-[#6F6F6F] leading-relaxed">
-                <p className="font-bold text-[#17191C] mb-1">Application Lifecycle</p>
+              <div className="p-3.5 rounded-2xl bg-page border border-line text-[11px] text-mut leading-relaxed">
+                <p className="font-bold text-ink mb-1">Application Lifecycle</p>
                 Updates to installed applications are delivered directly by the application itself via browser service worker cache refresh upon launch.
               </div>
             </div>
 
             {/* APK Installation Instructions (truthful, static guidance) */}
             {app.apk?.enabled && (
-              <div className="w-full p-4 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xs">
-                <h4 className="text-xs font-bold text-[#17191C] mb-2 flex items-center gap-1.5">
+              <div className="w-full p-4 rounded-2xl bg-card border border-line shadow-2xs">
+                <h4 className="text-xs font-bold text-ink mb-2 flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-[#1976F3]" />
                   How to install this APK on Android
                 </h4>
-                <ol className="text-[11px] text-[#6F6F6F] leading-relaxed list-decimal list-inside space-y-1">
-                  <li>Tap <strong className="text-[#17191C]">Get App / Download APK</strong> — your browser downloads the file directly from the official GitHub release.</li>
+                <ol className="text-[11px] text-mut leading-relaxed list-decimal list-inside space-y-1">
+                  <li>Tap <strong className="text-ink">Get App / Download APK</strong> — your browser downloads the file directly from the official GitHub release.</li>
                   <li>When the download finishes, open it from the notification or your Downloads folder.</li>
                   <li>If asked, allow installs from this source (Android: <em>Settings → Apps → Special access → Install unknown apps</em>).</li>
                   <li>Confirm the install and open the app. The package is signed; you can verify it against the SHA-256 checksum listed above.</li>
@@ -611,17 +611,17 @@ export default function AppDetailPage() {
             {app.type === 'PWA' && (
               <button
                 onClick={() => setShowPwaInstallGuide(true)}
-                className="w-full p-4 rounded-2xl bg-[#FFFDF8] hover:bg-white border border-[#E8DED0] text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
+                className="w-full p-4 rounded-2xl bg-card hover:bg-white border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
               >
                 <div>
-                  <h4 className="text-xs font-bold text-[#17191C] group-hover:text-[#1976F3] transition-colors">
+                  <h4 className="text-xs font-bold text-ink group-hover:text-[#1976F3] transition-colors">
                     How to install this app?
                   </h4>
-                  <p className="text-[11px] text-[#6F6F6F]">
+                  <p className="text-[11px] text-mut">
                     Step-by-step for Chrome, Edge &amp; Safari
                   </p>
                 </div>
-                <HelpCircle className="w-5 h-5 text-[#6F6F6F] group-hover:text-[#1976F3] transition-colors" />
+                <HelpCircle className="w-5 h-5 text-mut group-hover:text-[#1976F3] transition-colors" />
               </button>
             )}
           </section>
@@ -630,7 +630,7 @@ export default function AppDetailPage() {
         {/* 4. MORE APPS IN CATEGORY */}
         {relatedApps.length > 0 && (
           <section className="space-y-4 pt-4">
-            <h2 className="text-xl font-black text-[#17191C]">
+            <h2 className="text-xl font-black text-ink">
               More in {app.category}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -643,7 +643,7 @@ export default function AppDetailPage() {
       </main>
 
       {/* 5. STICKY MOBILE BOTTOM ACTION BAR (App Store Feel) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 backdrop-blur-md border-t border-[#E8DED0] p-3 sm:hidden shadow-lg flex items-center justify-between gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-line p-3 sm:hidden shadow-lg flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <AppIcon
             src={app.icon}
@@ -653,14 +653,14 @@ export default function AppDetailPage() {
             category={app.category}
           />
           <div className="min-w-0">
-            <h4 className="font-bold text-xs text-[#17191C] truncate">{app.name}</h4>
-            <p className="text-[10px] text-[#6F6F6F] truncate">v{app.version} • {app.category}</p>
+            <h4 className="font-bold text-xs text-ink truncate">{app.name}</h4>
+            <p className="text-[10px] text-mut truncate">v{app.version} • {app.category}</p>
           </div>
         </div>
 
         <button
           onClick={handleGetApp}
-          className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-black shadow-md transition shrink-0 cursor-pointer"
+          className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-black shadow-md transition shrink-0 cursor-pointer"
         >
           {getPrimaryCtaText()}
         </button>
@@ -754,9 +754,9 @@ export default function AppDetailPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 space-y-5"
+            className="bg-card border border-line rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 space-y-5"
           >
-            <div className="flex items-start justify-between border-b border-[#E8DED0] pb-3">
+            <div className="flex items-start justify-between border-b border-line pb-3">
               <div className="flex items-center gap-3">
                 <AppIcon
                   src={app.icon}
@@ -766,17 +766,17 @@ export default function AppDetailPage() {
                   category={app.category}
                 />
                 <div>
-                  <h3 className="font-black text-lg text-[#17191C]">
+                  <h3 className="font-black text-lg text-ink">
                     Install {app.name}
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Add directly to your device home screen or desktop
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="p-1 rounded-full hover:bg-[#F8F2E7] text-[#6F6F6F] hover:text-[#17191C] cursor-pointer"
+                className="p-1 rounded-full hover:bg-page text-mut hover:text-ink cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -787,7 +787,7 @@ export default function AppDetailPage() {
                 <p className="font-bold text-[#1976F3] flex items-center gap-1.5">
                   <Monitor className="w-4 h-4" /> Chrome / Edge (Desktop &amp; Android)
                 </p>
-                <p className="text-[#17191C]/80 leading-relaxed">
+                <p className="text-ink/80 leading-relaxed">
                   In the opened tab, look for the <strong>Install (⊕)</strong> icon on the right side of the address bar, or tap the browser menu (<strong>⋮</strong>) &rarr; <strong>&quot;Install app&quot;</strong> or <strong>&quot;Add to Home screen&quot;</strong>.
                 </p>
               </div>
@@ -796,20 +796,20 @@ export default function AppDetailPage() {
                 <p className="font-bold text-[#E52B32] flex items-center gap-1.5">
                   <Smartphone className="w-4 h-4" /> Safari (iPhone &amp; iPad)
                 </p>
-                <p className="text-[#17191C]/80 leading-relaxed">
+                <p className="text-ink/80 leading-relaxed">
                   Tap the <strong>Share</strong> button (box with upward arrow <span className="font-mono">↑</span>) in Safari&apos;s bottom toolbar, scroll down, and select <strong>&quot;Add to Home Screen&quot;</strong> (⊞).
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-[11px] text-[#6F6F6F] leading-relaxed">
-                <strong>Authentic Cross-Origin PWA:</strong> The installed application runs under its genuine domain (<code className="text-[#17191C] font-mono">{app.url}</code>) with its official manifest, icons, and offline storage. AppMintly does not wrap or alter the application.
+              <div className="p-3 rounded-2xl bg-page border border-line text-[11px] text-mut leading-relaxed">
+                <strong>Authentic Cross-Origin PWA:</strong> The installed application runs under its genuine domain (<code className="text-ink font-mono">{app.url}</code>) with its official manifest, icons, and offline storage. AppMintly does not wrap or alter the application.
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E8DED0]">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold hover:bg-[#E52B32] transition cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition cursor-pointer"
               >
                 Understood
               </button>

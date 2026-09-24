@@ -124,7 +124,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
 
   return (
     <div
-      className={`relative shrink-0 overflow-hidden shadow-2xs border border-[#17191C]/10 bg-white ${sizeClass} ${shapeClass} ${className}`}
+      className={`relative shrink-0 overflow-hidden shadow-2xs border border-ink/10 bg-white ${sizeClass} ${shapeClass} ${className}`}
     >
       <img
         src={resolvedSrc}

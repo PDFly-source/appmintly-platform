@@ -13,10 +13,10 @@ export default function SearchAliasPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[60vh] bg-[#F8F2E7] text-[#17191C] flex items-center justify-center px-4">
+        <div className="min-h-[60vh] bg-page text-ink flex items-center justify-center px-4">
           <div className="text-center">
-            <Search className="w-10 h-10 mx-auto text-[#E8DED0] mb-3" aria-hidden="true" />
-            <p className="text-sm font-semibold text-[#6F6F6F]">Loading AppMintly search…</p>
+            <Search className="w-10 h-10 mx-auto text-line mb-3" aria-hidden="true" />
+            <p className="text-sm font-semibold text-mut">Loading AppMintly search…</p>
           </div>
         </div>
       }
@@ -41,13 +41,13 @@ function SearchAliasRedirect() {
   }, [q, router]);
 
   return (
-    <div className="min-h-[60vh] bg-[#F8F2E7] text-[#17191C] flex items-center justify-center px-4">
+    <div className="min-h-[60vh] bg-page text-ink flex items-center justify-center px-4">
       <div className="text-center">
-        <Search className="w-10 h-10 mx-auto text-[#E8DED0] mb-3" aria-hidden="true" />
-        <p className="text-sm font-semibold text-[#6F6F6F]">
+        <Search className="w-10 h-10 mx-auto text-line mb-3" aria-hidden="true" />
+        <p className="text-sm font-semibold text-mut">
           {redirected ? 'Opening search results…' : 'Loading AppMintly search…'}
         </p>
-        <p className="text-xs text-[#6F6F6F] mt-1">
+        <p className="text-xs text-mut mt-1">
           You will be taken to the catalog explorer{q ? ` for “${q}”` : ''}.
         </p>
       </div>

@@ -20,7 +20,7 @@ export const BottomNav: React.FC = () => {
     <nav
       id="mobile-bottom-navigation"
       aria-label="Mobile navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 backdrop-blur-md border-t border-[#E8DED0] px-2 py-1.5 shadow-lg"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-line px-2 py-1.5 shadow-lg"
     >
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
@@ -34,7 +34,7 @@ export const BottomNav: React.FC = () => {
               className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
                 isActive
                   ? 'text-[#E52B32] font-black scale-105'
-                  : 'text-[#6F6F6F] hover:text-[#17191C] font-semibold'
+                  : 'text-mut hover:text-ink font-semibold'
               }`}
             >
               <div className="relative">

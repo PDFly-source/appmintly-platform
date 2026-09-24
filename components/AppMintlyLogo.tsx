@@ -64,7 +64,7 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
   const TextLabel = (
     <div className="flex flex-col select-none leading-none">
       <span
-        className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-[#17191C]'}`}
+        className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-ink'}`}
         style={{ fontSize: current.text }}
       >
         AppMintly
@@ -72,7 +72,7 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
       {showTagline && (
         <span
           className={`text-[11px] font-medium tracking-wide mt-0.5 ${
-            isDark ? 'text-white/70' : 'text-[#6F6F6F]'
+            isDark ? 'text-white/70' : 'text-mut'
           }`}
         >
           Discover. Install. Experience.

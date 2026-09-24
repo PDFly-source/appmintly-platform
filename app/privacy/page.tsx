@@ -13,15 +13,15 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#F8F2E7] text-[#17191C]">
+    <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <ShieldCheck className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Privacy Policy</h1>
         </div>
-        <p className="text-xs text-[#6F6F6F] mb-8">Last updated: September 24, 2026</p>
+        <p className="text-xs text-mut mb-8">Last updated: September 24, 2026</p>
 
-        <div className="space-y-6 text-sm text-[#17191C]/85 leading-relaxed">
+        <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="privacy-accounts">
             <h2 id="privacy-accounts" className="text-base font-black mb-2">No Accounts Required</h2>
             <p>

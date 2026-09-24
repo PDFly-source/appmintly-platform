@@ -65,7 +65,7 @@ export default function CategoryDetailPage() {
       <div className="mb-6">
         <Link
           href="/categories"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6F6F6F] hover:text-[#17191C] transition"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-mut hover:text-ink transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>All Categories</span>
@@ -73,7 +73,7 @@ export default function CategoryDetailPage() {
       </div>
 
       {/* Category Header */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] mb-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-card border border-line mb-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-start gap-4">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs"
@@ -87,17 +87,17 @@ export default function CategoryDetailPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+              <span className="text-xs font-black uppercase tracking-wider text-mut">
                 Category
               </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#F8F2E7] text-[#6F6F6F] border border-[#E8DED0]">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-page text-mut border border-line">
                 {matchingApps.length} {matchingApps.length === 1 ? 'app' : 'apps'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-[#17191C] tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-ink tracking-tight">
               {categoryName}
             </h1>
-            <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-mut mt-1 max-w-xl leading-relaxed">
               {category?.description || `Explore top verified ${categoryName} applications in the AppMintly marketplace.`}
             </p>
           </div>
@@ -105,7 +105,7 @@ export default function CategoryDetailPage() {
 
         <Link
           href={`/explore?category=${encodeURIComponent(category?.slug || slug)}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
         >
           <Search className="w-3.5 h-3.5" />
           <span>Search in {categoryName}</span>
@@ -120,26 +120,26 @@ export default function CategoryDetailPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 sm:py-24 px-4 bg-[#FFFDF8] rounded-3xl border border-[#E8DED0]">
+        <div className="text-center py-16 sm:py-24 px-4 bg-card rounded-3xl border border-line">
           <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8" />
           </div>
-          <h3 className="text-lg sm:text-xl font-black text-[#17191C] tracking-tight">
+          <h3 className="text-lg sm:text-xl font-black text-ink tracking-tight">
             No applications in {categoryName} yet
           </h3>
-          <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+          <p className="text-xs sm:text-sm text-mut mt-1 max-w-sm mx-auto">
             Check back soon as developers publish new software to AppMintly, or publish your own app today.
           </p>
           <div className="mt-5 flex items-center justify-center gap-3">
             <Link
               href="/explore"
-              className="px-5 py-2.5 rounded-full bg-[#17191C] text-white text-xs font-bold transition"
+              className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold transition"
             >
               Explore All Apps
             </Link>
             <Link
               href="/publisher"
-              className="px-5 py-2.5 rounded-full bg-[#FFFDF8] border border-[#E8DED0] text-[#17191C] text-xs font-bold hover:bg-[#F8F2E7] transition"
+              className="px-5 py-2.5 rounded-full bg-card border border-line text-ink text-xs font-bold hover:bg-page transition"
             >
               Publisher Console
             </Link>

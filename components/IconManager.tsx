@@ -129,12 +129,12 @@ export const IconManager: React.FC<IconManagerProps> = ({
   ];
 
   return (
-    <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+    <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E8DED0] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
         <div>
-          <h3 className="text-base font-black text-[#17191C]">Application Icon Manager</h3>
-          <p className="text-xs text-[#6F6F6F]">
+          <h3 className="text-base font-black text-ink">Application Icon Manager</h3>
+          <p className="text-xs text-mut">
             Configure verified, high-resolution icons for marketplace listings, PWA installation &amp; home screens.
           </p>
         </div>
@@ -146,8 +146,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
             onClick={() => setActiveTab('upload')}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               activeTab === 'upload'
-                ? 'bg-[#17191C] text-white'
-                : 'bg-[#F8F2E7] text-[#17191C] hover:bg-[#E8DED0]'
+                ? 'bg-inkbg text-white'
+                : 'bg-page text-ink hover:bg-line'
             }`}
           >
             Upload
@@ -157,8 +157,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
             onClick={() => setActiveTab('manifest')}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               activeTab === 'manifest'
-                ? 'bg-[#17191C] text-white'
-                : 'bg-[#F8F2E7] text-[#17191C] hover:bg-[#E8DED0]'
+                ? 'bg-inkbg text-white'
+                : 'bg-page text-ink hover:bg-line'
             }`}
           >
             From Manifest ({detectedIcons.length})
@@ -168,8 +168,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
             onClick={() => setActiveTab('url')}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               activeTab === 'url'
-                ? 'bg-[#17191C] text-white'
-                : 'bg-[#F8F2E7] text-[#17191C] hover:bg-[#E8DED0]'
+                ? 'bg-inkbg text-white'
+                : 'bg-page text-ink hover:bg-line'
             }`}
           >
             Paste URL
@@ -179,8 +179,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
             onClick={() => setActiveTab('preview')}
             className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
               activeTab === 'preview'
-                ? 'bg-[#17191C] text-white'
-                : 'bg-[#F8F2E7] text-[#17191C] hover:bg-[#E8DED0]'
+                ? 'bg-inkbg text-white'
+                : 'bg-page text-ink hover:bg-line'
             }`}
           >
             Multi-Size Previews
@@ -193,7 +193,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
         <div className="space-y-4">
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-[#E8DED0] hover:border-[#1976F3] rounded-3xl p-8 text-center bg-[#F8F2E7]/60 hover:bg-[#F8F2E7] transition-all cursor-pointer group"
+            className="border-2 border-dashed border-line hover:border-[#1976F3] rounded-3xl p-8 text-center bg-page/60 hover:bg-page transition-all cursor-pointer group"
           >
             <input
               ref={fileInputRef}
@@ -202,18 +202,18 @@ export const IconManager: React.FC<IconManagerProps> = ({
               onChange={handleFileUpload}
               className="hidden"
             />
-            <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-[#E8DED0] flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-line flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
               <Upload className="w-6 h-6 text-[#1976F3]" />
             </div>
-            <h4 className="font-black text-sm text-[#17191C]">Click to Upload Icon File</h4>
-            <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
+            <h4 className="font-black text-sm text-ink">Click to Upload Icon File</h4>
+            <p className="text-xs text-mut mt-1 max-w-sm mx-auto">
               PNG, WEBP, JPG or SVG. <strong>512x512 px</strong> or <strong>1024x1024 px</strong> square recommended for sharp rendering across all platforms.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-xs text-[#6F6F6F] flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-page border border-line text-xs text-mut flex items-center justify-between">
             <span>Recommended asset repository location:</span>
-            <code className="font-mono text-[#1976F3] bg-white px-2 py-0.5 rounded-md border border-[#E8DED0]">
+            <code className="font-mono text-[#1976F3] bg-white px-2 py-0.5 rounded-md border border-line">
               /assets/apps/{appSlug || 'app'}/icons/icon-512.png
             </code>
           </div>
@@ -224,8 +224,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
       {activeTab === 'manifest' && (
         <div className="space-y-4">
           {detectedIcons.length === 0 ? (
-            <div className="p-6 text-center bg-[#F8F2E7] rounded-2xl border border-[#E8DED0]">
-              <p className="text-xs text-[#6F6F6F]">
+            <div className="p-6 text-center bg-page rounded-2xl border border-line">
+              <p className="text-xs text-mut">
                 No manifest icons detected yet. Run the URL Analyzer in Step 1 to auto-discover icons from the web app manifest.
               </p>
             </div>
@@ -245,22 +245,22 @@ export const IconManager: React.FC<IconManagerProps> = ({
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
                     currentIcon === ic.src
                       ? 'border-[#16A765] bg-[#16A765]/5 shadow-xs'
-                      : 'border-[#E8DED0] bg-[#F8F2E7]/70 hover:bg-white'
+                      : 'border-line bg-page/70 hover:bg-white'
                   }`}
                 >
                   <img
                     src={ic.src}
                     alt="Manifest icon"
-                    className="w-12 h-12 rounded-xl object-cover bg-white border border-[#E8DED0] shrink-0"
+                    className="w-12 h-12 rounded-xl object-cover bg-white border border-line shrink-0"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-xs text-[#17191C] truncate">
+                    <p className="font-bold text-xs text-ink truncate">
                       {ic.sizes || 'Adaptive Icon'}
                     </p>
-                    <p className="text-[10px] text-[#6F6F6F] truncate mt-0.5">
+                    <p className="text-[10px] text-mut truncate mt-0.5">
                       {ic.purpose || ic.type || 'Standard icon'}
                     </p>
                     {currentIcon === ic.src && (
@@ -285,7 +285,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
               value={pastedUrl}
               onChange={(e) => setPastedUrl(e.target.value)}
               placeholder="https://.../pwa-512x512.png"
-              className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+              className="flex-1 bg-page border border-line rounded-2xl px-4 py-2.5 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
             />
             <button
               type="button"
@@ -323,19 +323,19 @@ export const IconManager: React.FC<IconManagerProps> = ({
       )}
 
       {/* 4. MULTI-SIZE & MASKABLE LIVE PREVIEWS */}
-      <div className="border-t border-[#E8DED0] pt-6 space-y-4">
+      <div className="border-t border-line pt-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+          <h4 className="text-xs font-black uppercase tracking-wider text-mut">
             Live Multi-Size Previews (Cross-Platform)
           </h4>
 
           {/* Mask shape controls */}
-          <div className="flex items-center gap-1 bg-[#F8F2E7] p-1 rounded-full border border-[#E8DED0]">
+          <div className="flex items-center gap-1 bg-page p-1 rounded-full border border-line">
             <button
               type="button"
               onClick={() => setPreviewMode('standard')}
               className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
-                previewMode === 'standard' ? 'bg-[#17191C] text-white' : 'text-[#6F6F6F]'
+                previewMode === 'standard' ? 'bg-inkbg text-white' : 'text-mut'
               }`}
             >
               Standard
@@ -344,7 +344,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
               type="button"
               onClick={() => setPreviewMode('squircle')}
               className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
-                previewMode === 'squircle' ? 'bg-[#17191C] text-white' : 'text-[#6F6F6F]'
+                previewMode === 'squircle' ? 'bg-inkbg text-white' : 'text-mut'
               }`}
             >
               Maskable Squircle
@@ -353,7 +353,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
               type="button"
               onClick={() => setPreviewMode('circle')}
               className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
-                previewMode === 'circle' ? 'bg-[#17191C] text-white' : 'text-[#6F6F6F]'
+                previewMode === 'circle' ? 'bg-inkbg text-white' : 'text-mut'
               }`}
             >
               Circular Mask
@@ -365,7 +365,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
           {previewSizes.map((spec) => (
             <div
               key={spec.px}
-              className="p-4 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] flex flex-col items-center justify-center text-center space-y-3"
+              className="p-4 rounded-2xl bg-page border border-line flex flex-col items-center justify-center text-center space-y-3"
             >
               <AppIcon
                 src={currentIcon}
@@ -376,8 +376,8 @@ export const IconManager: React.FC<IconManagerProps> = ({
                 maskShape={previewMode === 'circle' ? 'circle' : 'squircle'}
               />
               <div>
-                <p className="font-bold text-xs text-[#17191C]">{spec.px} &times; {spec.px} px</p>
-                <p className="text-[10px] text-[#6F6F6F] mt-0.5">{spec.label}</p>
+                <p className="font-bold text-xs text-ink">{spec.px} &times; {spec.px} px</p>
+                <p className="text-[10px] text-mut mt-0.5">{spec.label}</p>
               </div>
             </div>
           ))}

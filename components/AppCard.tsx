@@ -226,7 +226,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     return (
       <Link
         href={`/app/${app.slug}`}
-        className="group flex items-center justify-between p-3 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] hover:border-[#17191C]/35 hover:shadow-xs transition-all duration-200"
+        className="group flex items-center justify-between p-3 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all duration-200"
       >
         <div className="flex items-center gap-3 min-w-0">
           <AppIcon
@@ -238,7 +238,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h4 className="font-bold text-sm text-[#17191C] truncate group-hover:text-[#1976F3] transition-colors">
+              <h4 className="font-bold text-sm text-ink truncate group-hover:text-[#1976F3] transition-colors">
                 {app.name}
               </h4>
               {isNewApp(app) && (
@@ -250,7 +250,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
                 <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[#F7B928]" title="AppMintly Original" />
               )}
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#6F6F6F] mt-0.5">
+            <div className="flex items-center gap-2 text-[11px] text-mut mt-0.5">
               <span>{app.category}</span>
               <span>•</span>
               <span>v{app.version}</span>
@@ -260,7 +260,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
         <button
           onClick={handleActionClick}
-          className="shrink-0 ml-2 px-3 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#17191C] hover:text-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition-colors flex items-center gap-1 cursor-pointer"
+          className="shrink-0 ml-2 px-3 py-1.5 rounded-full bg-page hover:bg-inkbg hover:text-white text-xs font-bold text-ink border border-line transition-colors flex items-center gap-1 cursor-pointer"
         >
           {getActionLabel()}
         </button>
@@ -270,7 +270,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
   // Standard Grid Card (Store Marketplace Feel)
   return (
-    <div className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] hover:border-[#17191C]/40 hover:shadow-md transition-all duration-300">
+    <div className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl bg-card border border-line hover:border-ink/40 hover:shadow-md transition-all duration-300">
       {/* Top Header: Public Type Badge, New Badge & Library Save */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -294,7 +294,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
         <button
           onClick={handleFavoriteClick}
-          className="p-1.5 rounded-full text-[#6F6F6F] hover:text-[#E52B32] hover:bg-[#F8F2E7] transition shrink-0 cursor-pointer"
+          className="p-1.5 rounded-full text-mut hover:text-[#E52B32] hover:bg-page transition shrink-0 cursor-pointer"
           title={favorite ? 'Remove from Library' : 'Save to Library'}
           aria-label={favorite ? 'Remove from Library' : 'Save to Library'}
         >
@@ -313,15 +313,15 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           className="group-hover:scale-105 transition-transform duration-300"
         />
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-base text-[#17191C] group-hover:text-[#1976F3] transition-colors line-clamp-1">
+          <h3 className="font-bold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}
           </h3>
-          <p className="text-xs text-[#6F6F6F] truncate mt-0.5 flex items-center gap-1">
+          <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
             <span className="truncate">{resolveDeveloper(app).name}</span>
             {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
           </p>
-          <div className="flex items-center gap-2 mt-1 text-[11px] text-[#6F6F6F]">
-            <span className="font-medium text-[#17191C]/80">v{app.version}</span>
+          <div className="flex items-center gap-2 mt-1 text-[11px] text-mut">
+            <span className="font-medium text-ink/80">v{app.version}</span>
             <span>•</span>
             <span>{app.category}</span>
           </div>
@@ -329,19 +329,19 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       </Link>
 
       {/* Short Description */}
-      <p className="text-xs text-[#6F6F6F] line-clamp-2 mb-4 leading-relaxed flex-1">
+      <p className="text-xs text-mut line-clamp-2 mb-4 leading-relaxed flex-1">
         {app.shortDescription || app.description}
       </p>
 
       {/* Action Footer */}
-      <div className="pt-3 border-t border-[#E8DED0]/60 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-[#6F6F6F] font-semibold">
+      <div className="pt-3 border-t border-line/60 flex items-center justify-between gap-2">
+        <span className="text-[11px] text-mut font-semibold">
           {app.type === 'Android APK' ? (app.size || 'APK Package') : 'Installable App'}
         </span>
 
         <button
           onClick={handleActionClick}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold shadow-xs transition-colors duration-200 cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold shadow-xs transition-colors duration-200 cursor-pointer"
         >
           {getActionIcon()}
           <span>{getActionLabel()}</span>

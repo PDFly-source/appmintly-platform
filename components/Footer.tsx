@@ -5,7 +5,7 @@ import { Smartphone, Globe, Gamepad2, Wrench, Sparkles, BookOpen, Layers } from 
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#17191C] text-[#FAF5ED] pt-14 pb-24 md:pb-14 border-t border-[#17191C]/10 mt-16">
+    <footer className="bg-inkbg text-[#FAF5ED] pt-14 pb-24 md:pb-14 border-t border-ink/10 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
           {/* Brand Column */}

@@ -670,21 +670,21 @@ export default function PublisherPage() {
   }, [catalog, appSearch, typeFilter]);
 
   return (
-    <div className="min-h-screen bg-[#F8F2E7] text-[#17191C] pb-24">
+    <div className="min-h-screen bg-page text-ink pb-24">
       {/* Top Banner / Breadcrumb */}
-      <header className="bg-[#FFFDF8] border-b border-[#E8DED0] sticky top-16 z-30 shadow-2xs">
+      <header className="bg-card border-b border-line sticky top-16 z-30 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="text-xs font-bold text-[#6F6F6F] hover:text-[#17191C] transition"
+              className="text-xs font-bold text-mut hover:text-ink transition"
             >
               &larr; Storefront
             </Link>
-            <span className="text-[#E8DED0] font-bold">/</span>
+            <span className="text-line font-bold">/</span>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#16A765]" />
-              <h1 className="text-sm font-black text-[#17191C] tracking-tight">
+              <h1 className="text-sm font-black text-ink tracking-tight">
                 Publisher Console
               </h1>
             </div>
@@ -706,7 +706,7 @@ export default function PublisherPage() {
                 }
               }}
               disabled={!hasSessionEdits}
-              className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3.5 py-1.5 rounded-full bg-card hover:bg-white text-xs font-bold text-ink border border-line transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               title="Discard device-local session edits and re-sync with the published catalog"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -718,7 +718,7 @@ export default function PublisherPage() {
                 await refreshCatalog();
                 toast('Refreshed canonical catalog from server.', 'info');
               }}
-              className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-card hover:bg-white text-xs font-bold text-ink border border-line transition flex items-center gap-1.5 cursor-pointer"
               title="Refresh Catalog"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#1976F3]' : ''}`} />
@@ -738,7 +738,7 @@ export default function PublisherPage() {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-card hover:bg-white text-xs font-bold text-ink border border-line transition flex items-center gap-1.5 cursor-pointer"
                   title="Clear the publish key from memory"
                 >
                   <Lock className="w-3.5 h-3.5" />
@@ -748,7 +748,7 @@ export default function PublisherPage() {
             ) : (
               <>
                 <span
-                  className="px-3 py-1.5 rounded-full bg-[#F8F2E7] border border-[#E8DED0] text-xs font-bold text-[#6F6F6F] flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-full bg-page border border-line text-xs font-bold text-mut flex items-center gap-1.5"
                   title="No publish key is held in memory for this session"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#B9A99A]" />
@@ -757,7 +757,7 @@ export default function PublisherPage() {
                 <button
                   type="button"
                   onClick={() => requestPublisherAuth()}
-                  className="px-3.5 py-1.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-3.5 py-1.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   title="Authenticate with your AppMintly Publisher Key (memory-only)"
                 >
                   <KeyRound className="w-3.5 h-3.5" />
@@ -774,7 +774,7 @@ export default function PublisherPage() {
               <button
                 type="button"
                 onClick={handleLeaveEditor}
-                className="px-4 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer whitespace-nowrap"
+                className="px-4 py-1.5 rounded-full bg-page hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer whitespace-nowrap"
               >
                 Back to Catalog
               </button>
@@ -782,7 +782,7 @@ export default function PublisherPage() {
               <button
                 type="button"
                 onClick={handleStartAddApp}
-                className="px-4 py-1.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-4 py-1.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Add Application</span>
@@ -792,7 +792,7 @@ export default function PublisherPage() {
             <button
               type="button"
               onClick={handleCopyJson}
-              className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-full bg-card hover:bg-white text-xs font-bold text-ink border border-line transition flex items-center gap-1.5 cursor-pointer"
               title="Export current catalog JSON"
             >
               {copiedJson ? <Check className="w-3.5 h-3.5 text-[#16A765]" /> : <Copy className="w-3.5 h-3.5" />}
@@ -811,39 +811,39 @@ export default function PublisherPage() {
           <div className="space-y-6">
             {/* Publisher Dashboard Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
-                <p className="text-xs font-bold text-[#6F6F6F]">Total Applications</p>
-                <p className="text-2xl font-black text-[#17191C] mt-1">{catalog.length}</p>
+              <div className="p-4 sm:p-5 rounded-3xl bg-card border border-line shadow-xs min-w-0">
+                <p className="text-xs font-bold text-mut">Total Applications</p>
+                <p className="text-2xl font-black text-ink mt-1">{catalog.length}</p>
                 <p className="text-[10px] text-[#16A765] font-semibold mt-1">Live in catalog</p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
-                <p className="text-xs font-bold text-[#6F6F6F]">Installable PWAs</p>
+              <div className="p-4 sm:p-5 rounded-3xl bg-card border border-line shadow-xs min-w-0">
+                <p className="text-xs font-bold text-mut">Installable PWAs</p>
                 <p className="text-2xl font-black text-[#1976F3] mt-1">
                   {catalog.filter((a) => a.type === 'PWA').length}
                 </p>
-                <p className="text-[10px] text-[#6F6F6F] font-semibold mt-1">Manifest enabled</p>
+                <p className="text-[10px] text-mut font-semibold mt-1">Manifest enabled</p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
-                <p className="text-xs font-bold text-[#6F6F6F]">Android APKs</p>
+              <div className="p-4 sm:p-5 rounded-3xl bg-card border border-line shadow-xs min-w-0">
+                <p className="text-xs font-bold text-mut">Android APKs</p>
                 <p className="text-2xl font-black text-[#16A765] mt-1">
                   {catalog.filter((a) => a.type === 'Android APK').length}
                 </p>
-                <p className="text-[10px] text-[#6F6F6F] font-semibold mt-1">Direct downloads</p>
+                <p className="text-[10px] text-mut font-semibold mt-1">Direct downloads</p>
               </div>
 
-              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
-                <p className="text-xs font-bold text-[#6F6F6F]">Games &amp; Tools</p>
+              <div className="p-4 sm:p-5 rounded-3xl bg-card border border-line shadow-xs min-w-0">
+                <p className="text-xs font-bold text-mut">Games &amp; Tools</p>
                 <p className="text-2xl font-black text-[#E52B32] mt-1">
                   {catalog.filter((a) => a.type === 'Web Game' || a.type === 'Tool').length}
                 </p>
-                <p className="text-[10px] text-[#6F6F6F] font-semibold mt-1">Interactive</p>
+                <p className="text-[10px] text-mut font-semibold mt-1">Interactive</p>
               </div>
             </div>
 
             {/* Quick Action: Add App Banner */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#17191C] to-[#2A2E33] text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
+            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-inkbg to-[#2A2E33] text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
               <div className="space-y-1 text-center md:text-left">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E52B32] text-[10px] font-black uppercase tracking-wider text-white">
                   <Sparkles className="w-3 h-3" /> One-Click Discovery
@@ -874,15 +874,15 @@ export default function PublisherPage() {
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF8] p-4 rounded-3xl border border-[#E8DED0]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-3xl border border-line">
               <div className="relative flex-1 min-w-0 w-full sm:max-w-md">
-                <Search className="w-4 h-4 text-[#6F6F6F] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-4 h-4 text-mut absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="search"
                   value={appSearch}
                   onChange={(e) => setAppSearch(e.target.value)}
                   placeholder="Filter applications by name, developer, category..."
-                  className="w-full bg-[#F8F2E7] border border-transparent rounded-full pl-10 pr-4 py-2 text-xs text-[#17191C] placeholder-[#6F6F6F] focus:outline-hidden focus:border-[#1976F3]"
+                  className="w-full bg-page border border-transparent rounded-full pl-10 pr-4 py-2 text-xs text-ink placeholder-mut focus:outline-hidden focus:border-[#1976F3]"
                 />
               </div>
 
@@ -894,8 +894,8 @@ export default function PublisherPage() {
                     onClick={() => setTypeFilter(t)}
                     className={`px-3 py-1.5 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
                       typeFilter === t
-                        ? 'bg-[#17191C] text-white'
-                        : 'bg-[#F8F2E7] text-[#6F6F6F] hover:bg-[#E8DED0]'
+                        ? 'bg-inkbg text-white'
+                        : 'bg-page text-mut hover:bg-line'
                     }`}
                   >
                     {t === 'all' ? 'All Types' : t}
@@ -905,21 +905,21 @@ export default function PublisherPage() {
             </div>
 
             {/* Applications Table / Cards */}
-            <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl overflow-hidden shadow-xs">
-              <div className="p-4 sm:p-5 border-b border-[#E8DED0] flex items-center justify-between">
-                <h3 className="font-black text-sm text-[#17191C]">
+            <div className="bg-card border border-line rounded-3xl overflow-hidden shadow-xs">
+              <div className="p-4 sm:p-5 border-b border-line flex items-center justify-between">
+                <h3 className="font-black text-sm text-ink">
                   Catalog Records ({filteredApps.length})
                 </h3>
-                <span className="text-xs text-[#6F6F6F]">
+                <span className="text-xs text-mut">
                   Authoritative file: <code className="font-mono text-[#1976F3]">data/apps.json</code>
                 </span>
               </div>
 
-              <div className="divide-y divide-[#E8DED0]">
+              <div className="divide-y divide-line">
                 {filteredApps.map((app) => (
                   <div
                     key={app.id}
-                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#F8F2E7]/40 transition-colors"
+                    className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-page/40 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <AppIcon
@@ -931,8 +931,8 @@ export default function PublisherPage() {
                       />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-bold text-sm text-[#17191C] truncate">{app.name}</h4>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#F8F2E7] text-[#17191C] border border-[#E8DED0]">
+                          <h4 className="font-bold text-sm text-ink truncate">{app.name}</h4>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-page text-ink border border-line">
                             {app.type}
                           </span>
                           {/* Quick Status Dropdown */}
@@ -944,7 +944,7 @@ export default function PublisherPage() {
                                 ? 'bg-[#16A765]/15 text-[#16A765] border-[#16A765]/40'
                                 : (app.status || '').toLowerCase() === 'draft'
                                 ? 'bg-[#F7B928]/25 text-[#8C6000] border-[#F7B928]/50'
-                                : 'bg-[#6F6F6F]/15 text-[#6F6F6F] border-[#6F6F6F]/30'
+                                : 'bg-mut/15 text-mut border-mut/30'
                             }`}
                             title="Change publication status (Live update)"
                           >
@@ -960,7 +960,7 @@ export default function PublisherPage() {
                             className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold flex items-center gap-1 transition cursor-pointer ${
                               app.featured
                                 ? 'bg-[#F7B928]/20 text-[#8C6000] border-[#F7B928]/50'
-                                : 'bg-[#F8F2E7] text-[#6F6F6F] border-[#E8DED0] hover:text-[#17191C]'
+                                : 'bg-page text-mut border-line hover:text-ink'
                             }`}
                             title={app.featured ? 'Featured on Home (Click to toggle OFF)' : 'Not featured on Home (Click to toggle ON)'}
                           >
@@ -974,12 +974,12 @@ export default function PublisherPage() {
                               <CheckCircle2 className="w-3 h-3" /> APK Ready (v{app.apk.versionName})
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#F8F2E7] text-[#6F6F6F] border border-[#E8DED0]">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-page text-mut border border-line">
                               No APK
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-[#6F6F6F] truncate mt-0.5">
+                        <p className="text-xs text-mut truncate mt-0.5">
                           {app.developer} &bull; {app.category} &bull; v{app.version} &bull; {app.size}
                         </p>
                       </div>
@@ -989,7 +989,7 @@ export default function PublisherPage() {
                       <Link
                         href={`/app/${app.slug}`}
                         target="_blank"
-                        className="p-2 rounded-xl bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] transition cursor-pointer"
+                        className="p-2 rounded-xl bg-page hover:bg-line text-ink transition cursor-pointer"
                         title="View Live Listing"
                       >
                         <Eye className="w-4 h-4" />
@@ -1011,7 +1011,7 @@ export default function PublisherPage() {
                       <button
                         type="button"
                         onClick={() => handleEditApp(app)}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-xl bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                       >
                         <Edit className="w-3.5 h-3.5" />
                         <span>Edit</span>
@@ -1020,7 +1020,7 @@ export default function PublisherPage() {
                       <button
                         type="button"
                         onClick={() => handleDeleteApp(app.id, app.name)}
-                        className="p-2 rounded-xl bg-[#F8F2E7] hover:bg-[#E52B32]/10 text-[#6F6F6F] hover:text-[#E52B32] transition cursor-pointer"
+                        className="p-2 rounded-xl bg-page hover:bg-[#E52B32]/10 text-mut hover:text-[#E52B32] transition cursor-pointer"
                         title="Delete App"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1045,14 +1045,14 @@ export default function PublisherPage() {
                 className="bg-[#F7B928]/10 border border-[#F7B928]/40 rounded-2xl px-4 py-3 flex items-start gap-3"
               >
                 <AlertCircle className="w-4 h-4 text-[#F7B928] mt-0.5 shrink-0" />
-                <div className="flex-1 text-xs text-[#6F6F6F] leading-relaxed">
-                  <span className="font-bold text-[#17191C]">You have unsaved changes.</span>{' '}
+                <div className="flex-1 text-xs text-mut leading-relaxed">
+                  <span className="font-bold text-ink">You have unsaved changes.</span>{' '}
                   These edits are not saved to your working session and not published. Save to preview them on this device, or Publish to Production to update the authoritative catalog.
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowDiscardConfirm(true)}
-                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-[#E52B32]/10 text-xs font-bold text-[#E52B32] border border-[#E52B32]/30 transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 rounded-full bg-card hover:bg-[#E52B32]/10 text-xs font-bold text-[#E52B32] border border-[#E52B32]/30 transition flex items-center gap-1.5 cursor-pointer shrink-0"
                   aria-label="Discard unsaved changes and restore the last saved state"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -1062,21 +1062,21 @@ export default function PublisherPage() {
             )}
 
             {/* Persistence boundary banner (static GitHub Pages hosting) */}
-            <div className="bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-3 flex items-start gap-3">
+            <div className="bg-page border border-line rounded-2xl px-4 py-3 flex items-start gap-3">
               <Info className="w-4 h-4 text-[#1976F3] mt-0.5 shrink-0" />
-              <div className="text-xs text-[#6F6F6F] leading-relaxed">
-                <span className="font-bold text-[#17191C]">How saving works on this deployment:</span>{' '}
-                AppMintly runs as a static site on GitHub Pages. <span className="font-semibold text-[#17191C]">Save</span> validates
-                your changes and applies them to your <span className="font-semibold text-[#17191C]">working session</span> — the edit
-                previews across Home, Explore, Categories and Search on this device only. It is <span className="font-semibold text-[#17191C]">not</span> a
-                permanent production publish. To publish permanently, use <span className="font-semibold text-[#17191C]">Publish to Production</span> (step 9) — it
+              <div className="text-xs text-mut leading-relaxed">
+                <span className="font-bold text-ink">How saving works on this deployment:</span>{' '}
+                AppMintly runs as a static site on GitHub Pages. <span className="font-semibold text-ink">Save</span> validates
+                your changes and applies them to your <span className="font-semibold text-ink">working session</span> — the edit
+                previews across Home, Explore, Categories and Search on this device only. It is <span className="font-semibold text-ink">not</span> a
+                permanent production publish. To publish permanently, use <span className="font-semibold text-ink">Publish to Production</span> (step 9) — it
                 commits <code className="font-mono">data/apps.json</code> through the authorized publishing layer with your publish key and deploys automatically. The
-                manual <span className="font-semibold text-[#17191C]">Export Catalog JSON</span> path remains available as a fallback.
+                manual <span className="font-semibold text-ink">Export Catalog JSON</span> path remains available as a fallback.
               </div>
             </div>
 
             {/* Workflow Step Tracker */}
-            <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-3 sm:p-4 overflow-x-auto scrollbar-none shadow-xs">
+            <div className="bg-card border border-line rounded-3xl p-3 sm:p-4 overflow-x-auto scrollbar-none shadow-xs">
               <div className="flex items-center gap-2 min-w-max">
                 {steps.map((st, idx) => {
                   const isActive = workflowStep === st.id;
@@ -1087,13 +1087,13 @@ export default function PublisherPage() {
                       onClick={() => guardedSetWorkflowStep(st.id)}
                       className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
                         isActive
-                          ? 'bg-[#17191C] text-white shadow-xs'
-                          : 'bg-[#F8F2E7] text-[#6F6F6F] hover:bg-[#E8DED0] hover:text-[#17191C]'
+                          ? 'bg-inkbg text-white shadow-xs'
+                          : 'bg-page text-mut hover:bg-line hover:text-ink'
                       }`}
                     >
                       <span
                         className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                          isActive ? 'bg-[#E52B32] text-white' : 'bg-[#E8DED0] text-[#17191C]'
+                          isActive ? 'bg-[#E52B32] text-white' : 'bg-line text-ink'
                         }`}
                       >
                         {st.number}
@@ -1107,12 +1107,12 @@ export default function PublisherPage() {
 
             {/* STEP 1: APP LINK & AUTOMATIC DISCOVERY */}
             {workflowStep === 'links' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     Step 1: Application Link &amp; Metadata Discovery
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Enter the web application or PWA URL. AppMintly will inspect the web app manifest, icons, OpenGraph data, and installation readiness.
                   </p>
                 </div>
@@ -1121,7 +1121,7 @@ export default function PublisherPage() {
                 <div className="p-4 rounded-2xl bg-[#16A765]/10 border border-[#16A765]/25 flex items-center justify-between gap-3 flex-wrap">
                   <div className="text-xs">
                     <span className="font-bold text-[#16A765]">Try Primary Showcase App:</span>{' '}
-                    <span className="text-[#17191C]/80 font-mono">https://pdfly-source.github.io/pdfly-app/</span>
+                    <span className="text-ink/80 font-mono">https://pdfly-source.github.io/pdfly-app/</span>
                   </div>
                   <button
                     type="button"
@@ -1134,7 +1134,7 @@ export default function PublisherPage() {
 
                 {/* URL Input Form */}
                 <div className="space-y-3">
-                  <label className="text-xs font-bold text-[#17191C]">
+                  <label className="text-xs font-bold text-ink">
                     Application URL (HTTPS)
                   </label>
                   <div className="flex gap-2">
@@ -1147,7 +1147,7 @@ export default function PublisherPage() {
                         setForm((prev) => ({ ...prev, url: e.target.value, webUrl: e.target.value }));
                       }}
                       placeholder="https://your-app.example.com"
-                      className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-3 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="flex-1 bg-page border border-line rounded-2xl px-4 py-3 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                     <button
                       type="button"
@@ -1172,7 +1172,7 @@ export default function PublisherPage() {
                       <AlertCircle className="w-4 h-4" /> Destination Inspection Notice
                     </p>
                     <p>{analysisError}</p>
-                    <p className="text-[11px] text-[#17191C]/70">
+                    <p className="text-[11px] text-ink/70">
                       You can proceed and manually edit any information in the next steps.
                     </p>
                   </div>
@@ -1180,11 +1180,11 @@ export default function PublisherPage() {
 
                 {/* Discovered Summary Card */}
                 {detectedData && (
-                  <div className="p-5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] space-y-4">
+                  <div className="p-5 rounded-2xl bg-page border border-line space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-[#16A765]" />
-                        <h4 className="font-black text-xs text-[#17191C]">
+                        <h4 className="font-black text-xs text-ink">
                           Discovered Metadata from {detectedData.name}
                         </h4>
                       </div>
@@ -1194,37 +1194,37 @@ export default function PublisherPage() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <div className="p-2.5 rounded-xl bg-white border border-[#E8DED0]">
-                        <span className="text-[10px] text-[#6F6F6F] font-bold">App Name:</span>
-                        <p className="font-bold text-[#17191C] truncate">{detectedData.name}</p>
+                      <div className="p-2.5 rounded-xl bg-white border border-line">
+                        <span className="text-[10px] text-mut font-bold">App Name:</span>
+                        <p className="font-bold text-ink truncate">{detectedData.name}</p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-[#E8DED0]">
-                        <span className="text-[10px] text-[#6F6F6F] font-bold">Category:</span>
-                        <p className="font-bold text-[#17191C] truncate">{detectedData.category}</p>
+                      <div className="p-2.5 rounded-xl bg-white border border-line">
+                        <span className="text-[10px] text-mut font-bold">Category:</span>
+                        <p className="font-bold text-ink truncate">{detectedData.category}</p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-[#E8DED0]">
-                        <span className="text-[10px] text-[#6F6F6F] font-bold">Manifest URL:</span>
+                      <div className="p-2.5 rounded-xl bg-white border border-line">
+                        <span className="text-[10px] text-mut font-bold">Manifest URL:</span>
                         <p className="font-mono text-[10px] text-[#1976F3] truncate">
                           {detectedData.manifestUrl || 'Not detected'}
                         </p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-[#E8DED0]">
-                        <span className="text-[10px] text-[#6F6F6F] font-bold">Icons Found:</span>
-                        <p className="font-bold text-[#17191C]">{detectedData.icons.length} resolutions</p>
+                      <div className="p-2.5 rounded-xl bg-white border border-line">
+                        <span className="text-[10px] text-mut font-bold">Icons Found:</span>
+                        <p className="font-bold text-ink">{detectedData.icons.length} resolutions</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Additional Links: APK & App Stores */}
-                <div className="border-t border-[#E8DED0] pt-6 space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                <div className="border-t border-line pt-6 space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Optional Distribution Links
                   </h4>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold text-[#17191C] block mb-1">
+                      <label className="text-xs font-bold text-ink block mb-1">
                         Direct Android APK Package (.apk)
                       </label>
                       <input
@@ -1233,17 +1233,17 @@ export default function PublisherPage() {
                         readOnly={isProtectedRelease}
                         onChange={(e) => setForm({ ...form, apkUrl: e.target.value })}
                         placeholder="https://.../app-v1.0.apk"
-                        className={`w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`w-full bg-page border border-line rounded-2xl px-4 py-2 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
                       />
                       {isProtectedRelease && (
-                        <p className="text-[10px] text-[#6F6F6F] mt-1">
+                        <p className="text-[10px] text-mut mt-1">
                           Read-only: production APK distribution is linked to the verified GitHub release and cannot be edited here.
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold text-[#17191C] block mb-1">
+                      <label className="text-xs font-bold text-ink block mb-1">
                         Google Play Store Link
                       </label>
                       <input
@@ -1251,17 +1251,17 @@ export default function PublisherPage() {
                         value={form.playStoreUrl || ''}
                         onChange={(e) => setForm({ ...form, playStoreUrl: e.target.value })}
                         placeholder="https://play.google.com/store/apps/details?id=..."
-                        className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                        className="w-full bg-page border border-line rounded-2xl px-4 py-2 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-end pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('basic')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Basic Info</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1272,19 +1272,19 @@ export default function PublisherPage() {
 
             {/* STEP 2: BASIC INFO */}
             {workflowStep === 'basic' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     Step 2: Basic Application Information
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Define title, slug, developer branding, and marketplace classification.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Application Name *
                     </label>
                     <input
@@ -1293,12 +1293,12 @@ export default function PublisherPage() {
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder="e.g. PDFMiniFly"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Short Name (Home screen badge)
                     </label>
                     <input
@@ -1306,12 +1306,12 @@ export default function PublisherPage() {
                       value={form.shortName || ''}
                       onChange={(e) => setForm({ ...form, shortName: e.target.value })}
                       placeholder="e.g. PDFMiniFly"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       URL Slug (Unique path) *
                     </label>
                     <input
@@ -1320,14 +1320,14 @@ export default function PublisherPage() {
                       value={form.slug}
                       onChange={(e) => setForm({ ...form, slug: e.target.value })}
                       placeholder="e.g. pdfminifly"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Developer / Studio *
-                      <span className="text-[10px] font-normal text-[#6F6F6F]">
+                      <span className="text-[10px] font-normal text-mut">
                         (the blue &quot;Verified Publisher&quot; badge is granted at the repository level via data/publishers.json — it cannot be self-assigned from this form)
                       </span>
                     </label>
@@ -1336,18 +1336,18 @@ export default function PublisherPage() {
                       value={form.developer}
                       onChange={(e) => setForm({ ...form, developer: e.target.value })}
                       placeholder="e.g. PKD"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Category *
                     </label>
                     <select
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value })}
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     >
                       {CATEGORIES.map((c) => (
                         <option key={c.id} value={c.name}>
@@ -1358,13 +1358,13 @@ export default function PublisherPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Internal Distribution Type *
                     </label>
                     <select
                       value={form.type}
                       onChange={(e) => setForm({ ...form, type: e.target.value as AppType })}
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     >
                       <option value="PWA">PWA (Installable Web Application)</option>
                       <option value="Web App">Web App (Browser runtime)</option>
@@ -1376,7 +1376,7 @@ export default function PublisherPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Publication Status *
                     </label>
                     <select
@@ -1389,21 +1389,21 @@ export default function PublisherPage() {
                           published: val === 'published',
                         });
                       }}
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     >
                       <option value="published">Published (Live across public marketplace)</option>
                       <option value="draft">Draft (Staged, hidden from marketplace)</option>
                       <option value="archived">Archived (Deprecated, hidden publicly)</option>
                     </select>
-                    <p className="text-[10px] text-[#6F6F6F] mt-1">
+                    <p className="text-[10px] text-mut mt-1">
                       Only &ldquo;Published&rdquo; apps appear on Home, Explore, Categories, and Search.
                     </p>
                   </div>
                 </div>
 
                 {/* Flags: Featured / Original */}
-                <div className="border-t border-[#E8DED0] pt-6 flex items-center gap-6 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#17191C]">
+                <div className="border-t border-line pt-6 flex items-center gap-6 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-ink">
                     <input
                       type="checkbox"
                       checked={form.featured || false}
@@ -1413,7 +1413,7 @@ export default function PublisherPage() {
                     <span>Highlight as Featured App</span>
                   </label>
 
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#17191C]">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-ink">
                     <input
                       type="checkbox"
                       checked={form.original || false}
@@ -1424,11 +1424,11 @@ export default function PublisherPage() {
                   </label>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-between pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('links')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -1436,7 +1436,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('icon')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Icon Manager</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1463,7 +1463,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('basic')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -1471,7 +1471,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('apk')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#16A765] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#16A765] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Android APK Build</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1512,7 +1512,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('apk')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous: APK Build</span>
@@ -1520,7 +1520,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('description')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Features &amp; Copy</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1531,19 +1531,19 @@ export default function PublisherPage() {
 
             {/* STEP 5: DESCRIPTION & FEATURES */}
             {workflowStep === 'description' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     Step 5: Description &amp; Key Features
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Draft authentic copy describing the application&apos;s capabilities and value proposition.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Short Description (Card summary, max 90 chars)
                     </label>
                     <input
@@ -1552,12 +1552,12 @@ export default function PublisherPage() {
                       onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
                       placeholder="e.g. Private PDF Tools. Powerful. Fast. Local."
                       maxLength={120}
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Full Description (Detail Page Overview) *
                     </label>
                     <textarea
@@ -1565,14 +1565,14 @@ export default function PublisherPage() {
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       placeholder="Describe what the app does, who it's for, and why users will love it..."
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl p-4 text-xs text-[#17191C] leading-relaxed focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl p-4 text-xs text-ink leading-relaxed focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
                 </div>
 
                 {/* Key Features List Builder */}
-                <div className="border-t border-[#E8DED0] pt-6 space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                <div className="border-t border-line pt-6 space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Key Features Checklist ({form.features?.length || 0})
                   </h4>
 
@@ -1582,7 +1582,7 @@ export default function PublisherPage() {
                       value={newFeatureInput}
                       onChange={(e) => setNewFeatureInput(e.target.value)}
                       placeholder="Add key capability (e.g. '100% offline local processing')"
-                      className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="flex-1 bg-page border border-line rounded-2xl px-4 py-2 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1607,7 +1607,7 @@ export default function PublisherPage() {
                           setNewFeatureInput('');
                         }
                       }}
-                      className="px-4 py-2 rounded-2xl bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition cursor-pointer"
+                      className="px-4 py-2 rounded-2xl bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition cursor-pointer"
                     >
                       Add Feature
                     </button>
@@ -1617,7 +1617,7 @@ export default function PublisherPage() {
                     {form.features?.map((feat, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-xs font-semibold"
+                        className="flex items-center justify-between p-3 rounded-2xl bg-page border border-line text-xs font-semibold"
                       >
                         <span className="flex items-center gap-2">
                           <CheckCircle2 className="w-3.5 h-3.5 text-[#16A765]" />
@@ -1631,7 +1631,7 @@ export default function PublisherPage() {
                               features: form.features?.filter((_, i) => i !== idx),
                             })
                           }
-                          className="text-[#6F6F6F] hover:text-[#E52B32] p-1 cursor-pointer"
+                          className="text-mut hover:text-[#E52B32] p-1 cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1640,11 +1640,11 @@ export default function PublisherPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-between pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('screenshots')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -1652,7 +1652,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('version')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Version &amp; Updates</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1663,19 +1663,19 @@ export default function PublisherPage() {
 
             {/* STEP 6: VERSION & UPDATES */}
             {workflowStep === 'version' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     Step 6: Versioning &amp; Release Notes
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Track version history and announce improvements in the &quot;What&apos;s New&quot; section.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Current Version *
                     </label>
                     <input
@@ -1685,17 +1685,17 @@ export default function PublisherPage() {
                       readOnly={isProtectedRelease}
                       onChange={(e) => setForm({ ...form, version: e.target.value })}
                       placeholder="1.0.0"
-                      className={`w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      className={`w-full bg-page border border-line rounded-2xl px-4 py-2 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
                     />
                     {isProtectedRelease && (
-                      <p className="text-[10px] text-[#6F6F6F] mt-1">
+                      <p className="text-[10px] text-mut mt-1">
                         Read-only: this version belongs to the verified production APK release and is managed by the release pipeline.
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Previous Version
                     </label>
                     <input
@@ -1703,26 +1703,26 @@ export default function PublisherPage() {
                       value={form.previousVersion || ''}
                       onChange={(e) => setForm({ ...form, previousVersion: e.target.value })}
                       placeholder="0.9.0"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#17191C] block mb-1">
+                    <label className="text-xs font-bold text-ink block mb-1">
                       Last Updated Date
                     </label>
                     <input
                       type="date"
                       value={form.lastUpdated || new Date().toISOString().split('T')[0]}
                       onChange={(e) => setForm({ ...form, lastUpdated: e.target.value })}
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                     />
                   </div>
                 </div>
 
                 {/* Release notes builder */}
-                <div className="border-t border-[#E8DED0] pt-6 space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                <div className="border-t border-line pt-6 space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Release Notes for v{form.version}
                   </h4>
 
@@ -1732,7 +1732,7 @@ export default function PublisherPage() {
                       value={newReleaseNoteInput}
                       onChange={(e) => setNewReleaseNoteInput(e.target.value)}
                       placeholder="e.g. Added dark mode toggle and client-side PDF compression"
-                      className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className="flex-1 bg-page border border-line rounded-2xl px-4 py-2 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -1763,7 +1763,7 @@ export default function PublisherPage() {
                           setNewReleaseNoteInput('');
                         }
                       }}
-                      className="px-4 py-2 rounded-2xl bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition cursor-pointer"
+                      className="px-4 py-2 rounded-2xl bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition cursor-pointer"
                     >
                       Add Note
                     </button>
@@ -1773,7 +1773,7 @@ export default function PublisherPage() {
                     {form.releaseNotes?.map((note, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-xs font-semibold"
+                        className="flex items-center justify-between p-3 rounded-2xl bg-page border border-line text-xs font-semibold"
                       >
                         <span className="flex items-center gap-2">
                           <span className="text-[#1976F3] font-bold">&bull;</span>
@@ -1787,7 +1787,7 @@ export default function PublisherPage() {
                               releaseNotes: form.releaseNotes?.filter((_, i) => i !== idx),
                             })
                           }
-                          className="text-[#6F6F6F] hover:text-[#E52B32] p-1 cursor-pointer"
+                          className="text-mut hover:text-[#E52B32] p-1 cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1796,11 +1796,11 @@ export default function PublisherPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-between pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('description')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -1808,7 +1808,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('preview')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Store Preview</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1819,13 +1819,13 @@ export default function PublisherPage() {
 
             {/* STEP 7: STORE PREVIEW */}
             {workflowStep === 'preview' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-8 shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E8DED0] pb-4">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-8 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
                   <div>
-                    <h3 className="text-base font-black text-[#17191C]">
+                    <h3 className="text-base font-black text-ink">
                       Step 7: Live App Store Listing Preview
                     </h3>
-                    <p className="text-xs text-[#6F6F6F]">
+                    <p className="text-xs text-mut">
                       Verify how this application card and detail view will render to marketplace visitors.
                     </p>
                   </div>
@@ -1835,7 +1835,7 @@ export default function PublisherPage() {
                       href={form.url || form.webUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] text-xs font-bold border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                      className="px-4 py-2 rounded-full bg-page hover:bg-line text-ink text-xs font-bold border border-line transition flex items-center gap-1.5 cursor-pointer shrink-0"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>Open Live Destination</span>
@@ -1845,7 +1845,7 @@ export default function PublisherPage() {
 
                 {/* Marketplace Card Preview */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Marketplace Card Layout
                   </h4>
                   <div className="max-w-sm">
@@ -1854,11 +1854,11 @@ export default function PublisherPage() {
                 </div>
 
                 {/* Detail Page Top Header Preview */}
-                <div className="space-y-3 border-t border-[#E8DED0] pt-6">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                <div className="space-y-3 border-t border-line pt-6">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Detail Page Header Preview
                   </h4>
-                  <div className="p-6 rounded-3xl bg-[#F8F2E7] border border-[#E8DED0] flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                  <div className="p-6 rounded-3xl bg-page border border-line flex flex-col sm:flex-row items-center sm:items-start gap-4">
                     <AppIcon
                       src={form.icon}
                       name={form.name}
@@ -1871,24 +1871,24 @@ export default function PublisherPage() {
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#1976F3]/15 text-[#1976F3]">
                           {form.type === 'Web Game' ? 'GAME' : form.type === 'Tool' ? 'TOOL' : 'APP'}
                         </span>
-                        <span className="text-xs font-semibold text-[#6F6F6F]">
+                        <span className="text-xs font-semibold text-mut">
                           {form.category} &bull; v{form.version}
                         </span>
                       </div>
-                      <h3 className="text-xl font-black text-[#17191C]">{form.name || 'Untitled Application'}</h3>
-                      <p className="text-xs text-[#6F6F6F]">{form.developer}</p>
-                      <p className="text-xs text-[#17191C]/80 line-clamp-2 pt-1">
+                      <h3 className="text-xl font-black text-ink">{form.name || 'Untitled Application'}</h3>
+                      <p className="text-xs text-mut">{form.developer}</p>
+                      <p className="text-xs text-ink/80 line-clamp-2 pt-1">
                         {form.shortDescription || form.description}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-between pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('version')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -1896,7 +1896,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('publish')}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Publish &amp; Deploy</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1907,32 +1907,32 @@ export default function PublisherPage() {
 
             {/* STEP 8: PUBLISH & DEPLOY */}
             {workflowStep === 'publish' && (
-              <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
                 <div>
-                  <h3 className="text-base font-black text-[#17191C]">
+                  <h3 className="text-base font-black text-ink">
                     Step 8: Publish &amp; Repository Deployment
                   </h3>
-                  <p className="text-xs text-[#6F6F6F]">
+                  <p className="text-xs text-mut">
                     Validate configuration, commit to the static catalog buffer, and export updated records for GitHub deployment.
                   </p>
                 </div>
 
                 {/* Validation Checklist */}
-                <div className="p-5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                <div className="p-5 rounded-2xl bg-page border border-line space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                     Pre-Publish Quality Checklist
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center gap-2">
                       <CheckCircle2
-                        className={`w-4 h-4 ${form.name ? 'text-[#16A765]' : 'text-[#6F6F6F]'}`}
+                        className={`w-4 h-4 ${form.name ? 'text-[#16A765]' : 'text-mut'}`}
                       />
                       <span>App Name Configured: {form.name || 'Missing'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2
                         className={`w-4 h-4 ${
-                          form.url || form.apkUrl ? 'text-[#16A765]' : 'text-[#6F6F6F]'
+                          form.url || form.apkUrl ? 'text-[#16A765]' : 'text-mut'
                         }`}
                       />
                       <span>Destination URL Configured</span>
@@ -1945,7 +1945,7 @@ export default function PublisherPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle2
-                        className={`w-4 h-4 ${form.description ? 'text-[#16A765]' : 'text-[#6F6F6F]'}`}
+                        className={`w-4 h-4 ${form.description ? 'text-[#16A765]' : 'text-mut'}`}
                       />
                       <span>Description &amp; Overview Populated</span>
                     </div>
@@ -1953,16 +1953,16 @@ export default function PublisherPage() {
                 </div>
 
                 {/* Full validation (Phase 5) */}
-                <div className="p-5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] space-y-3">
+                <div className="p-5 rounded-2xl bg-page border border-line space-y-3">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-mut">
                       Validate for Publish
                     </h4>
                     <button
                       type="button"
                       onClick={handleValidateForPublish}
                       disabled={isValidating}
-                      className="px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                      className="px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                       aria-label="Validate this application for publishing"
                     >
                       {isValidating ? (
@@ -1987,7 +1987,7 @@ export default function PublisherPage() {
                             <AlertCircle className="w-4 h-4 shrink-0" />
                             {validationReport.errors.length} validation issue{validationReport.errors.length > 1 ? 's' : ''} must be fixed:
                           </div>
-                          <ul className="text-xs text-[#17191C] list-disc pl-9 space-y-0.5">
+                          <ul className="text-xs text-ink list-disc pl-9 space-y-0.5">
                             {validationReport.errors.map((e, idx) => (
                               <li key={idx}>{e}</li>
                             ))}
@@ -2009,7 +2009,7 @@ export default function PublisherPage() {
                 <div className="p-5 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
                     <h4 className="font-black text-sm text-[#1976F3]">Save to Working Session</h4>
-                    <p className="text-xs text-[#17191C]/80 mt-0.5">
+                    <p className="text-xs text-ink/80 mt-0.5">
                       Validates and applies &quot;{form.name}&quot; to your working session — previews across Home, Explore, Categories and Search on <span className="font-semibold">this device only</span>. This is <span className="font-semibold">not</span> a production publish.
                     </p>
                   </div>
@@ -2032,7 +2032,7 @@ export default function PublisherPage() {
                         <CloudUpload className="w-4 h-4" />
                         Publish to Production
                       </h4>
-                      <p className="text-xs text-[#17191C]/80 mt-0.5">
+                      <p className="text-xs text-ink/80 mt-0.5">
                         Commits <code className="font-mono font-bold">data/apps.json</code> on <code className="font-mono">main</code> through the authorized publishing layer (server-side validated, protected release fields enforced), then the repository deploy workflow publishes it live.
                       </p>
                     </div>
@@ -2043,7 +2043,7 @@ export default function PublisherPage() {
                         const currentIdx = order.indexOf(publishStage);
                         const active = currentIdx > idx;
                         return (
-                          <span key={st} className={`px-2 py-1 rounded-full border ${active ? 'bg-[#16A765] text-white border-[#16A765]' : 'bg-[#FFFDF8] text-[#6F6F6F] border-[#E8DED0]'}`}>
+                          <span key={st} className={`px-2 py-1 rounded-full border ${active ? 'bg-[#16A765] text-white border-[#16A765]' : 'bg-card text-mut border-line'}`}>
                             {st}
                           </span>
                         );
@@ -2052,7 +2052,7 @@ export default function PublisherPage() {
                   </div>
 
                   {serviceStatus && !serviceStatus.available && (
-                    <div className="p-3 rounded-xl bg-[#F7B928]/10 border border-[#F7B928]/40 text-xs text-[#17191C] flex items-start gap-2">
+                    <div className="p-3 rounded-xl bg-[#F7B928]/10 border border-[#F7B928]/40 text-xs text-ink flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 text-[#F7B928] shrink-0 mt-0.5" />
                       <span>
                         <span className="font-bold">Publishing service unavailable.</span>{' '}
@@ -2063,7 +2063,7 @@ export default function PublisherPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2.5 items-end">
                     <div className="space-y-1.5">
-                      <span className="text-xs font-bold text-[#17191C] flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-ink flex items-center gap-1.5">
                         <KeyRound className="w-3.5 h-3.5" />
                         Publisher Authentication
                       </span>
@@ -2073,7 +2073,7 @@ export default function PublisherPage() {
                           ✓ Publisher authenticated — the key is held in memory for this session only and is never stored on this device.
                         </p>
                       ) : (
-                        <p className="text-[11px] font-semibold text-[#6F6F6F] flex items-center gap-1.5">
+                        <p className="text-[11px] font-semibold text-mut flex items-center gap-1.5">
                           <Lock className="w-3.5 h-3.5" />
                           Not authenticated — click Publish to Production to authenticate with your AppMintly Publisher Key (memory-only, never stored on this device).
                         </p>
@@ -2106,31 +2106,31 @@ export default function PublisherPage() {
                         <CheckCircle2 className="w-4 h-4" />
                         Published to the authoritative production catalog
                       </div>
-                      <p className="text-xs text-[#17191C]/80">
+                      <p className="text-xs text-ink/80">
                         {publishResult.message}
                       </p>
                       {publishResult.commitSha && (
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-[#17191C]">
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-ink">
                           <GitCommitHorizontal className="w-4 h-4 text-[#16A765]" />
                           <span className="font-bold">{publishResult.commitSha.slice(0, 7)}</span>
                           {publishResult.commitUrl && (
-                            <a href={publishResult.commitUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                            <a href={publishResult.commitUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-card border border-line hover:bg-line transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
                               View Commit
                             </a>
                           )}
                           {publishResult.actionsUrl && (
-                            <a href={publishResult.actionsUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                            <a href={publishResult.actionsUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-card border border-line hover:bg-line transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
                               Watch Deployment
                             </a>
                           )}
                           {publishResult.deployedUrl && (
-                            <a href={publishResult.deployedUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                            <a href={publishResult.deployedUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-card border border-line hover:bg-line transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
                               Open Live App
                             </a>
                           )}
                         </div>
                       )}
-                      <p className="text-[10px] text-[#6F6F6F]">
+                      <p className="text-[10px] text-mut">
                         LIVE status: GitHub Pages finishes deploying typically within 1–2 minutes after the commit.
                       </p>
                     </div>
@@ -2142,36 +2142,36 @@ export default function PublisherPage() {
                         <AlertCircle className="w-4 h-4" />
                         PUBLISH FAILED — the authoritative catalog was not changed
                       </div>
-                      <p className="text-xs text-[#17191C]/80">{publishResult.message}</p>
-                      <p className="text-[10px] text-[#6F6F6F]">
+                      <p className="text-xs text-ink/80">{publishResult.message}</p>
+                      <p className="text-[10px] text-mut">
                         Nothing was committed. Fix the issue or retry above; the manual JSON export path below always works.
                       </p>
                     </div>
                   )}
 
-                  <p className="text-[10px] text-[#6F6F6F] flex items-start gap-1.5">
+                  <p className="text-[10px] text-mut flex items-start gap-1.5">
                     <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                     Security: your publish key never enters the repository, and no GitHub credentials ever run in the browser. The publishing layer enforces server-side validation, protected release fields, and can only ever write <code className="font-mono">data/apps.json</code>.
                   </p>
                 </div>
 
                 {/* Git-backed Static Architecture Instructions */}
-                <div className="space-y-3 border-t border-[#E8DED0] pt-6">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F] flex items-center gap-1.5">
+                <div className="space-y-3 border-t border-line pt-6">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-mut flex items-center gap-1.5">
                     <GitBranch className="w-4 h-4 text-[#1976F3]" />
                     <span>Manual Publishing Fallback (No Publish Key Required)</span>
                   </h4>
-                  <p className="text-xs text-[#6F6F6F] leading-relaxed">
+                  <p className="text-xs text-mut leading-relaxed">
                     AppMintly operates as an ultra-fast, independent static marketplace with no cloud database dependency. To publish your updates to production:
                   </p>
 
-                  <div className="bg-[#17191C] text-white p-4 rounded-2xl font-mono text-xs space-y-2 overflow-x-auto">
-                    <p className="text-[#6F6F6F]"># 1. Download or copy your updated catalog JSON</p>
+                  <div className="bg-inkbg text-white p-4 rounded-2xl font-mono text-xs space-y-2 overflow-x-auto">
+                    <p className="text-mut"># 1. Download or copy your updated catalog JSON</p>
                     <p className="text-[#16A765]">cp downloaded_apps.json data/apps.json</p>
-                    <p className="text-[#6F6F6F]"># 2. Stage changes and commit</p>
-                    <p className="text-[#FFFDF8]">git add data/apps.json</p>
-                    <p className="text-[#FFFDF8]">git commit -m &quot;feat(catalog): publish {form.slug || 'app'}&quot;</p>
-                    <p className="text-[#6F6F6F]"># 3. Push to main branch (triggers auto-build)</p>
+                    <p className="text-mut"># 2. Stage changes and commit</p>
+                    <p className="text-white">git add data/apps.json</p>
+                    <p className="text-white">git commit -m &quot;feat(catalog): publish {form.slug || 'app'}&quot;</p>
+                    <p className="text-mut"># 3. Push to main branch (triggers auto-build)</p>
                     <p className="text-[#1976F3]">git push origin main</p>
                   </div>
 
@@ -2179,7 +2179,7 @@ export default function PublisherPage() {
                     <button
                       type="button"
                       onClick={handleDownloadJson}
-                      className="px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download apps.json</span>
@@ -2187,7 +2187,7 @@ export default function PublisherPage() {
                     <button
                       type="button"
                       onClick={handleCopyJson}
-                      className="px-5 py-2.5 rounded-full bg-[#FFFDF8] hover:bg-white text-[#17191C] text-xs font-bold border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                      className="px-5 py-2.5 rounded-full bg-card hover:bg-white text-ink text-xs font-bold border border-line transition flex items-center gap-1.5 cursor-pointer"
                     >
                       <Copy className="w-3.5 h-3.5" />
                       <span>Copy JSON to Clipboard</span>
@@ -2195,11 +2195,11 @@ export default function PublisherPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
+                <div className="flex justify-between pt-4 border-t border-line">
                   <button
                     type="button"
                     onClick={() => guardedSetWorkflowStep('preview')}
-                    className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full bg-page text-ink text-xs font-bold hover:bg-line transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Previous: Preview</span>
@@ -2207,7 +2207,7 @@ export default function PublisherPage() {
                   <button
                     type="button"
                     onClick={handleLeaveEditor}
-                    className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Finish &amp; View Catalog</span>
                   </button>
@@ -2220,13 +2220,13 @@ export default function PublisherPage() {
         {/* Discard Changes Confirmation Modal */}
         {showDiscardConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div role="alertdialog" aria-modal="true" aria-label="Confirm discarding unsaved changes" className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div role="alertdialog" aria-modal="true" aria-label="Confirm discarding unsaved changes" className="bg-card border border-line rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-full bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto">
                 <AlertCircle className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#17191C]">Discard unsaved changes?</h3>
-                <p className="text-xs sm:text-sm text-[#6F6F6F] mt-2 leading-relaxed">
+                <h3 className="text-xl sm:text-2xl font-black text-ink">Discard unsaved changes?</h3>
+                <p className="text-xs sm:text-sm text-mut mt-2 leading-relaxed">
                   All edits in this session that have not been saved or published will be discarded, and the form restores the last saved state. This cannot be undone.
                 </p>
               </div>
@@ -2234,7 +2234,7 @@ export default function PublisherPage() {
                 <button
                   type="button"
                   onClick={() => setShowDiscardConfirm(false)}
-                  className="flex-1 py-3 px-4 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] font-bold text-xs sm:text-sm border border-[#E8DED0] transition cursor-pointer"
+                  className="flex-1 py-3 px-4 rounded-full bg-page hover:bg-line text-ink font-bold text-xs sm:text-sm border border-line transition cursor-pointer"
                   aria-label="Keep editing and cancel discarding"
                 >
                   Keep Editing
@@ -2255,14 +2255,14 @@ export default function PublisherPage() {
         {/* Publisher Success Modal */}
         {publishedAppSuccess && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-full bg-[#16A765]/15 text-[#16A765] flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#17191C]">Published successfully</h3>
-                <p className="text-xs sm:text-sm text-[#6F6F6F] mt-2 leading-relaxed">
-                  Your app <span className="font-bold text-[#17191C]">{publishedAppSuccess.name}</span> is now available across the AppMintly marketplace.
+                <h3 className="text-xl sm:text-2xl font-black text-ink">Published successfully</h3>
+                <p className="text-xs sm:text-sm text-mut mt-2 leading-relaxed">
+                  Your app <span className="font-bold text-ink">{publishedAppSuccess.name}</span> is now available across the AppMintly marketplace.
                 </p>
               </div>
 
@@ -2270,7 +2270,7 @@ export default function PublisherPage() {
                 <Link
                   href={`/app/${publishedAppSuccess.slug}`}
                   target="_blank"
-                  className="w-full py-3 px-4 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition"
+                  className="w-full py-3 px-4 rounded-full bg-inkbg hover:bg-[#E52B32] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition"
                 >
                   <Eye className="w-4 h-4" />
                   <span>View App</span>
@@ -2278,7 +2278,7 @@ export default function PublisherPage() {
                 <Link
                   href={`/explore?q=${encodeURIComponent(publishedAppSuccess.name)}`}
                   target="_blank"
-                  className="w-full py-3 px-4 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-[#E8DED0] transition"
+                  className="w-full py-3 px-4 rounded-full bg-page hover:bg-line text-ink font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-line transition"
                 >
                   <Search className="w-4 h-4" />
                   <span>View in Explore</span>
@@ -2289,7 +2289,7 @@ export default function PublisherPage() {
                     setPublishedAppSuccess(null);
                     setViewMode('catalog');
                   }}
-                  className="w-full py-2.5 px-4 rounded-full text-[#6F6F6F] hover:text-[#17191C] font-semibold text-xs transition cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-full text-mut hover:text-ink font-semibold text-xs transition cursor-pointer"
                 >
                   View in Catalog
                 </button>
@@ -2309,21 +2309,21 @@ export default function PublisherPage() {
             aria-modal="true"
             aria-label="Publisher Authentication"
           >
-            <div className="w-full max-w-[min(28rem,calc(100vw-2rem))] max-h-[90dvh] overflow-y-auto rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xl p-5 sm:p-6 space-y-4 box-border">
+            <div className="w-full max-w-[min(28rem,calc(100vw-2rem))] max-h-[90dvh] overflow-y-auto rounded-3xl bg-card border border-line shadow-2xl p-5 sm:p-6 space-y-4 box-border">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-9 h-9 rounded-full bg-[#17191C] flex items-center justify-center">
+                  <span className="w-9 h-9 rounded-full bg-inkbg flex items-center justify-center">
                     <KeyRound className="w-5 h-5 text-white" />
                   </span>
                   <div>
-                    <h2 className="text-sm font-black text-[#17191C]">Publisher Authentication</h2>
-                    <p className="text-[11px] font-semibold text-[#6F6F6F]">Enter your AppMintly Publisher Key</p>
+                    <h2 className="text-sm font-black text-ink">Publisher Authentication</h2>
+                    <p className="text-[11px] font-semibold text-mut">Enter your AppMintly Publisher Key</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleAuthCancel}
-                  className="p-1.5 rounded-full hover:bg-[#F8F2E7] text-[#6F6F6F] hover:text-[#17191C] transition cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-page text-mut hover:text-ink transition cursor-pointer"
                   aria-label="Cancel authentication"
                 >
                   <X className="w-4 h-4" />
@@ -2345,7 +2345,7 @@ export default function PublisherPage() {
                   if (e.key === 'Enter') handleAuthenticate();
                 }}
                 placeholder="••••••••••••••••••••"
-                className="w-full bg-white border border-[#E8DED0] rounded-2xl px-4 py-3 text-sm font-mono tracking-widest text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#16A765]"
+                className="w-full bg-white border border-line rounded-2xl px-4 py-3 text-sm font-mono tracking-widest text-ink focus:outline-hidden focus:ring-1 focus:ring-[#16A765]"
                 aria-label="AppMintly Publisher Key"
               />
 
@@ -2356,7 +2356,7 @@ export default function PublisherPage() {
                 </p>
               )}
 
-              <p className="text-[10px] font-semibold text-[#6F6F6F] leading-relaxed">
+              <p className="text-[10px] font-semibold text-mut leading-relaxed">
                 The key is kept in memory for this session only and is sent only to the AppMintly publishing service. It is never stored in this browser, in the repository, or in the catalog, and it is cleared on refresh or sign out.
               </p>
 
@@ -2364,7 +2364,7 @@ export default function PublisherPage() {
                 <button
                   type="button"
                   onClick={handleAuthCancel}
-                  className="px-5 py-2.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-full bg-page hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer"
                 >
                   Cancel
                 </button>

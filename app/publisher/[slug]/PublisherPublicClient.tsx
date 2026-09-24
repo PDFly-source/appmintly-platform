@@ -44,16 +44,16 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
 
   if (!identity) {
     return (
-      <div className="min-h-screen bg-[#F8F2E7] text-[#17191C] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-page text-ink flex items-center justify-center px-4">
         <div className="text-center max-w-md py-20">
-          <SearchX className="w-12 h-12 mx-auto text-[#E8DED0] mb-4" aria-hidden="true" />
+          <SearchX className="w-12 h-12 mx-auto text-line mb-4" aria-hidden="true" />
           <h1 className="text-2xl font-black tracking-tight mb-2">Publisher Not Found</h1>
-          <p className="text-sm text-[#6F6F6F] mb-6">
+          <p className="text-sm text-mut mb-6">
             No publisher with the address &ldquo;{slug}&rdquo; exists on AppMintly.
           </p>
           <Link
             href="/explore"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-sm font-bold transition"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-sm font-bold transition"
           >
             <ArrowLeft className="w-4 h-4" /> Browse Apps
           </Link>
@@ -63,7 +63,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F2E7] text-[#17191C] pb-16">
+    <div className="min-h-screen bg-page text-ink pb-16">
       {/* Publisher header */}
       <section className="px-4 sm:px-6 pt-8 sm:pt-12 max-w-7xl mx-auto">
         <Link
@@ -74,11 +74,11 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
           <span>Back to Explore</span>
         </Link>
 
-        <div className="rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] p-6 sm:p-10 shadow-xs">
+        <div className="rounded-3xl bg-card border border-line p-6 sm:p-10 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             {/* Publisher avatar/monogram */}
             <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#17191C] text-white flex items-center justify-center text-2xl sm:text-3xl font-black shrink-0 shadow-md"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-inkbg text-white flex items-center justify-center text-2xl sm:text-3xl font-black shrink-0 shadow-md"
               aria-hidden="true"
             >
               {identity.name.slice(0, 2).toUpperCase()}
@@ -90,7 +90,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
                 {identity.verified && <VerifiedBadge />}
               </div>
               {identity.bio && (
-                <p className="text-sm sm:text-base text-[#6F6F6F] mt-2 max-w-2xl leading-relaxed">
+                <p className="text-sm sm:text-base text-mut mt-2 max-w-2xl leading-relaxed">
                   {identity.bio}
                 </p>
               )}
@@ -111,30 +111,30 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
 
           {/* Truthful publisher stats (derived from live catalog) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8" role="list" aria-label="Publisher statistics">
-            <div className="rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-[#6F6F6F] text-xs font-bold uppercase tracking-wide">
+            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
+              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
                 <Package className="w-3.5 h-3.5" /> Total Apps
               </div>
               <p className="text-2xl font-black mt-1.5">{apps.length}</p>
             </div>
-            <div className="rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-[#6F6F6F] text-xs font-bold uppercase tracking-wide">
+            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
+              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
                 <Sparkles className="w-3.5 h-3.5" /> Published
               </div>
               <p className="text-2xl font-black mt-1.5">
                 {apps.filter((a) => a.published).length}
               </p>
             </div>
-            <div className="rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-[#6F6F6F] text-xs font-bold uppercase tracking-wide">
+            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
+              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
                 <RefreshCw className="w-3.5 h-3.5" /> Recently Updated
               </div>
               <p className="text-2xl font-black mt-1.5">
                 {updatedApps[0]?.version ? `v${updatedApps[0].version}` : '—'}
               </p>
             </div>
-            <div className="rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-[#6F6F6F] text-xs font-bold uppercase tracking-wide">
+            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
+              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
                 <Globe className="w-3.5 h-3.5" /> Categories
               </div>
               <p className="text-2xl font-black mt-1.5">
@@ -152,7 +152,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
             <h2 className="text-xl sm:text-2xl font-black tracking-tight">
               Apps by {identity.name}
             </h2>
-            <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1">
+            <p className="text-xs sm:text-sm text-mut mt-1">
               All published applications from this verified publisher.
             </p>
           </div>
@@ -165,9 +165,9 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
             ))}
           </div>
         ) : (
-          <div className="p-10 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] text-center">
-            <SearchX className="w-10 h-10 mx-auto text-[#E8DED0] mb-3" aria-hidden="true" />
-            <p className="text-sm font-semibold text-[#6F6F6F]">
+          <div className="p-10 rounded-2xl bg-card border border-line text-center">
+            <SearchX className="w-10 h-10 mx-auto text-line mb-3" aria-hidden="true" />
+            <p className="text-sm font-semibold text-mut">
               This publisher has no published applications yet.
             </p>
           </div>
@@ -180,20 +180,20 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
           <h2 className="text-lg sm:text-xl font-black tracking-tight mb-4">
             Latest Updates
           </h2>
-          <div className="rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs divide-y divide-[#E8DED0]">
+          <div className="rounded-2xl bg-card border border-line shadow-xs divide-y divide-line">
             {updatedApps.slice(0, 5).map((app) => (
               <Link
                 key={app.id}
                 href={`/app/${app.slug}`}
-                className="flex items-center justify-between gap-4 p-4 hover:bg-[#F8F2E7] transition"
+                className="flex items-center justify-between gap-4 p-4 hover:bg-page transition"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-bold truncate">{app.name}</p>
-                  <p className="text-xs text-[#6F6F6F] truncate">{app.category}</p>
+                  <p className="text-xs text-mut truncate">{app.category}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-black">v{app.version}</p>
-                  <p className="text-[10px] text-[#6F6F6F]">
+                  <p className="text-[10px] text-mut">
                     {app.lastUpdated || app.releaseDate || '—'}
                   </p>
                 </div>
