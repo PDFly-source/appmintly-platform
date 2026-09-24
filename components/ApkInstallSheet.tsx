@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import {
   Download,
-  CheckCircle2,
   AlertCircle,
   Copy,
   Check,
@@ -27,7 +26,7 @@ interface ApkInstallSheetProps {
 }
 
 export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallSheetProps) {
-  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'downloaded' | 'error'>('idle');
+  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'started' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedSha, setCopiedSha] = useState(false);
   const [verifiedSha256, setVerifiedSha256] = useState<string>('');
@@ -51,18 +50,38 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
   const expectedSha256 = apkMeta?.sha256 || '';
 
-  // Rigorous, non-simulated real APK binary downloader
+  // Simple, non-simulated APK download handoff. The browser's own download
+  // manager owns the transfer end-to-end; this UI never claims completion.
   const handleDownload = async () => {
-    setDownloadState('downloading');
     setErrorMessage(null);
 
-    try {
-      // The verified public production release asset (authoritative source).
-      const releaseUrl = apkMeta?.apkUrl;
+    // The verified public production release asset (authoritative source).
+    const releaseUrl = apkMeta?.apkUrl;
 
-      // 1. Same-origin fetch candidates: the backend build-server route and
-      //    static mirrors. These work on server deployments; static GitHub
-      //    Pages hosting has no /api routes, so they 404 there.
+    // 1. Preferred mechanism: plain browser navigation to the public GitHub
+    //    Release asset. Top-level navigation is not subject to CORS, and
+    //    GitHub serves the exact verified binary with Content-Type:
+    //    application/vnd.android.package-archive and Content-Disposition:
+    //    attachment, so Android Chrome's native download manager performs
+    //    and finalizes the download itself. No fetch/blob interception.
+    if (releaseUrl) {
+      const link = document.createElement('a');
+      link.href = releaseUrl;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setDownloadState('started');
+      return;
+    }
+
+    setDownloadState('downloading');
+
+    // 2. Fallback for deployments without a release URL: same-origin fetch
+    //    candidates (backend build-server route / static mirrors). These
+    //    work on server deployments; static GitHub Pages hosting has no
+    //    /api routes, so they 404 there.
+    try {
       const endpointsToTry = [
         apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
         `/downloads/apks/${encodeURIComponent(fileName)}`,
@@ -88,22 +107,6 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         } catch (e) {
           console.warn(`[APK Download] Failed endpoint: ${endpoint}`, e);
         }
-      }
-
-      // 2. Production fallback for static GitHub Pages hosting: direct
-      //    browser navigation to the verified public release asset. Top-level
-      //    navigation is not subject to CORS, and GitHub serves the asset with
-      //    Content-Disposition: attachment, so the exact verified binary
-      //    downloads under its canonical filename without leaving this page.
-      if ((!response || !response.ok) && releaseUrl) {
-        const link = document.createElement('a');
-        link.href = releaseUrl;
-        link.rel = 'noopener';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setDownloadState('downloaded');
-        return;
       }
 
       if (!response || !response.ok) {
@@ -157,10 +160,9 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         setVerifiedSha256(clientSha256);
       }
 
-      // 6. Trigger direct client-side blob download:
-      // By using a Blob object URL in the current browsing context, Android Chrome/browser
-      // writes the verified bytes directly to the device Downloads folder with the exact
-      // requested filename ("PDFMiniFly-2.1.0.apk"), without triggering an external tab or cookie check!
+      // 6. Hand the verified bytes to the browser as a blob download. The
+      //    browser still owns and finalizes the save; we only report that
+      //    the download was started, never that it completed.
       const blob = new Blob([arrayBuffer], { type: 'application/vnd.android.package-archive' });
       const objectUrl = window.URL.createObjectURL(blob);
 
@@ -175,8 +177,8 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         window.URL.revokeObjectURL(objectUrl);
       }, 60000);
 
-      // Transition strictly after verified binary delivery
-      setDownloadState('downloaded');
+      // Report the handoff only; finalization happens in the browser.
+      setDownloadState('started');
     } catch (err: any) {
       console.error('[APK Download Failure]', err);
       setDownloadState('error');
@@ -266,11 +268,11 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
             </div>
           )}
 
-          {downloadState === 'downloaded' && (
+          {downloadState === 'started' && (
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#16A765]/15 text-[#16A765] text-sm font-black border border-[#16A765]/30">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>APK downloaded successfully</span>
+                <Download className="w-4 h-4" />
+                <span>APK download started</span>
               </div>
 
               <div className="p-3 bg-white border border-[#E8DED0] rounded-xl text-left flex items-start gap-3">
@@ -278,7 +280,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
                 <div className="text-xs">
                   <p className="font-bold text-[#17191C]">Next step to install</p>
                   <p className="text-[#6F6F6F] mt-0.5">
-                    Open the downloaded APK from your <strong>Downloads</strong> or notification to install.
+                    Let the browser finish the download (watch the download notification), then open <strong>{fileName}</strong> from your <strong>Downloads</strong> folder to install.
                   </p>
                 </div>
               </div>
