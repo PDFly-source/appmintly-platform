@@ -44,6 +44,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: release-${{ inputs.package_id }}
@@ -353,6 +354,20 @@ jobs:
             git add data/apps.json
             git commit -m "release: $APP_NAME $VERSION_NAME production APK published and verified ($RELEASE_TAG)"
             git push
+            # A commit pushed with the run's GITHUB_TOKEN does NOT trigger the
+            # Pages deploy workflow (GitHub recursion guard). Dispatch it
+            # explicitly so the live marketplace reflects the release.
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              for i in 1 2 3 4 5; do
+                CODE=$(curl -s -o /tmp/dep.out -w '%{http_code}' -X POST \
+                  -H "Authorization: Bearer ${{ github.token }}" \
+                  -H "Accept: application/vnd.github+json" \
+                  https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/dispatches \
+                  -d '{"ref":"main"}')
+                if [[ "$CODE" == "204" ]]; then echo "Pages deploy dispatched"; break; fi
+                echo "Deploy dispatch attempt $i returned HTTP $CODE"; sleep 5
+              done
+            fi
           fi
 
       - name: Release summary
