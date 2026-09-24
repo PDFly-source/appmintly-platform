@@ -91,6 +91,13 @@ export const IconManager: React.FC<IconManagerProps> = ({
       setValidationResult({ valid: false, message: 'Please enter an icon URL.' });
       return;
     }
+    if (!url.startsWith('https://') && !url.startsWith('/')) {
+      setValidationResult({
+        valid: false,
+        message: 'Icon URL must use https:// (or a repository asset path starting with "/").',
+      });
+      return;
+    }
 
     setIsValidating(true);
     const img = new Image();

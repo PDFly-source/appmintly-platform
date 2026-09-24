@@ -36,7 +36,13 @@ import {
   Sliders,
   ChevronRight,
   Save,
-  CheckSquare
+  CheckSquare,
+  CloudUpload,
+  KeyRound,
+  Loader2,
+  GitCommitHorizontal,
+  RotateCcw,
+  Lock
 } from 'lucide-react';
 import { AppItem, AppType } from '@/data/apps';
 import { CATEGORIES } from '@/data/categories';
@@ -49,6 +55,18 @@ import { ScreenshotManager } from '@/components/ScreenshotManager';
 import { ApkBuildCenter } from '@/components/ApkBuildCenter';
 import type { DetectedMetadata } from '@/lib/detected-metadata';
 import { apiUrl } from '@/lib/api-path';
+import {
+  validateAppForPublish,
+  ValidationReport,
+} from '@/lib/catalog-validation';
+import {
+  publishAppToProduction,
+  checkPublishService,
+  loadRememberedPublishKey,
+  storeRememberedPublishKey,
+  ProductionPublishResult,
+  PublishServiceStatus,
+} from '@/lib/production-publish';
 
 type WorkflowStep =
   | 'basic'
@@ -139,24 +157,105 @@ export default function PublisherPage() {
   const [newTagInput, setNewTagInput] = useState('');
   const [newReleaseNoteInput, setNewReleaseNoteInput] = useState('');
 
+  // ---------- Phase 5: truthful edit → validate → publish lifecycle ----------
+  // The authoritative catalog record this edit session started from
+  // (null when adding a brand-new application).
+  const [originalRecord, setOriginalRecord] = useState<AppItem | null>(null);
+  // The last form state that was actually saved (session or production).
+  const lastSavedRef = React.useRef<AppItem | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Validation for publish
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
+  // Production publish state
+  const [publishStage, setPublishStage] = useState<'idle' | 'validated' | 'publishing' | 'published' | 'failed'>('idle');
+  const [publishKey, setPublishKey] = useState('');
+  const [rememberPublishKey, setRememberPublishKey] = useState(false);
+  const [publishResult, setPublishResult] = useState<ProductionPublishResult | null>(null);
+  const [serviceStatus, setServiceStatus] = useState<PublishServiceStatus | null>(null);
+
+  // Unsaved-changes detection: compare the live form to the last saved state.
+  React.useEffect(() => {
+    if (!lastSavedRef.current) {
+      setHasUnsavedChanges(false);
+      return;
+    }
+    setHasUnsavedChanges(JSON.stringify(form) !== JSON.stringify(lastSavedRef.current));
+  }, [form]);
+
+  // Load the optional remembered publish key on mount (deferred so the
+  // first paint matches the pre-rendered HTML).
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      const { key, remember } = loadRememberedPublishKey();
+      setPublishKey(key || '');
+      setRememberPublishKey(remember);
+    }, 0);
+    checkPublishService().then(setServiceStatus);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Re-check the publishing service whenever the publish step is opened.
+  React.useEffect(() => {
+    if (workflowStep === 'publish') {
+      checkPublishService().then(setServiceStatus);
+    }
+  }, [workflowStep]);
+
+  // Reset the publish lifecycle whenever the edited app changes.
+  const resetPublishLifecycle = () => {
+    setValidationReport(null);
+    setPublishStage('idle');
+    setPublishResult(null);
+  };
+
   // Launch Editor for New App
   const handleStartAddApp = () => {
     setForm(emptyForm);
+    lastSavedRef.current = emptyForm;
+    setOriginalRecord(null);
     setIsEditingExisting(false);
     setWorkflowStep('links'); // Start at Links & Analyzer for instant magic
     setViewMode('editor');
     setDetectedData(null);
     setAnalysisError(null);
+    resetPublishLifecycle();
   };
 
   // Launch Editor for Existing App
   const handleEditApp = (app: AppItem) => {
     setForm({ ...app });
+    lastSavedRef.current = { ...app };
+    setOriginalRecord({ ...app });
     setIsEditingExisting(true);
     setWorkflowStep('basic');
     setViewMode('editor');
     setDetectedData(null);
     setAnalysisError(null);
+    resetPublishLifecycle();
+  };
+
+  // Leave the editor with unsaved-changes protection.
+  const handleLeaveEditor = () => {
+    if (hasUnsavedChanges && !confirm('You have unsaved changes that are not saved or published. Leave the editor and discard them?')) {
+      return;
+    }
+    setViewMode('catalog');
+  };
+
+  // Discard all unsaved edits and restore the last saved state.
+  const handleDiscardChanges = () => {
+    if (lastSavedRef.current) {
+      setForm({ ...lastSavedRef.current });
+    }
+    setShowDiscardConfirm(false);
+    setValidationReport(null);
+    setPublishStage('idle');
+    setPublishResult(null);
+    toast('Unsaved changes discarded — restored the last saved state.', 'info');
   };
 
   // Delete App from canonical catalog
@@ -284,22 +383,9 @@ export default function PublisherPage() {
     handleAnalyzeUrl(pdfUrl);
   };
 
-  // Save App to Catalog
-  const handleSaveAppToCatalog = async () => {
-    // Validation
-    if (!form.name.trim()) {
-      toast('Application Name is required.', 'error');
-      setWorkflowStep('basic');
-      return;
-    }
+  // Build the normalized record to save/publish from the current form.
+  const buildAppRecord = (): AppItem => {
     const cleanSlug = form.slug.trim() || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-    if (!form.url?.trim() && !form.webUrl?.trim() && !form.apkUrl?.trim()) {
-      toast('At least one application URL or APK link is required.', 'error');
-      setWorkflowStep('links');
-      return;
-    }
-
     const appToSave: AppItem = {
       ...form,
       slug: cleanSlug,
@@ -312,10 +398,81 @@ export default function PublisherPage() {
       updatedAt: new Date().toISOString(),
       isDemo: false,
     };
+    return appToSave;
+  };
+
+  // Run the full Phase 5 validation (presentation + protected integrity).
+  const handleValidateForPublish = async (): Promise<{ record: AppItem; report: ValidationReport } | null> => {
+    setIsValidating(true);
+    const record = buildAppRecord();
+    const report = validateAppForPublish(record, catalog, originalRecord);
+    setValidationReport(report);
+    setIsValidating(false);
+    if (!report.valid) {
+      setPublishStage('idle');
+      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before publishing.`, 'error');
+    } else {
+      setPublishStage('validated');
+      toast('Validation passed — ready to publish.', 'success');
+    }
+    return { record, report };
+  };
+
+  // Publish to the AUTHORITATIVE production catalog through the authorized
+  // publishing layer (server-side validated commit to data/apps.json).
+  const handlePublishToProduction = async () => {
+    if (!publishKey.trim()) {
+      toast('Enter your publish key to publish to production.', 'error');
+      return;
+    }
+    let record: AppItem | null = null;
+    if (publishStage !== 'validated' || !validationReport?.valid) {
+      const result = await handleValidateForPublish();
+      if (!result?.report.valid) return; // errors already surfaced
+      record = result.record;
+    }
+    record = record || buildAppRecord();
+
+    setPublishStage('publishing');
+    toast('Publishing to production — committing data/apps.json…', 'info');
+
+    const result = await publishAppToProduction(record, publishKey);
+    setPublishResult(result);
+
+    if (result.success) {
+      storeRememberedPublishKey(publishKey, rememberPublishKey);
+      lastSavedRef.current = record;
+      setOriginalRecord(record);
+      setHasUnsavedChanges(false);
+      setPublishStage('published');
+      toast(
+        `Published "${record.name}" to the production catalog — commit ${result.commitSha?.slice(0, 7) || 'created'}. The live site updates after the deployment finishes.`,
+        'success'
+      );
+      await refreshCatalog();
+    } else {
+      setPublishStage('failed');
+      toast(`Publish failed: ${result.message}`, 'error');
+    }
+  };
+
+  // Save App to the working session (NOT a production publish).
+  const handleSaveAppToCatalog = async () => {
+    const appToSave = buildAppRecord();
+
+    // Validation gates saving as well — the same rules apply before the
+    // change is previewed in the working session.
+    const report = validateAppForPublish(appToSave, catalog, originalRecord);
+    setValidationReport(report);
+    if (!report.valid) {
+      setWorkflowStep('publish');
+      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before saving.`, 'error');
+      return;
+    }
 
     // Change detection — do not claim a save when nothing changed
     const existing = catalog.find(
-      (a) => a.slug.toLowerCase() === cleanSlug.toLowerCase() || a.id.toLowerCase() === appToSave.id.toLowerCase()
+      (a) => a.slug.toLowerCase() === appToSave.slug.toLowerCase() || a.id.toLowerCase() === appToSave.id.toLowerCase()
     );
     if (existing && JSON.stringify({ ...existing, ...appToSave }) === JSON.stringify({ ...existing })) {
       const changedKeys = Object.keys(appToSave).filter(
@@ -332,14 +489,18 @@ export default function PublisherPage() {
       // Static GitHub Pages hosting: the change is applied to the local
       // working session (preview across the site) but is NOT a permanent
       // production publish. State this truthfully.
+      lastSavedRef.current = appToSave;
+      setHasUnsavedChanges(false);
+      setPublishedAppSuccess(appToSave);
       toast(
-        `Saved "${appToSave.name}" to your working session — previews live on this device only. Not published: export the Catalog JSON and commit it to the repository to publish.`,
+        `Saved "${appToSave.name}" to your working session — previews live on this device only. Not published: use Publish to Production, or export the Catalog JSON and commit it.`,
         'success'
       );
-      setPublishedAppSuccess(appToSave);
     } else if (ok.success) {
-      toast(`Published "${appToSave.name}" successfully!`, 'success');
+      lastSavedRef.current = appToSave;
+      setHasUnsavedChanges(false);
       setPublishedAppSuccess(appToSave);
+      toast(`Saved "${appToSave.name}" to the server catalog.`, 'success');
     } else {
       toast(ok.message || 'Error saving application to catalog.', 'error');
     }
@@ -430,7 +591,7 @@ export default function PublisherPage() {
             {viewMode === 'editor' ? (
               <button
                 type="button"
-                onClick={() => setViewMode('catalog')}
+                onClick={handleLeaveEditor}
                 className="px-4 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
               >
                 Back to Catalog
@@ -694,6 +855,29 @@ export default function PublisherPage() {
         {/* ========================================================================= */}
         {viewMode === 'editor' && (
           <div className="space-y-6">
+            {/* Unsaved changes banner (Phase 5 truthful editing flow) */}
+            {hasUnsavedChanges && (
+              <div
+                role="alert"
+                className="bg-[#F7B928]/10 border border-[#F7B928]/40 rounded-2xl px-4 py-3 flex items-start gap-3"
+              >
+                <AlertCircle className="w-4 h-4 text-[#F7B928] mt-0.5 shrink-0" />
+                <div className="flex-1 text-xs text-[#6F6F6F] leading-relaxed">
+                  <span className="font-bold text-[#17191C]">You have unsaved changes.</span>{' '}
+                  These edits are not saved to your working session and not published. Save to preview them on this device, or Publish to Production to update the authoritative catalog.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiscardConfirm(true)}
+                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-[#E52B32]/10 text-xs font-bold text-[#E52B32] border border-[#E52B32]/30 transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                  aria-label="Discard unsaved changes and restore the last saved state"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Discard</span>
+                </button>
+              </div>
+            )}
+
             {/* Persistence boundary banner (static GitHub Pages hosting) */}
             <div className="bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-3 flex items-start gap-3">
               <Info className="w-4 h-4 text-[#1976F3] mt-0.5 shrink-0" />
@@ -702,8 +886,9 @@ export default function PublisherPage() {
                 AppMintly runs as a static site on GitHub Pages. <span className="font-semibold text-[#17191C]">Save</span> validates
                 your changes and applies them to your <span className="font-semibold text-[#17191C]">working session</span> — the edit
                 previews across Home, Explore, Categories and Search on this device only. It is <span className="font-semibold text-[#17191C]">not</span> a
-                permanent production publish. To publish permanently, use <span className="font-semibold text-[#17191C]">Export Catalog JSON</span> and
-                commit the file to <code className="font-mono">data/apps.json</code> in the repository.
+                permanent production publish. To publish permanently, use <span className="font-semibold text-[#17191C]">Publish to Production</span> (step 9) — it
+                commits <code className="font-mono">data/apps.json</code> through the authorized publishing layer with your publish key and deploys automatically. The
+                manual <span className="font-semibold text-[#17191C]">Export Catalog JSON</span> path remains available as a fallback.
               </div>
             </div>
 
@@ -1579,29 +1764,222 @@ export default function PublisherPage() {
                   </div>
                 </div>
 
-                {/* Save to Catalog Button */}
-                <div className="p-5 rounded-2xl bg-[#16A765]/10 border border-[#16A765]/25 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Full validation (Phase 5) */}
+                <div className="p-5 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] space-y-3">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F]">
+                      Validate for Publish
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={handleValidateForPublish}
+                      disabled={isValidating}
+                      className="px-5 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                      aria-label="Validate this application for publishing"
+                    >
+                      {isValidating ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isValidating ? 'Validating…' : 'Validate Application'}</span>
+                    </button>
+                  </div>
+
+                  {validationReport && (
+                    <div role="alert" className="space-y-2">
+                      {validationReport.valid ? (
+                        <div className="p-3 rounded-xl bg-[#16A765]/10 border border-[#16A765]/30 text-[#16A765] text-xs font-bold flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 shrink-0" />
+                          Validation passed — this app is ready to save or publish.
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-[#E52B32]/10 border border-[#E52B32]/30 space-y-1.5">
+                          <div className="text-xs font-black text-[#E52B32] flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4 shrink-0" />
+                            {validationReport.errors.length} validation issue{validationReport.errors.length > 1 ? 's' : ''} must be fixed:
+                          </div>
+                          <ul className="text-xs text-[#17191C] list-disc pl-9 space-y-0.5">
+                            {validationReport.errors.map((e, idx) => (
+                              <li key={idx}>{e}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {validationReport.warnings.length > 0 && (
+                        <ul className="text-xs text-[#F7B928] list-disc pl-9 space-y-0.5">
+                          {validationReport.warnings.map((w, idx) => (
+                            <li key={idx}>{w}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Save to working session (NOT production) */}
+                <div className="p-5 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
-                    <h4 className="font-black text-sm text-[#16A765]">Publish to Canonical Catalog</h4>
+                    <h4 className="font-black text-sm text-[#1976F3]">Save to Working Session</h4>
                     <p className="text-xs text-[#17191C]/80 mt-0.5">
-                      Saves &quot;{form.name}&quot; into the canonical catalog (<code className="font-mono font-bold">data/apps.json</code>) and immediately propagates across Home, Explore, Categories, and Search.
+                      Validates and applies &quot;{form.name}&quot; to your working session — previews across Home, Explore, Categories and Search on <span className="font-semibold">this device only</span>. This is <span className="font-semibold">not</span> a production publish.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleSaveAppToCatalog}
-                    className="px-6 py-3 rounded-full bg-[#16A765] hover:bg-[#11844f] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
+                    className="px-6 py-3 rounded-full bg-[#1976F3] hover:bg-[#135bbd] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
+                    aria-label="Save this application to the working session on this device"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Publish Application</span>
+                    <span>Save to Session</span>
                   </button>
+                </div>
+
+                {/* Production publish through the authorized publishing layer */}
+                <div className="p-5 rounded-2xl bg-[#16A765]/10 border border-[#16A765]/25 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="font-black text-sm text-[#16A765] flex items-center gap-1.5">
+                        <CloudUpload className="w-4 h-4" />
+                        Publish to Production
+                      </h4>
+                      <p className="text-xs text-[#17191C]/80 mt-0.5">
+                        Commits <code className="font-mono font-bold">data/apps.json</code> on <code className="font-mono">main</code> through the authorized publishing layer (server-side validated, protected release fields enforced), then the repository deploy workflow publishes it live.
+                      </p>
+                    </div>
+                    {/* Publish lifecycle state chip */}
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shrink-0">
+                      {['VALIDATED', 'PUBLISHING', 'PUBLISHED', 'LIVE'].map((st, idx) => {
+                        const order = ['idle', 'validated', 'publishing', 'published', 'live'];
+                        const currentIdx = order.indexOf(publishStage);
+                        const active = currentIdx > idx;
+                        return (
+                          <span key={st} className={`px-2 py-1 rounded-full border ${active ? 'bg-[#16A765] text-white border-[#16A765]' : 'bg-[#FFFDF8] text-[#6F6F6F] border-[#E8DED0]'}`}>
+                            {st}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {serviceStatus && !serviceStatus.available && (
+                    <div className="p-3 rounded-xl bg-[#F7B928]/10 border border-[#F7B928]/40 text-xs text-[#17191C] flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-[#F7B928] shrink-0 mt-0.5" />
+                      <span>
+                        <span className="font-bold">Publishing service unavailable.</span>{' '}
+                        {serviceStatus.message || 'The authorized publishing layer is not reachable.'} Production publish is disabled — use the manual JSON export path below, or configure the publishing service credentials.
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2.5 items-end">
+                    <div className="space-y-1.5">
+                      <label htmlFor="publish-key" className="text-xs font-bold text-[#17191C] flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5" />
+                        Publish Key
+                      </label>
+                      <input
+                        id="publish-key"
+                        type="password"
+                        autoComplete="off"
+                        value={publishKey}
+                        onChange={(e) => setPublishKey(e.target.value)}
+                        placeholder="Enter your publisher publish key"
+                        className="w-full bg-[#FFFDF8] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#16A765]"
+                        aria-label="Publish key for the authorized production publishing layer"
+                      />
+                      <label className="flex items-center gap-1.5 text-[10px] font-semibold text-[#6F6F6F] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={rememberPublishKey}
+                          onChange={(e) => setRememberPublishKey(e.target.checked)}
+                          className="accent-[#16A765]"
+                        />
+                        Remember key on this device (stored only in this browser, never in the repository)
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handlePublishToProduction}
+                      disabled={publishStage === 'publishing' || !publishKey.trim()}
+                      className="px-6 py-3 rounded-full bg-[#16A765] hover:bg-[#11844f] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs shrink-0 disabled:opacity-50"
+                      aria-label="Publish this application to the authoritative production catalog"
+                    >
+                      {publishStage === 'publishing' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Publishing…</span>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUpload className="w-4 h-4" />
+                          <span>{publishStage === 'failed' ? 'Retry Publish to Production' : 'Publish to Production'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {publishStage === 'published' && publishResult?.success && (
+                    <div role="status" className="p-4 rounded-2xl bg-[#16A765]/15 border border-[#16A765]/40 space-y-2">
+                      <div className="text-xs font-black text-[#16A765] flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Published to the authoritative production catalog
+                      </div>
+                      <p className="text-xs text-[#17191C]/80">
+                        {publishResult.message}
+                      </p>
+                      {publishResult.commitSha && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-[#17191C]">
+                          <GitCommitHorizontal className="w-4 h-4 text-[#16A765]" />
+                          <span className="font-bold">{publishResult.commitSha.slice(0, 7)}</span>
+                          {publishResult.commitUrl && (
+                            <a href={publishResult.commitUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                              View Commit
+                            </a>
+                          )}
+                          {publishResult.actionsUrl && (
+                            <a href={publishResult.actionsUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                              Watch Deployment
+                            </a>
+                          )}
+                          {publishResult.deployedUrl && (
+                            <a href={publishResult.deployedUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-full bg-[#FFFDF8] border border-[#E8DED0] hover:bg-[#E8DED0] transition cursor-pointer font-sans font-bold" style={{ fontSize: 10 }}>
+                              Open Live App
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-[10px] text-[#6F6F6F]">
+                        LIVE status: GitHub Pages finishes deploying typically within 1–2 minutes after the commit.
+                      </p>
+                    </div>
+                  )}
+
+                  {publishStage === 'failed' && publishResult && !publishResult.success && (
+                    <div role="alert" className="p-4 rounded-2xl bg-[#E52B32]/10 border border-[#E52B32]/40 space-y-1.5">
+                      <div className="text-xs font-black text-[#E52B32] flex items-center gap-1.5">
+                        <AlertCircle className="w-4 h-4" />
+                        PUBLISH FAILED — the authoritative catalog was not changed
+                      </div>
+                      <p className="text-xs text-[#17191C]/80">{publishResult.message}</p>
+                      <p className="text-[10px] text-[#6F6F6F]">
+                        Nothing was committed. Fix the issue or retry above; the manual JSON export path below always works.
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-[#6F6F6F] flex items-start gap-1.5">
+                    <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    Security: your publish key never enters the repository, and no GitHub credentials ever run in the browser. The publishing layer enforces server-side validation, protected release fields, and can only ever write <code className="font-mono">data/apps.json</code>.
+                  </p>
                 </div>
 
                 {/* Git-backed Static Architecture Instructions */}
                 <div className="space-y-3 border-t border-[#E8DED0] pt-6">
                   <h4 className="text-xs font-black uppercase tracking-wider text-[#6F6F6F] flex items-center gap-1.5">
                     <GitBranch className="w-4 h-4 text-[#1976F3]" />
-                    <span>Permanent GitHub Deployment Architecture</span>
+                    <span>Manual Publishing Fallback (No Publish Key Required)</span>
                   </h4>
                   <p className="text-xs text-[#6F6F6F] leading-relaxed">
                     AppMintly operates as an ultra-fast, independent static marketplace with no cloud database dependency. To publish your updates to production:
@@ -1648,7 +2026,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setViewMode('catalog')}
+                    onClick={handleLeaveEditor}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Finish &amp; View Catalog</span>
@@ -1656,6 +2034,41 @@ export default function PublisherPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Discard Changes Confirmation Modal */}
+        {showDiscardConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div role="alertdialog" aria-modal="true" aria-label="Confirm discarding unsaved changes" className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 rounded-full bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#17191C]">Discard unsaved changes?</h3>
+                <p className="text-xs sm:text-sm text-[#6F6F6F] mt-2 leading-relaxed">
+                  All edits in this session that have not been saved or published will be discarded, and the form restores the last saved state. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowDiscardConfirm(false)}
+                  className="flex-1 py-3 px-4 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-[#17191C] font-bold text-xs sm:text-sm border border-[#E8DED0] transition cursor-pointer"
+                  aria-label="Keep editing and cancel discarding"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDiscardChanges}
+                  className="flex-1 py-3 px-4 rounded-full bg-[#E52B32] hover:bg-[#c1171d] text-white font-bold text-xs sm:text-sm transition cursor-pointer shadow-xs"
+                  aria-label="Confirm discarding all unsaved changes"
+                >
+                  Discard Changes
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -36,6 +36,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   onScreenshotsChange,
 }) => {
   const [newUrl, setNewUrl] = useState('');
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -170,8 +171,12 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         <input
           type="url"
           value={newUrl}
-          onChange={(e) => setNewUrl(e.target.value)}
+          onChange={(e) => {
+            setNewUrl(e.target.value);
+            setUrlError(null);
+          }}
           placeholder="https://.../screenshot1.png"
+          aria-label="Screenshot URL (must be https)"
           className="flex-1 bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
         />
         <button
@@ -181,6 +186,11 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           Add URL
         </button>
       </form>
+      {urlError && (
+        <p role="alert" className="text-xs text-[#E52B32] font-bold -mt-4">
+          {urlError}
+        </p>
+      )}
 
       {/* Thumbnail Gallery & Management */}
       {screenshots.length === 0 ? (
