@@ -71,6 +71,41 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="min-h-screen bg-[#F8F2E7] text-[#17191C] font-sans antialiased selection:bg-[#E52B32]/20 selection:text-[#E52B32]">
+        {/* Sitewide structured data: marketplace Organization + WebSite */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': `${SITE_URL}#organization`,
+                  name: 'AppMintly',
+                  url: SITE_URL,
+                  slogan: 'Discover. Install. Experience.',
+                  description:
+                    'AppMintly is a digital marketplace for apps, web apps, PWAs, games, tools, and websites.',
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': `${SITE_URL}#website`,
+                  url: SITE_URL,
+                  name: 'AppMintly',
+                  publisher: { '@id': `${SITE_URL}#organization` },
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: {
+                      '@type': 'EntryPoint',
+                      urlTemplate: `${SITE_URL}search?q={search_term_string}`,
+                    },
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
         <ToastProvider>
           <CatalogProvider>
             <div className="flex min-h-screen flex-col">
