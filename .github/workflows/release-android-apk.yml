@@ -194,6 +194,8 @@ jobs:
             exit 1
           fi
           test -n "$BADGE_VERSION_CODE"
+          # The catalog must record the code from the actual binary, never a stale value
+          echo "VERSION_CODE=$BADGE_VERSION_CODE" >> "$GITHUB_ENV"
           echo "Package: $PACKAGE_ID | versionName: $BADGE_VERSION_NAME | versionCode: $BADGE_VERSION_CODE"
 
           # 5. DEX must exist and contain the FULL MainActivity class set (D8 multi-class fix)
@@ -341,6 +343,7 @@ jobs:
             --sha256 "$SHA256" \
             --size "$SIZE" \
             --version "$VERSION_NAME" \
+            --version-code "$VERSION_CODE" \
             --tag "$RELEASE_TAG"
           git config user.name "appmintly-release-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
