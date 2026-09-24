@@ -57,10 +57,14 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
     setErrorMessage(null);
 
     try {
-      // 1. Candidate download endpoints: Dedicated backend endpoint first, then public static
+      // The verified public production release asset (authoritative source).
+      const releaseUrl = apkMeta?.apkUrl;
+
+      // 1. Same-origin fetch candidates: the backend build-server route and
+      //    static mirrors. These work on server deployments; static GitHub
+      //    Pages hosting has no /api routes, so they 404 there.
       const endpointsToTry = [
         apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
-        apkMeta?.apkUrl,
         `/downloads/apks/${encodeURIComponent(fileName)}`,
         `/downloads/apks/${app.slug}-v${versionName}.apk`,
       ].filter(Boolean) as string[];
@@ -86,9 +90,25 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         }
       }
 
+      // 2. Production fallback for static GitHub Pages hosting: direct
+      //    browser navigation to the verified public release asset. Top-level
+      //    navigation is not subject to CORS, and GitHub serves the asset with
+      //    Content-Disposition: attachment, so the exact verified binary
+      //    downloads under its canonical filename without leaving this page.
+      if ((!response || !response.ok) && releaseUrl) {
+        const link = document.createElement('a');
+        link.href = releaseUrl;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setDownloadState('downloaded');
+        return;
+      }
+
       if (!response || !response.ok) {
         throw new Error(
-          'APK download unavailable: The APK file could not be retrieved from the build server.'
+          'No verified APK download source could be reached from this page.'
         );
       }
 
@@ -161,7 +181,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
       console.error('[APK Download Failure]', err);
       setDownloadState('error');
       setErrorMessage(
-        err.message || 'APK download unavailable: The APK file could not be retrieved from the build server.'
+        err.message || 'APK download unavailable: No verified download source could be reached.'
       );
     }
   };
@@ -282,7 +302,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
                 <div>
                   <p className="font-bold">APK download unavailable</p>
                   <p className="text-[#17191C]/80 mt-1 leading-relaxed">
-                    {errorMessage || 'The APK file could not be retrieved from the build server.'}
+                    {errorMessage || 'No verified download source could be reached for this app.'}
                   </p>
                 </div>
               </div>

@@ -68,7 +68,6 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
             const endpoints = [
               apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
-              app.apk?.apkUrl,
               `/downloads/apks/${encodeURIComponent(fileName)}`,
               `/downloads/apks/${app.slug}-v${app.version}.apk`,
             ].filter(Boolean) as string[];
@@ -84,8 +83,25 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               } catch (ignored) {}
             }
 
+            // Production fallback for static GitHub Pages hosting: direct
+            // browser navigation to the verified public release asset.
+            // Top-level navigation is not subject to CORS, and GitHub serves
+            // the asset with Content-Disposition: attachment, so the exact
+            // verified binary downloads under its canonical filename.
+            if ((!response || !response.ok) && apkUrl) {
+              const link = document.createElement('a');
+              link.href = apkUrl;
+              link.rel = 'noopener';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              setDownloadedState(true);
+              toast(`APK download started from the verified GitHub release asset. Open from Downloads or notification to install.`, 'success');
+              return;
+            }
+
             if (!response || !response.ok) {
-              throw new Error('The APK file could not be retrieved from the build server.');
+              throw new Error('No verified APK download source could be reached from this page.');
             }
 
             const ct = response.headers.get('content-type') || '';
@@ -113,7 +129,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
             toast(`APK downloaded successfully. Open from Downloads or notification to install.`, 'success');
           } catch (err: any) {
             console.error('[AppCard] Download error:', err);
-            toast(`APK download unavailable: ${err.message || 'File could not be retrieved.'}`, 'error');
+            toast(`APK download unavailable: ${err.message || 'No verified download source could be reached.'}`, 'error');
           }
         })();
       } else {
