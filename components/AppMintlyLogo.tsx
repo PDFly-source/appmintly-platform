@@ -21,8 +21,12 @@ interface AppMintlyLogoProps {
   className?: string;
 }
 
-const MARK_SRC = '/brand/appmintly-icon.png';
-const FULL_SRC = '/brand/appmintly-logo-full.png';
+// Base path is '' for local/server deployments and '/appmintly-platform' for
+// the static GitHub Pages build (injected at build time).
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
+const MARK_SRC = `${BASE_PATH}/brand/appmintly-icon.png`;
+const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
 
 export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
   size = 'md',

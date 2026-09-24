@@ -47,7 +47,8 @@ import { AppIcon } from '@/components/AppIcon';
 import { IconManager } from '@/components/IconManager';
 import { ScreenshotManager } from '@/components/ScreenshotManager';
 import { ApkBuildCenter } from '@/components/ApkBuildCenter';
-import { DetectedMetadata } from '@/app/api/analyze-url/route';
+import type { DetectedMetadata } from '@/lib/detected-metadata';
+import { apiUrl } from '@/lib/api-path';
 
 type WorkflowStep =
   | 'basic'
@@ -205,7 +206,7 @@ export default function PublisherPage() {
     setAnalysisError(null);
 
     try {
-      const res = await fetch('/api/analyze-url', {
+      const res = await fetch(apiUrl('/api/analyze-url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: target }),

@@ -38,6 +38,39 @@ const CatalogContext = createContext<CatalogContextType | null>(null);
 
 const STORAGE_KEY = 'appforge_canonical_catalog';
 
+import { BASE_PATH, apiUrl } from '@/lib/api-path';
+
+const API_CATALOG_URL = apiUrl('/api/catalog');
+const STATIC_CATALOG_URL = `${BASE_PATH}/data/apps.json`;
+
+/**
+ * Fetch the canonical catalog. Prefers the live API (server deployments);
+ * falls back to the static /data/apps.json snapshot shipped with the
+ * static GitHub Pages build.
+ */
+async function fetchCatalogItems(): Promise<AppItem[] | null> {
+  try {
+    const res = await fetch(API_CATALOG_URL);
+    if (res.ok) {
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : data && Array.isArray(data.apps) ? data.apps : null;
+      if (items && items.length > 0) return items;
+    }
+  } catch {
+    // API unavailable (static hosting) — fall through to static snapshot
+  }
+  try {
+    const res = await fetch(STATIC_CATALOG_URL);
+    if (res.ok) {
+      const items = await res.json();
+      if (Array.isArray(items) && items.length > 0) return items;
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
 export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Always initialize with DEFAULT_APPS to ensure identical SSR & initial client render
   const [catalog, setCatalog] = useState<AppItem[]>(DEFAULT_APPS);
@@ -46,21 +79,17 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Sync with /api/catalog
   const refreshCatalog = useCallback(async () => {
     try {
-      const res = await fetch('/api/catalog');
-      if (res.ok) {
-        const data = await res.json();
-        const items = Array.isArray(data) ? data : (data && Array.isArray(data.apps) ? data.apps : null);
-        if (items && items.length > 0) {
-          const normalized = items.map(normalizeApp);
-          setCatalog(normalized);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-            window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
-          }
+      const items = await fetchCatalogItems();
+      if (items && items.length > 0) {
+        const normalized = items.map(normalizeApp);
+        setCatalog(normalized);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+          window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
         }
       }
     } catch (err) {
-      console.error('[CatalogContext] Failed to fetch catalog from server:', err);
+      console.error('[CatalogContext] Failed to fetch catalog:', err);
     }
   }, []);
 
@@ -68,17 +97,13 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let isCancelled = false;
 
     // Fetch fresh canonical catalog asynchronously in background
-    fetch('/api/catalog')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (isCancelled || !data) return;
-        const items = Array.isArray(data) ? data : (data && Array.isArray(data.apps) ? data.apps : null);
-        if (items && items.length > 0) {
-          const normalized = items.map(normalizeApp);
-          setCatalog(normalized);
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-          }
+    fetchCatalogItems()
+      .then((items) => {
+        if (isCancelled || !items) return;
+        const normalized = items.map(normalizeApp);
+        setCatalog(normalized);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
         }
       })
       .catch((err) => {
@@ -118,7 +143,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     async (appData: Partial<AppItem>) => {
       setIsLoading(true);
       try {
-        const res = await fetch('/api/publish', {
+        const res = await fetch(apiUrl('/api/publish'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(appData),
@@ -167,7 +192,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(true);
     try {
       const normalized = newCatalog.map(normalizeApp);
-      const res = await fetch('/api/catalog', {
+      const res = await fetch(API_CATALOG_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apps: normalized }),

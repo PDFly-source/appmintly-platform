@@ -19,6 +19,7 @@ import {
 import { AppItem, AppType, isNewApp } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
+import { apiUrl } from '@/lib/api-path';
 import {
   useLocalFavorite,
   useIsStandalone,
@@ -64,7 +65,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               `${app.name.replace(/[^a-zA-Z0-9]/g, '') || 'App'}-${app.apk?.versionName || app.version}.apk`;
 
             const endpoints = [
-              `/api/download-apk/${encodeURIComponent(fileName)}`,
+              apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
               app.apk?.apkUrl,
               `/downloads/apks/${encodeURIComponent(fileName)}`,
               `/downloads/apks/${app.slug}-v${app.version}.apk`,

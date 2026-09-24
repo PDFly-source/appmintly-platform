@@ -8,8 +8,11 @@ on:
       - 'data/**'
       - 'app/**'
       - 'components/**'
+      - 'lib/**'
       - 'public/**'
+      - 'next.config.ts'
       - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
 
 permissions:
@@ -34,14 +37,26 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # npm 11 is required: npm 10.8.x has a lockfile-validation bug
+      # ("Invalid: lock file's ajv@6.15.0 does not satisfy ajv@8.20.0") that
+      # rejects an otherwise-valid, npm-generated lockfile on `npm ci`.
+      - name: Install npm 11
+        run: npm install -g npm@11
+
       - name: Install Dependencies
         run: npm ci
 
       - name: Verify apps.json Format
         run: node -e "const catalog = require('./data/apps.json'); if (!Array.isArray(catalog)) throw new Error('apps.json must be an array'); console.log('Validated ' + catalog.length + ' apps in catalog.');"
 
-      - name: Build Next.js Application
-        run: npm run build
+      # The Pages site is a fully static export of the marketplace. API routes
+      # (server-side publisher tooling) cannot run on static hosting and are
+      # excluded from this build; the client falls back to /data/apps.json.
+      - name: Build Static Next.js Export
+        run: rm -rf app/api && NEXT_OUTPUT=export NEXT_PUBLIC_BASE_PATH=/appmintly-platform npm run build
+
+      - name: Ship Static Catalog Data
+        run: mkdir -p out/data && cp data/apps.json data/categories.json data/collections.json out/data/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

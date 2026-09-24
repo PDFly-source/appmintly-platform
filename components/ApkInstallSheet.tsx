@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { AppIcon } from './AppIcon';
+import { apiUrl } from '@/lib/api-path';
 
 interface ApkInstallSheetProps {
   app: AppItem;
@@ -58,7 +59,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
     try {
       // 1. Candidate download endpoints: Dedicated backend endpoint first, then public static
       const endpointsToTry = [
-        `/api/download-apk/${encodeURIComponent(fileName)}`,
+        apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
         apkMeta?.apkUrl,
         `/downloads/apks/${encodeURIComponent(fileName)}`,
         `/downloads/apks/${app.slug}-v${versionName}.apk`,

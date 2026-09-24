@@ -9,19 +9,23 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
 export const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
 
+// Base path is '' for local/server deployments and '/appmintly-platform' for
+// the static GitHub Pages build (injected at build time).
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'AppMintly - Discover. Install. Experience.',
   description: 'AppMintly is a digital marketplace for Apps, Web Apps, Games, Tools, and Websites. Your digital world, one place.',
-  manifest: '/manifest.webmanifest',
+  manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: `${BASE_PATH}/favicon.ico` },
+      { url: `${BASE_PATH}/icon-32.png`, sizes: '32x32', type: 'image/png' },
+      { url: `${BASE_PATH}/icon-192.png`, sizes: '192x192', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    shortcut: `${BASE_PATH}/favicon.ico`,
+    apple: `${BASE_PATH}/apple-touch-icon.png`,
   },
   openGraph: {
     title: 'AppMintly — Discover. Install. Experience.',
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
     siteName: 'AppMintly',
     images: [
       {
-        url: '/brand/appmintly-logo-full.png',
+        url: `${BASE_PATH}/brand/appmintly-logo-full.png`,
         width: 900,
         height: 900,
         alt: 'AppMintly — Discover. Install. Experience.',
@@ -62,7 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href={`${BASE_PATH}/favicon.ico`} sizes="any" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>

@@ -3,15 +3,19 @@ const CACHE_VERSION = 'appmintly-v2.5.0';
 const STATIC_CACHE_NAME = `appmintly-static-${CACHE_VERSION}`;
 const DATA_CACHE_NAME = `appmintly-data-${CACHE_VERSION}`;
 
+// Base path derived from the registration scope so the worker works both at
+// the site root and under GitHub Pages project sub-paths (e.g. /appmintly-platform/).
+const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+
 const PRECACHE_ASSETS = [
-  '/',
-  '/manifest.json',
-  '/manifest.webmanifest',
-  '/icon-192.png',
-  '/brand/appmintly-icon.png',
-  '/data/apps.json',
-  '/data/categories.json',
-  '/data/collections.json'
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/manifest.json`,
+  `${BASE_PATH}/manifest.webmanifest`,
+  `${BASE_PATH}/icon-192.png`,
+  `${BASE_PATH}/brand/appmintly-icon.png`,
+  `${BASE_PATH}/data/apps.json`,
+  `${BASE_PATH}/data/categories.json`,
+  `${BASE_PATH}/data/collections.json`
 ];
 
 self.addEventListener('install', (event) => {

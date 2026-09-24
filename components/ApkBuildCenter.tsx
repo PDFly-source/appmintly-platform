@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { AppItem, ApkMetadata } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
+import { apiUrl } from '@/lib/api-path';
 
 interface ApkBuildCenterProps {
   form: AppItem;
@@ -103,7 +104,7 @@ export function ApkBuildCenter({
     });
 
     try {
-      const res = await fetch('/api/build-apk', {
+      const res = await fetch(apiUrl('/api/build-apk'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +186,7 @@ export function ApkBuildCenter({
     setHasNewVersion(false);
 
     try {
-      const res = await fetch('/api/analyze-url', {
+      const res = await fetch(apiUrl('/api/analyze-url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: launchUrl }),
@@ -235,7 +236,7 @@ export function ApkBuildCenter({
 
     try {
       const endpoints = [
-        `/api/download-apk/${encodeURIComponent(fileName)}`,
+        apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
         currentApk.apkUrl,
         `/downloads/apks/${encodeURIComponent(fileName)}`,
         `/downloads/apks/${form.slug}-v${form.version}.apk`,
