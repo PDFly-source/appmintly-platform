@@ -52,9 +52,15 @@ jobs:
           # ---------------- wait for working device network ----------------
           log "waiting for device network"
           NETOK=0
-          for i in $(seq 1 30); do
+          for i in $(seq 1 45); do
             if adb shell ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then log "device network OK at attempt $i"; NETOK=1; break; fi
-            sleep 10
+            if [ $((i % 5)) -eq 0 ]; then
+              adb shell svc wifi disable >/dev/null 2>&1 || true
+              sleep 4
+              adb shell svc wifi enable >/dev/null 2>&1 || true
+              log "wifi toggled at attempt $i"
+            fi
+            sleep 8
           done
           if [ "$NETOK" != "1" ]; then log "DEVICE NETWORK NEVER CAME UP"; fi
           adb shell ping -c1 -W2 github.com >> device_connectivity.txt 2>&1 || true
