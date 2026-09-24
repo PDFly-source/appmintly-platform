@@ -60,12 +60,32 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       const apkUrl = app.apk?.apkUrl || app.apkUrl;
       if (apkUrl || app.apk?.fileName) {
         trackAppDownloaded(app.id);
+
+        // 1. Preferred mechanism: plain browser navigation to the verified
+        //    public GitHub Release asset. GitHub serves the exact verified
+        //    binary with Content-Disposition: attachment, so Android
+        //    Chrome's native download manager performs and finalizes the
+        //    download itself. No fetch/blob interception on this path.
+        if (apkUrl) {
+          const link = document.createElement('a');
+          link.href = apkUrl;
+          link.rel = 'noopener';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setDownloadedState(true);
+          toast(`APK download started from the verified GitHub release asset. Finish it from the browser download notification, then install from Downloads.`, 'success');
+          return;
+        }
+
         (async () => {
           try {
             const fileName =
               app.apk?.fileName ||
               `${app.name.replace(/[^a-zA-Z0-9]/g, '') || 'App'}-${app.apk?.versionName || app.version}.apk`;
 
+            // Fallback for deployments without a release URL: same-origin
+            // fetch candidates (server route / static mirrors).
             const endpoints = [
               apiUrl(`/api/download-apk/${encodeURIComponent(fileName)}`),
               `/downloads/apks/${encodeURIComponent(fileName)}`,
@@ -81,23 +101,6 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
                   break;
                 }
               } catch (ignored) {}
-            }
-
-            // Production fallback for static GitHub Pages hosting: direct
-            // browser navigation to the verified public release asset.
-            // Top-level navigation is not subject to CORS, and GitHub serves
-            // the asset with Content-Disposition: attachment, so the exact
-            // verified binary downloads under its canonical filename.
-            if ((!response || !response.ok) && apkUrl) {
-              const link = document.createElement('a');
-              link.href = apkUrl;
-              link.rel = 'noopener';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              setDownloadedState(true);
-              toast(`APK download started from the verified GitHub release asset. Open from Downloads or notification to install.`, 'success');
-              return;
             }
 
             if (!response || !response.ok) {
@@ -126,7 +129,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
             setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60000);
 
             setDownloadedState(true);
-            toast(`APK downloaded successfully. Open from Downloads or notification to install.`, 'success');
+            toast(`APK download started. Finish it from the browser download notification, then install from Downloads.`, 'success');
           } catch (err: any) {
             console.error('[AppCard] Download error:', err);
             toast(`APK download unavailable: ${err.message || 'No verified download source could be reached.'}`, 'error');
@@ -184,7 +187,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   // For Studyria: Get App -> https://studyria.qzz.io/
   const getActionLabel = () => {
     if (app.apk?.enabled || app.type === 'Android APK') {
-      return downloadedState ? 'Downloaded' : 'Get App';
+      return downloadedState ? 'Download started' : 'Get App';
     }
     if (isInstalledLocally) {
       return 'Open';
