@@ -26,7 +26,7 @@ import { AppItem } from '@/data/apps';
  * must present a valid publish key and pass full server-side validation.
  */
 export const PUBLISH_ENDPOINT =
-  'https://6ab40d9b23fd8a5173463423.base44.app/functions/publishAppmintlyCatalog';
+  'https://untitled.base44.app/functions/publishAppmintlyCatalog';
 
 export interface ProductionPublishResult {
   success: boolean;
@@ -53,7 +53,14 @@ export async function checkPublishService(): Promise<PublishServiceStatus> {
     if (res.ok && data && typeof data.configured === 'boolean') {
       return { available: data.configured, message: data.message };
     }
-    return { available: false, message: 'Publishing service responded unexpectedly.' };
+    // Surface the actual platform message when the endpoint is blocked or
+    // misrouted, so the console states the real situation truthfully.
+    return {
+      available: false,
+      message:
+        (data && (data.message || data.detail)) ||
+        'Publishing service responded unexpectedly.',
+    };
   } catch (err: any) {
     return { available: false, message: 'Publishing service unreachable — production publish is unavailable right now.' };
   }
