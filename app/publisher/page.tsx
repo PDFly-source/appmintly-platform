@@ -63,8 +63,8 @@ import {
 import {
   publishAppToProduction,
   checkPublishService,
-  loadRememberedPublishKey,
-  storeRememberedPublishKey,
+  clearLegacyRememberedPublishKey,
+  verifyPublisherKey,
   ProductionPublishResult,
   PublishServiceStatus,
   serviceFetchJson,
@@ -175,8 +175,15 @@ export default function PublisherPage() {
 
   // Production publish state
   const [publishStage, setPublishStage] = useState<'idle' | 'validated' | 'publishing' | 'published' | 'failed'>('idle');
-  const [publishKey, setPublishKey] = useState('');
-  const [rememberPublishKey, setRememberPublishKey] = useState(false);
+  // Publisher authentication (MEMORY-ONLY). The publish key lives in React
+  // state for the lifetime of the page session only — never in localStorage,
+  // sessionStorage, cookies or URLs. A refresh requires re-entry (intentional).
+  const [publisherKey, setPublisherKey] = useState('');
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authKeyInput, setAuthKeyInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authVerifying, setAuthVerifying] = useState(false);
+  const authResolverRef = React.useRef<((key: string) => void) | null>(null);
   const [publishResult, setPublishResult] = useState<ProductionPublishResult | null>(null);
   const [serviceStatus, setServiceStatus] = useState<PublishServiceStatus | null>(null);
 
@@ -189,16 +196,13 @@ export default function PublisherPage() {
     setHasUnsavedChanges(JSON.stringify(form) !== JSON.stringify(lastSavedRef.current));
   }, [form]);
 
-  // Load the optional remembered publish key on mount (deferred so the
-  // first paint matches the pre-rendered HTML).
+  // Memory-only authentication: scrub any legacy remembered publish key from
+  // browser storage (the previous "remember on this device" feature is
+  // removed) and start the session unauthenticated. The publish key itself
+  // is never persisted — a page refresh requires re-entry (intentional).
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      const { key, remember } = loadRememberedPublishKey();
-      setPublishKey(key || '');
-      setRememberPublishKey(remember);
-    }, 0);
+    clearLegacyRememberedPublishKey();
     checkPublishService().then(setServiceStatus);
-    return () => clearTimeout(timer);
   }, []);
 
   // Re-check the publishing service whenever the publish step is opened.
@@ -207,6 +211,64 @@ export default function PublisherPage() {
       checkPublishService().then(setServiceStatus);
     }
   }, [workflowStep]);
+
+  // ---------------------------------------------------------------------------
+  // Publisher authentication (memory-only)
+  // ---------------------------------------------------------------------------
+  // Resolves immediately with the in-memory key when already authenticated;
+  // otherwise opens the authentication dialog and resolves with the key
+  // once the owner authenticates ('' if cancelled). Never fabricates success.
+  const requestPublisherAuth = (): Promise<string> => {
+    if (publisherKey.trim()) return Promise.resolve(publisherKey);
+    return new Promise((resolve) => {
+      authResolverRef.current = resolve;
+      setAuthKeyInput('');
+      setAuthError('');
+      setAuthDialogOpen(true);
+    });
+  };
+
+  // Verify the entered key against the Cloudflare Worker (non-mutating:
+  // the Worker checks the key before request validation and dispatches
+  // nothing). 401 => Invalid Publisher Key; any other response means the
+  // key was accepted. Never marks the session authenticated on failure.
+  const handleAuthenticate = async () => {
+    if (authVerifying) return;
+    setAuthError('');
+    const entered = authKeyInput.trim();
+    if (!entered) {
+      setAuthError('Enter your AppMintly Publisher Key.');
+      return;
+    }
+    setAuthVerifying(true);
+    const result = await verifyPublisherKey(entered);
+    setAuthVerifying(false);
+    if (!result.verified) {
+      setAuthError(result.message || 'Invalid Publisher Key');
+      return;
+    }
+    setPublisherKey(entered); // memory only — never persisted, never displayed
+    setAuthDialogOpen(false);
+    setAuthKeyInput('');
+    toast('✓ Publisher authenticated — the key is held in memory for this session only.', 'success');
+    const resolve = authResolverRef.current;
+    authResolverRef.current = null;
+    resolve?.(entered);
+  };
+
+  const handleAuthCancel = () => {
+    setAuthDialogOpen(false);
+    setAuthKeyInput('');
+    setAuthError('');
+    const resolve = authResolverRef.current;
+    authResolverRef.current = null;
+    resolve?.('');
+  };
+
+  const handleSignOut = () => {
+    setPublisherKey('');
+    toast('Signed out — the publish key was cleared from memory.', 'info');
+  };
 
   // Reset the publish lifecycle whenever the edited app changes.
   const resetPublishLifecycle = () => {
@@ -433,8 +495,13 @@ export default function PublisherPage() {
   // Publish to the AUTHORITATIVE production catalog through the authorized
   // publishing layer (server-side validated commit to data/apps.json).
   const handlePublishToProduction = async () => {
-    if (!publishKey.trim()) {
-      toast('Enter your publish key to publish to production.', 'error');
+    // Authentication gate: the publish key is required and lives only in
+    // memory. If no key is held, the authentication dialog opens
+    // automatically and publishing continues only after successful
+    // authentication.
+    const key = await requestPublisherAuth();
+    if (!key) {
+      toast('Publisher authentication is required to publish to production.', 'info');
       return;
     }
     let record: AppItem | null = null;
@@ -448,11 +515,10 @@ export default function PublisherPage() {
     setPublishStage('publishing');
     toast('Publishing to production — committing data/apps.json…', 'info');
 
-    const result = await publishAppToProduction(record, publishKey);
+    const result = await publishAppToProduction(record, key);
     setPublishResult(result);
 
     if (result.success) {
-      storeRememberedPublishKey(publishKey, rememberPublishKey);
       lastSavedRef.current = record;
       setOriginalRecord(record);
       setHasUnsavedChanges(false);
@@ -614,6 +680,47 @@ export default function PublisherPage() {
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#1976F3]' : ''}`} />
               <span>Refresh</span>
             </button>
+
+            {/* Publisher authentication state — memory-only key, never persisted */}
+            {publisherKey.trim() ? (
+              <>
+                <span
+                  className="px-3 py-1.5 rounded-full bg-[#16A765]/10 border border-[#16A765]/40 text-xs font-bold text-[#11844f] flex items-center gap-1.5"
+                  title="The publish key is held in memory for this session only"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Publisher authenticated</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
+                  title="Clear the publish key from memory"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Sign out</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <span
+                  className="px-3 py-1.5 rounded-full bg-[#F8F2E7] border border-[#E8DED0] text-xs font-bold text-[#6F6F6F] flex items-center gap-1.5"
+                  title="No publish key is held in memory for this session"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#B9A99A]" />
+                  <span>Unauthenticated</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => requestPublisherAuth()}
+                  className="px-3.5 py-1.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="Authenticate with your AppMintly Publisher Key (memory-only)"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Authenticate</span>
+                </button>
+              </>
+            )}
 
             {viewMode === 'editor' ? (
               <button
@@ -1329,7 +1436,7 @@ export default function PublisherPage() {
                 onNext={() => setWorkflowStep('screenshots')}
                 onPrev={() => setWorkflowStep('icon')}
                 onCatalogRefresh={refreshCatalog}
-                publishKey={publishKey}
+                onAuthRequired={requestPublisherAuth}
               />
             )}
 
@@ -1903,34 +2010,26 @@ export default function PublisherPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2.5 items-end">
                     <div className="space-y-1.5">
-                      <label htmlFor="publish-key" className="text-xs font-bold text-[#17191C] flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-[#17191C] flex items-center gap-1.5">
                         <KeyRound className="w-3.5 h-3.5" />
-                        Publish Key
-                      </label>
-                      <input
-                        id="publish-key"
-                        type="password"
-                        autoComplete="off"
-                        value={publishKey}
-                        onChange={(e) => setPublishKey(e.target.value)}
-                        placeholder="Enter your publisher publish key"
-                        className="w-full bg-[#FFFDF8] border border-[#E8DED0] rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#16A765]"
-                        aria-label="Publish key for the authorized production publishing layer"
-                      />
-                      <label className="flex items-center gap-1.5 text-[10px] font-semibold text-[#6F6F6F] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={rememberPublishKey}
-                          onChange={(e) => setRememberPublishKey(e.target.checked)}
-                          className="accent-[#16A765]"
-                        />
-                        Remember key on this device (stored only in this browser, never in the repository)
-                      </label>
+                        Publisher Authentication
+                      </span>
+                      {publisherKey.trim() ? (
+                        <p className="text-[11px] font-semibold text-[#11844f] flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          ✓ Publisher authenticated — the key is held in memory for this session only and is never stored on this device.
+                        </p>
+                      ) : (
+                        <p className="text-[11px] font-semibold text-[#6F6F6F] flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          Not authenticated — click Publish to Production to authenticate with your AppMintly Publisher Key (memory-only, never stored on this device).
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={handlePublishToProduction}
-                      disabled={publishStage === 'publishing' || !publishKey.trim()}
+                      disabled={publishStage === 'publishing'}
                       className="px-6 py-3 rounded-full bg-[#16A765] hover:bg-[#11844f] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs shrink-0 disabled:opacity-50"
                       aria-label="Publish this application to the authoritative production catalog"
                     >
@@ -2140,6 +2239,99 @@ export default function PublisherPage() {
                   className="w-full py-2.5 px-4 rounded-full text-[#6F6F6F] hover:text-[#17191C] font-semibold text-xs transition cursor-pointer"
                 >
                   View in Catalog
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PUBLISHER AUTHENTICATION DIALOG — memory-only key entry.
+            The key is never displayed back, never persisted, and is sent
+            only to the Cloudflare Worker over HTTPS. */}
+        {authDialogOpen && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(23, 25, 28, 0.45)' }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Publisher Authentication"
+          >
+            <div className="w-full max-w-md rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xl p-6 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-9 h-9 rounded-full bg-[#17191C] flex items-center justify-center">
+                    <KeyRound className="w-5 h-5 text-white" />
+                  </span>
+                  <div>
+                    <h2 className="text-sm font-black text-[#17191C]">Publisher Authentication</h2>
+                    <p className="text-[11px] font-semibold text-[#6F6F6F]">Enter your AppMintly Publisher Key</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAuthCancel}
+                  className="p-1.5 rounded-full hover:bg-[#F8F2E7] text-[#6F6F6F] hover:text-[#17191C] transition cursor-pointer"
+                  aria-label="Cancel authentication"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <input
+                id="publisher-key-input"
+                type="password"
+                autoFocus
+                autoComplete="off"
+                spellCheck={false}
+                value={authKeyInput}
+                onChange={(e) => {
+                  setAuthKeyInput(e.target.value);
+                  setAuthError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAuthenticate();
+                }}
+                placeholder="••••••••••••••••••••"
+                className="w-full bg-white border border-[#E8DED0] rounded-2xl px-4 py-3 text-sm font-mono tracking-widest text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#16A765]"
+                aria-label="AppMintly Publisher Key"
+              />
+
+              {authError && (
+                <p className="text-xs font-bold text-[#E52B32] flex items-center gap-1.5" role="alert">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{authError}</span>
+                </p>
+              )}
+
+              <p className="text-[10px] font-semibold text-[#6F6F6F] leading-relaxed">
+                The key is kept in memory for this session only and is sent only to the AppMintly publishing service. It is never stored in this browser, in the repository, or in the catalog, and it is cleared on refresh or sign out.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={handleAuthCancel}
+                  className="px-5 py-2.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAuthenticate}
+                  disabled={authVerifying}
+                  className="px-6 py-2.5 rounded-full bg-[#16A765] hover:bg-[#11844f] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  {authVerifying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Verifying…</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Authenticate</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
