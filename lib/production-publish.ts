@@ -148,7 +148,7 @@ export async function publishAppToProduction(
   try {
     const res = await fetch(PUBLISH_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: publisherAuthHeaders(publishKey),
       body: JSON.stringify({ publishKey, app }),
     });
     const data = await res.json().catch(() => null);
@@ -174,24 +174,76 @@ export async function publishAppToProduction(
   }
 }
 
-/** localStorage keys for the optional device-remembered publish key. */
-const PUBLISH_KEY_STORAGE = 'appmintly_publish_key';
-const PUBLISH_KEY_REMEMBER = 'appmintly_publish_key_remember';
+/**
+ * Publisher key handling is MEMORY-ONLY by design: the key is captured in
+ * React state for the lifetime of the page session, sent only to the
+ * Cloudflare Worker, and is never written to localStorage, sessionStorage,
+ * IndexedDB, cookies, URLs, or any persisted file. A page refresh requires
+ * the publisher to enter the key again — intentional.
+ */
 
-export function loadRememberedPublishKey(): { key: string; remember: boolean } {
-  if (typeof window === 'undefined') return { key: '', remember: false };
-  const remember = window.localStorage.getItem(PUBLISH_KEY_REMEMBER) === 'true';
-  const key = remember ? window.localStorage.getItem(PUBLISH_KEY_STORAGE) || '' : '';
-  return { key, remember };
+/**
+ * One-time cleanup: the console previously offered "remember key on this
+ * device" (localStorage). That feature is removed; scrub any legacy value
+ * so nothing remains in browser storage.
+ */
+export function clearLegacyRememberedPublishKey() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem('appmintly_publish_key');
+    window.localStorage.removeItem('appmintly_publish_key_remember');
+  } catch {
+    /* storage unavailable — nothing to clean */
+  }
 }
 
-export function storeRememberedPublishKey(key: string, remember: boolean) {
-  if (typeof window === 'undefined') return;
-  if (remember) {
-    window.localStorage.setItem(PUBLISH_KEY_STORAGE, key);
-    window.localStorage.setItem(PUBLISH_KEY_REMEMBER, 'true');
-  } else {
-    window.localStorage.removeItem(PUBLISH_KEY_STORAGE);
-    window.localStorage.setItem(PUBLISH_KEY_REMEMBER, 'false');
+/**
+ * Authenticated-request headers for the Worker. The publish key is carried
+ * BOTH as the Authorization: Bearer header (the Worker's CORS explicitly
+ * allows the Authorization header) and — for backward compatibility with
+ * the console's existing request shape — inside the JSON body. Both travel
+ * to the same Worker over the same TLS connection.
+ */
+export function publisherAuthHeaders(publishKey: string): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${publishKey}`,
+  };
+}
+
+/**
+ * Verify a publisher key WITHOUT any production side effect. Sends an
+ * intentionally empty app record to POST /build-apk: the Worker checks the
+ * key FIRST (verified live: every unauthenticated request returns 401
+ * before validation), so a 401 means the key is invalid, and any non-401
+ * response means the key was accepted and the empty record was rejected by
+ * request validation — exactly what we want. No build can be dispatched
+ * from an empty record (no name, no package id, no launch URL).
+ */
+export async function verifyPublisherKey(
+  publishKey: string
+): Promise<{ verified: boolean; message: string }> {
+  if (!publishKey.trim()) {
+    return { verified: false, message: 'Enter your AppMintly Publisher Key.' };
+  }
+  try {
+    const res = await fetch(BUILD_SERVICE_ENDPOINT, {
+      method: 'POST',
+      headers: publisherAuthHeaders(publishKey),
+      body: JSON.stringify({ publishKey, app: {} }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.status === 401) {
+      return { verified: false, message: 'Invalid Publisher Key' };
+    }
+    // Any non-401 response means authentication passed (the intentionally
+    // empty record was then refused by validation). Never guess success on
+    // anything else.
+    return { verified: true, message: 'Publisher key verified.' };
+  } catch (err: any) {
+    return {
+      verified: false,
+      message: 'Authentication failed — the publishing service could not be reached.',
+    };
   }
 }
