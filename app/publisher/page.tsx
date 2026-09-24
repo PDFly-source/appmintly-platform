@@ -53,6 +53,7 @@ import { AppIcon } from '@/components/AppIcon';
 import { IconManager } from '@/components/IconManager';
 import { ScreenshotManager } from '@/components/ScreenshotManager';
 import { ApkBuildCenter } from '@/components/ApkBuildCenter';
+import { collectDomFieldValues, findFieldMismatches } from '@/lib/build-dispatch-gate';
 import type { DetectedMetadata } from '@/lib/detected-metadata';
 import { apiUrl } from '@/lib/api-path';
 import { fetchJson } from '@/lib/api-client';
@@ -606,6 +607,43 @@ export default function PublisherPage() {
     toast('Downloaded apps.json. Place in /data/apps.json of your repository.', 'success');
   };
 
+  // -----------------------------------------------------------------
+  // STEP-TRANSITION SAFETY GATE (Phase 7.6)
+  // Wizard steps unmount their inputs when navigating. Before ANY step
+  // change, every visible input tagged with data-build-field is compared
+  // against the React state it visually represents. If the DOM value and
+  // the state diverge (the exact failure mode of the Phase 7.5 automation,
+  // where DOM values were written without React input/change events), the
+  // navigation is BLOCKED so the divergence can never reach the build
+  // payload. Only real user input (or automation dispatching proper React
+  // compatible events) can pass.
+  // -----------------------------------------------------------------
+  const buildFieldStateValues = (): Record<string, string> => ({
+    launchUrl: (form.launchUrl || form.webUrl || form.url || '').trim(),
+    name: form.name,
+    slug: form.slug,
+    version: form.version || '1.0.0',
+    // packageId intentionally excluded here: it lives in ApkBuildCenter's
+    // local state and is verified by the dedicated pre-dispatch gate in
+    // handleStartBuild (DOM value == React state == payload) instead.
+  });
+
+  const guardedSetWorkflowStep = (next: WorkflowStep) => {
+    const dom = collectDomFieldValues();
+    const mismatches = findFieldMismatches(dom, buildFieldStateValues());
+    if (mismatches.length > 0) {
+      toast(
+        'Blocked: visible input values do not match the form state (' +
+          mismatches.map((m) => `${m.field}: input shows "${m.domValue}", state has "${m.expectedValue}"`).join('; ') +
+          '). Please re-enter the values by typing so the form registers them.',
+        'error'
+      );
+      console.error('[AppMintly] Step transition blocked by input-state mismatch:', mismatches);
+      return;
+    }
+    setWorkflowStep(next);
+  };
+
   // Step navigation items
   const steps: { id: WorkflowStep; label: string; number: number }[] = [
     { id: 'links', label: '1. App Link & Analysis', number: 1 },
@@ -1046,7 +1084,7 @@ export default function PublisherPage() {
                     <button
                       key={st.id}
                       type="button"
-                      onClick={() => setWorkflowStep(st.id)}
+                      onClick={() => guardedSetWorkflowStep(st.id)}
                       className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
                         isActive
                           ? 'bg-[#17191C] text-white shadow-xs'
@@ -1102,6 +1140,7 @@ export default function PublisherPage() {
                   <div className="flex gap-2">
                     <input
                       type="url"
+                      data-build-field="launchUrl"
                       value={analyzerUrl || form.url}
                       onChange={(e) => {
                         setAnalyzerUrl(e.target.value);
@@ -1221,7 +1260,7 @@ export default function PublisherPage() {
                 <div className="flex justify-end pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('basic')}
+                    onClick={() => guardedSetWorkflowStep('basic')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Basic Info</span>
@@ -1250,6 +1289,7 @@ export default function PublisherPage() {
                     </label>
                     <input
                       type="text"
+                      data-build-field="name"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder="e.g. PDFMiniFly"
@@ -1276,6 +1316,7 @@ export default function PublisherPage() {
                     </label>
                     <input
                       type="text"
+                      data-build-field="slug"
                       value={form.slug}
                       onChange={(e) => setForm({ ...form, slug: e.target.value })}
                       placeholder="e.g. pdfminifly"
@@ -1386,7 +1427,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('links')}
+                    onClick={() => guardedSetWorkflowStep('links')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1394,7 +1435,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('icon')}
+                    onClick={() => guardedSetWorkflowStep('icon')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Icon Manager</span>
@@ -1421,7 +1462,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-2">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('basic')}
+                    onClick={() => guardedSetWorkflowStep('basic')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1429,7 +1470,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('apk')}
+                    onClick={() => guardedSetWorkflowStep('apk')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#16A765] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Android APK Build</span>
@@ -1444,8 +1485,8 @@ export default function PublisherPage() {
               <ApkBuildCenter
                 form={form}
                 onUpdateForm={(fields) => setForm((prev) => ({ ...prev, ...fields }))}
-                onNext={() => setWorkflowStep('screenshots')}
-                onPrev={() => setWorkflowStep('icon')}
+                onNext={() => guardedSetWorkflowStep('screenshots')}
+                onPrev={() => guardedSetWorkflowStep('icon')}
                 onCatalogRefresh={refreshCatalog}
                 onAuthRequired={requestPublisherAuth}
               />
@@ -1470,7 +1511,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-2">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('apk')}
+                    onClick={() => guardedSetWorkflowStep('apk')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1478,7 +1519,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('description')}
+                    onClick={() => guardedSetWorkflowStep('description')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Features &amp; Copy</span>
@@ -1602,7 +1643,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('screenshots')}
+                    onClick={() => guardedSetWorkflowStep('screenshots')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1610,7 +1651,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('version')}
+                    onClick={() => guardedSetWorkflowStep('version')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Version &amp; Updates</span>
@@ -1639,6 +1680,7 @@ export default function PublisherPage() {
                     </label>
                     <input
                       type="text"
+                      data-build-field="version"
                       value={form.version}
                       readOnly={isProtectedRelease}
                       onChange={(e) => setForm({ ...form, version: e.target.value })}
@@ -1757,7 +1799,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('description')}
+                    onClick={() => guardedSetWorkflowStep('description')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1765,7 +1807,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('preview')}
+                    onClick={() => guardedSetWorkflowStep('preview')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Store Preview</span>
@@ -1845,7 +1887,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('version')}
+                    onClick={() => guardedSetWorkflowStep('version')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
@@ -1853,7 +1895,7 @@ export default function PublisherPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('publish')}
+                    onClick={() => guardedSetWorkflowStep('publish')}
                     className="px-6 py-2.5 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>Next: Publish &amp; Deploy</span>
@@ -2156,7 +2198,7 @@ export default function PublisherPage() {
                 <div className="flex justify-between pt-4 border-t border-[#E8DED0]">
                   <button
                     type="button"
-                    onClick={() => setWorkflowStep('preview')}
+                    onClick={() => guardedSetWorkflowStep('preview')}
                     className="px-5 py-2.5 rounded-full bg-[#F8F2E7] text-[#17191C] text-xs font-bold hover:bg-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />

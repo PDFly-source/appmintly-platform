@@ -28,6 +28,13 @@ import {
   ANALYZE_SERVICE_ENDPOINT,
   serviceFetchJson,
 } from '@/lib/production-publish';
+import {
+  BuildUiState,
+  assertDispatchTargets,
+  collectDomFieldValues,
+  extractGitHubRunApiUrl,
+  mapGitHubRunStatus,
+} from '@/lib/build-dispatch-gate';
 
 interface ApkBuildCenterProps {
   form: AppItem;
@@ -124,6 +131,36 @@ export function ApkBuildCenter({
         return;
       }
 
+      // -----------------------------------------------------------------
+      // PRE-DISPATCH SAFETY GATE (Phase 7.6)
+      // The exact payload that would be sent is built FIRST, then verified
+      // against the React state and the visible UI inputs. UI target must
+      // equal React state must equal payload. Any mismatch BLOCKS the
+      // dispatch before any network call — no build service request, no
+      // workflow dispatch, no release creation.
+      // -----------------------------------------------------------------
+      const payload = {
+        slug: form.slug,
+        name: form.name,
+        versionName: form.version || '1.0.0',
+        launchUrl,
+        packageId: packageIdInput.trim(),
+      };
+      const gate = assertDispatchTargets(payload, {
+        slug: form.slug,
+        name: form.name,
+        versionName: form.version || '1.0.0',
+        launchUrl,
+        packageId: packageIdInput.trim(),
+      }, collectDomFieldValues());
+      if (!gate.pass) {
+        setIsBuilding(false);
+        setBuildError(gate.message);
+        toast(gate.message, 'error');
+        console.error('[AppMintly] Pre-dispatch gate blocked the build:', gate.mismatches);
+        return; // HARD STOP — nothing is dispatched
+      }
+
       const result = await serviceFetchJson(BUILD_SERVICE_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -133,15 +170,15 @@ export function ApkBuildCenter({
         body: JSON.stringify({
           publishKey: key,
           app: {
-            slug: form.slug,
-            name: form.name,
-            versionName: form.version || '1.0.0',
-            launchUrl,
+            slug: payload.slug,
+            name: payload.name,
+            versionName: payload.versionName,
+            launchUrl: payload.launchUrl,
             iconUrl: form.icon,
             themeColor: form.themeColor || '#17191C',
             backgroundColor: form.backgroundColor || '#FFFDF8',
             buildMode,
-            packageId: packageIdInput,
+            packageId: payload.packageId,
           },
         }),
       });
@@ -164,43 +201,167 @@ export function ApkBuildCenter({
         error: null,
       });
 
-      const serviceStateToJob = (data: any) => ({
-        status: data.status === 'SUCCESS' ? 'completed' : data.status === 'FAILED' ? 'failed' : 'building',
-        state: data.status,
-        runUrl: data.runUrl,
-        apkMetadata: data.apkMetadata || null,
-        apkUrl: data.apkMetadata?.apkUrl || null,
-        error: data.error || null,
-      });
+      // -----------------------------------------------------------------
+      // BUILD STATUS POLLING (Phase 7.6)
+      // GitHub Actions is the ONLY authoritative source of build state.
+      // Polling order of truth:
+      //   1. The build service (Worker) status — used when it returns a
+      //      usable, GitHub-backed state.
+      //   2. The public, unauthenticated GitHub Actions run API
+      //      (https://api.github.com/repos/<owner>/<repo>/actions/runs/<id>)
+      //      — checked at least once a minute and whenever the service
+      //      status is unusable. No token or secret is needed; the repo is
+      //      public and the browser only reads run status.
+      // The UI NEVER invents progress or success from a local timer. It
+      // stops polling exactly when GitHub reports a terminal state.
+      // -----------------------------------------------------------------
+      const serviceStateToJob = (data: any) => {
+        // GitHub-native fields are authoritative when the service returns them.
+        const ghStatus = data?.githubRunStatus ?? data?.runStatus ?? null;
+        const ghConclusion = data?.githubRunConclusion ?? data?.runConclusion ?? null;
+        let state: BuildUiState;
+        if (ghStatus) {
+          state = mapGitHubRunStatus(ghStatus, ghConclusion);
+        } else if (['QUEUED', 'BUILDING', 'SUCCESS', 'FAILED'].includes(data?.status)) {
+          state = data.status;
+        } else if (typeof data?.status === 'string' && data.status) {
+          // raw GitHub status (queued / in_progress / completed + conclusion)
+          state = mapGitHubRunStatus(data.status, data.conclusion);
+        } else {
+          state = 'QUEUED';
+        }
+        return {
+          status: state === 'SUCCESS' ? 'completed' : state === 'FAILED' ? 'failed' : 'building',
+          state,
+          runUrl: data?.runUrl,
+          apkMetadata: data?.apkMetadata || null,
+          apkUrl: data?.apkMetadata?.apkUrl || null,
+          error: data?.error || null,
+        };
+      };
+
+      const githubRunApi = extractGitHubRunApiUrl(result.data.runUrl);
+      const pollStartedAt = Date.now();
+      const MAX_POLL_MS = 30 * 60 * 1000; // stop polling after 30 minutes
+      let workerFailureCount = 0;
+      let tick = 0;
+      let finished = false;
+
+      const finishWithSuccess = async (job: ReturnType<typeof serviceStateToJob>) => {
+        clearInterval(pollTimer);
+        finished = true;
+        setIsBuilding(false);
+        setBuildJob({ ...job, state: 'SUCCESS', status: 'completed', error: null });
+        if (job.apkMetadata) {
+          onUpdateForm({
+            apkUrl: job.apkUrl,
+            apk: job.apkMetadata,
+            version: job.apkMetadata.versionName || form.version,
+            type: 'Android APK',
+          });
+          await onCatalogRefresh();
+          toast(`APK for ${form.name} built, signed and published successfully!`, 'success');
+        } else {
+          // GitHub says the run completed with success but the service did not
+          // return release metadata yet — refresh the catalog so the console
+          // loads the published release from the repository.
+          await onCatalogRefresh();
+          toast('Build completed successfully on GitHub Actions. Refresh the catalog to load the release details.', 'info');
+        }
+      };
+
+      const finishWithFailure = (job: ReturnType<typeof serviceStateToJob> | null, message: string) => {
+        clearInterval(pollTimer);
+        finished = true;
+        setIsBuilding(false);
+        setBuildError(message);
+        setBuildJob((prev: any) => ({ ...(job ?? prev), state: 'FAILED', status: 'failed', error: message }));
+        toast(`Build failed: ${message}`, 'error');
+      };
+
+      const pollGithubOnce = async (): Promise<{ state: BuildUiState; url: string } | null> => {
+        if (!githubRunApi) return null;
+        try {
+          const res = await fetch(githubRunApi.apiBaseUrl, {
+            headers: { Accept: 'application/vnd.github+json' },
+          });
+          if (!res.ok) return null;
+          const run = await res.json();
+          const state = mapGitHubRunStatus(run.status, run.conclusion);
+          return { state, url: run.html_url || githubRunApi.runUrl };
+        } catch {
+          return null;
+        }
+      };
 
       const pollTimer = setInterval(async () => {
+        if (finished) return;
+        tick += 1;
+
+        // Absolute stop: never poll forever.
+        if (Date.now() - pollStartedAt > MAX_POLL_MS) {
+          finishWithFailure(
+            null,
+            'Build status could not be confirmed within 30 minutes. Check the GitHub Actions run for the real result.'
+          );
+          return;
+        }
+
         try {
-          const pollRes = await serviceFetchJson(`${BUILD_SERVICE_ENDPOINT}?buildId=${encodeURIComponent(buildId)}`);
-          if (!pollRes.ok || !pollRes.data?.success) return;
-          const job = serviceStateToJob(pollRes.data);
-          setBuildJob(job);
-
-          if (job.status === 'completed') {
-            clearInterval(pollTimer);
-            setIsBuilding(false);
-
-            if (job.apkMetadata) {
-              onUpdateForm({
-                apkUrl: job.apkUrl,
-                apk: job.apkMetadata,
-                version: job.apkMetadata.versionName || form.version,
-                type: 'Android APK',
-              });
-              await onCatalogRefresh();
-              toast(`APK for ${form.name} built, signed and published successfully!`, 'success');
+          // 1. Poll the build service (Worker).
+          let job: ReturnType<typeof serviceStateToJob> | null = null;
+          try {
+            const pollRes = await serviceFetchJson(`${BUILD_SERVICE_ENDPOINT}?buildId=${encodeURIComponent(buildId)}`);
+            if (pollRes.ok && pollRes.data?.success) {
+              workerFailureCount = 0;
+              job = serviceStateToJob(pollRes.data);
+              setBuildJob(job);
+              if (job.status === 'completed') {
+                await finishWithSuccess(job);
+                return;
+              }
+              if (job.status === 'failed') {
+                finishWithFailure(job, job.error || 'GitHub Actions run completed without success');
+                return;
+              }
             } else {
-              toast('Build completed but the published release metadata could not be read back.', 'info');
+              workerFailureCount += 1;
             }
-          } else if (job.status === 'failed') {
-            clearInterval(pollTimer);
-            setIsBuilding(false);
-            setBuildError(job.error || 'Build process encountered a failure');
-            toast(`Build failed: ${job.error || 'Unknown error'}`, 'error');
+          } catch (pollErr) {
+            console.error('Build service polling error:', pollErr);
+            workerFailureCount += 1;
+          }
+
+          // 2. Authoritative cross-check against the GitHub Actions API —
+          //    every minute, and immediately whenever the service status was
+          //    unusable (this is exactly how a stale QUEUED gets corrected).
+          const serviceUnusable = !job || workerFailureCount > 0;
+          if (githubRunApi && (tick % 6 === 0 || serviceUnusable)) {
+            const gh = await pollGithubOnce();
+            if (gh) {
+              workerFailureCount = 0; // GitHub is authoritative and reachable.
+              if (gh.state === 'SUCCESS') {
+                await finishWithSuccess(job ?? { status: 'completed', state: 'SUCCESS', runUrl: gh.url, apkMetadata: null, apkUrl: null, error: null });
+                return;
+              }
+              if (gh.state === 'FAILED') {
+                finishWithFailure(job, 'GitHub Actions run completed with a non-success conclusion');
+                return;
+              }
+              setBuildJob({ status: 'building', state: gh.state, runUrl: gh.url, apkMetadata: job?.apkMetadata ?? null, apkUrl: job?.apkUrl ?? null, error: null });
+            }
+          }
+
+          // 3. Truthful unavailability notice: the service is unreachable and
+          //    no GitHub state could be read. Show the run link; never
+          //    fabricate a state from a timer.
+          if (workerFailureCount >= 6) {
+            setBuildJob((prev: any) => ({
+              ...prev,
+              state: prev?.state === 'SUCCESS' || prev?.state === 'FAILED' ? prev.state : 'QUEUED',
+              runUrl: githubRunApi?.runUrl || prev?.runUrl,
+              error: 'Live build status is temporarily unavailable. Follow the run on GitHub for the authoritative result.',
+            }));
           }
         } catch (pollErr) {
           console.error('Build polling error:', pollErr);
@@ -421,6 +582,7 @@ export function ApkBuildCenter({
                   value={packageIdInput}
                   onChange={(e) => handlePackageIdChange(e.target.value)}
                   placeholder="com.appmintly.myapp"
+                  data-build-field="packageId"
                   className={`w-full bg-[#F8F2E7] border rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 ${
                     packageIdError
                       ? 'border-[#E52B32] focus:ring-[#E52B32]'
