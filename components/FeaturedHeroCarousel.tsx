@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, Download, ExternalLink, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { AppItem } from '@/data/apps';
+import { BASE_PATH } from '@/lib/api-path';
 
 interface FeaturedHeroCarouselProps {
   featuredApps: AppItem[];
@@ -24,6 +25,12 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
 
   const current = featuredApps[currentIndex];
 
+  // Catalog image paths are repository-relative (e.g. "/brand/x.png").
+  // Resolve them against the deployment base path so the hero background
+  // loads under the GitHub Pages sub-path like every other catalog asset.
+  const heroImage = current.banner || current.icon;
+  const resolvedHeroImage = heroImage && heroImage.startsWith('/') ? `${BASE_PATH}${heroImage}` : heroImage;
+
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + featuredApps.length) % featuredApps.length);
   };
@@ -37,7 +44,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
       {/* Background Banner Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src={current.banner || current.icon}
+          src={resolvedHeroImage}
           alt={current.name}
           className="w-full h-full object-cover opacity-30 filter brightness-75 scale-105 transition-all duration-700 ease-out"
         />
