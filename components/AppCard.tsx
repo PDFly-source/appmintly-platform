@@ -19,6 +19,8 @@ import {
 import { AppItem, AppType, isNewApp } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { resolveDeveloper } from '@/data/publishers';
 import { apiUrl } from '@/lib/api-path';
 import {
   useLocalFavorite,
@@ -295,8 +297,9 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           <h3 className="font-bold text-base text-[#17191C] group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}
           </h3>
-          <p className="text-xs text-[#6F6F6F] truncate mt-0.5">
-            {app.developer}
+          <p className="text-xs text-[#6F6F6F] truncate mt-0.5 flex items-center gap-1">
+            <span className="truncate">{resolveDeveloper(app).name}</span>
+            {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
           </p>
           <div className="flex items-center gap-2 mt-1 text-[11px] text-[#6F6F6F]">
             <span className="font-medium text-[#17191C]/80">v{app.version}</span>

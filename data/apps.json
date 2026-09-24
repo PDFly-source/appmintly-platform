@@ -4,12 +4,12 @@
     "slug": "studyria",
     "name": "Studyria",
     "shortName": "Studyria",
-    "developer": "Studyria Team",
+    "developer": "PKD",
     "type": "Web App",
     "category": "Education",
     "description": "Studyria is an Assam-focused comprehensive educational web application built for candidates preparing for ADRE, APSC, Assam Police, and TET examinations. It provides curated PDFs, previous year question papers (PYQs), interactive quizzes, full mock tests, subject-wise MCQs, daily current affairs, and career vacancy alerts in one unified portal.",
     "shortDescription": "Assam-focused study app for ADRE, APSC, Assam Police & TET with PDFs, PYQs, quizzes, mock tests, MCQs, current affairs and career updates.",
-    "icon": "https://studyria.qzz.io/favicon.ico",
+    "icon": "/brand/studyria-icon-384.png",
     "screenshots": [
       "https://studyria.qzz.io/og-image.png"
     ],
@@ -88,7 +88,8 @@
       "architecture": "universal",
       "downloadAvailable": true,
       "verified": true
-    }
+    },
+    "developerSlug": "pkd"
   },
   {
     "id": "pdfminifly",
@@ -100,7 +101,7 @@
     "category": "Tools",
     "description": "Private PDF tools designed to edit, convert, organize and protect documents directly inside the browser. No cloud uploads. No account required. All files are processed locally using your device's memory for maximum speed and complete data privacy.",
     "shortDescription": "Private PDF Tools. Powerful. Fast. Local.",
-    "icon": "https://pdfly-source.github.io/pdfly-app/pwa-512x512.png",
+    "icon": "/brand/pdfminifly-icon-384.png",
     "screenshots": [
       "https://pdfly-source.github.io/pdfly-app/og-image.png"
     ],
@@ -176,6 +177,7 @@
       "architecture": "universal",
       "downloadAvailable": true,
       "verified": true
-    }
+    },
+    "developerSlug": "pkd"
   }
 ]

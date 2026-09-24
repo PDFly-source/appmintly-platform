@@ -130,6 +130,10 @@ export default function PublisherPage() {
 
   const [form, setForm] = useState<AppItem>(emptyForm);
   const [isEditingExisting, setIsEditingExisting] = useState(false);
+  // Production APK releases are protected infrastructure. When editing an
+  // existing app whose APK is verified against a production release, all
+  // release-identity fields become read-only in the editor.
+  const isProtectedRelease = Boolean(isEditingExisting && form.apk?.verified && form.apk?.enabled);
   const [copiedJson, setCopiedJson] = useState(false);
   const [newFeatureInput, setNewFeatureInput] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
@@ -309,12 +313,35 @@ export default function PublisherPage() {
       isDemo: false,
     };
 
+    // Change detection — do not claim a save when nothing changed
+    const existing = catalog.find(
+      (a) => a.slug.toLowerCase() === cleanSlug.toLowerCase() || a.id.toLowerCase() === appToSave.id.toLowerCase()
+    );
+    if (existing && JSON.stringify({ ...existing, ...appToSave }) === JSON.stringify({ ...existing })) {
+      const changedKeys = Object.keys(appToSave).filter(
+        (k) => JSON.stringify((appToSave as any)[k]) !== JSON.stringify((existing as any)[k])
+      );
+      if (changedKeys.length === 0) {
+        toast('No changes detected — nothing to save.', 'info');
+        return;
+      }
+    }
+
     const ok = await publishApp(appToSave);
-    if (ok) {
+    if (ok.success && ok.persisted === 'session') {
+      // Static GitHub Pages hosting: the change is applied to the local
+      // working session (preview across the site) but is NOT a permanent
+      // production publish. State this truthfully.
+      toast(
+        `Saved "${appToSave.name}" to your working session — previews live on this device only. Not published: export the Catalog JSON and commit it to the repository to publish.`,
+        'success'
+      );
+      setPublishedAppSuccess(appToSave);
+    } else if (ok.success) {
       toast(`Published "${appToSave.name}" successfully!`, 'success');
       setPublishedAppSuccess(appToSave);
     } else {
-      toast('Error saving application to catalog.', 'error');
+      toast(ok.message || 'Error saving application to catalog.', 'error');
     }
   };
 
@@ -667,6 +694,19 @@ export default function PublisherPage() {
         {/* ========================================================================= */}
         {viewMode === 'editor' && (
           <div className="space-y-6">
+            {/* Persistence boundary banner (static GitHub Pages hosting) */}
+            <div className="bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-3 flex items-start gap-3">
+              <Info className="w-4 h-4 text-[#1976F3] mt-0.5 shrink-0" />
+              <div className="text-xs text-[#6F6F6F] leading-relaxed">
+                <span className="font-bold text-[#17191C]">How saving works on this deployment:</span>{' '}
+                AppMintly runs as a static site on GitHub Pages. <span className="font-semibold text-[#17191C]">Save</span> validates
+                your changes and applies them to your <span className="font-semibold text-[#17191C]">working session</span> — the edit
+                previews across Home, Explore, Categories and Search on this device only. It is <span className="font-semibold text-[#17191C]">not</span> a
+                permanent production publish. To publish permanently, use <span className="font-semibold text-[#17191C]">Export Catalog JSON</span> and
+                commit the file to <code className="font-mono">data/apps.json</code> in the repository.
+              </div>
+            </div>
+
             {/* Workflow Step Tracker */}
             <div className="bg-[#FFFDF8] border border-[#E8DED0] rounded-3xl p-3 sm:p-4 overflow-x-auto scrollbar-none shadow-xs">
               <div className="flex items-center gap-2 min-w-max">
@@ -821,10 +861,16 @@ export default function PublisherPage() {
                       <input
                         type="url"
                         value={form.apkUrl || ''}
+                        readOnly={isProtectedRelease}
                         onChange={(e) => setForm({ ...form, apkUrl: e.target.value })}
                         placeholder="https://.../app-v1.0.apk"
-                        className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                        className={`w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
                       />
+                      {isProtectedRelease && (
+                        <p className="text-[10px] text-[#6F6F6F] mt-1">
+                          Read-only: production APK distribution is linked to the verified GitHub release and cannot be edited here.
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -910,6 +956,9 @@ export default function PublisherPage() {
                   <div>
                     <label className="text-xs font-bold text-[#17191C] block mb-1">
                       Developer / Studio *
+                      <span className="text-[10px] font-normal text-[#6F6F6F]">
+                        (the blue &quot;Verified Publisher&quot; badge is granted at the repository level via data/publishers.json — it cannot be self-assigned from this form)
+                      </span>
                     </label>
                     <input
                       type="text"
@@ -1260,10 +1309,16 @@ export default function PublisherPage() {
                     <input
                       type="text"
                       value={form.version}
+                      readOnly={isProtectedRelease}
                       onChange={(e) => setForm({ ...form, version: e.target.value })}
                       placeholder="1.0.0"
-                      className="w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                      className={`w-full bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl px-4 py-2 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3] ${isProtectedRelease ? 'opacity-60 cursor-not-allowed' : ''}`}
                     />
+                    {isProtectedRelease && (
+                      <p className="text-[10px] text-[#6F6F6F] mt-1">
+                        Read-only: this version belongs to the verified production APK release and is managed by the release pipeline.
+                      </p>
+                    )}
                   </div>
 
                   <div>

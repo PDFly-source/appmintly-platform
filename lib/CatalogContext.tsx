@@ -5,6 +5,7 @@ import {
   AppItem,
   APPS as DEFAULT_APPS,
   getPublishedApps,
+  isValidPublicApp,
   getFeaturedApps,
   getLatestApps,
   getNewApps,
@@ -13,6 +14,7 @@ import {
   searchPublishedApps,
   getAppBySlug as getSelectorAppBySlug,
   normalizeApp,
+  normalizeStatus,
 } from '@/data/apps';
 import { APPFORGE_DEMO_MODE } from '@/lib/config';
 
@@ -27,7 +29,9 @@ interface CatalogContextType {
   searchApps: (query: string) => AppItem[];
   getAppBySlug: (slug: string) => AppItem | undefined;
   refreshCatalog: () => Promise<void>;
-  publishApp: (app: Partial<AppItem>) => Promise<{ success: boolean; app?: AppItem; message?: string }>;
+  publishApp: (
+    app: Partial<AppItem>
+  ) => Promise<{ success: boolean; app?: AppItem; message?: string; persisted?: 'server' | 'session' }>;
   saveCatalog: (newCatalog: AppItem[]) => Promise<boolean>;
   deleteApp: (id: string) => Promise<boolean>;
   isLoading: boolean;
@@ -139,6 +143,60 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // Publish or update an application
+  /**
+   * Static-hosting fallback for the publish API.
+   *
+   * AppMintly production runs on GitHub Pages static export, where no
+   * server exists to write data/apps.json. In that case the edit is
+   * applied to the browser's working-session catalog (localStorage +
+   * in-memory state) so the change previews truthfully across Home,
+   * Explore, Categories and Search — but it is NOT a permanent
+   * production publish. The caller is told this via
+   * `persisted: 'session'` so the UI can present the real state.
+   * No credentials are ever exposed to the browser.
+   */
+  const applySessionPublish = useCallback(
+    async (appData: Partial<AppItem>, reason: string): Promise<{ success: boolean; app?: AppItem; message?: string; persisted?: 'server' | 'session' }> => {
+      try {
+        const updatedApp = normalizeApp({ ...appData } as AppItem);
+
+        // Validate the resulting record before applying it anywhere
+        if (!isValidPublicApp(updatedApp, APPFORGE_DEMO_MODE) && normalizeStatus(updatedApp) !== 'draft') {
+          return { success: false, message: 'Validation failed: app record is incomplete' };
+        }
+
+        setCatalog((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex(
+            (a) =>
+              a.id.toLowerCase() === updatedApp.id.toLowerCase() ||
+              a.slug.toLowerCase() === updatedApp.slug.toLowerCase()
+          );
+          if (idx >= 0) {
+            next[idx] = { ...next[idx], ...updatedApp };
+          } else {
+            next.unshift(updatedApp);
+          }
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
+          }
+          return next;
+        });
+
+        return {
+          success: true,
+          app: updatedApp,
+          persisted: 'session',
+          message: `${reason} — applied to your working session only`,
+        };
+      } catch (err: any) {
+        return { success: false, message: err?.message || 'Failed to apply changes' };
+      }
+    },
+    []
+  );
+
   const publishApp = useCallback(
     async (appData: Partial<AppItem>) => {
       setIsLoading(true);
@@ -175,16 +233,16 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
           return { success: true, app: updatedApp, message: data.message };
         } else {
-          return { success: false, message: data.error || 'Failed to publish application' };
+          return await applySessionPublish(appData, data.error || 'Failed to publish application');
         }
       } catch (err: any) {
-        console.error('[CatalogContext] Publish error:', err);
-        return { success: false, message: err?.message || 'Network error publishing app' };
+        console.warn('[CatalogContext] Publish API unavailable (static hosting), applying to working session:', err?.message);
+        return await applySessionPublish(appData, 'Publish API unavailable');
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [applySessionPublish]
   );
 
   // Replace/save the entire catalog
@@ -303,7 +361,11 @@ export function useCatalog() {
       searchApps: (q: string) => searchPublishedApps(q, DEFAULT_APPS, APPFORGE_DEMO_MODE),
       getAppBySlug: (s: string) => getSelectorAppBySlug(s, DEFAULT_APPS, APPFORGE_DEMO_MODE),
       refreshCatalog: async () => {},
-      publishApp: async () => ({ success: false, message: 'CatalogProvider not mounted' }),
+      publishApp: async () => ({
+        success: false,
+        message: 'CatalogProvider not mounted',
+        persisted: undefined as 'server' | 'session' | undefined,
+      }),
       saveCatalog: async () => false,
       deleteApp: async () => false,
       isLoading: false,

@@ -52,11 +52,14 @@ jobs:
       # The Pages site is a fully static export of the marketplace. API routes
       # (server-side publisher tooling) cannot run on static hosting and are
       # excluded from this build; the client falls back to /data/apps.json.
+      - name: Verify publishers.json Format
+        run: node -e "const publishers = require('./data/publishers.json'); if (!Array.isArray(publishers)) throw new Error('publishers.json must be an array'); for (const p of publishers) { if (!p.slug || !p.name) throw new Error('publisher record missing slug/name'); } console.log('Validated ' + publishers.length + ' publisher identities.');"
+
       - name: Build Static Next.js Export
         run: rm -rf app/api && NEXT_OUTPUT=export NEXT_PUBLIC_BASE_PATH=/appmintly-platform npm run build
 
       - name: Ship Static Catalog Data
-        run: mkdir -p out/data && cp data/apps.json data/categories.json data/collections.json out/data/
+        run: mkdir -p out/data && cp data/apps.json data/publishers.json data/categories.json data/collections.json out/data/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

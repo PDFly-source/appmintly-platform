@@ -32,6 +32,14 @@ export interface ApkMetadata {
   buildStatus?: string;
   buildId?: string;
   authorized?: boolean;
+  // Production release-pipeline attributes. These describe the verified
+  // production release and are NEVER editable from the publisher console.
+  releaseTag?: string;
+  releaseDate?: string;
+  platform?: string;
+  architecture?: string;
+  downloadAvailable?: boolean;
+  verified?: boolean;
 }
 
 export interface AppItem {
@@ -40,6 +48,7 @@ export interface AppItem {
   name: string;
   shortName?: string;
   developer: string;
+  developerSlug?: string;
   type: AppType;
   category: string;
   description: string;

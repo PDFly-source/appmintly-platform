@@ -25,7 +25,12 @@ interface AppMintlyLogoProps {
 // the static GitHub Pages build (injected at build time).
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
+// Compact sizes render at 26-42px (navbar/footer). A 192px optimized
+// derivative of the official 700px mark is used for those placements so
+// browsers download ~41 KB instead of ~368 KB. Large placements and the
+// original artwork still use the untouched official source assets.
 const MARK_SRC = `${BASE_PATH}/brand/appmintly-icon.png`;
+const MARK_SRC_COMPACT = `${BASE_PATH}/brand/appmintly-icon-192.png`;
 const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
 
 export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
@@ -47,7 +52,7 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
   const Mark = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={MARK_SRC}
+      src={size === 'xs' || size === 'sm' || size === 'md' ? MARK_SRC_COMPACT : MARK_SRC}
       alt="AppMintly"
       width={current.mark}
       height={current.mark}

@@ -33,6 +33,8 @@ import { APPS, AppItem } from '@/data/apps';
 import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { resolveDeveloper } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import {
@@ -298,8 +300,9 @@ export default function AppDetailPage() {
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#17191C] tracking-tight">
                   {app.name}
                 </h1>
-                <p className="text-sm sm:text-base font-semibold text-[#6F6F6F] mt-1">
-                  {app.developer}
+                <p className="text-sm sm:text-base font-semibold text-[#6F6F6F] mt-1 flex items-center gap-1.5">
+                  <span>{resolveDeveloper(app).name}</span>
+                  {resolveDeveloper(app).verified && <VerifiedBadge size="sm" withLabel />}
                 </p>
               </div>
 
@@ -490,7 +493,10 @@ export default function AppDetailPage() {
               <dl className="space-y-3.5 text-xs">
                 <div className="flex items-center justify-between">
                   <dt className="text-[#6F6F6F] font-bold">Developer</dt>
-                  <dd className="font-semibold text-[#17191C] text-right">{app.developer}</dd>
+                  <dd className="font-semibold text-[#17191C] text-right flex items-center justify-end gap-1">
+                    {resolveDeveloper(app).name}
+                    {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
+                  </dd>
                 </div>
 
                 <div className="flex items-center justify-between">

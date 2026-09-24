@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { BASE_PATH } from '@/lib/api-path';
 
 interface AppIconProps {
   src?: string;
@@ -71,9 +72,15 @@ export const AppIcon: React.FC<AppIconProps> = ({
   const [hasError, setHasError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
 
+  // Catalog icons may be stored as repository-relative paths (e.g.
+  // "/brand/studyria-icon-384.png"). Resolve them against the deployment
+  // base path ('' locally, '/appmintly-platform' on GitHub Pages) so they
+  // work in every environment without baking the base path into data.
+  const resolvedSrc = src && src.startsWith('/') ? `${BASE_PATH}${src}` : src;
+
   // Clean state adjustment when src prop changes
-  if (src !== prevSrc) {
-    setPrevSrc(src);
+  if (resolvedSrc !== prevSrc) {
+    setPrevSrc(resolvedSrc);
     setHasError(false);
   }
 
@@ -96,7 +103,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
   const sizeClass = sizeClasses[size] || sizeClasses.md;
   const colors = getLettermarkColors(name || 'App', themeColor);
 
-  if (!src || hasError) {
+  if (!resolvedSrc || hasError) {
     return (
       <div
         className={`relative shrink-0 flex items-center justify-center font-black select-none shadow-2xs overflow-hidden transition-all duration-200 border ${sizeClass} ${shapeClass} ${className}`}
@@ -120,7 +127,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
       className={`relative shrink-0 overflow-hidden shadow-2xs border border-[#17191C]/10 bg-white ${sizeClass} ${shapeClass} ${className}`}
     >
       <img
-        src={src}
+        src={resolvedSrc}
         alt={`${name} icon`}
         className="w-full h-full object-cover select-none"
         loading="lazy"
