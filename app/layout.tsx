@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: 'AppMintly',
     images: [
       {
-        url: `${BASE_PATH}/brand/appmintly-logo-full.png`,
+        url: '/brand/appmintly-logo-full.png',
         width: 900,
         height: 900,
         alt: 'AppMintly — Discover. Install. Experience.',
