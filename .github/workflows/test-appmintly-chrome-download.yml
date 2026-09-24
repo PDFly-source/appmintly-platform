@@ -1,0 +1,110 @@
+name: Test AppMintly APK download in Android Chrome
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chrome-download-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Write Chrome download test script
+        run: |
+          cat > /home/runner/chrome-apk-test.sh <<'EOS'
+          #!/bin/bash
+          set -x
+          cd "$HOME"
+          mkdir -p chrome-dl && cd chrome-dl
+          log(){ echo "### $*"; }
+
+          dump(){ adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1; }
+
+          find_tap(){
+            dump
+            python3 - "$1" <<'PY' > /tmp/coords
+          import sys,re,xml.etree.ElementTree as ET
+          pat=re.compile(sys.argv[1])
+          try: t=ET.parse('ui.xml')
+          except Exception: sys.exit(0)
+          for n in t.iter('node'):
+              txt=(n.get('text') or '')+' '+(n.get('content-desc') or '')
+              if pat.search(txt):
+                  m=list(map(int,re.findall(r'\d+',n.get('bounds'))))
+                  print((m[0]+m[2])//2,(m[1]+m[3])//2);break
+          PY
+            if [ -s /tmp/coords ]; then adb shell input tap $(cat /tmp/coords); log "tapped: $1"; sleep 2; return 0; else return 1; fi
+          }
+
+          ui_has(){ dump; grep -q "$1" ui.xml 2>/dev/null; }
+
+          adb shell pm list packages | grep -iE 'chrome|browser|webview' > browsers.txt || true
+          log "browser packages:"; cat browsers.txt
+
+          # ---------------- PART B: direct GitHub release URL in Chrome ----------------
+          log "PART B: direct GitHub release asset download via Chrome"
+          adb shell am start -a android.intent.action.VIEW -d "https://github.com/PDFly-source/appmintly-releases/releases/download/studyria-v2.0.1/Studyria-2.0.1.apk" -n com.android.chrome/com.google.android.apps.chrome.Main
+          sleep 8
+          for p in 'Accept (&|and )?[Cc]ontinue' '^[Cc]ontinue$' 'No,? thanks' 'Not now' 'Got it' '^[Nn]ext$' '^[Ss]kip$' '^[Ll]ater$' '^[Dd]one$'; do find_tap "$p"; done
+          sleep 4
+          for i in $(seq 1 25); do
+            sleep 6
+            adb shell ls -l /sdcard/Download/ > partB_listing_$i.txt 2>&1
+            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART B: Studyria-2.0.1.apk present in Download at poll $i"; break; fi
+            if [ $i -eq 25 ]; then log "PART B: file NOT present after 25 polls"; fi
+          done
+          adb shell ls -l /sdcard/Download/ > partB_listing_final.txt 2>&1
+          adb shell sha256sum /sdcard/Download/Studyria-2.0.1.apk > partB_sha.txt 2>&1 || echo "PART B sha: file absent" > partB_sha.txt
+          adb exec-out screencap -p > partB_screen.png || true
+          adb shell dumpsys notification > partB_notifications.txt 2>&1
+          adb logcat -d -s downloadmanager:V DownloadManager:V chromium:V cr_DownloadManagerBase:V System.err:W > partB_logcat.txt 2>&1
+          adb logcat -c
+          adb shell rm -f /sdcard/Download/Studyria-2.0.1.apk
+
+          # ---------------- PART A: real marketplace flow in Chrome ----------------
+          log "PART A: marketplace detail page flow"
+          adb shell am start -a android.intent.action.VIEW -d "https://pdfly-source.github.io/appmintly-platform/app/studyria" -n com.android.chrome/com.google.android.apps.chrome.Main
+          sleep 15
+          adb exec-out screencap -p > partA_page.png || true
+          if find_tap 'Get App'; then sleep 3; fi
+          adb exec-out screencap -p > partA_sheet.png || true
+          if find_tap 'Download APK'; then log "PART A: Download APK tapped"; else log "PART A: Download APK button NOT found"; fi
+          sleep 4
+          for i in $(seq 1 25); do
+            sleep 6
+            adb shell ls -l /sdcard/Download/ > partA_listing_$i.txt 2>&1
+            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART A: Studyria-2.0.1.apk present in Download at poll $i"; break; fi
+            if [ $i -eq 25 ]; then log "PART A: file NOT present after 25 polls"; fi
+          done
+          adb shell ls -l /sdcard/Download/ > partA_listing_final.txt 2>&1
+          adb shell sha256sum /sdcard/Download/Studyria-2.0.1.apk > partA_sha.txt 2>&1 || echo "PART A sha: file absent" > partA_sha.txt
+          adb exec-out screencap -p > partA_screen.png || true
+          adb shell dumpsys notification > partA_notifications.txt 2>&1
+          adb logcat -d > partA_logcat.txt 2>&1
+
+          log "TEST COMPLETE"
+          EOS
+          chmod +x /home/runner/chrome-apk-test.sh
+      - name: Launch on Android 16 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: bash /home/runner/chrome-apk-test.sh
+      - name: Upload Chrome download test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appmintly-chrome-download-test
+          path: /home/runner/chrome-dl/
+          if-no-files-found: warn
+          retention-days: 7
