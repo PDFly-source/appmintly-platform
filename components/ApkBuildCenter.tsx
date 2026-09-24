@@ -35,8 +35,14 @@ interface ApkBuildCenterProps {
   onNext: () => void;
   onPrev: () => void;
   onCatalogRefresh: () => Promise<void>;
-  /** Publisher publish key — required to authorize a REAL production build. */
-  publishKey: string;
+  /**
+   * Requests publisher authentication. Opens the authentication dialog
+   * automatically when no key is held in memory; resolves with the
+   * authenticated key, or an empty string if authentication did not happen.
+   * The key lives only in runtime memory for the page session and is never
+   * persisted on the device.
+   */
+  onAuthRequired: () => Promise<string>;
 }
 
 export function ApkBuildCenter({
@@ -45,7 +51,7 @@ export function ApkBuildCenter({
   onNext,
   onPrev,
   onCatalogRefresh,
-  publishKey,
+  onAuthRequired,
 }: ApkBuildCenterProps) {
   const { toast } = useToast();
 
@@ -106,18 +112,26 @@ export function ApkBuildCenter({
     setBuildError(null);
 
     try {
-      if (!publishKey.trim()) {
+      // Authentication gate: never call the build endpoint without an
+      // authenticated publisher. onAuthRequired opens the authentication
+      // dialog automatically when no key is in memory and resolves with
+      // the key ('' if not authenticated). The key stays memory-only.
+      const key = await onAuthRequired();
+      if (!key) {
         setIsBuilding(false);
         setBuildError(null);
-        toast('Enter your publisher publish key (Publish & Deploy, step 9) to authorize a real production build.', 'info');
+        toast('Publisher authentication is required to start a production build.', 'info');
         return;
       }
 
       const result = await serviceFetchJson(BUILD_SERVICE_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${key}`,
+        },
         body: JSON.stringify({
-          publishKey,
+          publishKey: key,
           app: {
             slug: form.slug,
             name: form.name,
