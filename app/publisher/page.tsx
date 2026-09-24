@@ -67,6 +67,8 @@ import {
   storeRememberedPublishKey,
   ProductionPublishResult,
   PublishServiceStatus,
+  serviceFetchJson,
+  ANALYZE_SERVICE_ENDPOINT,
 } from '@/lib/production-publish';
 
 type WorkflowStep =
@@ -82,7 +84,7 @@ type WorkflowStep =
 
 export default function PublisherPage() {
   const { toast } = useToast();
-  const { catalog, publishApp, deleteApp, refreshCatalog, isLoading } = useCatalog();
+  const { catalog, publishApp, deleteApp, refreshCatalog, clearSessionEdits, hasSessionEdits, isLoading } = useCatalog();
 
   // Active view: 'catalog' list or 'editor' (add/edit workflow)
   const [viewMode, setViewMode] = useState<'catalog' | 'editor'>('catalog');
@@ -310,7 +312,7 @@ export default function PublisherPage() {
     setAnalysisError(null);
 
     try {
-      const result = await fetchJson(apiUrl('/api/analyze-url'), {
+      const result = await serviceFetchJson(ANALYZE_SERVICE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: target }),
@@ -319,8 +321,8 @@ export default function PublisherPage() {
       if (!result.ok) {
         setAnalysisError(
           result.unavailable
-            ? 'Metadata analysis service unavailable. Enter the application details manually below.'
-            : result.error || 'Failed to inspect application metadata.'
+            ? 'Metadata analysis service temporarily unavailable. Enter the application details manually below.'
+            : result.data?.error || 'Failed to inspect application metadata.'
         );
         return;
       }
@@ -585,6 +587,21 @@ export default function PublisherPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                if (window.confirm('Discard all session-only edits saved on this device? The console will re-sync with the published catalog.')) {
+                  await clearSessionEdits();
+                  toast('Session edits discarded. Console re-synced with the published catalog.', 'info');
+                }
+              }}
+              disabled={!hasSessionEdits}
+              className="px-3.5 py-1.5 rounded-full bg-[#FFFDF8] hover:bg-white text-xs font-bold text-[#17191C] border border-[#E8DED0] transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Discard device-local session edits and re-sync with the published catalog"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{hasSessionEdits ? 'Reset Session' : 'No Session Edits'}</span>
+            </button>
             <button
               type="button"
               onClick={async () => {
@@ -1312,6 +1329,7 @@ export default function PublisherPage() {
                 onNext={() => setWorkflowStep('screenshots')}
                 onPrev={() => setWorkflowStep('icon')}
                 onCatalogRefresh={refreshCatalog}
+                publishKey={publishKey}
               />
             )}
 

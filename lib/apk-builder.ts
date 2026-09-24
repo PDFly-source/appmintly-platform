@@ -449,6 +449,34 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         );
       }
 
+      // Adaptive icon (Android 8+): real artwork foreground sized into the
+      // adaptive safe zone over a background layer. Without this, modern
+      // launchers render the flat legacy square (excessive white border).
+      const anydpiDir = path.join(resDir, 'mipmap-anydpi-v26');
+      await fs.promises.mkdir(anydpiDir, { recursive: true });
+      const adaptiveForegroundDensities: { dir: string; canvas: number }[] = [
+        { dir: mipmapMdpi, canvas: 108 },
+        { dir: mipmapHdpi, canvas: 162 },
+        { dir: mipmapXhdpi, canvas: 216 },
+        { dir: mipmapXhdpi, canvas: 324 },
+        { dir: mipmapXxxhdpi, canvas: 432 },
+      ];
+      for (const d of adaptiveForegroundDensities) {
+        const fgSize = Math.round(d.canvas * 0.75); // keeps artwork content inside the 66/108 safe zone
+        await execPromise(
+          `convert ${inputSpec} -resize ${fgSize}x${fgSize} -gravity center -background none -extent ${d.canvas}x${d.canvas} "${path.join(d.dir, 'ic_launcher_foreground.png')}"`
+        );
+      }
+      const adaptiveIconXml = (foreground: string) => `<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/${foreground}"/>
+</adaptive-icon>
+`;
+      await fs.promises.writeFile(path.join(anydpiDir, 'ic_launcher.xml'), adaptiveIconXml('ic_launcher_foreground'), 'utf8');
+      await fs.promises.writeFile(path.join(anydpiDir, 'ic_launcher_round.xml'), adaptiveIconXml('ic_launcher_foreground'), 'utf8');
+      job.stepsCompleted.push('Launcher icons (legacy + adaptive)');
+
       job.stepsCompleted.push('Preparing source');
 
       // ---------------------------------------------------------
@@ -490,6 +518,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 <resources>
     <color name="theme_color">${themeColor}</color>
     <color name="bg_color">${backgroundColor}</color>
+    <color name="ic_launcher_background">${iconBuffer ? '#FEFEFE' : themeColor}</color>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
 

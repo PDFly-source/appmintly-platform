@@ -23,7 +23,11 @@ import {
 import { AppItem, ApkMetadata } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { apiUrl } from '@/lib/api-path';
-import { fetchJson } from '@/lib/api-client';
+import {
+  BUILD_SERVICE_ENDPOINT,
+  ANALYZE_SERVICE_ENDPOINT,
+  serviceFetchJson,
+} from '@/lib/production-publish';
 
 interface ApkBuildCenterProps {
   form: AppItem;
@@ -31,6 +35,8 @@ interface ApkBuildCenterProps {
   onNext: () => void;
   onPrev: () => void;
   onCatalogRefresh: () => Promise<void>;
+  /** Publisher publish key — required to authorize a REAL production build. */
+  publishKey: string;
 }
 
 export function ApkBuildCenter({
@@ -39,6 +45,7 @@ export function ApkBuildCenter({
   onNext,
   onPrev,
   onCatalogRefresh,
+  publishKey,
 }: ApkBuildCenterProps) {
   const { toast } = useToast();
 
@@ -99,81 +106,92 @@ export function ApkBuildCenter({
     setBuildError(null);
 
     try {
-      const result = await fetchJson(apiUrl('/api/build-apk'), {
+      if (!publishKey.trim()) {
+        setIsBuilding(false);
+        setBuildError(null);
+        toast('Enter your publisher publish key (Publish & Deploy, step 9) to authorize a real production build.', 'info');
+        return;
+      }
+
+      const result = await serviceFetchJson(BUILD_SERVICE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          appId: form.id || form.slug,
-          slug: form.slug,
-          name: form.name,
-          shortName: form.shortName || form.name,
-          version: form.version || '1.0.0',
-          launchUrl,
-          iconUrl: form.icon,
-          themeColor: form.themeColor || '#17191C',
-          backgroundColor: form.backgroundColor || '#FFFDF8',
-          buildMode,
-          packageId: packageIdInput,
-          authorized: true,
+          publishKey,
+          app: {
+            slug: form.slug,
+            name: form.name,
+            versionName: form.version || '1.0.0',
+            launchUrl,
+            iconUrl: form.icon,
+            themeColor: form.themeColor || '#17191C',
+            backgroundColor: form.backgroundColor || '#FFFDF8',
+            buildMode,
+            packageId: packageIdInput,
+          },
         }),
       });
 
       if (!result.ok || !result.data?.success) {
         throw new Error(
           result.unavailable
-            ? 'APK build service unavailable. APK generation requires the server-side build pipeline, which is not reachable on this static deployment.'
-            : result.data?.error || result.error || 'Failed to start APK build process'
+            ? 'Build service temporarily unavailable. Please try again.'
+            : result.data?.error || result.data?.message || 'Failed to start APK build process'
         );
       }
 
-      // Only show build progress after the server has actually accepted the request.
+      // A REAL build has been accepted: the service dispatched the GitHub
+      // Actions production workflow and returned its actual run id.
+      const buildId = result.data.buildId as string;
       setBuildJob({
         status: 'queued',
-        progress: 5,
-        currentStep: 'Build accepted by server',
-        stepsCompleted: ['Build request registered'],
+        state: 'QUEUED',
+        runUrl: result.data.runUrl,
+        error: null,
       });
 
-      const buildId = result.data.buildId;
+      const serviceStateToJob = (data: any) => ({
+        status: data.status === 'SUCCESS' ? 'completed' : data.status === 'FAILED' ? 'failed' : 'building',
+        state: data.status,
+        runUrl: data.runUrl,
+        apkMetadata: data.apkMetadata || null,
+        apkUrl: data.apkMetadata?.apkUrl || null,
+        error: data.error || null,
+      });
 
-      // Poll the GitHub Actions run, not the AI Studio process
       const pollTimer = setInterval(async () => {
         try {
-          const pollRes = await fetch(apiUrl(`/api/build-apk/${buildId}`));
-          if (!pollRes.ok) return;
-          const pollData = await pollRes.json();
-          if (pollData.success && pollData.job) {
-            setBuildJob(pollData.job);
+          const pollRes = await serviceFetchJson(`${BUILD_SERVICE_ENDPOINT}?buildId=${encodeURIComponent(buildId)}`);
+          if (!pollRes.ok || !pollRes.data?.success) return;
+          const job = serviceStateToJob(pollRes.data);
+          setBuildJob(job);
 
-            if (pollData.job.status === 'completed') {
-              clearInterval(pollTimer);
-              setIsBuilding(false);
+          if (job.status === 'completed') {
+            clearInterval(pollTimer);
+            setIsBuilding(false);
 
-              if (pollData.job.apkMetadata) {
-                onUpdateForm({
-                  apkUrl: pollData.job.apkUrl,
-                  apk: pollData.job.apkMetadata,
-                  type: 'Android APK',
-                });
-              }
-
-              if (pollData.job.apkUrl && pollData.job.apkMetadata) {
-                await onCatalogRefresh();
-                toast(`APK for ${form.name} published successfully!`, 'success');
-              } else {
-                toast('APK validated as a private GitHub Actions artifact. Public download is not yet published.', 'info');
-              }
-            } else if (pollData.job.status === 'failed') {
-              clearInterval(pollTimer);
-              setIsBuilding(false);
-              setBuildError(pollData.job.error || 'Build process encountered a failure');
-              toast(`Build failed: ${pollData.job.error || 'Unknown error'}`, 'error');
+            if (job.apkMetadata) {
+              onUpdateForm({
+                apkUrl: job.apkUrl,
+                apk: job.apkMetadata,
+                version: job.apkMetadata.versionName || form.version,
+                type: 'Android APK',
+              });
+              await onCatalogRefresh();
+              toast(`APK for ${form.name} built, signed and published successfully!`, 'success');
+            } else {
+              toast('Build completed but the published release metadata could not be read back.', 'info');
             }
+          } else if (job.status === 'failed') {
+            clearInterval(pollTimer);
+            setIsBuilding(false);
+            setBuildError(job.error || 'Build process encountered a failure');
+            toast(`Build failed: ${job.error || 'Unknown error'}`, 'error');
           }
         } catch (pollErr) {
           console.error('Build polling error:', pollErr);
         }
-      }, 5000);
+      }, 10000);
     } catch (err: any) {
       setIsBuilding(false);
       setBuildError(err.message || 'Build initialization failed');
@@ -192,13 +210,13 @@ export function ApkBuildCenter({
     setHasNewVersion(false);
 
     try {
-      const result = await fetchJson(apiUrl('/api/analyze-url'), {
+      const result = await serviceFetchJson(ANALYZE_SERVICE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: launchUrl }),
       });
       if (!result.ok && result.unavailable) {
-        toast('Metadata analysis service unavailable on this deployment.', 'error');
+        toast('Metadata analysis service temporarily unavailable. Please try again.', 'error');
         return;
       }
       const json = result.ok ? result.data : null;
@@ -500,65 +518,60 @@ export function ApkBuildCenter({
             </button>
           </div>
 
-          {/* Live Build Progress / Step Checklist */}
+          {/* Live Build Progress — REAL GitHub Actions run states only */}
           {buildJob && (
             <div className="bg-[#F8F2E7] border border-[#E8DED0] rounded-2xl p-5 space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between text-xs font-bold text-[#17191C]">
+              <div className="flex items-center justify-between text-xs font-bold text-[#17191C] gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#16A765] animate-ping" />
-                  <span>Build Pipeline Status: {buildJob.currentStep}</span>
+                  <span className={`w-2 h-2 rounded-full animate-ping ${buildJob.state === 'FAILED' ? 'bg-[#E52B32]' : 'bg-[#16A765]'}`} />
+                  <span>Production Build: {buildJob.state === 'QUEUED' ? 'QUEUED — waiting for a GitHub Actions runner' : buildJob.state === 'BUILDING' ? 'BUILDING — compiling, signing and validating on GitHub Actions' : buildJob.state === 'SUCCESS' ? 'SUCCESS — APK built, signed and published' : 'FAILED'}</span>
                 </div>
-                <span className="font-mono">{buildJob.progress}%</span>
+                {buildJob.runUrl && (
+                  <a
+                    href={buildJob.runUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1 rounded-full bg-white border border-[#E8DED0] hover:bg-[#E8DED0] text-[#17191C] text-[10px] font-bold transition flex items-center gap-1 shrink-0"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>View run on GitHub</span>
+                  </a>
+                )}
               </div>
 
-              {/* Progress bar */}
-              <div className="w-full bg-[#E8DED0] rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-[#16A765] h-full transition-all duration-300"
-                  style={{ width: `${buildJob.progress}%` }}
-                />
-              </div>
-
-              {/* Step Checklist: 10 Real Stages */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 pt-2 text-xs">
-                {[
-                  'Preparing source',
-                  'Validating URL',
-                  'Preparing Android project',
-                  'Building APK',
-                  'Signing APK',
-                  'Validating APK',
-                  'Calculating SHA-256',
-                  'Uploading APK',
-                  'Validated artifact (not publicly published)',
-                ].map((stepName, stepIdx) => {
-                  const isDone = (buildJob.stepsCompleted || []).includes(stepName);
-                  const isCurrent = buildJob.currentStep === stepName && buildJob.status !== 'failed';
+              {/* Truthful state chips: no invented percentages, no fake stages */}
+              <div className="flex flex-wrap gap-1.5">
+                {['QUEUED', 'BUILDING', 'SUCCESS'].map((st) => {
+                  const order = ['QUEUED', 'BUILDING', 'SUCCESS'];
+                  const failed = buildJob.state === 'FAILED';
+                  const active = !failed && order.indexOf(buildJob.state) >= order.indexOf(st);
                   return (
-                    <div
-                      key={stepName}
-                      className={`p-2 rounded-xl border flex items-center gap-2 transition-colors ${
-                        isDone
-                          ? 'bg-white border-[#16A765]/40 text-[#16A765]'
-                          : isCurrent
-                          ? 'bg-[#16A765]/10 border-[#16A765] text-[#17191C] font-bold'
-                          : 'bg-white/50 border-[#E8DED0] text-[#6F6F6F]'
+                    <span
+                      key={st}
+                      className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${
+                        failed && st !== 'QUEUED'
+                          ? 'bg-[#E52B32]/10 text-[#E52B32] border-[#E52B32]/40'
+                          : active
+                          ? 'bg-[#16A765] text-white border-[#16A765]'
+                          : 'bg-white/50 text-[#6F6F6F] border-[#E8DED0]'
                       }`}
                     >
-                      {isDone ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[#16A765]" />
-                      ) : isCurrent ? (
-                        <div className="w-3.5 h-3.5 border-2 border-[#16A765] border-t-transparent rounded-full animate-spin shrink-0" />
-                      ) : (
-                        <span className="w-3.5 h-3.5 rounded-full border border-[#E8DED0] flex items-center justify-center text-[9px] text-[#6F6F6F] shrink-0">
-                          {stepIdx + 1}
-                        </span>
-                      )}
-                      <span className="truncate text-[11px]">{stepName}</span>
-                    </div>
+                      {st}
+                    </span>
                   );
                 })}
+                {buildJob.state === 'FAILED' && (
+                  <span className="px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider bg-[#E52B32] text-white border-[#E52B32]">
+                    FAILED
+                  </span>
+                )}
               </div>
+
+              {buildJob.state === 'BUILDING' && (
+                <p className="text-[11px] text-[#6F6F6F]">
+                  The run updates in near real time; you can follow every step on GitHub. This page only reports what the build service actually observes.
+                </p>
+              )}
             </div>
           )}
 

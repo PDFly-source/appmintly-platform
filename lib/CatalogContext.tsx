@@ -29,6 +29,10 @@ interface CatalogContextType {
   searchApps: (query: string) => AppItem[];
   getAppBySlug: (slug: string) => AppItem | undefined;
   refreshCatalog: () => Promise<void>;
+  /** Discard all device-local session edits and re-sync the canonical catalog. */
+  clearSessionEdits: () => Promise<void>;
+  /** True when device-local session edits exist (previews on this device). */
+  hasSessionEdits: boolean;
   publishApp: (
     app: Partial<AppItem>
   ) => Promise<{ success: boolean; app?: AppItem; message?: string; persisted?: 'server' | 'session' }>;
@@ -41,6 +45,39 @@ interface CatalogContextType {
 const CatalogContext = createContext<CatalogContextType | null>(null);
 
 const STORAGE_KEY = 'appforge_canonical_catalog';
+// Device-local session edits overlay (honest-save). Full app records keyed
+// by lowercase slug, merged over the canonical catalog at load so a session
+// save survives a page refresh on this device. Never a production publish.
+const SESSION_EDITS_KEY = 'appmintly_session_edits_v1';
+
+function readSessionEdits(): Record<string, AppItem> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(SESSION_EDITS_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSessionEdit(app: AppItem) {
+  if (typeof window === 'undefined') return;
+  const edits = readSessionEdits();
+  edits[(app.slug || app.id).toLowerCase()] = app;
+  window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
+}
+
+/** Merge the device-local session edits overlay on top of a catalog array. */
+function mergeSessionEdits(items: AppItem[]): AppItem[] {
+  if (typeof window === 'undefined') return items;
+  const edits = readSessionEdits();
+  if (Object.keys(edits).length === 0) return items;
+  return items.map((a) => {
+    const edit = edits[(a.slug || a.id).toLowerCase()];
+    return edit ? { ...a, ...edit } : a;
+  });
+}
 
 import { BASE_PATH, apiUrl } from '@/lib/api-path';
 
@@ -79,6 +116,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Always initialize with DEFAULT_APPS to ensure identical SSR & initial client render
   const [catalog, setCatalog] = useState<AppItem[]>(DEFAULT_APPS);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasSessionEdits, setHasSessionEdits] = useState<boolean>(false);
 
   // Sync with /api/catalog
   const refreshCatalog = useCallback(async () => {
@@ -86,7 +124,11 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const items = await fetchCatalogItems();
       if (items && items.length > 0) {
         const normalized = items.map(normalizeApp);
-        setCatalog(normalized);
+        // Session edits (device-local preview) survive a refresh; they are
+        // merged over the canonical catalog and are never a production publish.
+        const merged = mergeSessionEdits(normalized);
+        setHasSessionEdits(typeof window !== 'undefined' && Object.keys(readSessionEdits()).length > 0);
+        setCatalog(merged);
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
           window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
@@ -97,6 +139,15 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, []);
 
+  /** Discard all device-local session edits and re-sync the canonical catalog. */
+  const clearSessionEdits = useCallback(async () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(SESSION_EDITS_KEY);
+    }
+    setHasSessionEdits(false);
+    await refreshCatalog();
+  }, [refreshCatalog]);
+
   useEffect(() => {
     let isCancelled = false;
 
@@ -105,7 +156,9 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .then((items) => {
         if (isCancelled || !items) return;
         const normalized = items.map(normalizeApp);
-        setCatalog(normalized);
+        const merged = mergeSessionEdits(normalized);
+        setHasSessionEdits(Object.keys(readSessionEdits()).length > 0);
+        setCatalog(merged);
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
         }
@@ -121,7 +174,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            setCatalog(parsed.map(normalizeApp));
+            setCatalog(mergeSessionEdits(parsed.map(normalizeApp)));
           }
         }
       } catch (e) {
@@ -178,12 +231,14 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
             next.unshift(updatedApp);
           }
           if (typeof window !== 'undefined') {
+            writeSessionEdit(updatedApp);
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
             window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
           }
           return next;
         });
 
+        setHasSessionEdits(true);
         return {
           success: true,
           app: updatedApp,
@@ -319,6 +374,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       searchApps,
       getAppBySlug,
       refreshCatalog,
+      clearSessionEdits,
+      hasSessionEdits,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -336,6 +393,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       searchApps,
       getAppBySlug,
       refreshCatalog,
+      clearSessionEdits,
+      hasSessionEdits,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -361,6 +420,8 @@ export function useCatalog() {
       searchApps: (q: string) => searchPublishedApps(q, DEFAULT_APPS, APPFORGE_DEMO_MODE),
       getAppBySlug: (s: string) => getSelectorAppBySlug(s, DEFAULT_APPS, APPFORGE_DEMO_MODE),
       refreshCatalog: async () => {},
+      clearSessionEdits: async () => {},
+      hasSessionEdits: false,
       publishApp: async () => ({
         success: false,
         message: 'CatalogProvider not mounted',

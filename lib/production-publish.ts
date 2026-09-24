@@ -28,6 +28,57 @@ import { AppItem } from '@/data/apps';
 export const PUBLISH_ENDPOINT =
   'https://untitled.base44.app/functions/publishAppmintlyCatalog';
 
+/**
+ * Authorized APK build service. Dispatches the real GitHub Actions
+ * production build pipeline (release-android-apk.yml) after server-side
+ * validation, and reports the actual workflow run status.
+ */
+export const BUILD_SERVICE_ENDPOINT =
+  'https://untitled.base44.app/functions/appmintlyBuildApk';
+
+/**
+ * Server-side metadata analyzer (Analyze URL). Fetches the target app URL
+ * server-side and returns JSON; never parses HTML in the browser.
+ */
+export const ANALYZE_SERVICE_ENDPOINT =
+  'https://untitled.base44.app/functions/appmintlyAnalyzeUrl';
+
+export interface ServiceJsonResult<T = any> {
+  ok: boolean;
+  status: number;
+  data?: T;
+  unavailable: boolean;
+}
+
+/**
+ * fetch() a service endpoint and parse the body ONLY when the response is ok
+ * and actually JSON. HTML error pages yield `unavailable: true` so callers
+ * can show a truthful "service temporarily unavailable" message instead of
+ * a JSON parse error. Mirrors lib/api-client.ts for absolute service URLs.
+ */
+export async function serviceFetchJson<T = any>(url: string, init?: RequestInit): Promise<ServiceJsonResult<T>> {
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch {
+    return { ok: false, status: 0, unavailable: true };
+  }
+  const contentType = res.headers.get('content-type') || '';
+  const isJson = contentType.includes('application/json');
+  let data: T | undefined;
+  if (isJson) {
+    try {
+      data = await res.json();
+    } catch {
+      return { ok: false, status: res.status, unavailable: true };
+    }
+  }
+  if (!res.ok || !isJson) {
+    return { ok: false, status: res.status, unavailable: !isJson, data };
+  }
+  return { ok: true, status: res.status, unavailable: false, data };
+}
+
 export interface ProductionPublishResult {
   success: boolean;
   message: string;
