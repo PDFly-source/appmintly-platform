@@ -5,6 +5,7 @@ export const dynamic = 'force-static';
 
 import { SITE_URL } from '@/app/layout';
 import { APPS } from '@/data/apps';
+import { PUBLISHERS } from '@/data/publishers';
 import { CATEGORIES } from '@/data/categories';
 
 /**
@@ -22,7 +23,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}library`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${SITE_URL}publisher`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${SITE_URL}about`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${SITE_URL}privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
   ];
+
+  // Public publisher profile pages (one per repository-verified identity).
+  const publisherRoutes: MetadataRoute.Sitemap = PUBLISHERS.map((p) => ({
+    url: `${SITE_URL}publisher/${p.slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }));
 
   const appRoutes: MetadataRoute.Sitemap = APPS.filter((a) => a.published).map((a) => ({
     url: `${SITE_URL}app/${a.slug}`,
@@ -38,5 +49,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...appRoutes, ...categoryRoutes];
+  return [...staticRoutes, ...appRoutes, ...categoryRoutes, ...publisherRoutes];
 }
