@@ -279,8 +279,15 @@ export default function PublisherPage() {
     const result = await verifyPublisherKey(entered);
     setAuthVerifying(false);
     if (!result.verified) {
-      loginThrottleRef.current!.recordFailure();
-      setAuthError(result.message || 'Invalid Publisher Key');
+      // Only a REAL Worker 401 counts as a failed attempt for throttling.
+      // A network/service outage must never lock the owner out or imply a
+      // wrong key (Phase 10.1: honest service-vs-credential distinction).
+      if (result.kind === 'invalid-key') {
+        loginThrottleRef.current!.recordFailure();
+        setAuthError(result.message || 'Invalid Publisher Key');
+      } else {
+        setAuthError(result.message);
+      }
       return;
     }
     loginThrottleRef.current!.reset();

@@ -205,13 +205,14 @@ export function clearLegacyRememberedPublishKey() {
  * to the same Worker over the same TLS connection.
  */
 export function publisherAuthHeaders(publishKey: string): Record<string, string> {
+  // MUST match the deployed Worker's CORS allow-headers EXACTLY
+  // (verified live: Access-Control-Allow-Headers: Content-Type, Authorization).
+  // Adding any extra header here (e.g. X-Requested-With) makes the browser
+  // preflight fail and blocks every authenticated request with a network
+  // error. The Worker's bearer-key check remains the security boundary.
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${publishKey}`,
-    // Origin-validation defense-in-depth: identifies legitimate console/XHR
-    // traffic. The real security boundary remains the Worker (bearer-key
-    // check + CORS), never this header.
-    'X-Requested-With': 'appmintly-console',
   };
 }
 
@@ -224,31 +225,43 @@ export function publisherAuthHeaders(publishKey: string): Record<string, string>
  * request validation — exactly what we want. No build can be dispatched
  * from an empty record (no name, no package id, no launch URL).
  */
-export async function verifyPublisherKey(
-  publishKey: string
-): Promise<{ verified: boolean; message: string }> {
+export type PublisherKeyCheck =
+  | { verified: true; message: string }
+  | { verified: false; kind: 'empty' | 'invalid-key' | 'unavailable'; message: string };
+
+export async function verifyPublisherKey(publishKey: string): Promise<PublisherKeyCheck> {
   if (!publishKey.trim()) {
-    return { verified: false, message: 'Enter your AppMintly Publisher Key.' };
+    return { verified: false, kind: 'empty', message: 'Enter your AppMintly Publisher Key.' };
   }
+  // Timeout protection: a hung connection must surface as a service error,
+  // not an eternal spinner. 15s is generous for a Cloudflare Worker.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const res = await fetch(BUILD_SERVICE_ENDPOINT, {
       method: 'POST',
       headers: publisherAuthHeaders(publishKey),
       body: JSON.stringify({ publishKey, app: {} }),
+      signal: controller.signal,
     });
-    const data = await res.json().catch(() => null);
     if (res.status === 401) {
-      return { verified: false, message: 'Invalid Publisher Key' };
+      return { verified: false, kind: 'invalid-key', message: 'Invalid Publisher Key' };
     }
-    // Any non-401 response means authentication passed (the intentionally
-    // empty record was then refused by validation). Never guess success on
-    // anything else.
+    // Any non-401 response means the Worker accepted the key (the
+    // intentionally empty record was then refused by request validation).
+    // Never guess success on a 401.
     return { verified: true, message: 'Publisher key verified.' };
-  } catch (err: any) {
+  } catch {
+    // fetch throws (TypeError/AbortError) ONLY on network-level failure:
+    // unreachable host, CORS preflight rejection, or timeout. This is a
+    // SERVICE problem — never a wrong-key verdict.
     return {
       verified: false,
-      message: 'Authentication failed — the publishing service could not be reached.',
+      kind: 'unavailable',
+      message: 'Publishing service unavailable — could not reach the server. Check your connection and try again.',
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
