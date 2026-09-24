@@ -635,7 +635,7 @@ export default function PublisherPage() {
     <div className="min-h-screen bg-[#F8F2E7] text-[#17191C] pb-24">
       {/* Top Banner / Breadcrumb */}
       <header className="bg-[#FFFDF8] border-b border-[#E8DED0] sticky top-16 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 flex-wrap">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -652,7 +652,13 @@ export default function PublisherPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Responsive control groups — each group wraps independently, so the
+              toolbar reflows into multiple tidy rows on mobile instead of
+              overflowing the viewport. */}
+          <div className="flex flex-wrap items-center gap-2">
+
+            {/* Row A: session / refresh / publisher authentication state */}
+            <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={async () => {
@@ -722,11 +728,15 @@ export default function PublisherPage() {
               </>
             )}
 
+            </div>
+
+            {/* Row B: primary actions */}
+            <div className="flex flex-wrap items-center gap-2">
             {viewMode === 'editor' ? (
               <button
                 type="button"
                 onClick={handleLeaveEditor}
-                className="px-4 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-[#F8F2E7] hover:bg-[#E8DED0] text-xs font-bold text-[#17191C] border border-[#E8DED0] transition cursor-pointer whitespace-nowrap"
               >
                 Back to Catalog
               </button>
@@ -750,6 +760,7 @@ export default function PublisherPage() {
               {copiedJson ? <Check className="w-3.5 h-3.5 text-[#16A765]" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedJson ? 'Copied' : 'Export JSON'}</span>
             </button>
+            </div>
           </div>
         </div>
       </header>
@@ -761,14 +772,14 @@ export default function PublisherPage() {
         {viewMode === 'catalog' && (
           <div className="space-y-6">
             {/* Publisher Dashboard Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
                 <p className="text-xs font-bold text-[#6F6F6F]">Total Applications</p>
                 <p className="text-2xl font-black text-[#17191C] mt-1">{catalog.length}</p>
                 <p className="text-[10px] text-[#16A765] font-semibold mt-1">Live in catalog</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs">
+              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
                 <p className="text-xs font-bold text-[#6F6F6F]">Installable PWAs</p>
                 <p className="text-2xl font-black text-[#1976F3] mt-1">
                   {catalog.filter((a) => a.type === 'PWA').length}
@@ -776,7 +787,7 @@ export default function PublisherPage() {
                 <p className="text-[10px] text-[#6F6F6F] font-semibold mt-1">Manifest enabled</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs">
+              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
                 <p className="text-xs font-bold text-[#6F6F6F]">Android APKs</p>
                 <p className="text-2xl font-black text-[#16A765] mt-1">
                   {catalog.filter((a) => a.type === 'Android APK').length}
@@ -784,7 +795,7 @@ export default function PublisherPage() {
                 <p className="text-[10px] text-[#6F6F6F] font-semibold mt-1">Direct downloads</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs">
+              <div className="p-4 sm:p-5 rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-xs min-w-0">
                 <p className="text-xs font-bold text-[#6F6F6F]">Games &amp; Tools</p>
                 <p className="text-2xl font-black text-[#E52B32] mt-1">
                   {catalog.filter((a) => a.type === 'Web Game' || a.type === 'Tool').length}
@@ -794,7 +805,7 @@ export default function PublisherPage() {
             </div>
 
             {/* Quick Action: Add App Banner */}
-            <div className="p-6 rounded-3xl bg-gradient-to-r from-[#17191C] to-[#2A2E33] text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
+            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#17191C] to-[#2A2E33] text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
               <div className="space-y-1 text-center md:text-left">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E52B32] text-[10px] font-black uppercase tracking-wider text-white">
                   <Sparkles className="w-3 h-3" /> One-Click Discovery
@@ -826,7 +837,7 @@ export default function PublisherPage() {
 
             {/* Search and Filters */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFDF8] p-4 rounded-3xl border border-[#E8DED0]">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 min-w-0 w-full sm:max-w-md">
                 <Search className="w-4 h-4 text-[#6F6F6F] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="search"
@@ -837,7 +848,7 @@ export default function PublisherPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none max-w-full pb-1 -mx-1 px-1">
                 {['all', 'PWA', 'Web App', 'Android APK', 'Web Game', 'Tool'].map((t) => (
                   <button
                     key={t}
@@ -936,7 +947,7 @@ export default function PublisherPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-2 self-end sm:self-center shrink-0">
                       <Link
                         href={`/app/${app.slug}`}
                         target="_blank"
@@ -2250,13 +2261,13 @@ export default function PublisherPage() {
             only to the Cloudflare Worker over HTTPS. */}
         {authDialogOpen && (
           <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 box-border"
             style={{ backgroundColor: 'rgba(23, 25, 28, 0.45)' }}
             role="dialog"
             aria-modal="true"
             aria-label="Publisher Authentication"
           >
-            <div className="w-full max-w-md rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xl p-6 space-y-4">
+            <div className="w-full max-w-[min(28rem,calc(100vw-2rem))] max-h-[90dvh] overflow-y-auto rounded-3xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xl p-5 sm:p-6 space-y-4 box-border">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <span className="w-9 h-9 rounded-full bg-[#17191C] flex items-center justify-center">
