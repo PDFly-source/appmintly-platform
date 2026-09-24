@@ -34,56 +34,92 @@ jobs:
           pat=re.compile(sys.argv[1])
           try: t=ET.parse('ui.xml')
           except Exception: sys.exit(0)
+          best=None
           for n in t.iter('node'):
               txt=(n.get('text') or '')+' '+(n.get('content-desc') or '')
               if pat.search(txt):
                   m=list(map(int,re.findall(r'\d+',n.get('bounds'))))
-                  print((m[0]+m[2])//2,(m[1]+m[3])//2);break
+                  best=((m[0]+m[2])//2,(m[1]+m[3])//2);break
+          if best: print(best[0],best[1])
           PY
             if [ -s /tmp/coords ]; then adb shell input tap $(cat /tmp/coords); log "tapped: $1"; sleep 2; return 0; else return 1; fi
           }
 
           ui_has(){ dump; grep -q "$1" ui.xml 2>/dev/null; }
 
-          adb shell pm list packages | grep -iE 'chrome|browser|webview' > browsers.txt || true
-          log "browser packages:"; cat browsers.txt
+          dl_state(){ adb shell content query --uri content://downloads/my_downloads 2>&1 | grep -iE 'studyria|Row' | head -20; }
+
+          # ---------------- wait for working device network ----------------
+          log "waiting for device network"
+          NETOK=0
+          for i in $(seq 1 30); do
+            if adb shell ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then log "device network OK at attempt $i"; NETOK=1; break; fi
+            sleep 10
+          done
+          if [ "$NETOK" != "1" ]; then log "DEVICE NETWORK NEVER CAME UP"; fi
+          adb shell ping -c1 -W2 github.com >> device_connectivity.txt 2>&1 || true
+
+          # ---------------- Chrome version ----------------
+          adb shell dumpsys package com.android.chrome | grep -E 'versionName|versionCode' > chrome_version.txt || true
+
+          # ---------------- skip Chrome first-run ----------------
+          adb root >/dev/null 2>&1 || true
+          sleep 5
+          adb wait-for-device
+          adb shell "echo 'chrome --disable-fre --no-default-browser-check --disable-sync' > /data/local/tmp/chrome-command-line" || true
+          adb shell chmod 644 /data/local/tmp/chrome-command-line || true
+          adb shell ls -l /data/local/tmp/chrome-command-line > cmdline_check.txt 2>&1 || true
+          adb shell am force-stop com.android.chrome || true
+          sleep 3
+
+          dismiss_fre(){ for p in 'Accept (&|and )?[Cc]ontinue' '^[Cc]ontinue$' 'No,? thanks' 'Not now' 'Got it' '^[Nn]ext$' '^[Ss]kip$' '^[Ll]ater$' '^[Dd]one$'; do find_tap "$p"; done; }
 
           # ---------------- PART B: direct GitHub release URL in Chrome ----------------
           log "PART B: direct GitHub release asset download via Chrome"
           adb shell am start -a android.intent.action.VIEW -d "https://github.com/PDFly-source/appmintly-releases/releases/download/studyria-v2.0.1/Studyria-2.0.1.apk" -n com.android.chrome/com.google.android.apps.chrome.Main
-          sleep 8
-          for p in 'Accept (&|and )?[Cc]ontinue' '^[Cc]ontinue$' 'No,? thanks' 'Not now' 'Got it' '^[Nn]ext$' '^[Ss]kip$' '^[Ll]ater$' '^[Dd]one$'; do find_tap "$p"; done
-          sleep 4
+          sleep 10
+          dismiss_fre
+          dismiss_fre
+          sleep 5
           for i in $(seq 1 25); do
             sleep 6
-            adb shell ls -l /sdcard/Download/ > partB_listing_$i.txt 2>&1
-            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART B: Studyria-2.0.1.apk present in Download at poll $i"; break; fi
+            dl_state > partB_dlstate_$i.txt 2>&1
+            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART B: file present in Download at poll $i"; break; fi
             if [ $i -eq 25 ]; then log "PART B: file NOT present after 25 polls"; fi
           done
           adb shell ls -l /sdcard/Download/ > partB_listing_final.txt 2>&1
+          dl_state > partB_dlstate_final.txt 2>&1
           adb shell sha256sum /sdcard/Download/Studyria-2.0.1.apk > partB_sha.txt 2>&1 || echo "PART B sha: file absent" > partB_sha.txt
           adb exec-out screencap -p > partB_screen.png || true
-          adb shell dumpsys notification > partB_notifications.txt 2>&1
-          adb logcat -d -s downloadmanager:V DownloadManager:V chromium:V cr_DownloadManagerBase:V System.err:W > partB_logcat.txt 2>&1
+          adb logcat -d > partB_logcat.txt 2>&1
           adb logcat -c
           adb shell rm -f /sdcard/Download/Studyria-2.0.1.apk
 
           # ---------------- PART A: real marketplace flow in Chrome ----------------
           log "PART A: marketplace detail page flow"
           adb shell am start -a android.intent.action.VIEW -d "https://pdfly-source.github.io/appmintly-platform/app/studyria" -n com.android.chrome/com.google.android.apps.chrome.Main
-          sleep 15
+          sleep 10
+          dismiss_fre
+          PAGEOK=0
+          for i in $(seq 1 12); do
+            if ui_has 'Get App'; then log "PART A: marketplace page with Get App loaded (poll $i)"; PAGEOK=1; break; fi
+            sleep 5
+          done
+          if [ "$PAGEOK" != "1" ]; then log "PART A: marketplace page DID NOT LOAD Get App"; fi
           adb exec-out screencap -p > partA_page.png || true
-          if find_tap 'Get App'; then sleep 3; fi
+          find_tap 'Get App'
+          sleep 3
           adb exec-out screencap -p > partA_sheet.png || true
           if find_tap 'Download APK'; then log "PART A: Download APK tapped"; else log "PART A: Download APK button NOT found"; fi
-          sleep 4
+          sleep 5
           for i in $(seq 1 25); do
             sleep 6
-            adb shell ls -l /sdcard/Download/ > partA_listing_$i.txt 2>&1
-            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART A: Studyria-2.0.1.apk present in Download at poll $i"; break; fi
+            dl_state > partA_dlstate_$i.txt 2>&1
+            if adb shell ls /sdcard/Download/Studyria-2.0.1.apk >/dev/null 2>&1; then log "PART A: file present in Download at poll $i"; break; fi
             if [ $i -eq 25 ]; then log "PART A: file NOT present after 25 polls"; fi
           done
           adb shell ls -l /sdcard/Download/ > partA_listing_final.txt 2>&1
+          dl_state > partA_dlstate_final.txt 2>&1
           adb shell sha256sum /sdcard/Download/Studyria-2.0.1.apk > partA_sha.txt 2>&1 || echo "PART A sha: file absent" > partA_sha.txt
           adb exec-out screencap -p > partA_screen.png || true
           adb shell dumpsys notification > partA_notifications.txt 2>&1
