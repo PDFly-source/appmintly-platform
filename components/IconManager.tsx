@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { checkExternalUrl } from '@/lib/url-safety';
 import {
   Upload,
   Link as LinkIcon,
@@ -97,6 +98,17 @@ export const IconManager: React.FC<IconManagerProps> = ({
         message: 'Icon URL must use https:// (or a repository asset path starting with "/").',
       });
       return;
+    }
+    if (url.startsWith('/')) {
+      // Repository-relative asset — validated at publish time.
+    } else {
+      // Phase 9 security: full URL-safety guard for external icon URLs
+      // (blocks private/loopback hosts and unsafe schemes even if https-prefixed).
+      const safety = checkExternalUrl(url);
+      if (!safety.safe) {
+        setValidationResult({ valid: false, message: safety.reason || 'Icon URL rejected.' });
+        return;
+      }
     }
 
     setIsValidating(true);

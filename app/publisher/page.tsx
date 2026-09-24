@@ -73,6 +73,7 @@ import {
   PUBLISHER_SESSION_IDLE_MS,
   LoginThrottle,
 } from '@/lib/production-publish';
+import { checkExternalUrl } from '@/lib/url-safety';
 
 type WorkflowStep =
   | 'basic'
@@ -406,6 +407,15 @@ export default function PublisherPage() {
       toast('Please enter a valid application URL.', 'error');
       return;
     }
+    // Phase 9 security: reject loopback/private/link-local and non-http(s)
+    // targets before they ever reach the Worker. The Worker performs its own
+    // server-side SSRF validation; this is browser-side defense-in-depth.
+    const safety = checkExternalUrl(target);
+    if (!safety.safe) {
+      setAnalysisError(`URL rejected: ${safety.reason}`);
+      toast(`URL rejected: ${safety.reason}`, 'error');
+      return;
+    }
 
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -548,6 +558,46 @@ export default function PublisherPage() {
       record = result.record;
     }
     record = record || buildAppRecord();
+
+    // Phase 9 concurrency guard: re-read the authoritative catalog right
+    // before publishing. If the remote record for this slug changed since
+    // this session loaded it, stop with an honest CATALOG_CONFLICT state —
+    // the Worker additionally performs a SHA-aware commit server-side.
+    try {
+      const live = await fetch(
+        typeof window !== 'undefined' ? '/data/apps.json' : 'about:blank',
+        { cache: 'no-store' }
+      );
+      if (live.ok) {
+        const liveCatalog: AppItem[] = await live.json();
+        const remote = Array.isArray(liveCatalog)
+          ? liveCatalog.find((a) => (a.slug || '').toLowerCase() === (record.slug || '').toLowerCase())
+          : undefined;
+        const baseline = originalRecord?.slug
+          ? originalRecord
+          : null;
+        const remoteMatchesBaseline = baseline && remote && remote.version === baseline.version;
+        const isNewSlug = !baseline;
+        // Conflict = the remote record changed since this session loaded its
+        // baseline (remote no longer matches the version we based edits on).
+        // A legitimate version bump (remote == baseline, record = new) is safe.
+        if (remote && ((baseline && !remoteMatchesBaseline) || (isNewSlug && record.version === remote.version))) {
+          setPublishStage('failed');
+          setPublishResult({
+            success: false,
+            message:
+              `CATALOG_CONFLICT: the published version of "${record.slug}" is v${remote.version}, ` +
+              `which differs from the baseline this session loaded. Reload the catalog and ` +
+              `re-apply your changes before publishing. Nothing was written.`,
+          });
+          toast('Catalog conflict detected — publish stopped. Nothing was written.', 'error');
+          return;
+        }
+      }
+    } catch {
+      /* pre-flight read failed — the Worker's SHA-aware commit remains the
+         authoritative concurrency control; continue rather than block. */
+    }
 
     setPublishStage('publishing');
     toast('Publishing to production — committing data/apps.json…', 'info');

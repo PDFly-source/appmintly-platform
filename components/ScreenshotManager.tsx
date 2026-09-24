@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { checkHttpsUrl } from '@/lib/url-safety';
 import {
   Upload,
   Plus,
@@ -68,6 +69,13 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
     const clean = newUrl.trim();
     if (!clean) return;
     if (screenshots.includes(clean)) return;
+    // Phase 9 security: screenshots must be HTTPS and must pass the URL
+    // safety guard (blocks javascript:, data:, private/loopback hosts).
+    const safety = checkHttpsUrl(clean);
+    if (!safety.safe) {
+      setUrlError(safety.reason || 'Screenshot URL must be a valid https:// URL.');
+      return;
+    }
 
     onScreenshotsChange([...screenshots, clean]);
     setNewUrl('');
