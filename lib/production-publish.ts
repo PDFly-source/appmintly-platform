@@ -1,21 +1,23 @@
 /**
- * Phase 5 — Authorized production publishing client.
+ * Authorized production publishing client (Cloudflare Worker backend).
  *
  * Permanent publishing flow:
- *   Publisher Console → validate → POST to the authorized publishing layer
- *   → server re-validates (including protected-field integrity)
- *   → commits data/apps.json on main via the GitHub Contents API
- *   → existing GitHub Actions workflow deploys GitHub Pages
- *   → live AppMintly
+ *   Publisher Console → validate → POST to the AppMintly Publisher API
+ *   (Cloudflare Worker) → server re-validates (incl. protected-field
+ *   integrity) → commits data/apps.json on main via the GitHub Contents
+ *   API → existing GitHub Actions workflow deploys GitHub Pages → live
+ *   AppMintly.
  *
  * Security model:
  *   - NO GitHub token, secret or credential ever reaches the browser.
- *   - The publishing layer is authorized by a publish key, which the
- *     publisher enters at publish time (optionally remembered on the device).
- *   - The server holds the least-privilege GitHub token (fine-grained PAT
- *     with contents:read/write on the platform repository only) in its
- *     secret store; the token is never part of this client bundle.
- *   - The server can only ever modify data/apps.json (hard-coded path).
+ *   - The Cloudflare Worker is authorized by a publish key, which the
+ *     publisher enters at publish time (optionally remembered on the
+ *     device); the Worker verifies it server-side (constant-time).
+ *   - The Worker holds the least-privilege GitHub token (fine-grained
+ *     PAT scoped to the platform repository) as a server-side secret;
+ *     the token is never part of this client bundle.
+ *   - The Worker can only ever modify data/apps.json (hard-coded path).
+ *   - The browser never calls the GitHub API directly.
  */
 
 import { AppItem } from '@/data/apps';
@@ -25,23 +27,28 @@ import { AppItem } from '@/data/apps';
  * Configured once; the endpoint itself is public but every publish request
  * must present a valid publish key and pass full server-side validation.
  */
-export const PUBLISH_ENDPOINT =
-  'https://untitled.base44.app/functions/publishAppmintlyCatalog';
+/**
+ * AppMintly Publisher API — production Cloudflare Worker backend.
+ * The Worker is the ONLY backend used by the live publishing path; it
+ * performs all GitHub API/Actions operations server-side.
+ */
+export const PUBLISHER_API_BASE =
+  'https://appmintly-publisher-api.sbn50088.workers.dev';
+
+export const PUBLISH_ENDPOINT = `${PUBLISHER_API_BASE}/publish-catalog`;
 
 /**
  * Authorized APK build service. Dispatches the real GitHub Actions
  * production build pipeline (release-android-apk.yml) after server-side
  * validation, and reports the actual workflow run status.
  */
-export const BUILD_SERVICE_ENDPOINT =
-  'https://untitled.base44.app/functions/appmintlyBuildApk';
+export const BUILD_SERVICE_ENDPOINT = `${PUBLISHER_API_BASE}/build-apk`;
 
 /**
  * Server-side metadata analyzer (Analyze URL). Fetches the target app URL
  * server-side and returns JSON; never parses HTML in the browser.
  */
-export const ANALYZE_SERVICE_ENDPOINT =
-  'https://untitled.base44.app/functions/appmintlyAnalyzeUrl';
+export const ANALYZE_SERVICE_ENDPOINT = `${PUBLISHER_API_BASE}/analyze-url`;
 
 export interface ServiceJsonResult<T = any> {
   ok: boolean;
@@ -93,24 +100,32 @@ export interface PublishServiceStatus {
   message?: string;
 }
 
-/** Check whether the authorized publishing layer is configured. */
+/**
+ * Check that the authorized publishing layer (Cloudflare Worker) is online.
+ * The Worker's root endpoint reports its health; availability of the
+ * publish/build operations themselves is enforced server-side (publish key
+ * + GitHub token live only in the Worker's secret store).
+ */
 export async function checkPublishService(): Promise<PublishServiceStatus> {
   try {
-    const res = await fetch(PUBLISH_ENDPOINT, {
+    const res = await fetch(PUBLISHER_API_BASE, {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
     const data = await res.json().catch(() => null);
-    if (res.ok && data && typeof data.configured === 'boolean') {
-      return { available: data.configured, message: data.message };
+    if (res.ok && data && data.status === 'online') {
+      return {
+        available: true,
+        message: data.service || 'AppMintly Publisher API is online.',
+      };
     }
-    // Surface the actual platform message when the endpoint is blocked or
-    // misrouted, so the console states the real situation truthfully.
+    // Surface the real worker response when it is not online, so the
+    // console states the actual situation truthfully.
     return {
       available: false,
       message:
-        (data && (data.message || data.detail)) ||
-        'Publishing service responded unexpectedly.',
+        (data && (data.message || data.error || data.detail)) ||
+        `Publishing service responded unexpectedly (HTTP ${res.status}).`,
     };
   } catch (err: any) {
     return { available: false, message: 'Publishing service unreachable — production publish is unavailable right now.' };
