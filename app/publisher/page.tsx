@@ -70,6 +70,8 @@ import {
   PublishServiceStatus,
   serviceFetchJson,
   ANALYZE_SERVICE_ENDPOINT,
+  PUBLISHER_SESSION_IDLE_MS,
+  LoginThrottle,
 } from '@/lib/production-publish';
 
 type WorkflowStep =
@@ -180,6 +182,10 @@ export default function PublisherPage() {
   // state for the lifetime of the page session only — never in localStorage,
   // sessionStorage, cookies or URLs. A refresh requires re-entry (intentional).
   const [publisherKey, setPublisherKey] = useState('');
+  // Phase 9 session hardening: client-side login throttle + idle expiration.
+  const loginThrottleRef = React.useRef<LoginThrottle | null>(null);
+  if (!loginThrottleRef.current) loginThrottleRef.current = new LoginThrottle();
+  const lastActivityRef = React.useRef<number>(Date.now());
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authKeyInput, setAuthKeyInput] = useState('');
   const [authError, setAuthError] = useState('');
@@ -205,6 +211,27 @@ export default function PublisherPage() {
     clearLegacyRememberedPublishKey();
     checkPublishService().then(setServiceStatus);
   }, []);
+
+  // Session expiration: sign out after 30 minutes of inactivity. The key
+  // never persists, so expiry simply drops it and reports honestly.
+  React.useEffect(() => {
+    if (!publisherKey) return;
+    const bump = () => {
+      lastActivityRef.current = Date.now();
+    };
+    const events: (keyof WindowEventMap)[] = ['click', 'keydown', 'touchstart'];
+    events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    const interval = window.setInterval(() => {
+      if (Date.now() - lastActivityRef.current > PUBLISHER_SESSION_IDLE_MS) {
+        setPublisherKey('');
+        toast('Session expired after 30 minutes of inactivity. Re-authenticate to continue.', 'info');
+      }
+    }, 60_000);
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, bump));
+      window.clearInterval(interval);
+    };
+  }, [publisherKey, toast]);
 
   // Re-check the publishing service whenever the publish step is opened.
   React.useEffect(() => {
@@ -241,13 +268,22 @@ export default function PublisherPage() {
       setAuthError('Enter your AppMintly Publisher Key.');
       return;
     }
+    // Client-side brute-force throttle (Worker remains the real boundary).
+    const lockMs = loginThrottleRef.current!.remainingLockoutMs();
+    if (lockMs > 0) {
+      setAuthError(`Too many failed attempts. Try again in ${Math.ceil(lockMs / 60000)} minute(s).`);
+      return;
+    }
     setAuthVerifying(true);
     const result = await verifyPublisherKey(entered);
     setAuthVerifying(false);
     if (!result.verified) {
+      loginThrottleRef.current!.recordFailure();
       setAuthError(result.message || 'Invalid Publisher Key');
       return;
     }
+    loginThrottleRef.current!.reset();
+    lastActivityRef.current = Date.now();
     setPublisherKey(entered); // memory only — never persisted, never displayed
     setAuthDialogOpen(false);
     setAuthKeyInput('');

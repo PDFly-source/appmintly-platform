@@ -208,6 +208,10 @@ export function publisherAuthHeaders(publishKey: string): Record<string, string>
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${publishKey}`,
+    // Origin-validation defense-in-depth: identifies legitimate console/XHR
+    // traffic. The real security boundary remains the Worker (bearer-key
+    // check + CORS), never this header.
+    'X-Requested-With': 'appmintly-console',
   };
 }
 
@@ -245,5 +249,55 @@ export async function verifyPublisherKey(
       verified: false,
       message: 'Authentication failed — the publishing service could not be reached.',
     };
+  }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Phase 9 — session hardening helpers.
+ *
+ * The Worker is the authoritative security boundary (bearer-key validation
+ * on every privileged request). These helpers add a session-expiration
+ * contract and a client-side brute-force throttle so the console behaves
+ * like a production login surface. They never replace server validation.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Idle session lifetime in milliseconds (30 minutes). */
+export const PUBLISHER_SESSION_IDLE_MS = 30 * 60 * 1000;
+
+/**
+ * Tracks failed login attempts for a client-side throttle. Honest scope:
+ * this raises the cost of guessing in a browser; real brute-force
+ * protection must be enforced by the Worker side (rate limiting there is
+ * tracked as a Phase 9 backend limitation).
+ */
+export class LoginThrottle {
+  private attempts: number[] = [];
+
+  constructor(
+    private maxAttempts = 5,
+    private windowMs = 5 * 60 * 1000
+  ) {}
+
+  /** Record a failed attempt. */
+  recordFailure(): void {
+    const now = Date.now();
+    this.attempts = this.attempts.filter((t) => now - t < this.windowMs);
+    this.attempts.push(now);
+  }
+
+  /** Clear failures on success. */
+  reset(): void {
+    this.attempts = [];
+  }
+
+  /** Returns remaining lockout ms if throttled, otherwise 0. */
+  remainingLockoutMs(): number {
+    const now = Date.now();
+    this.attempts = this.attempts.filter((t) => now - t < this.windowMs);
+    if (this.attempts.length < this.maxAttempts) return 0;
+    const oldest = Math.min(...this.attempts);
+    const lockUntil = oldest + this.windowMs;
+    return Math.max(0, lockUntil - now);
   }
 }
