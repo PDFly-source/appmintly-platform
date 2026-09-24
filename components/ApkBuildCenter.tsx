@@ -23,6 +23,7 @@ import {
 import { AppItem, ApkMetadata } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { apiUrl } from '@/lib/api-path';
+import { fetchJson } from '@/lib/api-client';
 
 interface ApkBuildCenterProps {
   form: AppItem;
@@ -96,15 +97,9 @@ export function ApkBuildCenter({
 
     setIsBuilding(true);
     setBuildError(null);
-    setBuildJob({
-      status: 'queued',
-      progress: 5,
-      currentStep: 'Preparing metadata',
-      stepsCompleted: ['Build request registered'],
-    });
 
     try {
-      const res = await fetch(apiUrl('/api/build-apk'), {
+      const result = await fetchJson(apiUrl('/api/build-apk'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -123,17 +118,28 @@ export function ApkBuildCenter({
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to start APK build process');
+      if (!result.ok || !result.data?.success) {
+        throw new Error(
+          result.unavailable
+            ? 'APK build service unavailable. APK generation requires the server-side build pipeline, which is not reachable on this static deployment.'
+            : result.data?.error || result.error || 'Failed to start APK build process'
+        );
       }
 
-      const buildId = data.buildId;
+      // Only show build progress after the server has actually accepted the request.
+      setBuildJob({
+        status: 'queued',
+        progress: 5,
+        currentStep: 'Build accepted by server',
+        stepsCompleted: ['Build request registered'],
+      });
+
+      const buildId = result.data.buildId;
 
       // Poll the GitHub Actions run, not the AI Studio process
       const pollTimer = setInterval(async () => {
         try {
-          const pollRes = await fetch(`/api/build-apk/${buildId}`);
+          const pollRes = await fetch(apiUrl(`/api/build-apk/${buildId}`));
           if (!pollRes.ok) return;
           const pollData = await pollRes.json();
           if (pollData.success && pollData.job) {
@@ -186,13 +192,17 @@ export function ApkBuildCenter({
     setHasNewVersion(false);
 
     try {
-      const res = await fetch(apiUrl('/api/analyze-url'), {
+      const result = await fetchJson(apiUrl('/api/analyze-url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: launchUrl }),
       });
-      const json = await res.json();
-      if (res.ok && json.success && json.data) {
+      if (!result.ok && result.unavailable) {
+        toast('Metadata analysis service unavailable on this deployment.', 'error');
+        return;
+      }
+      const json = result.ok ? result.data : null;
+      if (json && json.success && json.data) {
         const foundVer = json.data.version || '1.0.0';
         setDetectedVersion(foundVer);
         if (foundVer !== form.version) {

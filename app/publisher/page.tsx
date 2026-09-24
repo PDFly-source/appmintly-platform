@@ -55,6 +55,7 @@ import { ScreenshotManager } from '@/components/ScreenshotManager';
 import { ApkBuildCenter } from '@/components/ApkBuildCenter';
 import type { DetectedMetadata } from '@/lib/detected-metadata';
 import { apiUrl } from '@/lib/api-path';
+import { fetchJson } from '@/lib/api-client';
 import {
   validateAppForPublish,
   ValidationReport,
@@ -309,14 +310,23 @@ export default function PublisherPage() {
     setAnalysisError(null);
 
     try {
-      const res = await fetch(apiUrl('/api/analyze-url'), {
+      const result = await fetchJson(apiUrl('/api/analyze-url'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: target }),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
+      if (!result.ok) {
+        setAnalysisError(
+          result.unavailable
+            ? 'Metadata analysis service unavailable. Enter the application details manually below.'
+            : result.error || 'Failed to inspect application metadata.'
+        );
+        return;
+      }
+
+      const json = result.data;
+      if (!json.success) {
         setAnalysisError(json.error || 'Failed to inspect application metadata.');
         toast('Analysis had partial restrictions. Check the discovered fields.', 'info');
         return;
