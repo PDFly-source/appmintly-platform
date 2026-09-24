@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Search,
@@ -20,6 +20,7 @@ import {
 import { useCatalog } from '@/lib/CatalogContext';
 import { AppItem, AppType } from '@/data/apps';
 import { CATEGORIES } from '@/data/categories';
+import { PUBLISHERS } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
 
 function ExploreContent() {
@@ -31,14 +32,30 @@ function ExploreContent() {
   const initialType = searchParams.get('type') || 'all';
   const initialFilter = searchParams.get('filter') || 'all';
   const initialSort = searchParams.get('sort') || 'newest';
+  const initialPublisher = searchParams.get('publisher') || 'all';
 
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedType, setSelectedType] = useState(initialType);
   const [filterOriginals, setFilterOriginals] = useState(initialFilter === 'originals');
-  const [sortBy, setSortBy] = useState<'newest' | 'name' | 'type'>(
-    initialSort === 'name' ? 'name' : 'newest'
+  const [selectedPublisher, setSelectedPublisher] = useState(initialPublisher);
+  const [sortBy, setSortBy] = useState<'newest' | 'updated' | 'name' | 'type'>(
+    initialSort === 'name' ? 'name' : initialSort === 'updated' ? 'updated' : initialSort === 'type' ? 'type' : 'newest'
   );
+  const router = useRouter();
+
+  // Keep the address bar in sync so filtered views are shareable.
+  React.useEffect(() => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('q', query.trim());
+    if (selectedCategory !== 'all') params.set('category', selectedCategory);
+    if (selectedType !== 'all') params.set('type', selectedType);
+    if (filterOriginals) params.set('filter', 'originals');
+    if (selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    const qs = params.toString();
+    router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false });
+  }, [query, selectedCategory, selectedType, filterOriginals, selectedPublisher, sortBy, router]);
 
   const appTypes: { label: string; value: string; icon: any }[] = [
     { label: 'All Formats', value: 'all', icon: Layers },
@@ -57,6 +74,9 @@ function ExploreContent() {
     return publishedApps.filter((app) => {
       // Originals filter
       if (filterOriginals && !app.original) return false;
+
+      // Publisher filter
+      if (selectedPublisher !== 'all' && (app.developerSlug || '').toLowerCase() !== selectedPublisher.toLowerCase()) return false;
 
       // Category filter
       if (selectedCategory !== 'all') {
@@ -114,6 +134,11 @@ function ExploreContent() {
 
       return true;
     }).sort((a, b) => {
+      if (sortBy === 'updated') {
+        const dateA = new Date(a.lastUpdated || a.updatedAt || 0).getTime();
+        const dateB = new Date(b.lastUpdated || b.updatedAt || 0).getTime();
+        return dateB - dateA;
+      }
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       }
@@ -125,7 +150,7 @@ function ExploreContent() {
       const dateB = new Date(b.lastUpdated || b.updatedAt || b.releaseDate || 0).getTime();
       return dateB - dateA;
     });
-  }, [publishedApps, query, selectedCategory, selectedType, filterOriginals, sortBy]);
+  }, [publishedApps, query, selectedCategory, selectedType, filterOriginals, selectedPublisher, sortBy]);
 
   // Quick suggestions for popular tags
   const popularTags = ['education', 'tools', 'study', 'pdf', 'assam', 'productivity', 'privacy', 'offline'];
@@ -240,6 +265,24 @@ function ExploreContent() {
               </select>
             </div>
 
+            {/* Publisher select */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-bold text-[#6F6F6F]">Publisher:</span>
+              <select
+                value={selectedPublisher}
+                onChange={(e) => setSelectedPublisher(e.target.value)}
+                aria-label="Filter by publisher"
+                className="bg-[#F8F2E7] border border-[#E8DED0] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+              >
+                <option value="all">All Publishers</option>
+                {PUBLISHERS.map((p) => (
+                  <option key={p.slug} value={p.slug}>
+                    {p.name}{p.verified ? ' ✓' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Originals Toggle */}
             <button
               onClick={() => setFilterOriginals(!filterOriginals)}
@@ -264,6 +307,7 @@ function ExploreContent() {
                 className="bg-[#F8F2E7] border border-[#E8DED0] rounded-xl px-3 py-1.5 text-xs font-semibold text-[#17191C] focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
               >
                 <option value="newest">Latest Release</option>
+                <option value="updated">Recently Updated</option>
                 <option value="name">App Name (A-Z)</option>
                 <option value="type">Format / Type</option>
               </select>
