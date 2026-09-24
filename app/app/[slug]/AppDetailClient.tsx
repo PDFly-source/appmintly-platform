@@ -301,7 +301,16 @@ export default function AppDetailPage() {
                   {app.name}
                 </h1>
                 <p className="text-sm sm:text-base font-semibold text-[#6F6F6F] mt-1 flex items-center gap-1.5">
-                  <span>{resolveDeveloper(app).name}</span>
+                  {resolveDeveloper(app).slug ? (
+                    <Link
+                      href={`/publisher/${resolveDeveloper(app).slug}`}
+                      className="hover:text-[#1976F3] transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                    >
+                      {resolveDeveloper(app).name}
+                    </Link>
+                  ) : (
+                    <span>{resolveDeveloper(app).name}</span>
+                  )}
                   {resolveDeveloper(app).verified && <VerifiedBadge size="sm" withLabel />}
                 </p>
               </div>
@@ -494,7 +503,16 @@ export default function AppDetailPage() {
                 <div className="flex items-center justify-between">
                   <dt className="text-[#6F6F6F] font-bold">Developer</dt>
                   <dd className="font-semibold text-[#17191C] text-right flex items-center justify-end gap-1">
-                    {resolveDeveloper(app).name}
+                    {resolveDeveloper(app).slug ? (
+                      <Link
+                        href={`/publisher/${resolveDeveloper(app).slug}`}
+                        className="hover:text-[#1976F3] transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                      >
+                        {resolveDeveloper(app).name}
+                      </Link>
+                    ) : (
+                      <span>{resolveDeveloper(app).name}</span>
+                    )}
                     {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
                   </dd>
                 </div>
@@ -532,6 +550,34 @@ export default function AppDetailPage() {
                   <dd className="font-semibold text-[#17191C]">{app.lastUpdated || app.releaseDate}</dd>
                 </div>
 
+                {app.apk?.sha256 && (
+                  <div className="pt-1">
+                    <dt className="text-[#6F6F6F] font-bold mb-1">SHA-256 Checksum</dt>
+                    <dd className="flex items-center gap-1.5">
+                      <code className="font-mono text-[10px] leading-tight break-all bg-[#F8F2E7] border border-[#E8DED0] rounded-lg px-2 py-1.5 text-[#17191C] flex-1">
+                        {app.apk.sha256}
+                      </code>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(app.apk!.sha256!);
+                          toast('SHA-256 checksum copied', 'success');
+                        }}
+                        aria-label="Copy SHA-256 checksum"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-[#17191C] text-white text-[10px] font-bold hover:bg-[#E52B32] transition cursor-pointer"
+                      >
+                        Copy
+                      </button>
+                    </dd>
+                  </div>
+                )}
+
+                {app.apk?.enabled && (
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#6F6F6F] font-bold">Version Code</dt>
+                    <dd className="font-mono font-semibold text-[#17191C]">{app.apk.versionCode}</dd>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <dt className="text-[#6F6F6F] font-bold">Privacy &amp; Data</dt>
                   <dd className="font-semibold text-[#16A765]">No Cloud Tracking</dd>
@@ -544,6 +590,22 @@ export default function AppDetailPage() {
                 Updates to installed applications are delivered directly by the application itself via browser service worker cache refresh upon launch.
               </div>
             </div>
+
+            {/* APK Installation Instructions (truthful, static guidance) */}
+            {app.apk?.enabled && (
+              <div className="w-full p-4 rounded-2xl bg-[#FFFDF8] border border-[#E8DED0] shadow-2xs">
+                <h4 className="text-xs font-bold text-[#17191C] mb-2 flex items-center gap-1.5">
+                  <HelpCircle className="w-4 h-4 text-[#1976F3]" />
+                  How to install this APK on Android
+                </h4>
+                <ol className="text-[11px] text-[#6F6F6F] leading-relaxed list-decimal list-inside space-y-1">
+                  <li>Tap <strong className="text-[#17191C]">Get App / Download APK</strong> — your browser downloads the file directly from the official GitHub release.</li>
+                  <li>When the download finishes, open it from the notification or your Downloads folder.</li>
+                  <li>If asked, allow installs from this source (Android: <em>Settings → Apps → Special access → Install unknown apps</em>).</li>
+                  <li>Confirm the install and open the app. The package is signed; you can verify it against the SHA-256 checksum listed above.</li>
+                </ol>
+              </div>
+            )}
 
             {/* PWA Direct Installation Helper Button */}
             {app.type === 'PWA' && (

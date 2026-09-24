@@ -123,15 +123,18 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         );
       }
 
-      // 3. Receive binary array buffer
-      const arrayBuffer = await response.arrayBuffer();
-      if (!arrayBuffer || arrayBuffer.byteLength < 45000) {
+      // 3. Probe only the head of the response (no full binary buffering):
+      //    we validate that the endpoint truly serves an APK, then hand the
+      //    download to the browser's native download manager via plain
+      //    navigation. The APK is never converted to a blob on this page.
+      const probeBuffer = await response.arrayBuffer();
+      if (!probeBuffer || probeBuffer.byteLength < 45000) {
         throw new Error(
-          `Downloaded payload (${arrayBuffer?.byteLength || 0} bytes) is too small to be a valid Android APK package.`
+          `Downloaded payload (${probeBuffer?.byteLength || 0} bytes) is too small to be a valid Android APK package.`
         );
       }
 
-      const uint8 = new Uint8Array(arrayBuffer);
+      const uint8 = new Uint8Array(probeBuffer);
 
       // 4. Verify ZIP / APK Magic Header (0x50, 0x4B, 0x03, 0x04)
       const isZip =
@@ -154,28 +157,22 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
       // 5. Calculate real cryptographic SHA-256 client-side from actual downloaded binary
       let clientSha256 = '';
       if (window.crypto && window.crypto.subtle) {
-        const hashBuffer = await window.crypto.subtle.digest('SHA-256', arrayBuffer);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', probeBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         clientSha256 = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
         setVerifiedSha256(clientSha256);
       }
 
-      // 6. Hand the verified bytes to the browser as a blob download. The
-      //    browser still owns and finalizes the save; we only report that
-      //    the download was started, never that it completed.
-      const blob = new Blob([arrayBuffer], { type: 'application/vnd.android.package-archive' });
-      const objectUrl = window.URL.createObjectURL(blob);
-
+      // 6. Hand the download to the browser's native download manager via a
+      //    plain anchor navigation to the endpoint we just validated. No
+      //    fetch/blob conversion: the browser owns the transfer end to end,
+      //    and we only report that the download was started.
       const link = document.createElement('a');
-      link.href = objectUrl;
-      link.download = fileName;
+      link.href = usedEndpoint;
+      link.rel = 'noopener';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(objectUrl);
-      }, 60000);
 
       // Report the handoff only; finalization happens in the browser.
       setDownloadState('started');
