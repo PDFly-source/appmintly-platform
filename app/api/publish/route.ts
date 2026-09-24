@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       app: appToSave,
-      message: 'Published successfully. Your app is now available across the APPFORGE marketplace.',
+      message: 'Published successfully. Your app is now available across the AppMintly marketplace.',
     });
   } catch (err: any) {
     return NextResponse.json(

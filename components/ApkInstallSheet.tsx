@@ -38,7 +38,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   const cleanAppName = app.name.replace(/[^a-zA-Z0-9]/g, '');
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
   const fileName = apkMeta?.fileName || `${cleanAppName || 'App'}-${versionName}.apk`;
-  const packageId = apkMeta?.packageId || `com.appforge.${app.slug.replace(/[^a-z0-9]/g, '')}`;
+  const packageId = apkMeta?.packageId || `com.appmintly.${app.slug.replace(/[^a-z0-9]/g, '')}`;
 
   // Use real file size and SHA-256 from verified metadata
   const realBytes = apkMeta?.fileSizeBytes;

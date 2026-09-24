@@ -56,7 +56,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             </span>
             {current.original && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F7B928]/20 border border-[#F7B928]/40 text-[#F7B928] text-xs font-bold">
-                APPFORGE Original
+                AppMintly Original
               </span>
             )}
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-xs font-medium backdrop-blur-xs">

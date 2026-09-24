@@ -85,7 +85,7 @@ export function validatePackageId(pkg: string): { valid: boolean; error?: string
   }
   const parts = trimmed.split('.');
   if (parts.length < 2) {
-    return { valid: false, error: 'Package ID must contain at least one dot (e.g., com.appforge.myapp)' };
+    return { valid: false, error: 'Package ID must contain at least one dot (e.g., com.appmintly.myapp)' };
   }
   const validIdentifier = /^[a-z][a-z0-9_]*$/;
   for (const part of parts) {
@@ -107,7 +107,7 @@ export function generatePackageId(slug: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
     .slice(0, 30);
-  return `com.appforge.${cleanSlug || 'app'}`;
+  return `com.appmintly.${cleanSlug || 'app'}`;
 }
 
 /**
@@ -391,7 +391,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       let iconBuffer: Buffer | null = null;
       if (options.iconUrl && options.iconUrl.startsWith('http')) {
         try {
-          const iconRes = await fetch(options.iconUrl, { headers: { 'User-Agent': 'APPFORGE-ApkBuilder/1.0' } });
+          const iconRes = await fetch(options.iconUrl, { headers: { 'User-Agent': 'AppMintly-ApkBuilder/1.0' } });
           if (iconRes.ok) {
             iconBuffer = Buffer.from(await iconRes.arrayBuffer());
           }
@@ -461,7 +461,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       try {
         const urlCheck = await fetch(options.launchUrl, {
           method: 'HEAD',
-          headers: { 'User-Agent': 'APPFORGE-ApkBuilder/1.0' },
+          headers: { 'User-Agent': 'AppMintly-ApkBuilder/1.0' },
         });
         if (urlCheck.status >= 500) {
           throw new Error(`Target web application returned server error HTTP ${urlCheck.status}`);

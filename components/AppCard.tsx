@@ -225,7 +225,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
                 </span>
               )}
               {app.original && (
-                <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[#F7B928]" title="APPFORGE Original" />
+                <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[#F7B928]" title="AppMintly Original" />
               )}
             </div>
             <div className="flex items-center gap-2 text-[11px] text-[#6F6F6F] mt-0.5">

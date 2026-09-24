@@ -44,7 +44,7 @@ export function ApkBuildCenter({
   const [authorized, setAuthorized] = useState(form.apk?.authorized ?? true);
   const [buildMode, setBuildMode] = useState<'webview' | 'twa'>(form.apk?.buildMode || 'webview');
   const [packageIdInput, setPackageIdInput] = useState(
-    form.apk?.packageId || `com.appforge.${(form.slug || 'app').toLowerCase().replace(/[^a-z0-9]/g, '')}`
+    form.apk?.packageId || `com.appmintly.${(form.slug || 'app').toLowerCase().replace(/[^a-z0-9]/g, '')}`
   );
   const [packageIdError, setPackageIdError] = useState<string | null>(null);
 
@@ -63,7 +63,7 @@ export function ApkBuildCenter({
   const validatePackageId = (id: string): boolean => {
     const pkgRegex = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
     if (!pkgRegex.test(id.toLowerCase())) {
-      setPackageIdError('Must be valid Android format: lowercase, dot-separated (e.g. com.appforge.studyria)');
+      setPackageIdError('Must be valid Android format: lowercase, dot-separated (e.g. com.appmintly.myapp)');
       return false;
     }
     setPackageIdError(null);
@@ -362,7 +362,7 @@ export function ApkBuildCenter({
                     I own/control this application or have permission to distribute it.
                   </span>
                   <p className="text-[#6F6F6F] text-[11px] leading-relaxed mt-1">
-                    APPFORGE operates as a verified app marketplace. Direct APK wrappers will only be compiled for authorized first-party web apps, PWAs, and tools.
+                    AppMintly operates as a verified app marketplace. Direct APK wrappers will only be compiled for authorized first-party web apps, PWAs, and tools.
                   </p>
                 </div>
               </label>
@@ -377,7 +377,7 @@ export function ApkBuildCenter({
                   type="text"
                   value={packageIdInput}
                   onChange={(e) => handlePackageIdChange(e.target.value)}
-                  placeholder="com.appforge.myapp"
+                  placeholder="com.appmintly.myapp"
                   className={`w-full bg-[#F8F2E7] border rounded-2xl px-4 py-2.5 text-xs font-mono text-[#17191C] focus:outline-hidden focus:ring-1 ${
                     packageIdError
                       ? 'border-[#E52B32] focus:ring-[#E52B32]'

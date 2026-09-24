@@ -98,7 +98,7 @@ export default function CategoryDetailPage() {
               {categoryName}
             </h1>
             <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-xl leading-relaxed">
-              {category?.description || `Explore top verified ${categoryName} applications in the APPFORGE marketplace.`}
+              {category?.description || `Explore top verified ${categoryName} applications in the AppMintly marketplace.`}
             </p>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function CategoryDetailPage() {
             No applications in {categoryName} yet
           </h3>
           <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1 max-w-sm mx-auto">
-            Check back soon as developers publish new software to APPFORGE, or publish your own app today.
+            Check back soon as developers publish new software to AppMintly, or publish your own app today.
           </p>
           <div className="mt-5 flex items-center justify-center gap-3">
             <Link

@@ -16,12 +16,15 @@ import {
   Zap,
   ShieldCheck,
   FolderOpen,
-  GraduationCap
+  GraduationCap,
+  Link2,
+  Rocket
 } from 'lucide-react';
 import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
 import { FeaturedHeroCarousel } from '@/components/FeaturedHeroCarousel';
 import { AppCard } from '@/components/AppCard';
+import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 
 export default function HomePage() {
   const { publishedApps, featuredApps, latestApps, newApps } = useCatalog();
@@ -39,19 +42,14 @@ export default function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-8 sm:mb-12">
           {/* Hero Text */}
           <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFFDF8] border border-[#E8DED0] shadow-2xs text-xs font-bold text-[#17191C]">
-              <span className="w-2 h-2 rounded-full bg-[#16A765] animate-pulse"></span>
-              <span className="text-[#16A765] font-black">APPFORGE</span>
-              <span className="text-[#6F6F6F]">•</span>
-              <span>Universal App Marketplace</span>
-            </div>
+            <AppMintlyLogo variant="horizontal" size="sm" />
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#17191C] leading-[1.08]">
-              Explore Apps &amp; Software
+              Discover. Install.<br />Experience.
             </h1>
 
             <p className="text-base sm:text-lg text-[#6F6F6F] max-w-xl leading-relaxed">
-              Discover verified web apps, installable tools, games and APKs. Fast, zero tracking bloat, and directly accessible on any device.
+              Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, zero tracking bloat, directly accessible on any device.
             </p>
 
             {/* CTAs */}
@@ -61,31 +59,34 @@ export default function HomePage() {
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#17191C] hover:bg-[#E52B32] text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
               >
                 <Compass className="w-4 h-4" />
-                <span>Explore Marketplace</span>
+                <span>Explore Apps</span>
               </Link>
 
               <Link
-                href="/categories"
+                href="/publisher"
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-[#FFFDF8] hover:bg-white text-[#17191C] text-sm font-bold border border-[#E8DED0] shadow-xs transition"
               >
-                <Layers className="w-4 h-4 text-[#1976F3]" />
-                <span>Browse Categories</span>
+                <Rocket className="w-4 h-4 text-[#1976F3]" />
+                <span>Publish Your App</span>
               </Link>
             </div>
 
-            {/* Quick platform badges */}
+            {/* Marketplace category row */}
             <div className="flex items-center gap-4 pt-2 text-xs text-[#6F6F6F] flex-wrap">
               <span className="inline-flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-[#1976F3]" /> Web Applications
+                <Smartphone className="w-3.5 h-3.5 text-[#16A765]" /> Apps
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-[#16A765]" /> Educational Portals
+                <Globe className="w-3.5 h-3.5 text-[#1976F3]" /> Web Apps
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-[#F7B928]" /> Utility &amp; Dev Tools
+                <Gamepad2 className="w-3.5 h-3.5 text-[#E52B32]" /> Games
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Smartphone className="w-3.5 h-3.5 text-[#16A765]" /> Android Packages
+                <Wrench className="w-3.5 h-3.5 text-[#F7B928]" /> Tools
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-[#16A765]" /> Websites
               </span>
             </div>
           </div>
@@ -133,7 +134,7 @@ export default function HomePage() {
               Featured Applications
             </h2>
             <p className="text-xs sm:text-sm text-[#6F6F6F] mt-1">
-              Top curated web applications, tools, and platforms on APPFORGE.
+              Top curated web applications, tools, and platforms on AppMintly.
             </p>
           </div>
           <Link
@@ -258,13 +259,13 @@ export default function HomePage() {
         <div className="rounded-3xl bg-[#17191C] text-white p-6 sm:p-10 border border-[#17191C]/20 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 max-w-xl">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1976F3] text-white text-xs font-bold uppercase tracking-wider">
-              <Globe className="w-3.5 h-3.5" /> APPFORGE PLATFORM
+              <Globe className="w-3.5 h-3.5" /> APPMINTLY PLATFORM
             </span>
             <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Install APPFORGE Directly to Your Home Screen
+              Install AppMintly Directly to Your Home Screen
             </h3>
             <p className="text-xs sm:text-sm text-white/75 leading-relaxed">
-              APPFORGE works seamlessly as a standalone application on Android, iOS, Windows, macOS, and Linux. Enjoy instantaneous catalog search, real-time updates, and an offline-ready library.
+              AppMintly works seamlessly as a standalone application on Android, iOS, Windows, macOS, and Linux. Enjoy instantaneous catalog search, real-time updates, and an offline-ready library.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">

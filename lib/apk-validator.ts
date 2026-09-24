@@ -222,7 +222,7 @@ export async function smokeTestApk(
     const res = await fetch(targetUrl, {
       method: 'GET',
       headers: {
-        'User-Agent': 'APPFORGE-ApkSmokeTester/1.0',
+        'User-Agent': 'AppMintly-ApkSmokeTester/1.0',
         Accept: 'application/vnd.android.package-archive, application/octet-stream',
       },
     });

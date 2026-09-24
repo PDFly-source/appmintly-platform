@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Download, Share2, X, Smartphone } from 'lucide-react';
-import { AppForgeLogo } from './AppForgeLogo';
+import { AppMintlyLogo } from './AppMintlyLogo';
 
 export const PWAInstallBanner: React.FC = () => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
@@ -24,9 +24,9 @@ export const PWAInstallBanner: React.FC = () => {
       <div className="bg-gradient-to-r from-[#17191C] via-[#23272C] to-[#17191C] text-white px-4 py-2.5 shadow-md border-b border-white/10 relative z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs md:text-sm">
           <div className="flex items-center gap-2.5 min-w-0">
-            <AppForgeLogo variant="mark" size="xs" />
+            <AppMintlyLogo variant="mark" size="xs" />
             <div className="truncate">
-              <span className="font-bold text-white">Install APPFORGE App</span>
+              <span className="font-bold text-white">Install AppMintly App</span>
               <span className="hidden sm:inline text-white/70 ml-2">Fast offline access & native experience</span>
             </div>
           </div>
@@ -70,7 +70,7 @@ export const PWAInstallBanner: React.FC = () => {
           <div className="w-full max-w-sm rounded-2xl bg-[#FFFDF8] p-6 shadow-2xl border border-[#E8DED0] text-[#17191C]">
             <div className="flex items-center justify-between pb-3 border-b border-[#E8DED0]">
               <div className="flex items-center gap-2">
-                <AppForgeLogo variant="mark" size="xs" />
+                <AppMintlyLogo variant="mark" size="xs" />
                 <h3 className="font-bold text-base">Install on iPhone / iPad</h3>
               </div>
               <button

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { AppForgeLogo } from './AppForgeLogo';
+import { AppMintlyLogo } from './AppMintlyLogo';
 import { Smartphone, Globe, Gamepad2, Wrench, Sparkles, BookOpen, Layers } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -10,9 +10,9 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
-            <AppForgeLogo variant="horizontal" size="md" />
+            <AppMintlyLogo variant="horizontal" size="md" />
             <p className="text-xs text-[#FAF5ED]/70 max-w-sm leading-relaxed">
-              APPFORGE is an independent digital application marketplace. Discover, install, and experience Android APKs, Progressive Web Apps, interactive browser games, and creative tools.
+              AppMintly is an independent digital marketplace for Apps, Web Apps, Games, Tools, and Websites. Discover, install, and experience them all in one place.
             </p>
             <div className="flex items-center gap-3 text-xs text-[#FAF5ED]/50 pt-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-white font-medium">
@@ -54,7 +54,7 @@ export const Footer: React.FC = () => {
               <li>
                 <Link href="/explore?filter=originals" className="hover:text-white transition flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" />
-                  <span>APPFORGE Originals</span>
+                  <span>AppMintly Originals</span>
                 </Link>
               </li>
             </ul>
@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
                 <Link href="/library" className="hover:text-white transition">Saved Apps & Library</Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-white transition">About APPFORGE</Link>
+                <Link href="/about" className="hover:text-white transition">About AppMintly</Link>
               </li>
             </ul>
           </div>
@@ -105,7 +105,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FAF5ED]/50">
-          <p>© {new Date().getFullYear()} APPFORGE. All rights reserved. “Discover. Install. Experience.”</p>
+          <p>© {new Date().getFullYear()} AppMintly. All rights reserved. “Discover. Install. Experience.”</p>
           <div className="flex items-center gap-4">
             <Link href="/about" className="hover:text-white transition">About</Link>
             <span>•</span>

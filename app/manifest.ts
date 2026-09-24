@@ -3,9 +3,9 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'APPFORGE',
-    short_name: 'APPFORGE',
-    description: 'Discover. Install. Experience.',
+    name: 'AppMintly',
+    short_name: 'AppMintly',
+    description: 'Discover. Install. Experience. Your digital world, one place — Apps, Web Apps, Games, Tools, and Websites.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -13,23 +13,23 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#17191C',
     icons: [
       {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml',
-        purpose: 'any',
-      },
-      {
-        src: '/appforge-logo.svg',
+        src: '/icon-192.png',
         sizes: '192x192',
-        type: 'image/svg+xml',
+        type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/appforge-logo.svg',
+        src: '/icon-512.png',
         sizes: '512x512',
-        type: 'image/svg+xml',
+        type: 'image/png',
         purpose: 'any',
-      }
+      },
+      {
+        src: '/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
   };
 }

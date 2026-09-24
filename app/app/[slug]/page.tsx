@@ -94,7 +94,7 @@ export default function AppDetailPage() {
         </div>
         <h1 className="text-2xl font-black text-[#17191C]">Application Not Found</h1>
         <p className="text-sm text-[#6F6F6F] mt-2">
-          The requested application is not present in the APPFORGE content registry.
+          The requested application is not present in the AppMintly content registry.
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Link
@@ -131,7 +131,7 @@ export default function AppDetailPage() {
     if (navigator.share) {
       navigator
         .share({
-          title: `${app.name} on APPFORGE`,
+          title: `${app.name} on AppMintly`,
           text: app.shortDescription || app.description,
           url: window.location.href,
         })
@@ -371,7 +371,7 @@ export default function AppDetailPage() {
                           Verified Android APK Package
                         </span>
                         <span className="text-[#6F6F6F] ml-2 font-mono text-[11px]">
-                          {app.apk?.packageId || `com.appforge.${app.slug}`}
+                          {app.apk?.packageId || `com.appmintly.${app.slug}`}
                         </span>
                       </div>
                     </div>
@@ -734,7 +734,7 @@ export default function AppDetailPage() {
               </div>
 
               <div className="p-3 rounded-2xl bg-[#F8F2E7] border border-[#E8DED0] text-[11px] text-[#6F6F6F] leading-relaxed">
-                <strong>Authentic Cross-Origin PWA:</strong> The installed application runs under its genuine domain (<code className="text-[#17191C] font-mono">{app.url}</code>) with its official manifest, icons, and offline storage. APPFORGE does not wrap or alter the application.
+                <strong>Authentic Cross-Origin PWA:</strong> The installed application runs under its genuine domain (<code className="text-[#17191C] font-mono">{app.url}</code>) with its official manifest, icons, and offline storage. AppMintly does not wrap or alter the application.
               </div>
             </div>
 

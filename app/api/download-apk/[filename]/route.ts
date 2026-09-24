@@ -55,7 +55,7 @@ export async function GET(
   } else if (remoteUrl && remoteUrl.startsWith('https://')) {
     try {
       const remoteRes = await fetch(remoteUrl, {
-        headers: { 'User-Agent': 'APPFORGE-ApkProxy/1.0' },
+        headers: { 'User-Agent': 'AppMintly-ApkProxy/1.0' },
       });
       if (remoteRes.ok) {
         const arrayBuf = await remoteRes.arrayBuffer();

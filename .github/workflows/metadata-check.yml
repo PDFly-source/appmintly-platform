@@ -38,7 +38,7 @@ jobs:
             }
             try {
               const res = await fetch(targetUrl, {
-                headers: { "User-Agent": "APPFORGE-HealthChecker/1.0" },
+                headers: { "User-Agent": "AppMintly-HealthChecker/1.0" },
                 signal: AbortSignal.timeout(8000)
               });
               if (!res.ok) {

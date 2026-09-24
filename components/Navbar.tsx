@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bookmark, Menu, X, Sparkles, Wrench, Shield, ArrowRight } from 'lucide-react';
-import { AppForgeLogo } from './AppForgeLogo';
+import { AppMintlyLogo } from './AppMintlyLogo';
 import { getLocalFavorites } from '@/lib/localLibrary';
 
 export const Navbar: React.FC = () => {
@@ -19,8 +19,8 @@ export const Navbar: React.FC = () => {
       setFavCount(getLocalFavorites().length);
     };
     updateFavCount();
-    window.addEventListener('appforge_local_updated', updateFavCount);
-    return () => window.removeEventListener('appforge_local_updated', updateFavCount);
+    window.addEventListener('appmintly_local_updated', updateFavCount);
+    return () => window.removeEventListener('appmintly_local_updated', updateFavCount);
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -44,7 +44,7 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
-          <AppForgeLogo size="md" variant="horizontal" />
+          <AppMintlyLogo size="md" variant="horizontal" />
         </Link>
 
         {/* Desktop Search Bar */}
@@ -172,7 +172,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="text-xs font-medium text-[#6F6F6F] hover:text-[#17191C]"
             >
-              About APPFORGE
+              About AppMintly
             </Link>
           </div>
         </div>

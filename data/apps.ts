@@ -117,28 +117,28 @@ export function isValidPublicApp(app: AppItem, allowDemo: boolean = APPFORGE_DEM
 
   if (!name) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[APPFORGE Catalog] Validation failed: app missing name', app.id);
+      console.warn('[AppMintly Catalog] Validation failed: app missing name', app.id);
     }
     return false;
   }
 
   if (!slug) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[APPFORGE Catalog] Validation failed: app missing slug', app.name);
+      console.warn('[AppMintly Catalog] Validation failed: app missing slug', app.name);
     }
     return false;
   }
 
   if (!launchUrl) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[APPFORGE Catalog] Validation failed: app missing valid launch URL', app.name);
+      console.warn('[AppMintly Catalog] Validation failed: app missing valid launch URL', app.name);
     }
     return false;
   }
 
   if (!category) {
     if (process.env.NODE_ENV !== 'production') {
-      console.warn('[APPFORGE Catalog] Validation failed: app missing category', app.name);
+      console.warn('[AppMintly Catalog] Validation failed: app missing category', app.name);
     }
     return false;
   }

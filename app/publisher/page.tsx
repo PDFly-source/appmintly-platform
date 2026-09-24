@@ -85,7 +85,7 @@ export default function PublisherPage() {
     name: '',
     shortName: '',
     slug: '',
-    developer: 'APPFORGE Originals',
+    developer: 'AppMintly Originals',
     shortDescription: '',
     description: '',
     icon: '',
@@ -478,7 +478,7 @@ export default function PublisherPage() {
                 </div>
                 <h2 className="text-xl font-black">Distribute a New Application</h2>
                 <p className="text-xs text-white/70 max-w-xl">
-                  Paste any web app or PWA URL. APPFORGE automatically parses the manifest, icons, metadata, and service worker indicators.
+                  Paste any web app or PWA URL. AppMintly automatically parses the manifest, icons, metadata, and service worker indicators.
                 </p>
               </div>
 
@@ -704,7 +704,7 @@ export default function PublisherPage() {
                     Step 1: Application Link &amp; Metadata Discovery
                   </h3>
                   <p className="text-xs text-[#6F6F6F]">
-                    Enter the web application or PWA URL. APPFORGE will inspect the web app manifest, icons, OpenGraph data, and installation readiness.
+                    Enter the web application or PWA URL. AppMintly will inspect the web app manifest, icons, OpenGraph data, and installation readiness.
                   </p>
                 </div>
 
@@ -999,7 +999,7 @@ export default function PublisherPage() {
                       onChange={(e) => setForm({ ...form, original: e.target.checked })}
                       className="w-4 h-4 rounded-md accent-[#F7B928]"
                     />
-                    <span>APPFORGE Original</span>
+                    <span>AppMintly Original</span>
                   </label>
                 </div>
 
@@ -1548,7 +1548,7 @@ export default function PublisherPage() {
                     <span>Permanent GitHub Deployment Architecture</span>
                   </h4>
                   <p className="text-xs text-[#6F6F6F] leading-relaxed">
-                    APPFORGE operates as an ultra-fast, independent static marketplace with no cloud database dependency. To publish your updates to production:
+                    AppMintly operates as an ultra-fast, independent static marketplace with no cloud database dependency. To publish your updates to production:
                   </p>
 
                   <div className="bg-[#17191C] text-white p-4 rounded-2xl font-mono text-xs space-y-2 overflow-x-auto">
@@ -1613,7 +1613,7 @@ export default function PublisherPage() {
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-[#17191C]">Published successfully</h3>
                 <p className="text-xs sm:text-sm text-[#6F6F6F] mt-2 leading-relaxed">
-                  Your app <span className="font-bold text-[#17191C]">{publishedAppSuccess.name}</span> is now available across the APPFORGE marketplace.
+                  Your app <span className="font-bold text-[#17191C]">{publishedAppSuccess.name}</span> is now available across the AppMintly marketplace.
                 </p>
               </div>
 

@@ -1,4 +1,4 @@
-// APPFORGE Global Configuration
+// AppMintly Global Configuration
 // Production Mode: SHOW ONLY REAL PUBLISHED CATALOG APPS.
 // Demo Mode: May show sample applications.
 // Default production configuration: false (no demo apps leak into public pages).

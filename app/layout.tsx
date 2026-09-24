@@ -7,26 +7,33 @@ import { BottomNav } from '@/components/BottomNav';
 import { Footer } from '@/components/Footer';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
+export const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
+
 export const metadata: Metadata = {
-  title: 'APPFORGE - Discover. Install. Experience.',
-  description: 'The independent digital application marketplace for Android APKs, Web Apps, PWAs, Games, and Tools.',
+  metadataBase: new URL(SITE_URL),
+  title: 'AppMintly - Discover. Install. Experience.',
+  description: 'AppMintly is a digital marketplace for Apps, Web Apps, Games, Tools, and Websites. Your digital world, one place.',
   manifest: '/manifest.webmanifest',
   icons: {
-    icon: '/icon.svg',
-    shortcut: '/icon.svg',
-    apple: '/appforge-logo.svg',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'APPFORGE - Discover. Install. Experience.',
-    description: 'Discover, download, and experience verified Android APKs, Web Apps, PWAs, and developer tools.',
-    url: 'https://appforge.dev',
-    siteName: 'APPFORGE',
+    title: 'AppMintly — Discover. Install. Experience.',
+    description: 'Discover, install, and experience Apps, Web Apps, Games, Tools, and Websites — all in one digital marketplace.',
+    url: SITE_URL,
+    siteName: 'AppMintly',
     images: [
       {
-        url: '/appforge-logo.svg',
-        width: 800,
-        height: 600,
-        alt: 'APPFORGE Official Logo',
+        url: '/brand/appmintly-logo-full.png',
+        width: 900,
+        height: 900,
+        alt: 'AppMintly — Discover. Install. Experience.',
       },
     ],
     locale: 'en_US',
@@ -34,8 +41,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'APPFORGE - Discover. Install. Experience.',
-    description: 'Independent digital application marketplace for Android APKs, Web Apps, PWAs, and Games.',
+    title: 'AppMintly - Discover. Install. Experience.',
+    description: 'Your digital world, one place. Discover, install, and experience Apps, Web Apps, Games, Tools, and Websites.',
+    images: ['/brand/appmintly-logo-full.png'],
   },
 };
 
@@ -54,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>

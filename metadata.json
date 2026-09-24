@@ -1,5 +1,5 @@
 {
-  "name": "APPFORGE",
+  "name": "AppMintly",
   "description": "Discover, install, and experience Android apps, web apps, PWAs, games, tools, and websites in one unified digital marketplace.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

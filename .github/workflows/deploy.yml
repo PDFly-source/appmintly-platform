@@ -1,4 +1,4 @@
-name: Deploy APPFORGE to GitHub Pages
+name: Deploy AppMintly to GitHub Pages
 
 on:
   push:

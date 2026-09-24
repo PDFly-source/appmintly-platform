@@ -1,14 +1,14 @@
-// APPFORGE Service Worker - Cache Versioning
-const CACHE_VERSION = 'appforge-v2.5.0';
-const STATIC_CACHE_NAME = `appforge-static-${CACHE_VERSION}`;
-const DATA_CACHE_NAME = `appforge-data-${CACHE_VERSION}`;
+// AppMintly Service Worker - Cache Versioning
+const CACHE_VERSION = 'appmintly-v2.5.0';
+const STATIC_CACHE_NAME = `appmintly-static-${CACHE_VERSION}`;
+const DATA_CACHE_NAME = `appmintly-data-${CACHE_VERSION}`;
 
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
   '/manifest.webmanifest',
-  '/icon.svg',
-  '/appforge-logo.svg',
+  '/icon-192.png',
+  '/brand/appmintly-icon.png',
   '/data/apps.json',
   '/data/categories.json',
   '/data/collections.json'

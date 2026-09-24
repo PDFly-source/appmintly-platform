@@ -45,10 +45,10 @@ export default function LibraryPage() {
       setMountedTime(Date.now());
     }, 0);
     const handleUpdate = () => setMountedTime(Date.now());
-    window.addEventListener('appforge_local_updated', handleUpdate);
+    window.addEventListener('appmintly_local_updated', handleUpdate);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('appforge_local_updated', handleUpdate);
+      window.removeEventListener('appmintly_local_updated', handleUpdate);
     };
   }, []);
 
@@ -238,7 +238,7 @@ export default function LibraryPage() {
               <Clock className="w-12 h-12 text-[#E8DED0] mx-auto mb-3" />
               <h3 className="text-lg font-bold text-[#17191C]">No recently opened apps</h3>
               <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
-                Apps you launch from APPFORGE will appear here automatically.
+                Apps you launch from AppMintly will appear here automatically.
               </p>
               <Link
                 href="/explore"
@@ -297,7 +297,7 @@ export default function LibraryPage() {
               <Download className="w-12 h-12 text-[#E8DED0] mx-auto mb-3" />
               <h3 className="text-lg font-bold text-[#17191C]">No APK downloads yet</h3>
               <p className="text-xs text-[#6F6F6F] mt-1 max-w-sm mx-auto">
-                Android APKs downloaded from APPFORGE will appear in this local history ledger.
+                Android APKs downloaded from AppMintly will appear in this local history ledger.
               </p>
               <Link
                 href="/explore?type=Android+APK"

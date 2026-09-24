@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `App "${slug}" not found in catalog` }, { status: 404 });
   }
 
-  const packageId = app.apk?.packageId || `com.appforge.${slug}`;
+  const packageId = app.apk?.packageId || `com.appmintly.${slug}`;
   const versionName = app.apk?.versionName || app.version || '1.0.0';
   const expectedFileName = app.apk?.fileName || `${app.name.replace(/[^a-zA-Z0-9]/g, '')}-${versionName}.apk`;
 

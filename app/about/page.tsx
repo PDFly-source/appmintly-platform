@@ -11,7 +11,7 @@ import {
   Layers,
   ArrowRight
 } from 'lucide-react';
-import { AppForgeLogo } from '@/components/AppForgeLogo';
+import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 
 export default function AboutPage() {
   return (
@@ -19,13 +19,13 @@ export default function AboutPage() {
       {/* Brand Header */}
       <div className="text-center space-y-4">
         <div className="inline-flex justify-center mb-2">
-          <AppForgeLogo size="lg" variant="full" showTagline />
+          <AppMintlyLogo size="lg" variant="full" showTagline />
         </div>
         <h1 className="text-3xl sm:text-5xl font-black text-[#17191C] tracking-tight">
           An Independent Application Marketplace
         </h1>
         <p className="text-base sm:text-lg text-[#6F6F6F] max-w-2xl mx-auto leading-relaxed">
-          APPFORGE is a fast, unbloated, privacy-first software platform created to distribute original apps, Android APKs, Progressive Web Apps, indie games, and developer utilities directly to you.
+          AppMintly is a fast, unbloated, privacy-first digital marketplace created to distribute original apps, web apps, Android APKs, games, tools, and websites directly to you.
         </p>
       </div>
 
@@ -85,9 +85,9 @@ export default function AboutPage() {
           </div>
 
           <div className="pt-4">
-            <h4 className="font-bold text-[#17191C]">Are APPFORGE applications verified?</h4>
+            <h4 className="font-bold text-[#17191C]">Are AppMintly applications verified?</h4>
             <p className="text-[#6F6F6F] text-xs sm:text-sm mt-1 leading-relaxed">
-              Yes. Every application listed in the APPFORGE content registry is compiled, audited, and curated by APPFORGE before publication. We never include malware, predatory advertisements, or background crypto miners.
+              Yes. Every application listed in the AppMintly content registry is compiled, audited, and curated by AppMintly before publication. We never include malware, predatory advertisements, or background crypto miners.
             </p>
           </div>
 

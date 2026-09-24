@@ -29,7 +29,7 @@ function safeSet(key: string, value: any[]) {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new Event('appforge_local_updated'));
+    window.dispatchEvent(new Event('appmintly_local_updated'));
   } catch (err) {
     console.error(`Error saving ${key} to localStorage`, err);
   }
@@ -47,8 +47,8 @@ export function isLocalFavorite(appId: string): boolean {
 
 function subscribeToLocalUpdates(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
-  window.addEventListener('appforge_local_updated', callback);
-  return () => window.removeEventListener('appforge_local_updated', callback);
+  window.addEventListener('appmintly_local_updated', callback);
+  return () => window.removeEventListener('appmintly_local_updated', callback);
 }
 
 /**
@@ -125,7 +125,7 @@ export function clearAllLocalData() {
     window.localStorage.removeItem(WISHLIST_KEY);
     window.localStorage.removeItem(OPENED_KEY);
     window.localStorage.removeItem(DOWNLOADED_KEY);
-    window.dispatchEvent(new Event('appforge_local_updated'));
+    window.dispatchEvent(new Event('appmintly_local_updated'));
   } catch (err) {
     console.error('Error clearing local data', err);
   }
