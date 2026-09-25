@@ -13,6 +13,8 @@ const PRECACHE_ASSETS = [
   `${BASE_PATH}/manifest.webmanifest`,
   `${BASE_PATH}/icon-192.png`,
   `${BASE_PATH}/brand/appmintly-icon.png`,
+  `${BASE_PATH}/brand/appmintly-icon-512.png`,
+  `${BASE_PATH}/brand/appmintly-icon-1024.png`,
   `${BASE_PATH}/data/apps.json`,
   `${BASE_PATH}/data/categories.json`,
   `${BASE_PATH}/data/collections.json`

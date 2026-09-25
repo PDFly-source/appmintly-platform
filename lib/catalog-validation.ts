@@ -137,13 +137,25 @@ export function validateAppForPublish(
   }
 
   // ---- Screenshots ---------------------------------------------------
+  // Phase 10.6 (permanent screenshot fix): production screenshots must be
+  // PERMANENT addresses — https:// URLs or repository asset paths. data:/blob:
+  // values are device-local temporaries: they can never survive to the shared
+  // catalog and are rejected outright, field-level.
   const screenshots = Array.isArray(app.screenshots) ? app.screenshots : [];
-  for (const s of screenshots) {
-    if (!isHttpsUrl(s) && !s.startsWith('data:image/')) {
-      errors.push('Screenshots must be https:// URLs (or uploaded images).');
-      break;
+  screenshots.forEach((s, idx) => {
+    const label = `Screenshot ${idx + 1}`;
+    if (!s || !s.trim()) {
+      errors.push(`${label}: empty screenshot URL.`);
+    } else if (s.startsWith('data:')) {
+      errors.push(`${label} is a data:image value — device-local previews can never be published. Provide an https:// URL or a repository asset path (e.g. /apps/<slug>/screenshots/shot-1.png).`);
+    } else if (s.startsWith('blob:')) {
+      errors.push(`${label} is a temporary blob: URL — it exists only in this browser session. Provide a permanent https:// URL or repository asset path.`);
+    } else if (s.startsWith('javascript:') || s.startsWith('http://')) {
+      errors.push(`${label} must be https:// (or a repository asset path), not ${s.split(':')[0]}:.`);
+    } else if (!isHttpsOrRepoAsset(s)) {
+      errors.push(`${label} must be an https:// URL or a repository asset path starting with /.`);
     }
-  }
+  });
   if (screenshots.length > 10) errors.push('Maximum 10 screenshots allowed.');
 
   // ---- Tags / features ------------------------------------------------

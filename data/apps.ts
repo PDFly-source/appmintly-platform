@@ -1,5 +1,5 @@
 import rawApps from './apps.json';
-import { APPFORGE_DEMO_MODE, NEW_APP_THRESHOLD_DAYS, DEFAULT_FEATURED_LIMIT } from '@/lib/config';
+import { APPFORGE_DEMO_MODE, NEW_APP_THRESHOLD_DAYS } from '@/lib/config';
 
 export type AppType =
   | 'PWA'
@@ -219,21 +219,23 @@ export function getPublishedApps(catalog?: AppItem[], allowDemo: boolean = APPFO
  * If no explicitly featured apps are present, falls back to published apps sorted by updatedAt DESC.
  */
 export function getFeaturedApps(catalog?: AppItem[], allowDemo: boolean = APPFORGE_DEMO_MODE): AppItem[] {
+  // Phase 10.6 (permanent Featured fix): Featured is EXCLUSIVELY data-driven.
+  // A record enters the Featured carousel only when it is published AND
+  // featured === true in the canonical catalog. There is NO fallback to
+  // "latest published apps" — a previously-featured app must never appear
+  // just because nothing is featured. When no app is featured the result is
+  // an empty list and the UI shows its explicit empty state.
   const published = getPublishedApps(catalog, allowDemo);
-  const explicitlyFeatured = published.filter((a) => Boolean(a.featured));
-
-  if (explicitlyFeatured.length > 0) {
-    return explicitlyFeatured;
-  }
-
-  // Fallback: published apps sorted by last updated / release date
-  return [...published]
+  return published
+    .filter((a) => a.featured === true)
     .sort((a, b) => {
+      // Deterministic order: most recently updated first, then by name —
+      // identical catalog input always produces an identical carousel.
       const dateA = new Date(a.lastUpdated || a.updatedAt || a.releaseDate || 0).getTime();
       const dateB = new Date(b.lastUpdated || b.updatedAt || b.releaseDate || 0).getTime();
-      return dateB - dateA;
-    })
-    .slice(0, DEFAULT_FEATURED_LIMIT);
+      if (dateA !== dateB) return dateB - dateA;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 /**

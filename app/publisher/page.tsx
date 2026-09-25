@@ -42,7 +42,8 @@ import {
   Loader2,
   GitCommitHorizontal,
   RotateCcw,
-  Lock
+  Lock,
+  FilePen
 } from 'lucide-react';
 import { AppItem, AppType } from '@/data/apps';
 import { CATEGORIES } from '@/data/categories';
@@ -89,7 +90,19 @@ type WorkflowStep =
 
 export default function PublisherPage() {
   const { toast } = useToast();
-  const { catalog, publishApp, refreshCatalog, clearSessionEdits, hasSessionEdits, isLoading } = useCatalog();
+  const {
+    catalog,
+    publishApp,
+    refreshCatalog,
+    clearSessionEdits,
+    hasSessionEdits,
+    isLoading,
+    // Phase 10.6: console-scoped device drafts (never merged into public pages)
+    getSessionEditMap,
+    getSessionEditFor,
+    mergeDraftOverlay,
+    clearSessionEditFor,
+  } = useCatalog();
 
   // Active view: 'catalog' list or 'editor' (add/edit workflow)
   const [viewMode, setViewMode] = useState<'catalog' | 'editor'>('catalog');
@@ -338,9 +351,17 @@ export default function PublisherPage() {
 
   // Launch Editor for Existing App
   const handleEditApp = (app: AppItem) => {
-    setForm({ ...app });
-    lastSavedRef.current = { ...app };
+    // Phase 10.6: if a device-local draft exists for this app, open the
+    // draft (canonical + sanitized draft overlay) so in-progress edits
+    // survive a reload. Public pages keep showing the canonical record.
+    const hasDraft = Boolean(getSessionEditFor(app.slug || app.id));
+    const hydrated = hasDraft ? mergeDraftOverlay(app) : app;
+    setForm({ ...hydrated });
+    lastSavedRef.current = { ...hydrated };
     setOriginalRecord({ ...app });
+    if (hasDraft) {
+      toast(`Loaded device-local draft for "${app.name}" — publish to make changes live.`, 'info');
+    }
     setIsEditingExisting(true);
     setWorkflowStep('basic');
     setViewMode('editor');
@@ -483,7 +504,7 @@ export default function PublisherPage() {
     };
     const ok = await publishApp(updated);
     if (ok) {
-      toast(`Set "${app.name}" status to ${newStatus}.`, 'info');
+      toast(`Saved "${app.name}" status ${newStatus} as a device draft — publish it to make the change live.`, 'info');
     }
   };
 
@@ -496,7 +517,7 @@ export default function PublisherPage() {
     };
     const ok = await publishApp(updated);
     if (ok) {
-      toast(`Turned Featured ${updated.featured ? 'ON' : 'OFF'} for "${app.name}".`, 'info');
+      toast(`Saved Featured ${updated.featured ? 'ON' : 'OFF'} for "${app.name}" as a device draft — publish it to change the live homepage.`, 'info');
     }
   };
 
@@ -736,6 +757,9 @@ export default function PublisherPage() {
     setPublishResult(result);
 
     if (result.success) {
+      // Phase 10.6: the canonical catalog now carries this record — the
+      // device draft must go, so it can never overlay newer canonical data.
+      clearSessionEditFor(record.slug || record.id);
       lastSavedRef.current = record;
       setOriginalRecord(record);
       setHasUnsavedChanges(false);
@@ -751,12 +775,12 @@ export default function PublisherPage() {
     }
   };
 
-  // Save App to the working session (NOT a production publish).
+  // Save App as a device draft (NOT a production publish).
   const handleSaveAppToCatalog = async () => {
     const appToSave = buildAppRecord();
 
     // Validation gates saving as well — the same rules apply before the
-    // change is previewed in the working session.
+    // change is stored as a device draft (console + Store Preview).
     const report = validateAppForPublish(appToSave, catalog, originalRecord);
     setValidationReport(report);
     if (!report.valid) {
@@ -785,13 +809,13 @@ export default function PublisherPage() {
     const ok = await publishApp(appToSave);
     if (ok.success && ok.persisted === 'session') {
       // Static GitHub Pages hosting: the change is applied to the local
-      // working session (preview across the site) but is NOT a permanent
+      // device draft (console + Store Preview only) and is NOT a permanent
       // production publish. State this truthfully.
       lastSavedRef.current = appToSave;
       setHasUnsavedChanges(false);
       setPublishedAppSuccess(appToSave);
       toast(
-        `Saved "${appToSave.name}" to your working session — previews live on this device only. Not published: use Publish to Production, or export the Catalog JSON and commit it.`,
+        `Saved "${appToSave.name}" as a device draft (console + Store Preview only). Use Publish to Production to make it live on the marketplace.`,
         'success'
       );
     } else if (ok.success) {
@@ -804,18 +828,37 @@ export default function PublisherPage() {
     }
   };
 
+  // Phase 10.6: the manual export includes the canonical catalog PLUS any
+  // device-local drafts (sanitized overlays applied, new-draft records
+  // appended) so the Save Draft -> Export -> manual commit fallback keeps
+  // working. The toast states exactly what was exported.
+  const buildExportJson = (): string => {
+    const draftMap: Record<string, Partial<AppItem>> = getSessionEditMap();
+    const inCatalog = new Set(catalog.map((a) => (a.slug || a.id).toLowerCase()));
+    const mergedExisting = catalog.map((a) => {
+      const slug = (a.slug || a.id).toLowerCase();
+      return draftMap[slug] ? mergeDraftOverlay(a) : a;
+    });
+    const newDrafts = Object.entries(draftMap)
+      .filter(([slug]) => !inCatalog.has(slug.toLowerCase()))
+      .map(([slug, draft]) => ({ ...emptyForm, ...(draft as Partial<AppItem>), slug } as AppItem));
+    const draftCount = Object.keys(draftMap).length;
+    if (draftCount === 0) return JSON.stringify(mergedExisting, null, 2);
+    return JSON.stringify([...newDrafts, ...mergedExisting], null, 2);
+  };
+
   // Copy apps.json
   const handleCopyJson = () => {
-    const jsonStr = JSON.stringify(catalog, null, 2);
+    const jsonStr = buildExportJson();
     navigator.clipboard.writeText(jsonStr);
     setCopiedJson(true);
-    toast('Copied data/apps.json to clipboard!', 'success');
+    toast('Copied catalog JSON (canonical + device drafts) to clipboard!', 'success');
     setTimeout(() => setCopiedJson(false), 3000);
   };
 
   // Download apps.json
   const handleDownloadJson = () => {
-    const jsonStr = JSON.stringify(catalog, null, 2);
+    const jsonStr = buildExportJson();
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -823,7 +866,7 @@ export default function PublisherPage() {
     a.download = 'apps.json';
     a.click();
     URL.revokeObjectURL(url);
-    toast('Downloaded apps.json. Place in /data/apps.json of your repository.', 'success');
+    toast('Downloaded apps.json (canonical catalog + device drafts). Place in /data/apps.json of your repository to publish manually.', 'success');
   };
 
   // -----------------------------------------------------------------
@@ -1061,6 +1104,67 @@ export default function PublisherPage() {
               </div>
             </div>
 
+            {/* Phase 10.6: device-local drafts for apps not yet in the catalog */}
+            {(() => {
+              const draftMap = getSessionEditMap();
+              const newDrafts = Object.entries(draftMap).filter(
+                ([slug]) => !catalog.some((a) => (a.slug || a.id).toLowerCase() === slug.toLowerCase())
+              );
+              if (newDrafts.length === 0) return null;
+              return (
+                <div className="p-5 rounded-3xl bg-[#1976F3]/5 border border-[#1976F3]/25">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FilePen className="w-4 h-4 text-[#1976F3]" />
+                    <h3 className="text-sm font-black text-ink">Device Drafts (not in the published catalog)</h3>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/30">
+                      {newDrafts.length} draft{newDrafts.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <p className="text-xs text-mut mb-3">
+                    These records exist only as device drafts. They never appear on the public marketplace until published.
+                  </p>
+                  <div className="space-y-2">
+                    {newDrafts.map(([slug, draft]) => (
+                      <div key={slug} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-line">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-ink truncate">{(draft as Partial<AppItem>).name || slug}</p>
+                          <p className="text-[11px] text-mut truncate">
+                            {slug} &bull; v{(draft as Partial<AppItem>).version || '1.0.0'} &bull; draft
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const rec = { ...emptyForm, ...(draft as Partial<AppItem>), slug } as AppItem;
+                              handleEditApp(rec);
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-page hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Open Draft</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Discard the device draft "${slug}"? This cannot be undone.`)) {
+                                clearSessionEditFor(slug);
+                                toast(`Discarded device draft "${slug}".`, 'info');
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-full bg-card hover:bg-[#E52B32]/10 text-xs font-bold text-[#E52B32] border border-[#E52B32]/30 transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Discard</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Quick Action: Add App Banner */}
             <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-inkbg to-[#2A2E33] text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-md">
               <div className="space-y-1 text-center md:text-left">
@@ -1187,6 +1291,16 @@ export default function PublisherPage() {
                             <span>{app.featured ? 'Featured' : 'Standard'}</span>
                           </button>
 
+                          {/* Phase 10.6: device-local draft indicator */}
+                          {Boolean(getSessionEditFor(app.slug || app.id)) && (
+                            <span
+                              className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/30 flex items-center gap-1"
+                              title="This app has a device-local draft. Public pages show the published record until you publish."
+                            >
+                              <FilePen className="w-3 h-3" /> Draft on this device
+                            </span>
+                          )}
+
                           {/* APK Status Pill */}
                           {app.apk?.enabled ? (
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/35 flex items-center gap-1">
@@ -1266,7 +1380,7 @@ export default function PublisherPage() {
                 <AlertCircle className="w-4 h-4 text-[#F7B928] mt-0.5 shrink-0" />
                 <div className="flex-1 text-xs text-mut leading-relaxed">
                   <span className="font-bold text-ink">You have unsaved changes.</span>{' '}
-                  These edits are not saved to your working session and not published. Save to preview them on this device, or Publish to Production to update the authoritative catalog.
+                  These edits exist only in the editor. Save to store them as a device draft, or Publish to Production to update the authoritative catalog.
                 </div>
                 <button
                   type="button"
@@ -1286,11 +1400,11 @@ export default function PublisherPage() {
               <div className="text-xs text-mut leading-relaxed">
                 <span className="font-bold text-ink">How saving works on this deployment:</span>{' '}
                 AppMintly runs as a static site on GitHub Pages. <span className="font-semibold text-ink">Save</span> validates
-                your changes and applies them to your <span className="font-semibold text-ink">working session</span> — the edit
-                previews across Home, Explore, Categories and Search on this device only. It is <span className="font-semibold text-ink">not</span> a
-                permanent production publish. To publish permanently, use <span className="font-semibold text-ink">Publish to Production</span> (step 9) — it
+                your changes and stores them as a <span className="font-semibold text-ink">device draft</span> — it opens again in this console (and in Step 8 Store Preview)
+                on this device only, and <span className="font-semibold text-ink">never changes the public marketplace</span> (Home, Explore, Categories, Search and detail
+                pages always show the published catalog). To publish permanently, use <span className="font-semibold text-ink">Publish to Production</span> (step 9) — it
                 commits <code className="font-mono">data/apps.json</code> through the authorized publishing layer with your publish key and deploys automatically. The
-                manual <span className="font-semibold text-ink">Export Catalog JSON</span> path remains available as a fallback.
+                manual <span className="font-semibold text-ink">Export Catalog JSON</span> path (which includes your device drafts, clearly separated) remains available as a fallback.
               </div>
             </div>
 
@@ -2224,22 +2338,22 @@ export default function PublisherPage() {
                   )}
                 </div>
 
-                {/* Save to working session (NOT production) */}
+                {/* Save as a device draft (NOT production) */}
                 <div className="p-5 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
-                    <h4 className="font-black text-sm text-[#1976F3]">Save to Working Session</h4>
+                    <h4 className="font-black text-sm text-[#1976F3]">Save Draft (This Device)</h4>
                     <p className="text-xs text-ink/80 mt-0.5">
-                      Validates and applies &quot;{form.name}&quot; to your working session — previews across Home, Explore, Categories and Search on <span className="font-semibold">this device only</span>. This is <span className="font-semibold">not</span> a production publish.
+                      Validates and stores &quot;{form.name}&quot; as a <span className="font-semibold">device draft</span> — it reopens in this console and in the Store Preview step on <span className="font-semibold">this device only</span>. Public marketplace pages always show the published catalog. This is <span className="font-semibold">not</span> a production publish.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleSaveAppToCatalog}
                     className="px-6 py-3 rounded-full bg-[#1976F3] hover:bg-[#135bbd] text-white text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
-                    aria-label="Save this application to the working session on this device"
+                    aria-label="Save this application as a device draft on this device"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save to Session</span>
+                    <span>Save Draft</span>
                   </button>
                 </div>
 

@@ -143,9 +143,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Hero Featured Spotlight Carousel */}
+          {/* Hero Featured Spotlight Carousel — data-driven only:
+              exactly the records with published === true AND featured === true.
+              NO fallback to arbitrary published apps (Phase 10.6 fix). */}
           <div className="lg:col-span-6">
-            <FeaturedHeroCarousel featuredApps={featuredApps.length > 0 ? featuredApps : publishedApps.slice(0, 3)} />
+            {featuredApps.length > 0 ? (
+              <FeaturedHeroCarousel featuredApps={featuredApps} />
+            ) : (
+              /* Explicit empty state when no published app is featured */
+              <div className="h-full min-h-[220px] rounded-3xl border border-dashed border-ink/15 bg-card/60 flex flex-col items-center justify-center gap-2 p-8 text-center">
+                <Sparkles className="w-5 h-5 text-mut" aria-hidden="true" />
+                <p className="text-sm font-bold text-ink">No Featured Apps right now</p>
+                <p className="text-xs text-mut max-w-xs">
+                  Publishers choose which published apps to feature from the Publisher Console.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

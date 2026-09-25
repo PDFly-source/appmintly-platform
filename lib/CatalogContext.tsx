@@ -32,8 +32,18 @@ interface CatalogContextType {
   refreshCatalog: () => Promise<void>;
   /** Discard all device-local session edits and re-sync the canonical catalog. */
   clearSessionEdits: () => Promise<void>;
-  /** True when device-local session edits exist (previews on this device). */
+  /** True when device-local draft edits exist on this device. */
   hasSessionEdits: boolean;
+  /** Phase 10.6: all device-local draft overlays keyed by lowercase slug. */
+  getSessionEditMap: () => Record<string, Partial<AppItem>>;
+  /** Phase 10.6: the sanitized device-local draft for one slug, or null. */
+  getSessionEditFor: (slug: string) => Partial<AppItem> | null;
+  /** Phase 10.6: canonical record with its device-local draft applied
+   *  (console editor use only — public pages render canonical data only). */
+  mergeDraftOverlay: (app: AppItem) => AppItem;
+  /** Phase 10.6: discard the draft for one slug (e.g. after a successful
+   *  production publish, so a stale draft can never overlay newer canonical data). */
+  clearSessionEditFor: (slug: string) => void;
   publishApp: (
     app: Partial<AppItem>
   ) => Promise<{ success: boolean; app?: AppItem; message?: string; persisted?: 'server' | 'session' }>;
@@ -46,9 +56,15 @@ interface CatalogContextType {
 const CatalogContext = createContext<CatalogContextType | null>(null);
 
 const STORAGE_KEY = 'appforge_canonical_catalog';
-// Device-local session edits overlay (honest-save). Full app records keyed
-// by lowercase slug, merged over the canonical catalog at load so a session
-// save survives a page refresh on this device. Never a production publish.
+// Device-local DRAFT edits. Full app records keyed by lowercase slug.
+// Phase 10.6 architecture fix: drafts are CONSOLE-ONLY. They hydrate the
+// Publisher Console editor and its Store Preview step, and are NEVER merged
+// into the public marketplace state — Home, Explore, Search, Categories and
+// detail pages render the canonical published catalog only, so a stale
+// device draft can never silently override production data after a reload.
+// A draft is never applied for a slug absent from the canonical catalog
+// (e.g. the app was deleted), and is discarded after a successful
+// production publish. Saving a draft is never a production publish.
 const SESSION_EDITS_KEY = 'appmintly_session_edits_v1';
 
 function readSessionEdits(): Record<string, Partial<AppItem>> {
@@ -101,6 +117,41 @@ function writeSessionEdit(app: AppItem, baseline?: AppItem | null) {
 }
 
 /** Merge the device-local session edits overlay on top of a catalog array. */
+// Phase 10.6: sanitize a device-local draft overlay against the canonical
+// record. Drops protected release fields (released APK metadata), invalid
+// data:/blob: icons, non-permanent screenshot URLs, and unknown values,
+// so only legitimate editable listing fields can hydrate the console editor.
+function sanitizeDraftOverlay(edit: Record<string, unknown>, canonical?: AppItem): Partial<AppItem> {
+  let overlay: Record<string, unknown> = edit;
+  if (typeof overlay.icon === 'string' && !isHttpsOrRepoAsset(overlay.icon)) {
+    const { icon, ...rest } = overlay;
+    overlay = rest;
+  }
+  if (Array.isArray(overlay.screenshots)) {
+    overlay = {
+      ...overlay,
+      screenshots: (overlay.screenshots as unknown[]).filter(
+        (sh) => typeof sh === 'string' && isHttpsOrRepoAsset(sh)
+      ),
+    };
+  }
+  if (canonical?.apk?.enabled && canonical.apk.verified) {
+    overlay = stripProtectedReleaseFields(overlay) as Record<string, unknown>;
+  }
+  return overlay as Partial<AppItem>;
+}
+
+// Phase 10.6: canonical record + its sanitized device draft. Used ONLY by
+// the Publisher Console editor/preview — never by public pages.
+function applyDraftOverlay(a: AppItem): AppItem {
+  if (typeof window === 'undefined') return a;
+  const edits = readSessionEdits();
+  const edit = edits[(a.slug || a.id).toLowerCase()] as unknown as Record<string, unknown> | undefined;
+  if (!edit) return a;
+  const overlay = sanitizeDraftOverlay(edit, a);
+  return { ...a, ...overlay };
+}
+
 function mergeSessionEdits(items: AppItem[]): AppItem[] {
   if (typeof window === 'undefined') return items;
   const edits = readSessionEdits();
@@ -180,11 +231,10 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const items = await fetchCatalogItems();
       if (items && items.length > 0) {
         const normalized = items.map(normalizeApp);
-        // Session edits (device-local preview) survive a refresh; they are
-        // merged over the canonical catalog and are never a production publish.
-        const merged = mergeSessionEdits(normalized);
+        // Phase 10.6: refresh re-syncs the canonical catalog only. Device
+        // drafts are console-scoped and are never merged into public state.
         setHasSessionEdits(typeof window !== 'undefined' && Object.keys(readSessionEdits()).length > 0);
-        setCatalog(merged);
+        setCatalog(normalized);
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
           window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
@@ -204,6 +254,42 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await refreshCatalog();
   }, [refreshCatalog]);
 
+  // ---- Phase 10.6 console-scoped draft API --------------------------------
+  // These expose device-local drafts to the Publisher Console ONLY. Public
+  // pages consume `catalog` (canonical) exclusively.
+  const getSessionEditMap = useCallback((): Record<string, Partial<AppItem>> => {
+    if (typeof window === 'undefined') return {};
+    return readSessionEdits();
+  }, []);
+
+  const getSessionEditFor = useCallback((slug: string): Partial<AppItem> | null => {
+    if (typeof window === 'undefined' || !slug) return null;
+    const edits = readSessionEdits();
+    const edit = edits[slug.toLowerCase()] as unknown as Record<string, unknown> | undefined;
+    if (!edit) return null;
+    return sanitizeDraftOverlay(edit);
+  }, []);
+
+  const mergeDraftOverlay = useCallback((app: AppItem): AppItem => {
+    return applyDraftOverlay(app);
+  }, []);
+
+  const clearSessionEditFor = useCallback((slug: string) => {
+    if (typeof window === 'undefined' || !slug) return;
+    try {
+      const edits = readSessionEdits();
+      delete edits[slug.toLowerCase()];
+      if (Object.keys(edits).length > 0) {
+        window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
+      } else {
+        window.localStorage.removeItem(SESSION_EDITS_KEY);
+      }
+      setHasSessionEdits(Object.keys(edits).length > 0);
+    } catch {
+      /* storage unavailable — nothing to clean */
+    }
+  }, []);
+
   useEffect(() => {
     let isCancelled = false;
 
@@ -212,9 +298,10 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       .then((items) => {
         if (isCancelled || !items) return;
         const normalized = items.map(normalizeApp);
-        const merged = mergeSessionEdits(normalized);
+        // Phase 10.6: the context state IS the canonical catalog. Device
+        // drafts never merge into public marketplace state.
         setHasSessionEdits(Object.keys(readSessionEdits()).length > 0);
-        setCatalog(merged);
+        setCatalog(normalized);
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
         }
@@ -230,7 +317,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            setCatalog(mergeSessionEdits(parsed.map(normalizeApp)));
+            setCatalog(parsed.map(normalizeApp));
           }
         }
       } catch (e) {
@@ -274,46 +361,31 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
           return { success: false, message: 'Validation failed: app record is incomplete' };
         }
 
-        setCatalog((prev) => {
-          const next = [...prev];
-          const idx = next.findIndex(
-            (a) =>
-              a.id.toLowerCase() === updatedApp.id.toLowerCase() ||
-              a.slug.toLowerCase() === updatedApp.slug.toLowerCase()
-          );
-          // Phase 10.4: a non-canonical icon (data:/blob:) never replaces
-          // the canonical icon of the working-session record — the icon key
-          // is dropped from the update so the previous canonical value stays.
-          const iconValid = isHttpsOrRepoAsset(updatedApp.icon);
-          const updatePayload: Partial<AppItem> = iconValid
-            ? updatedApp
-            : (() => {
-                const { icon, ...rest } = updatedApp as AppItem;
-                return rest as Partial<AppItem>;
-              })();
-          // Phase 10.5: capture the pre-update AUTHORITATIVE record — the
-          // baseline that decides whether the session edit may carry
-          // protected release fields (it never may, for a released APK).
-          const baseline = idx >= 0 ? (next[idx] as AppItem) : null;
-          if (idx >= 0) {
-            next[idx] = { ...next[idx], ...updatePayload } as AppItem;
-          } else {
-            next.unshift(updatedApp);
+        // Phase 10.6: a device-local save writes ONLY a console draft. The
+        // public catalog state (`catalog` consumed by Home, Explore, Search,
+        // Categories and detail pages) stays canonical — a draft can never
+        // silently override production data on this device, even in-session.
+        if (typeof window !== 'undefined') {
+          const canonical = window.localStorage.getItem(STORAGE_KEY);
+          let baseline: AppItem | null = null;
+          try {
+            const parsed = canonical ? JSON.parse(canonical) : null;
+            baseline = Array.isArray(parsed)
+              ? (parsed.find(
+                  (a: AppItem) => a.slug.toLowerCase() === updatedApp.slug.toLowerCase()
+                ) as AppItem | undefined) || null
+              : null;
+          } catch {
+            baseline = null;
           }
-          if (typeof window !== 'undefined') {
-            writeSessionEdit(updatedApp, baseline);
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
-          }
-          return next;
-        });
-
+          writeSessionEdit(updatedApp, baseline);
+        }
         setHasSessionEdits(true);
         return {
           success: true,
           app: updatedApp,
           persisted: 'session',
-          message: `${reason} — applied to your working session only`,
+          message: `${reason} — saved as a device-local draft (console only). Publish to Production to make it live.`,
         };
       } catch (err: any) {
         return { success: false, message: err?.message || 'Failed to apply changes' };
@@ -446,6 +518,10 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       refreshCatalog,
       clearSessionEdits,
       hasSessionEdits,
+      getSessionEditMap,
+      getSessionEditFor,
+      mergeDraftOverlay,
+      clearSessionEditFor,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -465,6 +541,10 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       refreshCatalog,
       clearSessionEdits,
       hasSessionEdits,
+      getSessionEditMap,
+      getSessionEditFor,
+      mergeDraftOverlay,
+      clearSessionEditFor,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -492,6 +572,10 @@ export function useCatalog() {
       refreshCatalog: async () => {},
       clearSessionEdits: async () => {},
       hasSessionEdits: false,
+      getSessionEditMap: () => ({}),
+      getSessionEditFor: () => null,
+      mergeDraftOverlay: (app: AppItem) => app,
+      clearSessionEditFor: () => {},
       publishApp: async () => ({
         success: false,
         message: 'CatalogProvider not mounted',

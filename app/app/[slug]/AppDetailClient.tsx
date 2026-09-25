@@ -325,7 +325,13 @@ export default function AppDetailPage() {
                   Version {app.version}
                 </span>
                 <span>•</span>
-                <span>{app.type === 'Android APK' ? (app.size || 'APK Package') : 'Installable App'}</span>
+                <span>
+                  {app.type === 'Android APK'
+                    ? app.size || 'APK Package'
+                    : hasApk
+                    ? `${app.type} + Android APK`
+                    : app.type}
+                </span>
                 <span>•</span>
                 <span>Updated {app.lastUpdated || app.releaseDate}</span>
               </div>
@@ -392,7 +398,11 @@ export default function AppDetailPage() {
                         v{app.version} ({app.apk?.versionCode || 20000})
                       </span>
                       <span>•</span>
-                      <span>{app.size || (app.apk?.fileSizeBytes ? `${(app.apk.fileSizeBytes / 1024).toFixed(0)} KB` : '102 KB')}</span>
+                      <span>
+                        {app.apk?.fileSizeBytes
+                          ? `${(app.apk.fileSizeBytes / 1024).toFixed(0)} KB`
+                          : app.size || 'Size not published'}
+                      </span>
                       <span>•</span>
                       <span className="text-[#16A765] font-bold">Signed (v1+v2+v3)</span>
                     </div>

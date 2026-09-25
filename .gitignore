@@ -15,3 +15,4 @@ coverage/
 # Build output
 dist/
 out/
+tsconfig.tsbuildinfo

@@ -14,6 +14,7 @@ import {
   Sparkles,
   Check,
   AlertCircle,
+  Info,
   Image as ImageIcon
 } from 'lucide-react';
 
@@ -39,29 +40,18 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   const [newUrl, setNewUrl] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
+  const [showUploadNotice, setShowUploadNotice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Upload handler for multiple screenshots
+  // Phase 10.6 (permanent screenshot fix): uploaded files can NEVER enter the
+  // catalog. data:/blob: values are device-local temporaries that would break
+  // for every other visitor and are rejected by validation. The file picker
+  // therefore opens an honest notice explaining the permanent workflow:
+  // add screenshots as https:// URLs or repository asset paths
+  // (public/apps/<slug>/screenshots/... committed with the repository).
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const newItems: string[] = [];
-    let processed = 0;
-
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        newItems.push(dataUrl);
-        processed++;
-        if (processed === files.length) {
-          onScreenshotsChange([...screenshots, ...newItems]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    e.target.value = '';
+    setShowUploadNotice(true);
   };
 
   const handleAddUrl = (e?: React.FormEvent) => {
@@ -124,7 +114,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
             Screenshots &amp; App Previews ({screenshots.length}/10)
           </h3>
           <p className="text-xs text-mut">
-            Upload or import authentic screenshots showing real app interface. No stock photos.
+            Add authentic screenshots by permanent https:// URL or repository asset path. No stock photos, no device-local files.
           </p>
         </div>
 
@@ -134,7 +124,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           className="px-4 py-2 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
         >
           <Upload className="w-3.5 h-3.5" />
-          <span>Upload Screenshots</span>
+          <span>Add Screenshots</span>
         </button>
         <input
           ref={fileInputRef}
@@ -145,6 +135,29 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           className="hidden"
         />
       </div>
+
+      {/* Phase 10.6: honest local-file workflow notice */}
+      {showUploadNotice && (
+        <div role="alert" className="p-4 rounded-2xl bg-[#F7B928]/10 border border-[#F7B928]/40 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <Info className="w-4 h-4 text-[#8C6000] mt-0.5 shrink-0" />
+            <div className="text-xs text-mut leading-relaxed">
+              <span className="font-bold text-ink">Local files can be previewed on this device only.</span>{' '}
+              For the published catalog, screenshots must live at a permanent address: an <span className="font-semibold text-ink">https:// URL</span> or a
+              repository asset path such as <code className="font-mono">/apps/&lt;slug&gt;/screenshots/shot-1.png</code> (committed under{' '}
+              <code className="font-mono">public/</code> in the platform repository). Add them by URL below — validation rejects data:/blob: values at publish time.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowUploadNotice(false)}
+            className="px-3 py-1.5 rounded-full bg-card hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer shrink-0"
+            aria-label="Dismiss the local-file screenshot notice"
+          >
+            Got it
+          </button>
+        </div>
+      )}
 
       {/* Manifest Detected Screenshots Quick Import */}
       {detectedManifestScreenshots.length > 0 && (

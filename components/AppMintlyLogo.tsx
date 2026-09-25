@@ -29,8 +29,9 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 // derivative of the official 700px mark is used for those placements so
 // browsers download ~41 KB instead of ~368 KB. Large placements and the
 // original artwork still use the untouched official source assets.
-const MARK_SRC = `${BASE_PATH}/brand/appmintly-icon.png`;
+const MARK_SRC = `${BASE_PATH}/brand/appmintly-icon-512.png`;
 const MARK_SRC_COMPACT = `${BASE_PATH}/brand/appmintly-icon-192.png`;
+const MARK_SRC_HERO = `${BASE_PATH}/brand/appmintly-icon-1024.png`;
 const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
 
 export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
