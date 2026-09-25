@@ -134,10 +134,17 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   // A temporary blob: preview exists only while the upload is in flight and
   // is revoked once the canonical repository asset path is live.
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    // Allow repeated selection of the same file.
+    // Phase 10.8.2: SNAPSHOT the selected files IMMEDIATELY. In Chromium
+    // (including Android Chrome) `input.files` is a LIVE FileList — clearing
+    // input.value below empties the very same object, so reading it later
+    // (Array.from/length) yields an empty list. Snapshotting FIRST and
+    // clearing AFTER was the exact cause of the false "Maximum 10
+    // screenshots allowed." on a single fresh selection.
+    const selected = e.target.files ? Array.from(e.target.files) : [];
+    // Allow repeated selection of the same file. Safe now: the File
+    // objects in `selected` remain valid after the input is cleared.
     e.target.value = '';
+    if (selected.length === 0) return;
 
     setUploadError(null);
     setUploadNotice(null);
@@ -149,25 +156,36 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
       return;
     }
 
-    const slots = MAX_SCREENSHOTS - screenshots.length - pending.length;
+    // Phase 10.8.2: the maximum check is based ONLY on the files selected
+    // in THIS file-picker event plus the currently PERSISTED screenshot
+    // count. Stale in-flight UI entries (pending) never block a fresh
+    // selection, and a failed upload never increments the count.
+    const slots = MAX_SCREENSHOTS - screenshots.length;
     if (slots <= 0) {
       setUploadError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
       return;
     }
 
-    // Phase 10.8.1: Android file providers often deliver REAL images with an
-    // empty or unusual File.type (e.g. "image/jpg"), which previously caused
-    // valid screenshots to be rejected with "Only PNG, JPEG and WebP images
-    // are supported." Selection is therefore NEVER filtered by File.type:
-    // every selected file is validated by its actual byte signature (magic
-    // bytes) with a filename-extension fallback, and the authorized Worker
-    // independently re-sniffs the bytes before committing anything.
-    const queue = Array.from(files).slice(0, slots);
-    if (queue.length === 0) {
-      setUploadError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
-      return;
+    // Deterministic and honest overflow handling: accept exactly the first
+    // `slots` files and tell the user what happened — never the generic
+    // maximum message when they selected fewer than 10.
+    const queue = selected.slice(0, slots);
+    if (selected.length > slots) {
+      setUploadNotice(
+        `Only ${slots} screenshot slot${slots === 1 ? '' : 's'} remaining — uploading the first ${slots} image${slots === 1 ? '' : 's'}.`
+      );
     }
 
+    // Canonical paths accepted during THIS event, so multi-file batches
+    // always build on the latest accepted state (no stale-closure loss).
+    const added: string[] = [];
+
+    // Phase 10.8.1: Android file providers often deliver REAL images with an
+    // empty or unusual File.type (e.g. "image/jpg"). Selection is therefore
+    // NEVER filtered by File.type: every selected file is validated by its
+    // actual byte signature (magic bytes) with a filename-extension
+    // fallback, and the authorized Worker independently re-sniffs the bytes
+    // before committing anything.
     for (const file of queue) {
       if (file.size > MAX_SCREENSHOT_BYTES) {
         setUploadError(`"${file.name}" is larger than 10 MB. Screenshot was NOT added.`);
@@ -203,7 +221,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         if (!result.success || !result.path) {
           throw new Error(result.message || 'Screenshot upload failed.');
         }
-        if (screenshots.includes(result.path)) {
+        if (screenshots.includes(result.path) || added.includes(result.path)) {
           // Identical image already attached — drop the duplicate honestly.
           URL.revokeObjectURL(tempUrl);
           setPending((prev) => prev.filter((p) => p.id !== id));
@@ -211,7 +229,8 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           continue;
         }
         // Success: the canonical repository path is the ONLY stored value.
-        onScreenshotsChange([...screenshots, result.path]);
+        added.push(result.path);
+        onScreenshotsChange([...screenshots, ...added]);
         setTempPreviews((prev) => ({ ...prev, [result.path!]: tempUrl }));
         setDeployingPaths((prev) => new Set(prev).add(result.path!));
         setPending((prev) => prev.filter((p) => p.id !== id));
@@ -222,6 +241,8 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         );
         waitForAssetLive(result.path);
       } catch (err) {
+        // Failed upload: the count is NOT incremented, the temporary
+        // selection is cleared and the actual error is shown.
         URL.revokeObjectURL(tempUrl);
         setPending((prev) => prev.filter((p) => p.id !== id));
         setUploadError(
@@ -236,7 +257,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
     const clean = newUrl.trim();
     if (!clean) return;
     setUrlError(null);
-    if (screenshots.length + pending.length >= MAX_SCREENSHOTS) {
+    if (screenshots.length >= MAX_SCREENSHOTS) {
       setUrlError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
       return;
     }
