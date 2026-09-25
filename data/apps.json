@@ -149,7 +149,7 @@
     "changelog": [
       "v1.0.0: Initial public release of PDFMiniFly PWA workspace"
     ],
-    "featured": true,
+    "featured": false,
     "original": false,
     "published": true,
     "size": "117.2 KB",
