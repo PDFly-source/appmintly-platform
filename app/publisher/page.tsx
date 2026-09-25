@@ -66,6 +66,7 @@ import {
   checkPublishService,
   clearLegacyRememberedPublishKey,
   verifyPublisherKey,
+  PUBLISHER_API_BASE,
   ProductionPublishResult,
   PublishServiceStatus,
   serviceFetchJson,
@@ -88,7 +89,7 @@ type WorkflowStep =
 
 export default function PublisherPage() {
   const { toast } = useToast();
-  const { catalog, publishApp, deleteApp, refreshCatalog, clearSessionEdits, hasSessionEdits, isLoading } = useCatalog();
+  const { catalog, publishApp, refreshCatalog, clearSessionEdits, hasSessionEdits, isLoading } = useCatalog();
 
   // Active view: 'catalog' list or 'editor' (add/edit workflow)
   const [viewMode, setViewMode] = useState<'catalog' | 'editor'>('catalog');
@@ -368,15 +369,107 @@ export default function PublisherPage() {
     toast('Unsaved changes discarded — restored the last saved state.', 'info');
   };
 
-  // Delete App from canonical catalog
-  const handleDeleteApp = async (id: string, name: string) => {
-    if (confirm(`Are you sure you want to remove "${name}" from the canonical catalog?`)) {
-      const ok = await deleteApp(id);
-      if (ok) {
-        toast(`Removed ${name} from catalog.`, 'info');
-      } else {
-        toast('Failed to delete application from catalog.', 'error');
+  // ── Phase 10.2: production-grade DELETE architecture ──────────────────
+  // The old one-tap delete (window.confirm + full-catalog overwrite via a
+  // client API that does not exist on production Pages) is REMOVED. The new
+  // flow: authenticated session required → identity resolved from the
+  // canonical catalog → typed "DELETE" confirmation → real server-side
+  // capability check against the authorized publishing Worker. It NEVER
+  // fabricates success: with no server-side delete endpoint deployed, it
+  // reports the exact failed step instead of deleting client-side.
+  const PROTECTED_PACKAGES = ['com.appforge.studyria', 'com.appforge.pdfminifly'];
+  const PROTECTED_SLUGS = ['studyria', 'pdfminifly'];
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AppItem | null>(null);
+  const [deleteStep, setDeleteStep] = useState<'confirming' | 'authenticating' | 'validating' | 'failed' | 'protected'>( 'confirming');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [deleteRunning, setDeleteRunning] = useState(false);
+
+  // Open the destructive-confirmation dialog. Identity (name/package/version)
+  // is resolved from the canonical catalog record, never from the button.
+  const handleDeleteApp = (id: string) => {
+    const record = catalog.find((a) => a.id === id || a.slug === id);
+    if (!record) {
+      toast('Delete blocked — no such application exists in the canonical catalog.', 'error');
+      return;
+    }
+    setDeleteTarget(record);
+    setDeleteConfirmInput('');
+    setDeleteError('');
+    const pkg = record.apk?.packageId || '';
+    if (PROTECTED_SLUGS.includes(record.slug) || PROTECTED_PACKAGES.includes(pkg)) {
+      setDeleteStep('protected');
+    } else {
+      setDeleteStep('confirming');
+    }
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogCancel = () => {
+    if (deleteRunning) return; // no accidental dismissal mid-operation
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+    setDeleteConfirmInput('');
+    setDeleteError('');
+    setDeleteStep('confirming');
+  };
+
+  const handleDeleteDialogConfirm = async () => {
+    if (!deleteTarget || deleteRunning) return;
+    if (deleteConfirmInput.trim() !== 'DELETE') {
+      setDeleteError('Type DELETE exactly to confirm. Nothing has been removed.');
+      return;
+    }
+    setDeleteRunning(true);
+    try {
+      // B.1/B.3 — an authenticated publisher session is REQUIRED. Expired
+      // sessions trigger the authentication dialog; the flow stops if the
+      // publisher does not authenticate.
+      setDeleteStep('authenticating');
+      const key = await requestPublisherAuth();
+      if (!key) {
+        setDeleteStep('failed');
+        setDeleteError('Deletion blocked — publisher authentication is required (401).');
+        return;
       }
+
+      // B.4/B.5 — deletion is SERVER-SIDE only. The browser holds no GitHub
+      // credentials; the authorized publishing Worker is the only path.
+      // Capability check: does the deployed Worker accept DELETE-method
+      // requests at all? (Verified live today: its CORS allows only
+      // GET, POST, OPTIONS — there is no delete endpoint deployed.)
+      setDeleteStep('validating');
+      let deleteSupported = false;
+      try {
+        const probe = await fetch(`${PUBLISHER_API_BASE}/publish-catalog`, {
+          method: 'OPTIONS',
+          headers: {
+            'Access-Control-Request-Method': 'DELETE',
+          },
+        });
+        const allow = probe.headers.get('access-control-allow-methods') || '';
+        deleteSupported = probe.ok && allow.toUpperCase().includes('DELETE');
+      } catch {
+        deleteSupported = false; // Worker unreachable → capability unknown → refuse
+      }
+
+      if (!deleteSupported) {
+        // Honest terminal state: NO fake client-side deletion.
+        setDeleteStep('failed');
+        setDeleteError(
+          'FAILED at VALIDATING: server-side deletion is not deployed on the authorized publishing backend (the publishing Worker accepts only GET, POST, OPTIONS — no DELETE endpoint exists). Nothing was deleted: no release asset, no release, no tag, and no catalog record were modified. Permanent deletions must be performed through the authorized backend by the platform operator.'
+        );
+        return;
+      }
+      // Even if a DELETE method appears someday, its request contract is
+      // undocumented — we refuse to guess a payload for a destructive op.
+      setDeleteStep('failed');
+      setDeleteError(
+        'FAILED at VALIDATING: the publishing backend now reports DELETE support, but its delete request contract is undocumented. Refusing to guess a destructive payload. Nothing was deleted.'
+      );
+    } finally {
+      setDeleteRunning(false);
     }
   };
 
@@ -538,7 +631,11 @@ export default function PublisherPage() {
     setIsValidating(false);
     if (!report.valid) {
       setPublishStage('idle');
-      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before publishing.`, 'error');
+      // Phase 10.2 (C.4): surface the EXACT issues in the toast, not just the count.
+      const issues = report.errors
+        .map((e, i) => `${i + 1}. ${e}`)
+        .join(' ');
+      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before publishing: ${issues}`, 'error');
     } else {
       setPublishStage('validated');
       toast('Validation passed — ready to publish.', 'success');
@@ -638,7 +735,10 @@ export default function PublisherPage() {
     setValidationReport(report);
     if (!report.valid) {
       setWorkflowStep('publish');
-      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before saving.`, 'error');
+      const saveIssues = report.errors
+        .map((e, i) => `${i + 1}. ${e}`)
+        .join(' ');
+      toast(`Validation failed — ${report.errors.length} issue${report.errors.length > 1 ? 's' : ''} must be fixed before saving: ${saveIssues}`, 'error');
       return;
     }
 
@@ -1112,7 +1212,7 @@ export default function PublisherPage() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteApp(app.id, app.name)}
+                        onClick={() => handleDeleteApp(app.id)}
                         className="p-2 rounded-xl bg-page hover:bg-[#E52B32]/10 text-mut hover:text-[#E52B32] transition cursor-pointer"
                         title="Delete App"
                       >
@@ -2480,6 +2580,130 @@ export default function PublisherPage() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* PHASE 10.2 — DESTRUCTIVE DELETE CONFIRMATION DIALOG.
+            Auth-gated, typed-confirmation, identity resolved from the
+            canonical catalog, production apps permanently protected, and
+            NO fake success when the server-side backend lacks a delete
+            endpoint. */}
+        {deleteDialogOpen && deleteTarget && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 box-border"
+            style={{ backgroundColor: 'rgba(23, 25, 28, 0.55)' }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete Application"
+          >
+            <div className="w-full max-w-[min(28rem,calc(100vw-2rem))] max-h-[90dvh] overflow-y-auto rounded-3xl bg-card border border-line shadow-2xl p-5 sm:p-6 space-y-4 box-border">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-9 h-9 rounded-full bg-[#E52B32] flex items-center justify-center">
+                    <Trash2 className="w-5 h-5 text-white" />
+                  </span>
+                  <div>
+                    <h2 className="text-sm font-black text-ink">DELETE APPLICATION</h2>
+                    <p className="text-[11px] font-semibold text-mut">This action cannot be undone.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDeleteDialogCancel}
+                  disabled={deleteRunning}
+                  className="p-1.5 rounded-full hover:bg-page text-mut hover:text-ink transition cursor-pointer disabled:opacity-40"
+                  aria-label="Cancel deletion"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {deleteStep === 'protected' && (
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-[#E52B32]">
+                    This production application is PROTECTED and can never be deleted from the console.
+                  </p>
+                  <div className="rounded-xl bg-page border border-line p-3 text-[11px] font-semibold text-mut space-y-1">
+                    <div>Application: {deleteTarget.name}</div>
+                    <div>Package: {deleteTarget.apk?.packageId || '—'}</div>
+                    <div>Version: {deleteTarget.version}</div>
+                  </div>
+                  <p className="text-[11px] text-mut font-medium">
+                    Studyria and PDFMiniFly are protected production releases (403). Their catalog records,
+                    APK binaries, tags and assets are permanently locked.
+                  </p>
+                </div>
+              )}
+
+              {(deleteStep === 'confirming' || deleteStep === 'authenticating' || deleteStep === 'validating') && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-ink">
+                    This permanently removes this application from the AppMintly catalog and its
+                    associated release metadata. This action cannot be undone.
+                  </p>
+                  <div className="rounded-xl bg-page border border-line p-3 text-[11px] font-semibold text-mut space-y-1">
+                    <div>Application: {deleteTarget.name}</div>
+                    <div>Package: {deleteTarget.apk?.packageId || '—'}</div>
+                    <div>Version: {deleteTarget.version}{deleteTarget.apk?.versionCode ? ` (code ${deleteTarget.apk.versionCode})` : ''}</div>
+                  </div>
+                  <label className="block text-[11px] font-bold text-ink">
+                    Type DELETE to confirm
+                    <input
+                      type="text"
+                      value={deleteConfirmInput}
+                      onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                      placeholder="DELETE"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-page border border-line text-xs font-bold text-ink placeholder:text-mut focus:outline-none focus:ring-2 focus:ring-ink"
+                    />
+                  </label>
+                  {deleteError && <p className="text-[11px] font-bold text-[#E52B32]">{deleteError}</p>}
+                  <div className="rounded-xl bg-page border border-line p-3 text-[11px] font-semibold text-mut space-y-1">
+                    <div className={deleteStep !== 'confirming' ? 'text-mut' : 'text-ink'}>• CONFIRMING {deleteStep === 'confirming' ? '← current step' : '✓'}</div>
+                    <div className={deleteStep === 'authenticating' ? 'text-ink' : 'text-mut'}>• AUTHENTICATING {deleteStep === 'authenticating' ? '← current step' : ''}</div>
+                    <div className={deleteStep === 'validating' ? 'text-ink' : 'text-mut'}>• VALIDATING SERVER-SIDE SUPPORT {deleteStep === 'validating' ? '← current step' : ''}</div>
+                    <div className="text-mut">• REMOVING RELEASE ASSET / RELEASE / TAG</div>
+                    <div className="text-mut">• UPDATING CATALOG / DEPLOYING / VERIFYING</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDeleteDialogConfirm}
+                    disabled={deleteRunning || deleteConfirmInput.trim() !== 'DELETE'}
+                    className="w-full py-3 rounded-xl bg-[#E52B32] hover:bg-[#c62228] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black transition cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    {deleteRunning ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{deleteStep === 'authenticating' ? 'AUTHENTICATING…' : deleteStep === 'validating' ? 'VALIDATING…' : 'CONFIRMING…'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-4 h-4" />
+                        <span>Permanently Delete</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {deleteStep === 'failed' && (
+                <div className="space-y-3">
+                  <p className="text-xs font-black text-[#E52B32]">FAILED</p>
+                  <p className="text-[11px] font-semibold text-mut">{deleteError}</p>
+                  <p className="text-[11px] text-mut font-medium">
+                    Verified safe state: no release asset, release, tag, or catalog record was modified.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleDeleteDialogCancel}
+                    className="w-full py-2.5 rounded-xl bg-inkbg hover:bg-page text-white text-xs font-bold transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

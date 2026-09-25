@@ -76,6 +76,22 @@ export function isHttpsUrl(url: string | undefined | null): boolean {
  * Validate an app record for save/publish.
  * `original` is the authoritative catalog record for an existing app (if any).
  */
+/**
+ * Compare dotted numeric versions ("2.1.0"). Returns >0 when a is newer,
+ * <0 when older, 0 when equal, null when either side is not parseable.
+ */
+function compareDottedVersion(a: string, b: string): number | null {
+  const pa = a.trim().split('.').map((n) => parseInt(n, 10));
+  const pb = b.trim().split('.').map((n) => parseInt(n, 10));
+  if (pa.some(isNaN) || pb.some(isNaN) || pa.length === 0 || pb.length === 0) return null;
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
 export function validateAppForPublish(
   app: Partial<AppItem>,
   catalog: AppItem[],
@@ -155,6 +171,47 @@ export function validateAppForPublish(
   );
   if (duplicate && (!original || duplicate.id.toLowerCase() !== original.id.toLowerCase())) {
     errors.push(`An app with slug "${slug}" already exists in the catalog. Slugs must be unique.`);
+  }
+
+  // ---- Release version monotonicity (cannot be weakened) ----------------
+  // A NEW release must be strictly greater than the already-released
+  // version of the same application (same slug or same package id):
+  // both the semantic version and the versionCode must increase. Editing
+  // presentation fields of the SAME released version remains allowed.
+  const released = catalog.find(
+    (a) =>
+      a.apk?.buildStatus === 'released' &&
+      (a.slug.toLowerCase() === slug.toLowerCase() ||
+        (Boolean(a.apk?.packageId) &&
+          Boolean(app.apk?.packageId) &&
+          a.apk!.packageId === app.apk!.packageId))
+  );
+  if (released?.apk?.versionCode && app.apk?.versionCode) {
+    const newCode = app.apk.versionCode;
+    const relCode = released.apk.versionCode;
+    const newName = app.apk.versionName || '';
+    const relName = released.apk.versionName || '';
+    if (newCode < relCode) {
+      errors.push(
+        `Version code ${newCode} is not greater than released version code ${relCode}. Fix: enter a higher version code.`
+      );
+    } else if (newCode === relCode) {
+      // Same versionCode: only a presentation-only edit of the SAME release
+      // is allowed. A different versionName with the same code is invalid.
+      if (newName && relName && newName !== relName) {
+        errors.push(
+          `Version ${newName} does not match released version ${relName} while the version code stays at ${relCode}. Fix: keep the released version name for metadata edits, or enter a higher version code for a new release.`
+        );
+      }
+    } else {
+      // Higher versionCode: the semantic version must also increase.
+      const cmp = compareDottedVersion(newName, relName);
+      if (newName && relName && cmp !== null && cmp <= 0) {
+        errors.push(
+          `Version ${newName} is not greater than released version ${relName}. Fix: enter a higher version number.`
+        );
+      }
+    }
   }
 
   // ---- Publisher identity integrity --------------------------------------
