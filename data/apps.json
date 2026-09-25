@@ -153,7 +153,7 @@
       "v2.0.0: Added interactive quizzes, full-length mock tests, and latest current affairs syllabus."
     ],
     "featured": true,
-    "original": false,
+    "original": true,
     "published": true,
     "status": "published",
     "isDemo": false,
@@ -240,7 +240,7 @@
       "v1.0.0: Initial public release of PDFMiniFly PWA workspace"
     ],
     "featured": true,
-    "original": false,
+    "original": true,
     "published": true,
     "size": "117.2 KB",
     "downloadCount": null,

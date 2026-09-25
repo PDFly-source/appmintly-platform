@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Sparkles, ArrowRight, Download, ExternalLink, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { BASE_PATH } from '@/lib/api-path';
+import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 
 interface FeaturedHeroCarouselProps {
   featuredApps: AppItem[];
@@ -28,6 +29,14 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   // Catalog image paths are repository-relative (e.g. "/brand/x.png").
   // Resolve them against the deployment base path so the hero background
   // loads under the GitHub Pages sub-path like every other catalog asset.
+  // Phase 10.10: CTA and size line must follow authoritative release evidence
+  // from the canonical catalog record — never the app type, slug or session state.
+  const hasApkRelease = hasAuthoritativeApkRelease(current);
+  const apkSizeLabel =
+    hasApkRelease && current.apk?.fileSizeBytes
+      ? `${Math.round(current.apk.fileSizeBytes / 1024)} KB APK`
+      : current.size;
+
   const heroImage = current.banner || current.icon;
   const resolvedHeroImage = heroImage && heroImage.startsWith('/') ? `${BASE_PATH}${heroImage}` : heroImage;
 
@@ -84,7 +93,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             <span>•</span>
             <span>v{current.version}</span>
             <span>•</span>
-            <span>{current.size}</span>
+            <span>{apkSizeLabel}</span>
           </div>
         </div>
 
@@ -94,20 +103,15 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             href={`/app/${current.slug}`}
             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E52B32] hover:bg-[#b81f25] text-white font-bold text-xs sm:text-sm shadow-md transition-all transform hover:-translate-y-0.5"
           >
-            {current.type === 'Android APK' ? (
+            {hasApkRelease ? (
               <>
                 <Download className="w-4 h-4" />
-                <span>Download APK</span>
+                <span>Get App</span>
               </>
             ) : current.type === 'Web Game' || current.type === 'Game' ? (
               <>
                 <ExternalLink className="w-4 h-4" />
                 <span>Play Now</span>
-              </>
-            ) : current.slug === 'studyria' || current.id === 'studyria' || current.type === 'PWA' ? (
-              <>
-                <ExternalLink className="w-4 h-4" />
-                <span>Get App</span>
               </>
             ) : (
               <>
