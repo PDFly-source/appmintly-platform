@@ -17,7 +17,7 @@ import {
   normalizeStatus,
 } from '@/data/apps';
 import { APPFORGE_DEMO_MODE } from '@/lib/config';
-import { isHttpsOrRepoAsset } from '@/lib/catalog-validation';
+import { isHttpsOrRepoAsset, PROTECTED_APP_FIELDS } from '@/lib/catalog-validation';
 
 interface CatalogContextType {
   catalog: AppItem[];
@@ -51,7 +51,7 @@ const STORAGE_KEY = 'appforge_canonical_catalog';
 // save survives a page refresh on this device. Never a production publish.
 const SESSION_EDITS_KEY = 'appmintly_session_edits_v1';
 
-function readSessionEdits(): Record<string, AppItem> {
+function readSessionEdits(): Record<string, Partial<AppItem>> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = window.localStorage.getItem(SESSION_EDITS_KEY);
@@ -62,18 +62,41 @@ function readSessionEdits(): Record<string, AppItem> {
   }
 }
 
-function writeSessionEdit(app: AppItem) {
+
+// Phase 10.5: protected release fields — the released `apk` object and its
+// top-level mirrors (version, previousVersion, size, apkUrl) — are
+// production infrastructure. A listing/session edit must NEVER carry them:
+// the authoritative catalog record is the only source of release truth.
+// Returns a shallow copy of `edit` with those keys removed.
+function stripProtectedReleaseFields<T extends Record<string, unknown>>(edit: T): Partial<T> {
+  const rest: Record<string, unknown> = { ...edit };
+  delete rest.apk;
+  for (const f of PROTECTED_APP_FIELDS) delete rest[f];
+  return rest as Partial<T>;
+}
+
+function writeSessionEdit(app: AppItem, baseline?: AppItem | null) {
   if (typeof window === 'undefined') return;
   const edits = readSessionEdits();
-  let record = app;
+  let record: Record<string, unknown> = app as unknown as Record<string, unknown>;
   // Phase 10.4: a data:/blob: icon must NEVER be persisted into a session
   // edit (it would be re-applied over every fresh catalog load). Drop the
   // icon key from the edit so the canonical catalog icon survives the merge.
-  if (record.icon && !isHttpsOrRepoAsset(record.icon)) {
+  if (typeof record.icon === 'string' && !isHttpsOrRepoAsset(record.icon)) {
     const { icon, ...rest } = record;
-    record = rest as AppItem;
+    record = rest;
   }
-  edits[(app.slug || app.id).toLowerCase()] = record;
+  // Phase 10.5: when the app has a released APK (authoritative baseline),
+  // the session edit must never carry protected release fields. A stale
+  // draft apk object (e.g. a pre-release placeholder with a wrong
+  // fileSizeBytes) stored here would override the authoritative release
+  // metadata on every merge and turn every subsequent publish into a
+  // protected-field conflict. The edit keeps ONLY editable listing fields;
+  // release metadata always comes from the canonical catalog.
+  if (baseline?.apk?.enabled && baseline.apk.verified) {
+    record = stripProtectedReleaseFields(record);
+  }
+  edits[(app.slug || app.id).toLowerCase()] = record as Partial<AppItem>;
   window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
 }
 
@@ -83,18 +106,29 @@ function mergeSessionEdits(items: AppItem[]): AppItem[] {
   const edits = readSessionEdits();
   if (Object.keys(edits).length === 0) return items;
   return items.map((a) => {
-    const edit = edits[(a.slug || a.id).toLowerCase()];
+    const edit = edits[(a.slug || a.id).toLowerCase()] as unknown as Record<string, unknown> | undefined;
     if (!edit) return a;
     // Phase 10.4: an edit carrying a data:/blob:/invalid icon would
     // reintroduce the old base64 value over the fixed canonical catalog.
     // Invalid icon values in edits are dropped so the catalog's canonical
     // icon is preserved. (writeSessionEdit no longer produces these; this
     // also cleans legacy edits already stored on devices.)
-    if (edit.icon && !isHttpsOrRepoAsset(edit.icon)) {
-      const { icon, ...rest } = edit;
-      return { ...a, ...(rest as Partial<AppItem>) };
+    let overlay: Record<string, unknown> = edit;
+    if (typeof overlay.icon === 'string' && !isHttpsOrRepoAsset(overlay.icon)) {
+      const { icon, ...rest } = overlay;
+      overlay = rest;
     }
-    return { ...a, ...edit };
+    // Phase 10.5: legacy edits may carry a stale `apk` object (e.g. saved
+    // from a pre-release draft with wrong fileSizeBytes/sha) that would
+    // silently override the AUTHORITATIVE release metadata on every load
+    // and block publishing with "protected APK field cannot be changed".
+    // Protected release fields are dropped from the overlay so the
+    // canonical catalog values always win — a reload can never
+    // reintroduce the stale values.
+    if (a.apk?.enabled && a.apk.verified) {
+      overlay = stripProtectedReleaseFields(overlay) as Record<string, unknown>;
+    }
+    return { ...a, ...overlay };
   });
 }
 
@@ -257,13 +291,17 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 const { icon, ...rest } = updatedApp as AppItem;
                 return rest as Partial<AppItem>;
               })();
+          // Phase 10.5: capture the pre-update AUTHORITATIVE record — the
+          // baseline that decides whether the session edit may carry
+          // protected release fields (it never may, for a released APK).
+          const baseline = idx >= 0 ? (next[idx] as AppItem) : null;
           if (idx >= 0) {
             next[idx] = { ...next[idx], ...updatePayload } as AppItem;
           } else {
             next.unshift(updatedApp);
           }
           if (typeof window !== 'undefined') {
-            writeSessionEdit(updatedApp);
+            writeSessionEdit(updatedApp, baseline);
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
             window.dispatchEvent(new CustomEvent('appforge_catalog_updated'));
           }

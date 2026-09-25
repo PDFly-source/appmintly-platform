@@ -619,6 +619,32 @@ export default function PublisherPage() {
       updatedAt: new Date().toISOString(),
       isDemo: false,
     };
+
+    // Phase 10.5 (protected APK metadata sync): the save/publish payload is
+    // AUTHORITATIVE production APK metadata + editable listing metadata —
+    // never draft APK metadata. When the edited app has a released APK and
+    // no newer release was actually built in this session (a real new build
+    // has a strictly higher versionCode), every protected release field is
+    // pinned to the authoritative baseline. An ordinary listing edit (name,
+    // icon, description, distribution type, URLs…) can therefore never
+    // attempt to change release metadata — the exact cause of
+    // "Protected production APK field cannot be changed: apk.fileSizeBytes"
+    // publish rejections from stale draft/session state.
+    const base = originalRecord;
+    if (base?.apk?.enabled && base.apk.verified) {
+      const draftApk = appToSave.apk;
+      const newerReleaseActuallyBuilt =
+        Boolean(draftApk?.versionCode) &&
+        Boolean(base.apk.versionCode) &&
+        draftApk!.versionCode! > base.apk.versionCode!;
+      if (!newerReleaseActuallyBuilt) {
+        appToSave.apk = base.apk;
+        appToSave.version = base.version;
+        appToSave.previousVersion = base.previousVersion;
+        appToSave.size = base.size;
+        appToSave.apkUrl = base.apkUrl;
+      }
+    }
     return appToSave;
   };
 
