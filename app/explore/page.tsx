@@ -22,6 +22,7 @@ import { AppItem, AppType } from '@/data/apps';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
+import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 
 function ExploreContent() {
   const { publishedApps } = useCatalog();
@@ -109,6 +110,16 @@ function ExploreContent() {
             // matches web app family
           } else if (selTypeLower === 'game' && (appTypeLower === 'web game' || appTypeLower === 'game')) {
             // matches game family
+          } else if (
+            selTypeLower === 'android apk' &&
+            hasAuthoritativeApkRelease(app) &&
+            typeof app.apk?.fileSizeBytes === 'number' &&
+            app.apk.fileSizeBytes > 0
+          ) {
+            // Format filter matches canonical authoritative APK release
+            // evidence (enabled + verified + sha256 + real size + downloadable
+            // release asset), independent of the record's web-app type.
+            // Generic for any future app; never matches fabricated listings.
           } else {
             return false;
           }
