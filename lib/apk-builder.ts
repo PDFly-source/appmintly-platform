@@ -529,7 +529,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     android:versionCode="${versionCode}"
     android:versionName="${escapeXml(versionName)}">
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

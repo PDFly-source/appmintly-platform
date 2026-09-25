@@ -72,14 +72,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install Android 30 and Build Tools 33.0.2
+      - name: Install Android 36 and Build Tools 36.0.0
         shell: bash
         run: |
           set -euo pipefail
           test -d "$ANDROID_SDK_ROOT"
           SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
           test -x "$SDKMANAGER"
-          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --install 'platforms;android-30' 'build-tools;33.0.2'
+          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --install 'platforms;android-36' 'build-tools;36.0.0'
           sudo apt-get update -qq
           sudo apt-get install -y -qq imagemagick zip unzip
       - name: Verify compiler and Android toolchain
@@ -90,10 +90,10 @@ jobs:
           javac -version
           echo "JAVA_HOME=$JAVA_HOME"
           test -x "$JAVA_HOME/bin/javac"
-          test -f "$ANDROID_SDK_ROOT/platforms/android-30/android.jar"
+          test -f "$ANDROID_SDK_ROOT/platforms/android-36/android.jar"
           for tool in aapt zipalign apksigner; do
-            test -x "$ANDROID_SDK_ROOT/build-tools/33.0.2/$tool"
-            echo "Verified: $tool at $ANDROID_SDK_ROOT/build-tools/33.0.2/$tool"
+            test -x "$ANDROID_SDK_ROOT/build-tools/36.0.0/$tool"
+            echo "Verified: $tool at $ANDROID_SDK_ROOT/build-tools/36.0.0/$tool"
           done
           command -v convert
           command -v unzip
@@ -133,10 +133,10 @@ jobs:
               echo "DEBUG_$name=${!name}" >> "$GITHUB_ENV"
             done
           fi
-          echo "ANDROID_JAR=$ANDROID_SDK_ROOT/platforms/android-30/android.jar" >> "$GITHUB_ENV"
+          echo "ANDROID_JAR=$ANDROID_SDK_ROOT/platforms/android-36/android.jar" >> "$GITHUB_ENV"
           echo "R8_JAR=$RUNNER_TEMP/android-build/r8.jar" >> "$GITHUB_ENV"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
-          echo "$ANDROID_SDK_ROOT/build-tools/33.0.2" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
       - name: Compile, sign and validate real APK
         shell: bash
         env:

@@ -6,6 +6,67 @@ import util from 'util';
 
 const execPromise = util.promisify(exec);
 
+/**
+ * Modern Android target SDK every AppMintly build must compile against.
+ * Keeps generated APKs compatible with current Play Protect expectations
+ * and avoids the "built for an older version of Android" install warning.
+ */
+export const MODERN_TARGET_SDK = 36;
+
+/** Lowest release device floor still supported (Android 5.0, 99%+ of devices). */
+export const MODERN_MIN_SDK = 21;
+
+/**
+ * Sensitive permissions a plain WebView wrapper must never request.
+ * If a future app genuinely needs one, extend `expected` explicitly —
+ * the validator fails closed by default.
+ */
+const FORBIDDEN_PERMISSIONS = [
+  'android.permission.READ_SMS',
+  'android.permission.RECEIVE_SMS',
+  'android.permission.SEND_SMS',
+  'android.permission.READ_CALL_LOG',
+  'android.permission.WRITE_CALL_LOG',
+  'android.permission.READ_CONTACTS',
+  'android.permission.WRITE_CONTACTS',
+  'android.permission.ACCESS_FINE_LOCATION',
+  'android.permission.ACCESS_COARSE_LOCATION',
+  'android.permission.ACCESS_BACKGROUND_LOCATION',
+  'android.permission.RECORD_AUDIO',
+  'android.permission.CAMERA',
+  'android.permission.BLUETOOTH',
+  'android.permission.BLUETOOTH_ADMIN',
+  'android.permission.BLUETOOTH_CONNECT',
+  'android.permission.BLUETOOTH_SCAN',
+  'android.permission.BODY_SENSORS',
+  'android.permission.READ_PHONE_STATE',
+  'android.permission.READ_EXTERNAL_STORAGE',
+  'android.permission.WRITE_EXTERNAL_STORAGE',
+];
+
+/**
+ * Credential / development artifacts that must never be embedded in a
+ * release APK binary (signing keys, API tokens, dev endpoints).
+ */
+const FORBIDDEN_BINARY_PATTERNS = [
+  'sk-ant-api',
+  'sk-proj-',
+  'github_pat_',
+  'ghp_',
+  'gho_',
+  'AKIA', // AWS access key id prefix
+  'BEGIN PRIVATE KEY',
+  'BEGIN RSA PRIVATE KEY',
+  'BEGIN EC PRIVATE KEY',
+  'BEGIN OPENSSH PRIVATE KEY',
+  'publish-key',
+  'publishKey',
+  'localhost:',
+  '127.0.0.1',
+  '10.0.2.2', // Android emulator host loopback
+  'file:///', // file:// access would break the HTTPS-only navigation model
+];
+
 export interface ApkValidationResult {
   valid: boolean;
   fileSizeBytes: number;
@@ -44,6 +105,12 @@ export async function validateApkBinary(
     packageId?: string;
     versionName?: string;
     minSize?: number;
+    /**
+     * Minimum acceptable targetSdkVersion. Modern builds must target the
+     * current Android release; anything older triggers the legacy-app
+     * install warning on device. Defaults to MODERN_TARGET_SDK.
+     */
+    minTargetSdk?: number;
   }
 ): Promise<ApkValidationResult> {
   const minSize = expected?.minSize || 45000; // minimum realistic APK size in bytes
@@ -115,6 +182,10 @@ export async function validateApkBinary(
   let versionCode = 0;
   let versionName = '';
   let applicationLabel = '';
+  let targetSdkVersion = 0;
+  let minSdkVersion = 0;
+  let applicationDebuggable = false;
+  const declaredPermissions: string[] = [];
 
   try {
     const { stdout: aaptOutput } = await execPromise(`aapt dump badging "${apkFilePath}"`);
@@ -127,6 +198,18 @@ export async function validateApkBinary(
     const labelMatch = aaptOutput.match(/application-label:'([^']+)'/);
     if (labelMatch) {
       applicationLabel = labelMatch[1];
+    }
+    const targetMatch = aaptOutput.match(/targetSdkVersion:'(\d+)'/);
+    if (targetMatch) {
+      targetSdkVersion = parseInt(targetMatch[1], 10);
+    }
+    const minMatch = aaptOutput.match(/sdkVersion:'(\d+)'/);
+    if (minMatch) {
+      minSdkVersion = parseInt(minMatch[1], 10);
+    }
+    applicationDebuggable = /application-debuggable/.test(aaptOutput);
+    for (const m of aaptOutput.matchAll(/uses-permission:'([^']+)'/g)) {
+      declaredPermissions.push(m[1]);
     }
   } catch (err: any) {
     throw new Error(`Failed to extract APK badging with aapt: ${err.message}`);
@@ -146,6 +229,64 @@ export async function validateApkBinary(
   if (expected?.versionName && versionName !== expected.versionName) {
     versionMatch = false;
     throw new Error(`Version name mismatch: expected "${expected.versionName}", found "${versionName}"`);
+  }
+
+  // Modern-target gate: legacy targets trigger the "built for an older
+  // version of Android" install warning. Fail closed.
+  const minTargetSdk = expected?.minTargetSdk ?? MODERN_TARGET_SDK;
+  if (targetSdkVersion < minTargetSdk) {
+    throw new Error(
+      `Modern Android target gate: APK targets SDK ${targetSdkVersion || 'unknown'}, ` +
+        `but the central pipeline requires >= ${minTargetSdk}. Update the APK builder target SDK.`
+    );
+  }
+  if (minSdkVersion < MODERN_MIN_SDK) {
+    throw new Error(`minSdkVersion ${minSdkVersion || 'unknown'} is below the supported floor of ${MODERN_MIN_SDK}.`);
+  }
+
+  // versionCode validity (Android range)
+  if (!Number.isInteger(versionCode) || versionCode <= 0 || versionCode > 2100000000) {
+    throw new Error(`versionCode ${versionCode} is invalid (must be 1..2100000000).`);
+  }
+
+  // Debug builds must never pass validation
+  if (applicationDebuggable) {
+    throw new Error('APK is debuggable (android:debuggable=true). Release builds must not be debuggable.');
+  }
+
+  // testOnly flag: inspect the compiled manifest tree
+  try {
+    const { stdout: xmlTree } = await execPromise(`aapt dump xmltree "${apkFilePath}" AndroidManifest.xml`);
+    // aapt xmltree prints boolean attributes as (type 0x12)0xffffffff (true)
+    // or (type 0x12)0x0 (false), never as literal "true".
+    const testOnlyTrue = /android:testOnly\(0x[0-9a-f]+\)=\(type 0x12\)0xffffffff/.test(xmlTree);
+    const debuggableTrue = /android:debuggable\(0x[0-9a-f]+\)=\(type 0x12\)0xffffffff/.test(xmlTree);
+    if (testOnlyTrue) {
+      throw new Error('APK declares android:testOnly=true. Release builds must never be test-only.');
+    }
+    if (debuggableTrue) {
+      throw new Error('APK declares android:debuggable=true. Release builds must never be debuggable.');
+    }
+  } catch (err: any) {
+    if (err.message.includes('test-only') || err.message.includes('debuggable')) throw err;
+    throw new Error(`Failed to inspect manifest XML tree: ${err.message}`);
+  }
+
+  // Sensitive permission denylist: WebView wrappers must stay minimal
+  const forbiddenFound = declaredPermissions.filter((p) => FORBIDDEN_PERMISSIONS.includes(p));
+  if (forbiddenFound.length > 0) {
+    throw new Error(
+      `APK requests forbidden sensitive permissions: ${forbiddenFound.join(', ')}. ` +
+        'Plain WebView wrappers must not request them.'
+    );
+  }
+
+  // Embedded secrets / development artifacts scan across the whole binary
+  const asBinary = buffer.toString('latin1');
+  for (const pattern of FORBIDDEN_BINARY_PATTERNS) {
+    if (asBinary.includes(pattern)) {
+      throw new Error(`APK binary contains forbidden credential/development pattern: "${pattern}".`);
+    }
   }
 
   // 5. Verify cryptographic signatures using apksigner
