@@ -85,7 +85,21 @@
       "platform": "android",
       "architecture": "universal",
       "downloadAvailable": true,
-      "verified": true
+      "verified": true,
+      "minSdk": 21,
+      "targetSdk": 36,
+      "certificateSubject": "AppMintly",
+      "certificateSha256Fingerprint": "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368",
+      "signatureSchemes": {
+        "v1": true,
+        "v2": true,
+        "v3": true
+      },
+      "securityCheckStatus": "passed",
+      "securityCheckTimestamp": "2026-09-25T16:45:36.000Z",
+      "validatorVersion": "11.6.0",
+      "releaseId": 396749115,
+      "assetId": 588720398
     },
     "developerSlug": "pkd",
     "privacyTech": {
