@@ -54,7 +54,8 @@
       "Installable Android Apps",
       "Web Apps and PWA Experiences",
       "Verified Publisher Information",
-      "Direct Access to Published Apps"
+      "Direct Access to Published Apps",
+      "Regression test feature (temporary)"
     ],
     "tags": [],
     "releaseNotes": [
@@ -63,7 +64,7 @@
     "changelog": [],
     "featured": true,
     "original": true,
-    "updatedAt": "2026-09-25T11:54:56.680Z",
+    "updatedAt": "2026-09-25T11:55:06.571Z",
     "isDemo": false,
     "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
