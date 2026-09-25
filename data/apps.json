@@ -70,7 +70,7 @@
     "apk": {
       "enabled": false,
       "buildMode": "webview",
-      "packageId": "",
+      "packageId": "com.appmintly.appmintly",
       "authorized": true
     },
     "developerSlug": "pkd"
