@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bookmark, Menu, X, Sparkles, Wrench, Shield, ArrowRight, Sun, Moon, MonitorSmartphone } from 'lucide-react';
+import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo } from './AppMintlyLogo';
 import { getLocalFavorites } from '@/lib/localLibrary';
@@ -55,7 +56,7 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-line transition-colors">
+    <header className="sticky top-0 z-40 glass transition-colors motion-reduce:transition-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
@@ -99,11 +100,11 @@ export const Navbar: React.FC = () => {
 
         {/* Right side controls */}
         <div className="flex items-center gap-2">
-          {/* Mobile search toggle */}
+          {/* Mobile search / quick-action toggle: opens the command palette */}
           <button
-            onClick={() => router.push('/explore')}
+            onClick={() => window.dispatchEvent(new Event('appmintly:open-command-palette'))}
             className="md:hidden p-2 rounded-full text-ink hover:bg-page transition"
-            aria-label="Search apps"
+            aria-label="Search apps and quick actions"
           >
             <Search className="w-5 h-5" />
           </button>
@@ -124,6 +125,11 @@ export const Navbar: React.FC = () => {
               </span>
             )}
           </Link>
+
+          {/* Desktop command palette trigger (Ctrl+K) */}
+          <span className="hidden lg:inline-flex">
+            <CommandPaletteTrigger />
+          </span>
 
           {/* Publisher Console Link (Clean owner link) */}
           <Link

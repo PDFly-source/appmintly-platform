@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { BottomNav } from '@/components/BottomNav';
 import { Footer } from '@/components/Footer';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { SystemStatus } from '@/components/SystemStatus';
 
 export const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
 
@@ -119,6 +120,7 @@ export default function RootLayout({
               </main>
               <Footer />
               <BottomNav />
+              <SystemStatus />
             </div>
           </CatalogProvider>
         </ToastProvider>

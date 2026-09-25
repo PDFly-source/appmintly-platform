@@ -32,6 +32,7 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { FeaturedHeroCarousel } from '@/components/FeaturedHeroCarousel';
+import { BentoShowcase } from '@/components/BentoShowcase';
 import { AppCard } from '@/components/AppCard';
 import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -188,7 +189,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. FEATURED APPLICATIONS GRID */}
+      {/* 3. BENTO GRID — real catalog highlights (Phase 11) */}
+      <div className="px-4 sm:px-6 max-w-7xl mx-auto">
+        <BentoShowcase featuredApps={featuredApps} publishedApps={publishedApps} latestApps={latestApps} />
+      </div>
+
+      {/* 4. FEATURED APPLICATIONS GRID */}
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 mt-10" aria-label="Featured applications">
         <div className="flex items-end justify-between mb-6">
           <div>

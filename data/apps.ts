@@ -42,6 +42,54 @@ export interface ApkMetadata {
   verified?: boolean;
 }
 
+
+/**
+ * Phase 11 — Privacy & Technology facts.
+ *
+ * Evidence-based, never fabricated: every value must either come from the
+ * canonical record, be mechanically verifiable from the platform code /
+ * signed release binaries, or stay "unknown" and render as
+ * "Not specified" / "Not verified". No numeric privacy score is derived.
+ */
+export interface PrivacyTechFacts {
+  /** Android permissions requested by the released APK (extracted from the
+   *  signed binary's manifest) or web platform permissions. Empty = unknown. */
+  permissions?: string[];
+  /** Where the permission list came from; drives the "Not verified" label. */
+  permissionsSource?: 'apk-manifest' | 'platform-code' | 'publisher-declared';
+  /** Honest description of what user data (if any) the app handles. */
+  dataCollection?: string;
+  /** Honest description of trackers/telemetry, if any. */
+  tracking?: string;
+  networkRequirement?: 'online-only' | 'offline-capable' | 'unknown';
+  offlineSupport?: string;
+  storage?: string;
+  pwaSupport?: 'verified-installable' | 'not-installable' | 'unknown';
+  installationType?: string;
+  /** Third-party/external services the app depends on. Honest, verifiable. */
+  externalServices?: string[];
+  /** Free-text notes with sourcing for anything unusual. */
+  notes?: string;
+}
+
+/**
+ * Phase 11 — optional looped preview media for the screenshot section.
+ * Must be a permanent repository asset or a verified HTTPS URL
+ * (validated by validateAppForPublish — data:/blob:/javascript:/http:
+ * are always rejected). GIF/video must be a real published asset.
+ */
+export interface PreviewMedia {
+  type: 'video' | 'gif';
+  /** Permanent asset path (/assets/…) or https:// URL. */
+  url: string;
+  /** Poster image shown before load and when media fails. */
+  poster: string;
+  /** Short a11y label. */
+  label?: string;
+  /** Enforced upper bound in bytes for publisher-declared remote media. */
+  maxBytes?: number;
+}
+
 export interface AppItem {
   id: string;
   slug: string;
@@ -86,6 +134,8 @@ export interface AppItem {
   size?: string;
   platform?: string[];
   apk?: ApkMetadata;
+  privacyTech?: PrivacyTechFacts;
+  previewMedia?: PreviewMedia;
   status?: 'published' | 'draft' | 'archived' | 'Published' | 'Draft' | 'Archived';
   downloadCount?: number | null;
   rating?: number | null;

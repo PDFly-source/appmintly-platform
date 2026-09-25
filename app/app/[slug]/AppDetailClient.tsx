@@ -37,6 +37,11 @@ import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { QrCodeDialog } from '@/components/QrCodeDialog';
+import { PrivacyTechCard } from '@/components/PrivacyTechCard';
+import { ApkHashVerifier } from '@/components/ApkHashVerifier';
+import { AppMediaPreview } from '@/components/AppMediaPreview';
+import { QrCode as QrCodeIcon } from 'lucide-react';
 import { AppCard } from '@/components/AppCard';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import {
@@ -62,6 +67,7 @@ export default function AppDetailPage() {
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number | null>(null);
   const [showPwaInstallGuide, setShowPwaInstallGuide] = useState(false);
   const [showApkInstallSheet, setShowApkInstallSheet] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
   const [isAppInstalledEvent, setIsAppInstalledEvent] = useState(false);
   const isStandaloneInstalled = isStandalone || isAppInstalledEvent;
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -378,6 +384,15 @@ export default function AppDetailPage() {
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
+
+                <button
+                  onClick={() => setShowQrDialog(true)}
+                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer"
+                  title="Share via QR code"
+                  aria-label="Share via QR code"
+                >
+                  <QrCodeIcon className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Verified Android APK Distribution Specs */}
@@ -419,8 +434,8 @@ export default function AppDetailPage() {
           </div>
         </section>
 
-        {/* 2. SCREENSHOTS GALLERY (App Store Style) */}
-        {validScreenshots.length > 0 && (
+        {/* 2. SCREENSHOTS GALLERY + optional looped preview media */}
+        {(validScreenshots.length > 0 || app.previewMedia) && (
           <section className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-black text-ink">Screenshots &amp; Preview</h2>
@@ -428,6 +443,14 @@ export default function AppDetailPage() {
                 Tap image to view full screen
               </span>
             </div>
+
+            {/* Optional looped muted preview video/GIF (Phase 11) — falls back
+                to its poster/screenshot if the media fails to load */}
+            {app.previewMedia && (
+              <div className="max-w-[320px] sm:max-w-[420px]">
+                <AppMediaPreview app={app} />
+              </div>
+            )}
 
             {/* Mobile horizontal carousel / Desktop scroll rail */}
             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none snap-x">
@@ -640,6 +663,12 @@ export default function AppDetailPage() {
                 <HelpCircle className="w-5 h-5 text-mut group-hover:text-[#1976F3] transition-colors" />
               </button>
             )}
+
+            {/* Phase 11: evidence-based Privacy & Technology scorecard */}
+            <PrivacyTechCard app={app} />
+
+            {/* Phase 11: browser-side APK integrity verification */}
+            {hasApk && <ApkHashVerifier app={app} />}
           </section>
         </div>
 
@@ -683,6 +712,10 @@ export default function AppDetailPage() {
       </div>
 
       {/* 6. FULLSCREEN SCREENSHOT LIGHTBOX */}
+      {showQrDialog && (
+        <QrCodeDialog app={app} onClose={() => setShowQrDialog(false)} toast={toast} />
+      )}
+
       {selectedScreenshotIndex !== null && validScreenshots[selectedScreenshotIndex] && (
         <div
           onClick={() => setSelectedScreenshotIndex(null)}

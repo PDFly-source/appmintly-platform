@@ -11,7 +11,7 @@
  * - a publisher can never grant itself verification state
  */
 
-import { AppItem } from '@/data/apps';
+import { AppItem, PrivacyTechFacts, PreviewMedia } from '@/data/apps';
 import { isPermanentScreenshotUrl } from '@/lib/screenshot-assets';
 import { CATEGORIES } from '@/data/categories';
 
@@ -72,6 +72,68 @@ export function isHttpsUrl(url: string | undefined | null): boolean {
     return Boolean(parsed.hostname);
   } catch {
     return false;
+  }
+}
+
+/** Phase 11 — preview media constraints. */
+export const PREVIEW_MEDIA_MAX_BYTES = 4 * 1024 * 1024; // 4 MB hard ceiling
+const PREVIEW_MEDIA_TYPES = ['video', 'gif'] as const;
+const PREVIEW_MEDIA_EXT = ['.webm', '.mp4', '.gif'];
+
+/** Rejects data:/blob:/javascript:/http: and non-allowlisted media types. */
+export function isSafePreviewMediaUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  if (url.startsWith('/')) return true;
+  if (!url.startsWith('https://')) return false; // data:, blob:, javascript:, http: rejected
+  try {
+    const parsed = new URL(url);
+    return PREVIEW_MEDIA_EXT.some((ext) => parsed.pathname.toLowerCase().endsWith(ext));
+  } catch {
+    return false;
+  }
+}
+
+/** Phase 11 — validate the optional previewMedia block. */
+function validatePreviewMedia(media: PreviewMedia | undefined, errors: string[]): void {
+  if (!media) return;
+  if (!PREVIEW_MEDIA_TYPES.includes(media.type)) {
+    errors.push('Preview media type must be "video" or "gif".');
+  }
+  if (!isSafePreviewMediaUrl(media.url)) {
+    errors.push(
+      'Preview media must be a permanent repository asset (/assets/...) or a verified HTTPS .webm/.mp4/.gif URL. data:/blob:/javascript: URLs are rejected.'
+    );
+  }
+  if (!isHttpsOrRepoAsset(media.poster)) {
+    errors.push('Preview media poster must be a permanent repository asset or an https:// image URL.');
+  }
+  if (media.maxBytes !== undefined && (media.maxBytes <= 0 || media.maxBytes > PREVIEW_MEDIA_MAX_BYTES)) {
+    errors.push(`Preview media size ceiling must be between 1 and ${PREVIEW_MEDIA_MAX_BYTES} bytes.`);
+  }
+}
+
+/** Phase 11 — validate the optional privacyTech facts block (truthfulness:
+ *  structure and URL-safety only; semantic claims stay the publisher's
+ *  responsibility and unverified values render as "Not verified"). */
+function validatePrivacyTech(facts: PrivacyTechFacts | undefined, errors: string[]): void {
+  if (!facts) return;
+  const PERMISSION_SOURCES = ['apk-manifest', 'platform-code', 'publisher-declared'];
+  if (facts.permissionsSource && !PERMISSION_SOURCES.includes(facts.permissionsSource)) {
+    errors.push('privacyTech.permissionsSource must be "apk-manifest", "platform-code" or "publisher-declared".');
+  }
+  if (facts.permissions && !Array.isArray(facts.permissions)) {
+    errors.push('privacyTech.permissions must be an array of permission identifiers.');
+  }
+  const NETWORK = ['online-only', 'offline-capable', 'unknown'];
+  if (facts.networkRequirement && !NETWORK.includes(facts.networkRequirement)) {
+    errors.push('privacyTech.networkRequirement must be "online-only", "offline-capable" or "unknown".');
+  }
+  const PWA = ['verified-installable', 'not-installable', 'unknown'];
+  if (facts.pwaSupport && !PWA.includes(facts.pwaSupport)) {
+    errors.push('privacyTech.pwaSupport must be "verified-installable", "not-installable" or "unknown".');
+  }
+  if (facts.externalServices && !Array.isArray(facts.externalServices)) {
+    errors.push('privacyTech.externalServices must be an array of service names.');
   }
 }
 
@@ -154,6 +216,10 @@ export function validateAppForPublish(
     }
   });
   if (screenshots.length > 10) errors.push('Maximum 10 screenshots allowed.');
+
+  // ---- Phase 11: preview media & privacy facts ----------------------
+  validatePreviewMedia((app as Partial<AppItem>).previewMedia, errors);
+  validatePrivacyTech((app as Partial<AppItem>).privacyTech, errors);
 
   // ---- Tags / features ------------------------------------------------
   const tags = Array.isArray(app.tags) ? app.tags : [];

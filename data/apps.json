@@ -87,7 +87,33 @@
       "downloadAvailable": true,
       "verified": true
     },
-    "developerSlug": "pkd"
+    "developerSlug": "pkd",
+    "privacyTech": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
+      "permissionsSource": "apk-manifest",
+      "dataCollection": "Static content marketplace: no accounts, no personal data collection, no analytics or telemetry in the platform code.",
+      "tracking": "No cross-site trackers, ads or telemetry scripts \u2014 verified from the platform source code.",
+      "networkRequirement": "offline-capable",
+      "offlineSupport": "Service-worker offline shell: installed home page, catalog and app details remain browsable without a connection.",
+      "storage": "Browser local storage only: saved apps (Library), theme preference and service-worker cache on your own device.",
+      "pwaSupport": "verified-installable",
+      "installationType": "Installable Web App (PWA) + signed Android APK package",
+      "externalServices": [
+        "GitHub Pages (site hosting)",
+        "GitHub Releases (APK distribution)"
+      ]
+    },
+    "previewMedia": {
+      "type": "video",
+      "url": "/assets/apps/appmintly/preview/appmintly-home-preview-4f2c9a71b8.webm",
+      "poster": "/assets/apps/appmintly/screenshots/screenshot-1-2e638c25bf.png",
+      "label": "AppMintly home screen preview",
+      "maxBytes": 5242880
+    }
   },
   {
     "id": "studyria",
@@ -180,7 +206,25 @@
       "verified": true
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-24T08:58:47.555Z"
+    "updatedAt": "2026-09-24T08:58:47.555Z",
+    "privacyTech": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
+      "permissionsSource": "apk-manifest",
+      "dataCollection": "Not verified \u2014 the app is published by its developer; AppMintly has not audited its internal data handling.",
+      "tracking": "Not verified \u2014 AppMintly has not audited the app for trackers.",
+      "networkRequirement": "online-only",
+      "offlineSupport": "Not specified",
+      "storage": "Not specified",
+      "pwaSupport": "unknown",
+      "installationType": "Web App + signed Android APK package",
+      "externalServices": [
+        "GitHub Releases (APK distribution)"
+      ]
+    }
   },
   {
     "id": "pdfminifly",
@@ -269,6 +313,24 @@
       "downloadAvailable": true,
       "verified": true
     },
-    "developerSlug": "pkd"
+    "developerSlug": "pkd",
+    "privacyTech": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
+      "permissionsSource": "apk-manifest",
+      "dataCollection": "Not verified \u2014 the app is published by its developer; AppMintly has not audited its internal data handling.",
+      "tracking": "Not verified \u2014 AppMintly has not audited the app for trackers.",
+      "networkRequirement": "online-only",
+      "offlineSupport": "Not specified",
+      "storage": "Not specified",
+      "pwaSupport": "unknown",
+      "installationType": "Web App + signed Android APK package",
+      "externalServices": [
+        "GitHub Releases (APK distribution)"
+      ]
+    }
   }
 ]

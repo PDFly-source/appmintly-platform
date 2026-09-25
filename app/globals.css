@@ -110,3 +110,106 @@ body {
     transition: background-color 160ms ease, color 160ms ease;
   }
 }
+
+/* ============================================================
+   Phase 11 — Glow + glassmorphism surface language.
+   Subtle, premium, brand-consistent: frosted-glass cards, soft
+   ambient glows and gentle micro-interactions. No neon.
+   ============================================================ */
+
+/* Frosted glass surface: navbar, dialogs, floating pills */
+.glass {
+  background: color-mix(in srgb, var(--c-card) 82%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--c-line) 70%, transparent);
+  box-shadow: 0 2px 10px -2px rgba(23, 25, 28, 0.08), 0 12px 32px -12px rgba(23, 25, 28, 0.12);
+}
+.dark .glass {
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.5), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Soft ambient glow for primary cards/CTAs (very restrained) */
+.glow-soft {
+  box-shadow:
+    0 1px 3px rgba(23, 25, 28, 0.06),
+    0 8px 24px -10px rgba(229, 43, 50, 0.14);
+}
+.glow-soft:hover {
+  box-shadow:
+    0 2px 6px rgba(23, 25, 28, 0.08),
+    0 12px 30px -10px rgba(229, 43, 50, 0.24);
+}
+
+/* Premium card lift — hover/focus micro-interaction */
+.card-lift {
+  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 220ms ease, border-color 220ms ease;
+}
+.card-lift:hover,
+.card-lift:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px -16px rgba(23, 25, 28, 0.25);
+}
+.dark .card-lift:hover,
+.dark .card-lift:focus-visible {
+  box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.65);
+}
+
+/* Controlled gradient wash for hero/bento focal surfaces */
+.gradient-wash {
+  background-image: radial-gradient(
+      120% 90% at 15% 0%,
+      color-mix(in srgb, var(--c-card) 88%, #1976F3 6%) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      110% 80% at 90% 10%,
+      color-mix(in srgb, var(--c-card) 90%, #E52B32 5%) 0%,
+      transparent 60%
+    );
+}
+
+/* Micro-interaction: icon/button press feedback */
+.press {
+  transition: transform 120ms ease;
+}
+.press:active {
+  transform: scale(0.96);
+}
+
+/* Visible, consistent focus ring for keyboard users */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #1976F3 35%, transparent);
+}
+
+/* ---- Pointer-capability guards ----
+   Hover lifts and transforms are desktop-pointer-only: on touch
+   devices hover never fires reliably, and the effect wastes paint. */
+@media (hover: none) {
+  .card-lift:hover,
+  .card-lift:focus-visible {
+    transform: none;
+  }
+}
+
+/* ---- Reduced motion: strip ALL nonessential animation ----
+   Transitions, transforms, entry animations and video autoplay
+   intent are neutralized for users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-lift:hover,
+  .card-lift:focus-visible {
+    transform: none !important;
+  }
+  .press:active {
+    transform: none !important;
+  }
+}
