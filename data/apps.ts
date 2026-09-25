@@ -40,6 +40,21 @@ export interface ApkMetadata {
   architecture?: string;
   downloadAvailable?: boolean;
   verified?: boolean;
+  /**
+   * Phase 11.6 Part P — authoritative security evidence produced by the
+   * fail-closed central validator inside the release pipeline. Written
+   * only by release automation; never editable from the publisher console.
+   */
+  minSdk?: number;
+  targetSdk?: number;
+  certificateSubject?: string;
+  certificateSha256Fingerprint?: string;
+  signatureSchemes?: { v1: boolean; v2: boolean; v3: boolean };
+  securityCheckStatus?: 'passed' | 'failed';
+  securityCheckTimestamp?: string;
+  validatorVersion?: string;
+  releaseId?: number;
+  assetId?: number;
 }
 
 

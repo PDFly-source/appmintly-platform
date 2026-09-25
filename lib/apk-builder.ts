@@ -3,7 +3,12 @@ import path from 'path';
 import { exec } from 'child_process';
 import util from 'util';
 import crypto from 'crypto';
-import { validateApkBinary, ApkValidationResult } from './apk-validator';
+import {
+  validateApkBinary,
+  ApkValidationResult,
+  MODERN_TARGET_SDK,
+  MODERN_MIN_SDK,
+} from './apk-validator';
 
 const execPromise = util.promisify(exec);
 
@@ -529,7 +534,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     android:versionCode="${versionCode}"
     android:versionName="${escapeXml(versionName)}">
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="36" />
+    <uses-sdk android:minSdkVersion="${MODERN_MIN_SDK}" android:targetSdkVersion="${MODERN_TARGET_SDK}" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -632,6 +637,9 @@ public class MainActivity extends Activity {
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER);
         settings.setSupportMultipleWindows(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);

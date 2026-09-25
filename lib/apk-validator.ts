@@ -17,6 +17,59 @@ export const MODERN_TARGET_SDK = 36;
 export const MODERN_MIN_SDK = 21;
 
 /**
+ * Central compile/platform + build-tools pin. Workflows must install this
+ * platform; the builder and validator must agree with it. One authoritative
+ * configuration source for the whole pipeline.
+ */
+export const MODERN_COMPILE_SDK = 36;
+export const MODERN_BUILD_TOOLS = '36.0.0';
+
+/** Version tag for the security validator, stored with release evidence. */
+export const APK_SECURITY_VALIDATOR_VERSION = '11.6.0';
+
+/**
+ * The AppMintly production signing identity (public certificate
+ * fingerprint, NOT a secret). Every production APK — AppMintly,
+ * Studyria, PDFMiniFly and all future apps — must be signed with this
+ * exact certificate so new versions install as updates over previous
+ * releases. Verified identical on all current production releases.
+ */
+export const PRODUCTION_CERT_SHA256_FINGERPRINT =
+  'dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368';
+
+/**
+ * Permission allowlist for generated WebView wrappers (Phase 11.6 Part F).
+ * A permission NOT in this allowlist fails validation closed — extending
+ * it requires an explicit pipeline change with a declared reason.
+ */
+const ALLOWED_PERMISSIONS = [
+  'android.permission.INTERNET',
+  'android.permission.ACCESS_NETWORK_STATE',
+  'android.permission.DOWNLOAD_WITHOUT_NOTIFICATION',
+];
+
+/** Named security gates emitted with every validation (Phase 11.6 Part I). */
+export interface ApkSecurityCheck {
+  targetSdk: 'PASS' | 'FAIL';
+  minSdk: 'PASS' | 'FAIL';
+  debuggable: 'PASS' | 'FAIL';
+  testOnly: 'PASS' | 'FAIL';
+  signing: 'PASS' | 'FAIL';
+  certificate: 'PASS' | 'FAIL';
+  signature: 'PASS' | 'FAIL';
+  permissions: 'PASS' | 'FAIL';
+  embeddedSecrets: 'PASS' | 'FAIL';
+  developmentUrls: 'PASS' | 'FAIL';
+  apkStructure: 'PASS' | 'FAIL';
+  packageName: 'PASS' | 'FAIL';
+  version: 'PASS' | 'FAIL';
+  sha256: 'PASS' | 'FAIL';
+  eligible: boolean;
+  validatorVersion: string;
+  checkedAt: string;
+}
+
+/**
  * Sensitive permissions a plain WebView wrapper must never request.
  * If a future app genuinely needs one, extend `expected` explicitly —
  * the validator fails closed by default.
@@ -81,6 +134,12 @@ export interface ApkValidationResult {
     v2: boolean;
     v3: boolean;
   };
+  minSdkVersion: number;
+  targetSdkVersion: number;
+  permissions: string[];
+  certificateSubject: string;
+  certificateSha256Fingerprint: string;
+  securityCheck: ApkSecurityCheck;
   checks: {
     fileExists: boolean;
     validZipHeader: boolean;
@@ -111,6 +170,8 @@ export async function validateApkBinary(
      * install warning on device. Defaults to MODERN_TARGET_SDK.
      */
     minTargetSdk?: number;
+    /** Optional override of the pinned production certificate fingerprint. */
+    certificateSha256Fingerprint?: string;
   }
 ): Promise<ApkValidationResult> {
   const minSize = expected?.minSize || 45000; // minimum realistic APK size in bytes
@@ -249,6 +310,16 @@ export async function validateApkBinary(
     throw new Error(`versionCode ${versionCode} is invalid (must be 1..2100000000).`);
   }
 
+  // Permission POLICY (Phase 11.6 Part F): allowlist-first. Any requested
+  // permission outside the explicit allowlist fails closed.
+  const notAllowed = declaredPermissions.filter((perm) => !ALLOWED_PERMISSIONS.includes(perm));
+  if (notAllowed.length > 0) {
+    throw new Error(
+      `Permission policy violation: APK requests permissions outside the allowlist: ${notAllowed.join(', ')}. ` +
+        'Only permissions genuinely required by the app may be requested; extend the policy explicitly with a declared reason.'
+    );
+  }
+
   // Debug builds must never pass validation
   if (applicationDebuggable) {
     throw new Error('APK is debuggable (android:debuggable=true). Release builds must not be debuggable.');
@@ -306,6 +377,35 @@ export async function validateApkBinary(
     throw new Error(`apksigner verification rejected this APK: ${err.message}`);
   }
 
+  // Certificate identity (Phase 11.6 Part H): production key pin. The
+  // signing certificate must be the AppMintly production identity so new
+  // versions install as updates over previous releases. An unexpected
+  // certificate (debug/test/foreign key) fails closed.
+  let certificateSubject = '';
+  let certificateSha256Fingerprint = '';
+  try {
+    const { stdout: certOutput } = await execPromise(
+      `apksigner verify --print-certs "${apkFilePath}"`
+    );
+    const subjMatch = certOutput.match(/CN=([^,\n]+)/);
+    if (subjMatch) certificateSubject = subjMatch[1].trim();
+    const fpMatch = certOutput.match(/SHA-256 digest:\s*([0-9a-f]{64})/i);
+    if (fpMatch) certificateSha256Fingerprint = fpMatch[1].toLowerCase();
+    const certOk =
+      certificateSha256Fingerprint ===
+      (expected?.certificateSha256Fingerprint || PRODUCTION_CERT_SHA256_FINGERPRINT);
+    if (!certOk) {
+      throw new Error(
+        `Signing certificate mismatch: APK is signed by "${certificateSubject}" with fingerprint ` +
+          `${certificateSha256Fingerprint || 'unknown'}, which is NOT the AppMintly production ` +
+          'signing identity. Production releases must use the production keystore.'
+      );
+    }
+  } catch (err: any) {
+    if (String(err.message).includes('production signing identity')) throw err;
+    throw new Error(`Failed to verify signing certificate identity: ${err.message}`);
+  }
+
   // 6. Calculate real cryptographic SHA-256 and byte length from exact binary buffer
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
   const fileSizeBytes = buffer.length;
@@ -313,6 +413,29 @@ export async function validateApkBinary(
     fileSizeBytes >= 1024 * 1024
       ? `${(fileSizeBytes / (1024 * 1024)).toFixed(2)} MB`
       : `${(fileSizeBytes / 1024).toFixed(1)} KB`;
+
+  // Structured security gate result (Phase 11.6 Part I). Every gate that
+  // ran without throwing is PASS; reaching this point means all mandatory
+  // gates passed, so the release is eligible.
+  const securityCheck: ApkSecurityCheck = {
+    targetSdk: 'PASS',
+    minSdk: 'PASS',
+    debuggable: 'PASS',
+    testOnly: 'PASS',
+    signing: 'PASS',
+    certificate: 'PASS',
+    signature: 'PASS',
+    permissions: 'PASS',
+    embeddedSecrets: 'PASS',
+    developmentUrls: 'PASS',
+    apkStructure: 'PASS',
+    packageName: 'PASS',
+    version: 'PASS',
+    sha256: 'PASS',
+    eligible: true,
+    validatorVersion: APK_SECURITY_VALIDATOR_VERSION,
+    checkedAt: new Date().toISOString(),
+  };
 
   return {
     valid: true,
@@ -324,6 +447,12 @@ export async function validateApkBinary(
     versionCode,
     applicationLabel,
     signatures: { v1, v2, v3 },
+    minSdkVersion,
+    targetSdkVersion,
+    permissions: declaredPermissions,
+    certificateSubject,
+    certificateSha256Fingerprint,
+    securityCheck,
     checks: {
       fileExists: true,
       validZipHeader: true,

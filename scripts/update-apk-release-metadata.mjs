@@ -77,6 +77,19 @@ apk.downloadAvailable = true;
 apk.verified = true;
 apk.authorized = true;
 
+// Phase 11.6 Part P: authoritative security evidence from the fail-closed
+// validator. Protected fields — publisher edits can never modify them.
+apk.minSdk = minSdk;
+apk.targetSdk = targetSdk;
+apk.certificateSubject = certificateSubject;
+apk.certificateSha256Fingerprint = certificateSha256Fingerprint;
+apk.signatureSchemes = signatureSchemes;
+apk.securityCheckStatus = securityCheckStatus;
+apk.securityCheckTimestamp = securityCheckTimestamp;
+apk.validatorVersion = validatorVersion;
+apk.releaseId = releaseId;
+apk.assetId = assetId;
+
 // Keep the top-level download pointer consistent with the apk block.
 app.apkUrl = apkUrl;
 if (app.version !== versionName) app.version = versionName;
@@ -87,3 +100,4 @@ const updated = JSON.stringify(apps, null, 2) + (originalHadTrailingNewline ? '\
 fs.writeFileSync(CATALOG_PATH, updated);
 console.log(`Updated catalog metadata for ${app.name} (${packageId}) -> ${apkUrl}`);
 console.log(`SHA-256: ${sha256} | Size: ${size} bytes | Tag: ${releaseTag} | verified: true`);
+console.log(`Security evidence: targetSdk=${targetSdk} minSdk=${minSdk} securityCheck=${securityCheckStatus} validator=${validatorVersion} release=${releaseId} asset=${assetId}`);

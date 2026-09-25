@@ -21,6 +21,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { AppItem, ApkMetadata } from '@/data/apps';
+import { ApkSecurityCheckPanel } from '@/components/ApkSecurityCheckPanel';
 import { useToast } from '@/lib/ToastContext';
 import { apiUrl } from '@/lib/api-path';
 import {
@@ -672,6 +673,9 @@ export function ApkBuildCenter({
 
         {/* Section 3: Build Pipeline Execution UI */}
         <div className="pt-4 border-t border-line space-y-4">
+          {/* Phase 11.6: mandatory pre-publish security gate panel */}
+          <ApkSecurityCheckPanel apk={currentApk} isBuilding={isBuilding} />
+
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h4 className="text-xs font-black uppercase tracking-wider text-mut">

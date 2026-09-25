@@ -251,6 +251,66 @@ jobs:
           echo "SIZE=$SIZE" >> "$GITHUB_ENV"
           echo "Validated $APP_FILE: $SIZE bytes, SHA-256 $SHA256"
 
+      - name: APK security gate (fail-closed pre-publish scan)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="dist/apk/$APP_FILE"
+          node -e '
+            const fs = require("fs");
+            const v = JSON.parse(fs.readFileSync("dist/apk/validation.json", "utf8"));
+            const g = v.securityCheck || {};
+            const rows = [
+              ["Target SDK", g.targetSdk, v.targetSdk],
+              ["Min SDK", g.minSdk, v.minSdk],
+              ["Debuggable", g.debuggable, ""],
+              ["TestOnly", g.testOnly, ""],
+              ["Signing", g.signing, "v1=" + v.signatureSchemes?.v1 + " v2=" + v.signatureSchemes?.v2 + " v3=" + v.signatureSchemes?.v3],
+              ["Certificate", g.certificate, "CN=" + v.certificateSubject],
+              ["Signature", g.signature, ""],
+              ["Permissions", g.permissions, (v.permissions || []).join(", ")],
+              ["Embedded secrets", g.embeddedSecrets, ""],
+              ["Development URLs", g.developmentUrls, ""],
+              ["APK structure", g.apkStructure, ""],
+              ["Package", g.packageName, v.packageName],
+              ["Version", g.version, v.validation.versionName + " / " + v.validation.versionCode],
+              ["SHA-256", g.sha256, v.sha256],
+            ];
+            console.log("APK SECURITY STATUS");
+            console.log("==================");
+            for (const [name, status, detail] of rows) {
+              console.log(name.padEnd(18) + ": " + String(status).padEnd(4) + " " + detail);
+            }
+            console.log("");
+            const eligible = g.eligible === true && v.validation.valid === true;
+            console.log("Final release eligibility: " + (eligible ? "PASS" : "FAIL") + " (validator " + (g.validatorVersion || "?") + ")");
+            if (!eligible) { console.error("BLOCKED: mandatory security gate failed. Publishing is stopped."); process.exit(1); }
+          '
+          # Independent certificate pin: the workflow itself re-verifies the
+          # production signing identity, not only the build validator.
+          CERT_FP="$(apksigner verify --print-certs "$APK" | sed -n "s/.*SHA-256 digest: \([0-9a-f]\{64\}\).*/\1/p" | head -n1)"
+          if [[ "$CERT_FP" != "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368" ]]; then
+            echo "FATAL: signing certificate fingerprint '$CERT_FP' is not the AppMintly production identity." >&2
+            exit 1
+          fi
+          echo "Production certificate fingerprint verified: ${CERT_FP:0:16}..."
+          # Expose evidence for the catalog update step
+          node -e '
+            const v = JSON.parse(require("fs").readFileSync("dist/apk/validation.json", "utf8"));
+            const g = v.securityCheck;
+            const out = [
+              "TARGET_SDK=" + v.targetSdk,
+              "MIN_SDK=" + v.minSdk,
+              "CERT_SUBJECT=" + v.certificateSubject,
+              "CERT_FINGERPRINT=" + v.certificateSha256Fingerprint,
+              "SIG_V1=" + v.signatureSchemes.v1, "SIG_V2=" + v.signatureSchemes.v2, "SIG_V3=" + v.signatureSchemes.v3,
+              "SECURITY_STATUS=" + (g.eligible ? "passed" : "failed"),
+              "SECURITY_TIMESTAMP=" + g.checkedAt,
+              "VALIDATOR_VERSION=" + g.validatorVersion,
+            ].join("\n");
+            require("fs").appendFileSync(process.env.GITHUB_ENV, "\n" + out + "\n");
+          '
+
       - name: Publish APK to the public distribution repository
         shell: bash
         env:
@@ -298,7 +358,11 @@ jobs:
           PUBLIC_URL="https://github.com/$DISTRIBUTION_REPO/releases/download/$TAG/$APP_FILE"
           echo "PUBLIC_URL=$PUBLIC_URL" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
-          echo "Published $APP_FILE to $PUBLIC_URL"
+          RELEASE_ID="$(node -e 'console.log(require("/tmp/release.json").id)')"
+          ASSET_ID2="$(node -e 'console.log(require("/tmp/asset.json").id)')"
+          echo "GH_RELEASE_ID=$RELEASE_ID" >> "$GITHUB_ENV"
+          echo "GH_ASSET_ID=$ASSET_ID2" >> "$GITHUB_ENV"
+          echo "Published $APP_FILE to $PUBLIC_URL (release $RELEASE_ID, asset $ASSET_ID2)"
 
       - name: Verify anonymous public download is byte-for-byte identical
         shell: bash
@@ -357,7 +421,17 @@ jobs:
             --size "$SIZE" \
             --version "$VERSION_NAME" \
             --version-code "$VERSION_CODE" \
-            --tag "$RELEASE_TAG"
+            --tag "$RELEASE_TAG" \
+            --min-sdk "$MIN_SDK" \
+            --target-sdk "$TARGET_SDK" \
+            --cert-subject "$CERT_SUBJECT" \
+            --cert-fingerprint "$CERT_FINGERPRINT" \
+            --sig-v1 "$SIG_V1" --sig-v2 "$SIG_V2" --sig-v3 "$SIG_V3" \
+            --security-status "$SECURITY_STATUS" \
+            --security-timestamp "$SECURITY_TIMESTAMP" \
+            --validator-version "$VALIDATOR_VERSION" \
+            --release-id "$GH_RELEASE_ID" \
+            --asset-id "$GH_ASSET_ID"
           git config user.name "appmintly-release-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --quiet data/apps.json; then

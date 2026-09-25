@@ -376,6 +376,12 @@ const APK_PROTECTED_KEYS = [
   // Phase 10.9: the remaining release-pipeline-written evidence fields are
   // equally authoritative — a browser submission can never write them.
   'verified', 'downloadAvailable', 'architecture', 'platform', 'releaseDate',
+  // Phase 11.6 Part P: security-gate evidence written by the release
+  // pipeline after every mandatory check passed. Browser submissions can
+  // never create or modify these.
+  'minSdk', 'targetSdk', 'certificateSubject', 'certificateSha256Fingerprint',
+  'signatureSchemes', 'securityCheckStatus', 'securityCheckTimestamp',
+  'validatorVersion', 'releaseId', 'assetId',
 ];
 
 function normalizeStatus(raw) {
