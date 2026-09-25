@@ -110,7 +110,10 @@ const STATIC_CATALOG_URL = `${BASE_PATH}/data/apps.json`;
  */
 async function fetchCatalogItems(): Promise<AppItem[] | null> {
   try {
-    const res = await fetch(API_CATALOG_URL);
+    // cache: 'no-cache' always revalidates against the origin (ETag/304)
+    // so the Publisher Console reflects the ACTUAL canonical catalog, not a
+    // stale HTTP-cache entry that can survive a fresh production deploy.
+    const res = await fetch(API_CATALOG_URL, { cache: 'no-cache' });
     if (res.ok) {
       const data = await res.json();
       const items = Array.isArray(data) ? data : data && Array.isArray(data.apps) ? data.apps : null;
@@ -120,7 +123,7 @@ async function fetchCatalogItems(): Promise<AppItem[] | null> {
     // API unavailable (static hosting) — fall through to static snapshot
   }
   try {
-    const res = await fetch(STATIC_CATALOG_URL);
+    const res = await fetch(STATIC_CATALOG_URL, { cache: 'no-cache' });
     if (res.ok) {
       const items = await res.json();
       if (Array.isArray(items) && items.length > 0) return items;
