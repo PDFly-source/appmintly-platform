@@ -937,7 +937,9 @@ async function handlePublishPost(request, env) {
   return json(request, 200, {
     success: true,
     message: 'Published successfully. The production catalog was committed and the marketplace deployment was triggered.',
-    commitSha: put.data?.content?.sha || put.data?.commit?.sha || null,
+    // Phase 10.9 fix: report the REAL commit sha, not the file blob sha
+    // (GitHub Contents PUT returns content.sha = blob; commit.sha = commit).
+    commitSha: put.data?.commit?.sha || put.data?.content?.sha || null,
     commitUrl: put.data?.content?.html_url || put.data?.commit?.html_url || null,
     actionsUrl: `https://github.com/${REPO}/actions`,
     deployedUrl,
