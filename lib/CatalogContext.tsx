@@ -17,6 +17,7 @@ import {
   normalizeStatus,
 } from '@/data/apps';
 import { APPFORGE_DEMO_MODE } from '@/lib/config';
+import { isHttpsOrRepoAsset } from '@/lib/catalog-validation';
 
 interface CatalogContextType {
   catalog: AppItem[];
@@ -64,7 +65,15 @@ function readSessionEdits(): Record<string, AppItem> {
 function writeSessionEdit(app: AppItem) {
   if (typeof window === 'undefined') return;
   const edits = readSessionEdits();
-  edits[(app.slug || app.id).toLowerCase()] = app;
+  let record = app;
+  // Phase 10.4: a data:/blob: icon must NEVER be persisted into a session
+  // edit (it would be re-applied over every fresh catalog load). Drop the
+  // icon key from the edit so the canonical catalog icon survives the merge.
+  if (record.icon && !isHttpsOrRepoAsset(record.icon)) {
+    const { icon, ...rest } = record;
+    record = rest as AppItem;
+  }
+  edits[(app.slug || app.id).toLowerCase()] = record;
   window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
 }
 
@@ -75,7 +84,17 @@ function mergeSessionEdits(items: AppItem[]): AppItem[] {
   if (Object.keys(edits).length === 0) return items;
   return items.map((a) => {
     const edit = edits[(a.slug || a.id).toLowerCase()];
-    return edit ? { ...a, ...edit } : a;
+    if (!edit) return a;
+    // Phase 10.4: an edit carrying a data:/blob:/invalid icon would
+    // reintroduce the old base64 value over the fixed canonical catalog.
+    // Invalid icon values in edits are dropped so the catalog's canonical
+    // icon is preserved. (writeSessionEdit no longer produces these; this
+    // also cleans legacy edits already stored on devices.)
+    if (edit.icon && !isHttpsOrRepoAsset(edit.icon)) {
+      const { icon, ...rest } = edit;
+      return { ...a, ...(rest as Partial<AppItem>) };
+    }
+    return { ...a, ...edit };
   });
 }
 
@@ -225,8 +244,18 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
               a.id.toLowerCase() === updatedApp.id.toLowerCase() ||
               a.slug.toLowerCase() === updatedApp.slug.toLowerCase()
           );
+          // Phase 10.4: a non-canonical icon (data:/blob:) never replaces
+          // the canonical icon of the working-session record — the icon key
+          // is dropped from the update so the previous canonical value stays.
+          const iconValid = isHttpsOrRepoAsset(updatedApp.icon);
+          const updatePayload: Partial<AppItem> = iconValid
+            ? updatedApp
+            : (() => {
+                const { icon, ...rest } = updatedApp as AppItem;
+                return rest as Partial<AppItem>;
+              })();
           if (idx >= 0) {
-            next[idx] = { ...next[idx], ...updatedApp };
+            next[idx] = { ...next[idx], ...updatePayload } as AppItem;
           } else {
             next.unshift(updatedApp);
           }

@@ -17,6 +17,8 @@ import {
   Globe
 } from 'lucide-react';
 import { AppIcon } from './AppIcon';
+import { resolveUploadToRepoAsset } from '@/lib/brand-assets';
+import { isHttpsOrRepoAsset } from '@/lib/catalog-validation';
 
 interface IconManagerProps {
   appName: string;
@@ -49,6 +51,11 @@ export const IconManager: React.FC<IconManagerProps> = ({
   } | null>(null);
 
   const [previewMode, setPreviewMode] = useState<'standard' | 'squircle' | 'circle' | 'checkered'>('standard');
+  // TRANSIENT upload preview (data: URL). Local preview ONLY — NEVER becomes
+  // the persisted catalog `icon` value. The canonical catalog value is emitted
+  // to onIconChange ONLY when it is a valid https:// URL or a repository
+  // asset path (isHttpsOrRepoAsset contract, unchanged).
+  const [previewIconUrl, setPreviewIconUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle local file upload
@@ -66,15 +73,35 @@ export const IconManager: React.FC<IconManagerProps> = ({
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
       const img = new Image();
-      img.onload = () => {
-        setIsValidating(false);
+      img.onload = async () => {
         const dimensions = `${img.width}x${img.height}`;
-        setValidationResult({
-          valid: true,
-          dimensions,
-          message: `Verified: ${dimensions} px ${file.type.replace('image/', '').toUpperCase()}`,
-        });
-        onIconChange(dataUrl);
+        // Phase 10.4 root-cause fix: the uploaded image becomes a TRANSIENT
+        // preview only — it is NEVER written into the catalog draft value.
+        // If the uploaded bytes are byte-identical to an official repository
+        // brand asset, the canonical repository path is emitted instead.
+        setPreviewIconUrl(dataUrl);
+        try {
+          const repoPath = await resolveUploadToRepoAsset(file);
+          if (repoPath) {
+            onIconChange(repoPath);
+            setIsValidating(false);
+            setValidationResult({
+              valid: true,
+              dimensions,
+              message: `Verified: ${dimensions} px — matches official repository asset. Catalog icon set to the canonical path ${repoPath}.`,
+            });
+          } else {
+            setIsValidating(false);
+            setValidationResult({
+              valid: false,
+              dimensions,
+              message: `Preview only: ${dimensions} px. Uploaded images cannot be published as catalog icons (data: URLs are rejected by validation). Use an https:// URL or upload an official repository asset.`,
+            });
+          }
+        } catch {
+          setIsValidating(false);
+          setValidationResult({ valid: false, message: 'Failed to fingerprint the uploaded image.' });
+        }
       };
       img.onerror = () => {
         setIsValidating(false);
@@ -121,7 +148,10 @@ export const IconManager: React.FC<IconManagerProps> = ({
         dimensions,
         message: `Verified: ${dimensions} px accessible icon`,
       });
-      onIconChange(url);
+      if (isHttpsOrRepoAsset(url)) {
+        setPreviewIconUrl('');
+        onIconChange(url);
+      }
     };
     img.onerror = () => {
       setIsValidating(false);
@@ -380,7 +410,7 @@ export const IconManager: React.FC<IconManagerProps> = ({
               className="p-4 rounded-2xl bg-page border border-line flex flex-col items-center justify-center text-center space-y-3"
             >
               <AppIcon
-                src={currentIcon}
+                src={previewIconUrl || currentIcon}
                 name={appName || 'App'}
                 size={spec.size as any}
                 themeColor={themeColor}
