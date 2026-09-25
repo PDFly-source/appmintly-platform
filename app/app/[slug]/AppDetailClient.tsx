@@ -36,6 +36,7 @@ import { AppIcon } from '@/components/AppIcon';
 import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
+import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { AppCard } from '@/components/AppCard';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import {
@@ -145,13 +146,12 @@ export default function AppDetailPage() {
     }
   };
 
-  const hasApk = !!(
-    app.apk?.enabled ||
-    app.apkUrl ||
-    app.type === 'Android APK' ||
-    app.slug === 'studyria' ||
-    app.slug === 'pdfminifly'
-  );
+  // Phase 10.9: Android APK distribution renders ONLY when the canonical
+  // record carries real release evidence (verified release + sha256 +
+  // downloadable asset) written by the production release pipeline. No
+  // hardcoded app slugs, no fabricated stub-apk matching: a Web App without
+  // a released APK is distributed as a web experience only.
+  const hasApk = hasAuthoritativeApkRelease(app);
 
   // Smart Get App CTA Logic: Prioritizes Android APK generation/download
   const handleGetApp = () => {
@@ -241,10 +241,7 @@ export default function AppDetailPage() {
     if (app.type === 'Web Game' || app.type === 'Game') {
       return 'Play Now';
     }
-    if (app.type === 'Tool') {
-      return 'Open Tool';
-    }
-    return 'Open App';
+    return 'Open on Web';
   };
 
   // Real screenshots only (no stock photos). Canonical repository asset
@@ -351,7 +348,7 @@ export default function AppDetailPage() {
                   <span>{getPrimaryCtaText()}</span>
                 </button>
 
-                {(app.webUrl || app.pwaUrl || app.url || app.launchUrl) && (
+                {hasApk && (app.webUrl || app.pwaUrl || app.url || app.launchUrl) && (
                   <button
                     onClick={handleOpenDirect}
                     className="px-6 py-3.5 rounded-full bg-page hover:bg-line text-ink text-sm font-bold border border-line transition flex items-center gap-1.5 cursor-pointer"
@@ -393,14 +390,16 @@ export default function AppDetailPage() {
                         <span className="font-extrabold text-ink">
                           Verified Android APK Package
                         </span>
-                        <span className="text-mut ml-2 font-mono text-[11px]">
-                          {app.apk?.packageId || `com.appmintly.${app.slug}`}
-                        </span>
+                        {app.apk?.packageId && (
+                          <span className="text-mut ml-2 font-mono text-[11px]">
+                            {app.apk.packageId}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-mut">
                       <span className="px-2 py-0.5 rounded-md bg-white border border-[#16A765]/30 text-[#16A765]">
-                        v{app.version} ({app.apk?.versionCode || 20000})
+                        v{app.version}{app.apk?.versionCode ? ` (${app.apk.versionCode})` : ''}
                       </span>
                       <span>•</span>
                       <span>
@@ -409,7 +408,9 @@ export default function AppDetailPage() {
                           : app.size || 'Size not published'}
                       </span>
                       <span>•</span>
-                      <span className="text-[#16A765] font-bold">Signed (v1+v2+v3)</span>
+                      {app.apk?.sha256 && (
+                        <span className="text-[#16A765] font-bold">Signed &amp; Verified</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -586,12 +587,12 @@ export default function AppDetailPage() {
                   </div>
                 )}
 
-                {app.apk?.enabled && (
+                {hasApk && app.apk?.versionCode ? (
                   <div className="flex items-center justify-between">
                     <dt className="text-mut font-bold">Version Code</dt>
                     <dd className="font-mono font-semibold text-ink">{app.apk.versionCode}</dd>
                   </div>
-                )}
+                ) : null}
 
                 <div className="flex items-center justify-between">
                   <dt className="text-mut font-bold">Privacy &amp; Data</dt>

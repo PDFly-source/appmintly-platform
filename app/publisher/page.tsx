@@ -46,6 +46,7 @@ import {
   FilePen
 } from 'lucide-react';
 import { AppItem, AppType } from '@/data/apps';
+import { PUBLISHERS } from '@/data/publishers';
 import { CATEGORIES } from '@/data/categories';
 import { useCatalog, type DraftEnvelope } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
@@ -128,7 +129,8 @@ export default function PublisherPage() {
     name: '',
     shortName: '',
     slug: '',
-    developer: 'AppMintly Originals',
+    developer: 'PKD',
+    developerSlug: 'pkd',
     shortDescription: '',
     description: '',
     icon: '',
@@ -652,6 +654,12 @@ export default function PublisherPage() {
       updatedAt: new Date().toISOString(),
       isDemo: false,
     };
+
+    // Phase 10.9: publisher verification is NEVER part of the app record —
+    // it resolves exclusively from the repository-controlled
+    // data/publishers.json (canonical publisher catalog). The editor can
+    // never grant, carry or duplicate a verification state.
+    delete (appToSave as unknown as Record<string, unknown>).verified;
 
     // Phase 10.5 (protected APK metadata sync): the save/publish payload is
     // AUTHORITATIVE production APK metadata + editable listing metadata —
@@ -1713,18 +1721,50 @@ export default function PublisherPage() {
 
                   <div>
                     <label className="text-xs font-bold text-ink block mb-1">
-                      Developer / Studio *
+                      Publisher (canonical identity) *
                       <span className="text-[10px] font-normal text-mut">
-                        (the blue &quot;Verified Publisher&quot; badge is granted at the repository level via data/publishers.json — it cannot be self-assigned from this form)
+                        (the blue &quot;Verified Publisher&quot; badge comes from the repository-controlled publisher catalog — it is inherited from the selected identity and can never be self-assigned here)
                       </span>
                     </label>
-                    <input
-                      type="text"
-                      value={form.developer}
-                      onChange={(e) => setForm({ ...form, developer: e.target.value })}
-                      placeholder="e.g. PKD"
-                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
-                    />
+                    <select
+                      value={(() => {
+                        const byName = PUBLISHERS.find((p) => p.name.toLowerCase() === (form.developer || '').toLowerCase());
+                        const bySlug = PUBLISHERS.find((p) => p.slug === form.developerSlug);
+                        return (bySlug || byName || null) ? (bySlug || byName)!.slug : '__custom__';
+                      })()}
+                      onChange={(e) => {
+                        const selected = PUBLISHERS.find((p) => p.slug === e.target.value);
+                        if (selected) {
+                          // Canonical identity: display name + slug + (repo-level)
+                          // verified state are all inherited from data/publishers.json.
+                          setForm({ ...form, developer: selected.name, developerSlug: selected.slug });
+                        } else {
+                          // Custom developer: kept as an unverified raw string.
+                          setForm({ ...form, developerSlug: '' });
+                        }
+                      }}
+                      className="w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                    >
+                      {PUBLISHERS.map((p) => (
+                        <option key={p.slug} value={p.slug}>
+                          {p.name}{p.verified ? ' — Verified Publisher' : ' — unverified'}
+                        </option>
+                      ))}
+                      <option value="__custom__">Custom developer (unverified)</option>
+                    </select>
+                    {(() => {
+                      const byName = PUBLISHERS.find((p) => p.name.toLowerCase() === (form.developer || '').toLowerCase());
+                      const bySlug = PUBLISHERS.find((p) => p.slug === form.developerSlug);
+                      return !(bySlug || byName) ? (
+                        <input
+                          type="text"
+                          value={form.developer}
+                          onChange={(e) => setForm({ ...form, developer: e.target.value, developerSlug: '' })}
+                          placeholder="e.g. My Indie Studio"
+                          className="mt-2 w-full bg-page border border-line rounded-2xl px-4 py-2.5 text-xs text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                        />
+                      ) : null;
+                    })()}
                   </div>
 
                   <div>

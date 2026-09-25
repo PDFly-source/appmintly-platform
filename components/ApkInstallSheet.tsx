@@ -38,7 +38,10 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   const cleanAppName = app.name.replace(/[^a-zA-Z0-9]/g, '');
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
   const fileName = apkMeta?.fileName || `${cleanAppName || 'App'}-${versionName}.apk`;
-  const packageId = apkMeta?.packageId || `com.appmintly.${app.slug.replace(/[^a-z0-9]/g, '')}`;
+  // Phase 10.9: never fabricate a package ID. Only the authoritative
+  // release record value is displayed (this sheet opens only for apps
+  // with real release evidence).
+  const packageId = apkMeta?.packageId || '';
 
   // Use real file size and SHA-256 from verified metadata
   const realBytes = apkMeta?.fileSizeBytes;
@@ -379,10 +382,12 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
         {/* Security & Binary Specs */}
         <div className="pt-2 border-t border-line space-y-2 text-xs">
-          <div className="flex items-center justify-between text-mut">
-            <span>Package ID:</span>
-            <span className="font-mono text-ink font-semibold">{packageId}</span>
-          </div>
+          {packageId && (
+            <div className="flex items-center justify-between text-mut">
+              <span>Package ID:</span>
+              <span className="font-mono text-ink font-semibold">{packageId}</span>
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-mut">
             <span>Binary File:</span>

@@ -196,6 +196,23 @@ async function readCatalog(token) {
   throw new SafeError(502, 'Unexpected catalog format from GitHub.');
 }
 
+/* ===================== canonical publisher catalog ================ */
+
+const PUBLISHERS_PATH = 'data/publishers.json';
+
+/** Read the repository-controlled publisher identities (fail-closed). */
+async function readPublishers(token) {
+  const { data } = await github(token, `/contents/${PUBLISHERS_PATH}?ref=main`);
+  if (data && typeof data.content === 'string' && data.encoding === 'base64') {
+    const bin = atob(data.content.replace(/\n/g, ''));
+    const publishers = JSON.parse(new TextDecoder().decode(
+      Uint8Array.from(bin, (c) => c.charCodeAt(0))
+    ));
+    if (Array.isArray(publishers)) return publishers;
+  }
+  throw new SafeError(502, 'Publisher catalog on GitHub is unavailable or invalid.');
+}
+
 /* ======================= HTML metadata analysis =================== */
 
 function resolveUrl(rel, base) {
@@ -356,6 +373,9 @@ function validateAppInput(app) {
 const APK_PROTECTED_KEYS = [
   'sha256', 'versionName', 'versionCode', 'fileName', 'apkUrl', 'fileSizeBytes',
   'releaseTag', 'generatedAt', 'buildId', 'buildStatus', 'validation',
+  // Phase 10.9: the remaining release-pipeline-written evidence fields are
+  // equally authoritative — a browser submission can never write them.
+  'verified', 'downloadAvailable', 'architecture', 'platform', 'releaseDate',
 ];
 
 function normalizeStatus(raw) {
@@ -447,13 +467,28 @@ function mergeApp(existing, incoming) {
     changelog: Array.isArray(incoming.changelog) ? incoming.changelog : (existing?.changelog || []),
   };
 
+  // Phase 10.9: publisher identity merges from the canonical record —
+  // display name and slug survive an edit even if the editor omitted them,
+  // and the record-level `verified` flag is NEVER stored (verification
+  // resolves exclusively from data/publishers.json at render time).
+  delete merged.verified;
+  merged.developer = (typeof incoming.developer === 'string' && incoming.developer.trim()) ||
+    (typeof existing?.developer === 'string' && existing.developer) || 'Unknown Developer';
+  merged.developerSlug = (typeof incoming.developerSlug === 'string' && incoming.developerSlug.trim()) ||
+    (typeof existing?.developerSlug === 'string' && existing.developerSlug) || '';
+
   // Protected APK release integrity: browser submissions can only set the
   // build intent fields; all release evidence comes from the production
   // release workflow only.
   const incomingApk = (incoming.apk && typeof incoming.apk === 'object') ? { ...incoming.apk } : {};
   const existingApk = (existing?.apk && typeof existing.apk === 'object') ? { ...existing.apk } : {};
+  // Phase 10.9 distribution model: `apk.enabled` can only be true when a
+  // REAL authoritative release exists (release-pipeline evidence: verified
+  // + sha256). A listing without a released APK is a Web App only — the
+  // catalog must never claim a fabricated Android APK.
+  const hasAuthoritativeRelease = Boolean(existingApk.verified && existingApk.sha256);
   const apk = {
-    enabled: typeof incomingApk.enabled === 'boolean' ? incomingApk.enabled : (existingApk.enabled ?? true),
+    enabled: incomingApk.enabled === true && hasAuthoritativeRelease,
     buildMode: incomingApk.buildMode || existingApk.buildMode || 'webview',
     packageId: incomingApk.packageId || existingApk.packageId || '',
     authorized: Boolean(incomingApk.authorized ?? existingApk.authorized ?? true),
@@ -846,6 +881,20 @@ async function handlePublishPost(request, env) {
 
   // Read current catalog with its blob SHA (compare-and-swap protection)
   const { apps, sha } = await readCatalog(token);
+
+  // Phase 10.9: publisher slugs validate server-side against the canonical
+  // repository-controlled publisher catalog — the browser can never invent
+  // or promote an identity.
+  if (incoming.developerSlug) {
+    const publishers = await readPublishers(token);
+    const known = publishers.some(
+      (p) => p && typeof p.slug === 'string' &&
+        p.slug.toLowerCase() === String(incoming.developerSlug).toLowerCase()
+    );
+    if (!known) {
+      throw new SafeError(400, `Unknown publisher identity "${incoming.developerSlug}". Only repository-approved publisher slugs may be used.`);
+    }
+  }
 
   const idx = apps.findIndex(
     (a) => String(a.id).toLowerCase() === String(incoming.id || incoming.slug).toLowerCase() ||

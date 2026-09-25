@@ -23,6 +23,8 @@ export interface ValidationReport {
 
 /** APK/release fields that are production infrastructure and must never be
  *  changed through the catalog editor once a release is verified+enabled. */
+import { PUBLISHERS } from '@/data/publishers';
+
 export const PROTECTED_APK_FIELDS = [
   'enabled',
   'buildMode',
@@ -222,8 +224,15 @@ export function validateAppForPublish(
   }
 
   // ---- Publisher identity integrity --------------------------------------
-  if (app.developerSlug && app.developerSlug !== 'pkd') {
-    errors.push(`Unknown publisher identity "${app.developerSlug}". Only repository-approved publisher slugs may be used.`);
+  // Phase 10.9: publisher slugs validate against the canonical publisher
+  // catalog (data/publishers.json) — the single source of truth for identity
+  // and verification. Any repository-approved publisher is allowed; the
+  // verification state itself is never taken from the app record.
+  if (app.developerSlug) {
+    const known = PUBLISHERS.some((p) => p.slug.toLowerCase() === String(app.developerSlug).toLowerCase());
+    if (!known) {
+      errors.push(`Unknown publisher identity "${app.developerSlug}". Only repository-approved publisher slugs may be used.`);
+    }
   }
   // "verified" on an app record can never be set by the editor; verification
   // lives exclusively in data/publishers.json (repository-controlled).

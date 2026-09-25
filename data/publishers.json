@@ -3,5 +3,10 @@
     "slug": "pkd",
     "name": "PKD",
     "verified": true
+  },
+  {
+    "slug": "mint-test-lab",
+    "name": "Mint Test Lab",
+    "verified": false
   }
 ]

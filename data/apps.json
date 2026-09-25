@@ -68,11 +68,12 @@
     "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
     "apk": {
-      "enabled": true,
+      "enabled": false,
       "buildMode": "webview",
       "packageId": "",
       "authorized": true
-    }
+    },
+    "developerSlug": "pkd"
   },
   {
     "id": "studyria",

@@ -21,6 +21,7 @@ import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
+import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { apiUrl } from '@/lib/api-path';
 import {
   useLocalFavorite,
@@ -37,6 +38,7 @@ interface AppCardProps {
 
 export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const { toast } = useToast();
+  const hasReleasedApk = hasAuthoritativeApkRelease(app);
   const favorite = useLocalFavorite(app.id);
   const isInstalledLocally = useIsStandalone();
   const [downloadedState, setDownloadedState] = useState(false);
@@ -55,8 +57,8 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // 1. Android APK available or built
-    if (app.apk?.enabled || app.type === 'Android APK') {
+    // 1. Android APK: ONLY when a real authoritative release exists
+    if (hasReleasedApk) {
       const apkUrl = app.apk?.apkUrl || app.apkUrl;
       if (apkUrl || app.apk?.fileName) {
         trackAppDownloaded(app.id);
@@ -182,36 +184,27 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     );
   };
 
-  // Primary CTA label matching App Store expectations:
-  // Web App: Open | PWA / installable: Get App | APK: Download | Game: Play | Website: Open
-  // For Studyria: Get App -> https://studyria.qzz.io/
+  // Primary CTA label (Phase 10.9 distribution model):
+  //   real authoritative APK release -> Get App (APK download)
+  //   Web App / PWA / Tool / Website   -> Open on Web
+  //   Game                             -> Play
+  // No special-casing for individual apps: the release evidence in the
+  // canonical record decides, nothing else.
   const getActionLabel = () => {
-    if (app.apk?.enabled || app.type === 'Android APK') {
+    if (hasReleasedApk) {
       return downloadedState ? 'Download started' : 'Get App';
     }
     if (isInstalledLocally) {
       return 'Open';
     }
-    if (app.slug === 'studyria' || app.id === 'studyria' || app.type === 'PWA' || (app.pwa && app.pwa.installable)) {
-      return 'Get App';
-    }
     if (app.type === 'Web Game' || app.type === 'Game') {
       return 'Play';
     }
-    if (app.type === 'Web App') {
-      return 'Open';
-    }
-    if (app.type === 'Website') {
-      return 'Open';
-    }
-    if (app.type === 'Tool') {
-      return 'Open';
-    }
-    return 'Open';
+    return 'Open on Web';
   };
 
   const getActionIcon = () => {
-    if (app.apk?.enabled || app.type === 'Android APK') {
+    if (hasReleasedApk) {
       return downloadedState ? (
         <Check className="w-3.5 h-3.5 text-[#16A765]" />
       ) : (
