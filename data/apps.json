@@ -4,18 +4,18 @@
     "name": "AppMintly",
     "shortName": "AppMintly",
     "slug": "appmintly",
-    "developer": "pdfly-source.github.io",
-    "shortDescription": "Discover, install, and experience apps in one place.",
-    "description": "Discover. Install. Experience. Your digital world, one place — Apps, Web Apps, Games, Tools, and Websites.",
+    "developer": "PKD",
+    "shortDescription": "Discover, install, and experience apps in one place. Morden",
+    "description": "AppMintly is a modern digital marketplace for discovering Apps, Web Apps, Games, Tools and Websites in one place. Explore useful digital experiences, browse verified listings, discover apps by category, and access published products through a simple and organized marketplace.",
     "icon": "https://pdfly-source.github.io/appmintly-platform/icon-512.png",
     "screenshots": [
-      "https://pdfly-source.github.io/appmintly-platform/brand/appmintly-logo-full.png",
-      "/assets/apps/appmintly/screenshots/screenshot-1-42858aea70.png",
-      "/assets/apps/appmintly/screenshots/screenshot-1-03cfcd83f5.jpg"
+      "/assets/apps/appmintly/screenshots/screenshot-1-2e638c25bf.png",
+      "/assets/apps/appmintly/screenshots/screenshot-1-b1c778af32.png",
+      "/assets/apps/appmintly/screenshots/screenshot-1-ca88ab2035.png"
     ],
     "banner": "",
     "category": "Tools",
-    "type": "PWA",
+    "type": "Web App",
     "platform": [
       "Web Browser",
       "Desktop",
@@ -46,13 +46,24 @@
       "serviceWorkerDetected": null,
       "statusSummary": "PWA Metadata Found"
     },
-    "features": [],
+    "features": [
+      "Discover Apps, Web Apps, Games and Tools",
+      "Explore Apps by Category",
+      "Fast and Simple App Discovery",
+      "Search and Discover New Digital Products",
+      "Installable Android Apps",
+      "Web Apps and PWA Experiences",
+      "Verified Publisher Information",
+      "Direct Access to Published Apps"
+    ],
     "tags": [],
-    "releaseNotes": [],
+    "releaseNotes": [
+      "Initial AppMintly release with a modern marketplace experience for discovering Apps, Web Apps, Games, Tools and Websites."
+    ],
     "changelog": [],
-    "featured": false,
+    "featured": true,
     "original": true,
-    "updatedAt": "2026-09-25T10:22:41.316Z",
+    "updatedAt": "2026-09-25T11:12:49.603Z",
     "isDemo": false,
     "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
