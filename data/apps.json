@@ -9,7 +9,9 @@
     "description": "Discover. Install. Experience. Your digital world, one place — Apps, Web Apps, Games, Tools, and Websites.",
     "icon": "https://pdfly-source.github.io/appmintly-platform/icon-512.png",
     "screenshots": [
-      "https://pdfly-source.github.io/appmintly-platform/brand/appmintly-logo-full.png"
+      "https://pdfly-source.github.io/appmintly-platform/brand/appmintly-logo-full.png",
+      "/assets/apps/appmintly/screenshots/screenshot-1-42858aea70.png",
+      "/assets/apps/appmintly/screenshots/screenshot-1-03cfcd83f5.jpg"
     ],
     "banner": "",
     "category": "Tools",
@@ -50,7 +52,7 @@
     "changelog": [],
     "featured": false,
     "original": true,
-    "updatedAt": "2026-09-25T09:34:42.593Z",
+    "updatedAt": "2026-09-25T10:22:41.316Z",
     "isDemo": false,
     "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
