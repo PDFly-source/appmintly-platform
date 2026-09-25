@@ -33,6 +33,7 @@ import { APPS, AppItem } from '@/data/apps';
 import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
+import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
@@ -246,8 +247,12 @@ export default function AppDetailPage() {
     return 'Open App';
   };
 
+  // Real screenshots only (no stock photos). Canonical repository asset
+  // paths are resolved against the Pages base path for display (Phase 10.8).
   const validScreenshots = app.screenshots && app.screenshots.length > 0
-    ? app.screenshots.filter((s) => !s.includes('unsplash.com'))
+    ? app.screenshots
+        .filter((s) => !s.includes('unsplash.com'))
+        .map((s) => resolveAssetDisplayUrl(s))
     : [];
 
   return (

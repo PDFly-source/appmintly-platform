@@ -12,6 +12,7 @@
  */
 
 import { AppItem } from '@/data/apps';
+import { isPermanentScreenshotUrl } from '@/lib/screenshot-assets';
 import { CATEGORIES } from '@/data/categories';
 
 export interface ValidationReport {
@@ -137,23 +138,17 @@ export function validateAppForPublish(
   }
 
   // ---- Screenshots ---------------------------------------------------
-  // Phase 10.6 (permanent screenshot fix): production screenshots must be
-  // PERMANENT addresses — https:// URLs or repository asset paths. data:/blob:
-  // values are device-local temporaries: they can never survive to the shared
-  // catalog and are rejected outright, field-level.
+  // Phase 10.8: production screenshots must be PERMANENT addresses —
+  // canonical repository asset paths (/assets/apps/<slug>/screenshots/...)
+  // or verified HTTPS image URLs. data:/blob:/javascript:/http:/local or
+  // private addresses and GitHub /blob/ page URLs are always rejected,
+  // field-level, client and server side.
   const screenshots = Array.isArray(app.screenshots) ? app.screenshots : [];
   screenshots.forEach((s, idx) => {
-    const label = `Screenshot ${idx + 1}`;
-    if (!s || !s.trim()) {
-      errors.push(`${label}: empty screenshot URL.`);
-    } else if (s.startsWith('data:')) {
-      errors.push(`${label} is a data:image value — device-local previews can never be published. Provide an https:// URL or a repository asset path (e.g. /apps/<slug>/screenshots/shot-1.png).`);
-    } else if (s.startsWith('blob:')) {
-      errors.push(`${label} is a temporary blob: URL — it exists only in this browser session. Provide a permanent https:// URL or repository asset path.`);
-    } else if (s.startsWith('javascript:') || s.startsWith('http://')) {
-      errors.push(`${label} must be https:// (or a repository asset path), not ${s.split(':')[0]}:.`);
-    } else if (!isHttpsOrRepoAsset(s)) {
-      errors.push(`${label} must be an https:// URL or a repository asset path starting with /.`);
+    if (!isPermanentScreenshotUrl(s)) {
+      errors.push(
+        `Screenshot ${idx + 1} uses a non-permanent image URL. Please upload the image again or provide a valid HTTPS image URL.`
+      );
     }
   });
   if (screenshots.length > 10) errors.push('Maximum 10 screenshots allowed.');

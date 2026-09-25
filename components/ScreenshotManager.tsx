@@ -1,7 +1,17 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { checkHttpsUrl } from '@/lib/url-safety';
+import {
+  uploadScreenshotToProduction,
+  ScreenshotUploadResult
+} from '@/lib/production-publish';
+import {
+  normalizeScreenshotInput,
+  resolveAssetDisplayUrl,
+  verifyHttpsImageLoads,
+  REPO_SCREENSHOT_PATH_RE
+} from '@/lib/screenshot-assets';
 import {
   Upload,
   Plus,
@@ -14,65 +24,300 @@ import {
   Sparkles,
   Check,
   AlertCircle,
-  Info,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 
-interface ScreenshotItem {
-  url: string;
-  label?: string;
-  isCover?: boolean;
-}
+const MAX_SCREENSHOTS = 10;
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  'image/png': 'PNG',
+  'image/jpeg': 'JPEG',
+  'image/webp': 'WebP',
+};
+const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024; // 10 MB
 
 interface ScreenshotManagerProps {
   screenshots: string[];
   coverScreenshot?: string;
   detectedManifestScreenshots?: string[];
+  /** App slug used for the canonical repository asset path. */
+  slug: string;
+  /** Resolves the memory-only publisher key (opens the auth dialog when needed). */
+  onAuthRequired: () => Promise<string>;
   onScreenshotsChange: (newScreenshots: string[], newCover?: string) => void;
 }
+
+interface PendingUpload {
+  id: number;
+  tempUrl: string; // blob: preview — ONLY while the upload/deploy is in flight
+  fileName: string;
+  status: 'uploading' | 'deploying' | 'failed';
+  error?: string;
+}
+
+/**
+ * Phase 10.8 — production screenshot management.
+ *
+ * Local files are uploaded through the authenticated Cloudflare Worker
+ * (POST /upload-screenshot), which commits a permanent repository asset
+ * under public/assets/apps/<slug>/screenshots/ via the GitHub Contents API.
+ * Only the canonical repository asset path is ever stored in the draft —
+ * temporary blob: previews exist purely while an upload is in progress and
+ * are revoked as soon as the permanent asset is live.
+ *
+ * URL paste supports direct HTTPS image URLs, repository-relative asset
+ * paths, deployed AppMintly URLs and GitHub blob/raw URLs of this
+ * repository (auto-converted to the canonical asset path — never stored as
+ * GitHub page URLs).
+ */
 
 export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   screenshots = [],
   coverScreenshot,
   detectedManifestScreenshots = [],
+  slug,
+  onAuthRequired,
   onScreenshotsChange,
 }) => {
   const [newUrl, setNewUrl] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [urlVerifying, setUrlVerifying] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
   const [previewModalUrl, setPreviewModalUrl] = useState<string | null>(null);
-  const [showUploadNotice, setShowUploadNotice] = useState(false);
+  /** blob: preview per canonical path while the Pages deployment goes live. */
+  const [tempPreviews, setTempPreviews] = useState<Record<string, string>>({});
+  /** canonical paths whose permanent asset is not deployed yet. */
+  const [deployingPaths, setDeployingPaths] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState<PendingUpload[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nextIdRef = useRef(1);
 
-  // Phase 10.6 (permanent screenshot fix): uploaded files can NEVER enter the
-  // catalog. data:/blob: values are device-local temporaries that would break
-  // for every other visitor and are rejected by validation. The file picker
-  // therefore opens an honest notice explaining the permanent workflow:
-  // add screenshots as https:// URLs or repository asset paths
-  // (public/apps/<slug>/screenshots/... committed with the repository).
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const effectiveSlug = (slug || '').trim().toLowerCase();
+
+  /** Convert a File to standard base64 (no data: prefix). */
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read the selected image.'));
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        const comma = result.indexOf(',');
+        if (!result.startsWith('data:') || comma < 0) {
+          reject(new Error('Could not read the selected image.'));
+          return;
+        }
+        resolve(result.slice(comma + 1));
+      };
+      reader.readAsDataURL(file);
+    });
+
+  /** Swap the temp blob preview for the permanent asset once Pages serves it. */
+  const waitForAssetLive = useCallback((canonicalPath: string) => {
+    const displayUrl = resolveAssetDisplayUrl(canonicalPath);
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      const img = new Image();
+      const finish = (live: boolean) => {
+        window.clearInterval(timer);
+        setTempPreviews((prev) => {
+          const next = { ...prev };
+          const temp = next[canonicalPath];
+          delete next[canonicalPath];
+          if (temp) URL.revokeObjectURL(temp);
+          return next;
+        });
+        setDeployingPaths((prev) => {
+          const next = new Set(prev);
+          next.delete(canonicalPath);
+          return next;
+        });
+        if (!live) {
+          setUploadError(
+            'Screenshot was uploaded, but the marketplace has not deployed it yet. Reload the console in a minute to see it.'
+          );
+        }
+      };
+      img.onload = () => finish(true);
+      img.onerror = () => {
+        if (attempts >= 60) finish(false); // ~5 minutes of polling
+      };
+      img.src = `${displayUrl}${displayUrl.includes('?') ? '&' : '?'}_livecheck=${Date.now()}`;
+    }, 5000);
+  }, []);
+
+  // Phase 10.8 (permanent screenshot upload): local files are uploaded to
+  // PERMANENT AppMintly asset storage through the authenticated Worker.
+  // A temporary blob: preview exists only while the upload is in flight and
+  // is revoked once the canonical repository asset path is live.
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    // Allow repeated selection of the same file.
     e.target.value = '';
-    setShowUploadNotice(true);
+
+    setUploadError(null);
+    setUploadNotice(null);
+
+    if (!effectiveSlug) {
+      setUploadError(
+        'Set the application URL/slug first (Analyze URL) so screenshots have a permanent storage location.'
+      );
+      return;
+    }
+
+    const slots = MAX_SCREENSHOTS - screenshots.length - pending.length;
+    if (slots <= 0) {
+      setUploadError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
+      return;
+    }
+
+    const queue = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES[f.type]).slice(0, slots);
+    if (queue.length === 0) {
+      setUploadError('Only PNG, JPEG and WebP images are supported.');
+      return;
+    }
+
+    for (const file of queue) {
+      if (file.size > MAX_SCREENSHOT_BYTES) {
+        setUploadError(`"${file.name}" is larger than 10 MB. Screenshot was NOT added.`);
+        continue;
+      }
+
+      const id = nextIdRef.current++;
+      const tempUrl = URL.createObjectURL(file);
+      setPending((prev) => [...prev, { id, tempUrl, fileName: file.name, status: 'uploading' }]);
+
+      try {
+        const imageBase64 = await fileToBase64(file);
+        const publishKey = await onAuthRequired();
+        if (!publishKey.trim()) {
+          throw new Error('Authentication required to upload screenshots.');
+        }
+        const result: ScreenshotUploadResult = await uploadScreenshotToProduction({
+          slug: effectiveSlug,
+          imageBase64,
+          publishKey,
+        });
+        if (!result.success || !result.path) {
+          throw new Error(result.message || 'Screenshot upload failed.');
+        }
+        if (screenshots.includes(result.path)) {
+          // Identical image already attached — drop the duplicate honestly.
+          URL.revokeObjectURL(tempUrl);
+          setPending((prev) => prev.filter((p) => p.id !== id));
+          setUploadNotice('That screenshot is already attached to this app.');
+          continue;
+        }
+        // Success: the canonical repository path is the ONLY stored value.
+        onScreenshotsChange([...screenshots, result.path]);
+        setTempPreviews((prev) => ({ ...prev, [result.path!]: tempUrl }));
+        setDeployingPaths((prev) => new Set(prev).add(result.path!));
+        setPending((prev) => prev.filter((p) => p.id !== id));
+        setUploadNotice(
+          result.uploaded === false
+            ? 'Screenshot already existed in secure AppMintly asset storage — reused the permanent repository asset.'
+            : 'Screenshot uploaded successfully. Your image was committed to the permanent AppMintly asset repository.'
+        );
+        waitForAssetLive(result.path);
+      } catch (err) {
+        URL.revokeObjectURL(tempUrl);
+        setPending((prev) => prev.filter((p) => p.id !== id));
+        setUploadError(
+          `${err instanceof Error && err.message ? err.message : 'Screenshot upload failed.'} Your screenshot was NOT added to the published draft.`
+        );
+      }
+    }
   };
 
-  const handleAddUrl = (e?: React.FormEvent) => {
+  const handleAddUrl = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const clean = newUrl.trim();
     if (!clean) return;
-    if (screenshots.includes(clean)) return;
-    // Phase 9 security: screenshots must be HTTPS and must pass the URL
-    // safety guard (blocks javascript:, data:, private/loopback hosts).
-    const safety = checkHttpsUrl(clean);
+    setUrlError(null);
+    if (screenshots.length + pending.length >= MAX_SCREENSHOTS) {
+      setUrlError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
+      return;
+    }
+
+    const normalized = normalizeScreenshotInput(clean);
+    if (normalized.kind === 'error') {
+      setUrlError(normalized.error);
+      return;
+    }
+
+    // Repository asset paths: verify the asset exists on the deployed site.
+    if (normalized.kind === 'repo') {
+      if (!REPO_SCREENSHOT_PATH_RE.test(normalized.value)) {
+        setUrlError('Invalid AppMintly screenshot asset path.');
+        return;
+      }
+      if (screenshots.includes(normalized.value)) {
+        setUrlError('That screenshot is already attached.');
+        return;
+      }
+      setUrlVerifying(true);
+      try {
+        const displayUrl = resolveAssetDisplayUrl(normalized.value);
+        const res = await fetch(displayUrl, { method: 'HEAD' });
+        const type = res.headers.get('content-type') || '';
+        if (!res.ok || !type.startsWith('image/')) {
+          setUrlError(
+            'Image URL could not be verified. Use an AppMintly repository asset or upload the image.'
+          );
+          setUrlVerifying(false);
+          return;
+        }
+        onScreenshotsChange([...screenshots, normalized.value]);
+        setNewUrl('');
+        setUploadNotice('Screenshot attached from the permanent AppMintly asset repository.');
+      } catch {
+        setUrlError(
+          'Image URL could not be verified. Use an AppMintly repository asset or upload the image.'
+        );
+      }
+      setUrlVerifying(false);
+      return;
+    }
+
+    // Direct HTTPS URL: Phase 9 URL-safety guard, then verify it loads as
+    // an image (rejects HTML/JSON pages and broken links honestly).
+    const safety = checkHttpsUrl(normalized.value);
     if (!safety.safe) {
       setUrlError(safety.reason || 'Screenshot URL must be a valid https:// URL.');
       return;
     }
-
-    onScreenshotsChange([...screenshots, clean]);
+    if (screenshots.includes(normalized.value)) {
+      setUrlError('That screenshot is already attached.');
+      return;
+    }
+    setUrlVerifying(true);
+    const loads = await verifyHttpsImageLoads(normalized.value);
+    setUrlVerifying(false);
+    if (!loads) {
+      setUrlError(
+        'Image URL could not be verified. Use an AppMintly repository asset or upload the image.'
+      );
+      return;
+    }
+    onScreenshotsChange([...screenshots, normalized.value]);
     setNewUrl('');
+    setUploadNotice('Screenshot attached from the verified HTTPS image URL.');
   };
 
   const handleDelete = (index: number) => {
     const target = screenshots[index];
+    // Draft-only removal: repository files are never deleted (Phase 10.8).
+    const temp = tempPreviews[target];
+    if (temp) {
+      URL.revokeObjectURL(temp);
+      setTempPreviews((prev) => {
+        const next = { ...prev };
+        delete next[target];
+        return next;
+      });
+    }
     const updated = screenshots.filter((_, i) => i !== index);
     const newCover = coverScreenshot === target ? updated[0] || '' : coverScreenshot;
     onScreenshotsChange(updated, newCover);
@@ -105,16 +350,18 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
     onScreenshotsChange([...screenshots, url]);
   };
 
+  const displayFor = (url: string) => tempPreviews[url] || resolveAssetDisplayUrl(url);
+
   return (
     <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
         <div>
           <h3 className="text-base font-black text-ink">
-            Screenshots &amp; App Previews ({screenshots.length}/10)
+            Screenshots &amp; App Previews ({screenshots.length}/{MAX_SCREENSHOTS})
           </h3>
           <p className="text-xs text-mut">
-            Add authentic screenshots by permanent https:// URL or repository asset path. No stock photos, no device-local files.
+            Upload authentic screenshots to permanent AppMintly asset storage, or add a permanent https:// image URL. No stock photos.
           </p>
         </div>
 
@@ -124,7 +371,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           className="px-4 py-2 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
         >
           <Upload className="w-3.5 h-3.5" />
-          <span>Add Screenshots</span>
+          <span>Upload Screenshots</span>
         </button>
         <input
           ref={fileInputRef}
@@ -136,27 +383,36 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         />
       </div>
 
-      {/* Phase 10.6: honest local-file workflow notice */}
-      {showUploadNotice && (
-        <div role="alert" className="p-4 rounded-2xl bg-[#F7B928]/10 border border-[#F7B928]/40 flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <Info className="w-4 h-4 text-[#8C6000] mt-0.5 shrink-0" />
-            <div className="text-xs text-mut leading-relaxed">
-              <span className="font-bold text-ink">Local files can be previewed on this device only.</span>{' '}
-              For the published catalog, screenshots must live at a permanent address: an <span className="font-semibold text-ink">https:// URL</span> or a
-              repository asset path such as <code className="font-mono">/apps/&lt;slug&gt;/screenshots/shot-1.png</code> (committed under{' '}
-              <code className="font-mono">public/</code> in the platform repository). Add them by URL below — validation rejects data:/blob: values at publish time.
+      {/* Upload status / errors */}
+      {pending.length > 0 && (
+        <div className="p-4 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 space-y-3">
+          {pending.map((p) => (
+            <div key={p.id} className="flex items-center gap-3">
+              <div className="w-14 h-10 rounded-lg overflow-hidden border border-[#1976F3]/30 bg-inkbg shrink-0">
+                <img src={p.tempUrl} alt="Uploading screenshot preview" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-[#1976F3]">Uploading screenshot…</p>
+                <p className="text-[11px] text-mut truncate">
+                  Uploading to secure AppMintly asset storage…
+                </p>
+              </div>
+              <Loader2 className="w-4 h-4 text-[#1976F3] animate-spin shrink-0" />
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowUploadNotice(false)}
-            className="px-3 py-1.5 rounded-full bg-card hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer shrink-0"
-            aria-label="Dismiss the local-file screenshot notice"
-          >
-            Got it
-          </button>
+          ))}
         </div>
+      )}
+      {uploadError && (
+        <p role="alert" className="flex items-start gap-2 text-xs text-[#E52B32] font-bold">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{uploadError}</span>
+        </p>
+      )}
+      {uploadNotice && !uploadError && (
+        <p className="flex items-start gap-2 text-xs text-[#16A765] font-bold">
+          <Check className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{uploadNotice}</span>
+        </p>
       )}
 
       {/* Manifest Detected Screenshots Quick Import */}
@@ -196,15 +452,17 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
             setNewUrl(e.target.value);
             setUrlError(null);
           }}
-          placeholder="https://.../screenshot1.png"
-          aria-label="Screenshot URL (must be https)"
+          placeholder="https://.../screenshot1.png  or  /assets/apps/<slug>/screenshots/..."
+          aria-label="Screenshot URL (https or AppMintly repository asset path)"
           className="flex-1 bg-page border border-line rounded-2xl px-4 py-2.5 text-xs font-mono text-ink focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
         />
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-2xl bg-page hover:bg-line border border-line text-xs font-bold text-ink transition cursor-pointer shrink-0"
+          disabled={urlVerifying}
+          className="px-5 py-2.5 rounded-2xl bg-page hover:bg-line border border-line text-xs font-bold text-ink transition cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5"
         >
-          Add URL
+          {urlVerifying && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          <span>Add URL</span>
         </button>
       </form>
       {urlError && (
@@ -212,9 +470,14 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
           {urlError}
         </p>
       )}
+      <p className="text-[11px] text-mut -mt-4">
+        GitHub blob URLs and deployed AppMintly URLs are converted to the permanent repository asset
+        path automatically. Uploaded screenshots are committed to permanent AppMintly asset storage —
+        temporary previews are never saved.
+      </p>
 
       {/* Thumbnail Gallery & Management */}
-      {screenshots.length === 0 ? (
+      {screenshots.length === 0 && pending.length === 0 ? (
         <div className="p-8 text-center bg-page rounded-3xl border-2 border-dashed border-line space-y-2">
           <ImageIcon className="w-8 h-8 text-mut mx-auto" />
           <h4 className="font-bold text-sm text-ink">No screenshots attached yet</h4>
@@ -226,6 +489,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {screenshots.map((url, idx) => {
             const isCover = coverScreenshot === url || (!coverScreenshot && idx === 0);
+            const deploying = deployingPaths.has(url);
             return (
               <div
                 key={idx}
@@ -235,11 +499,11 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
               >
                 {/* Image preview */}
                 <div
-                  onClick={() => setPreviewModalUrl(url)}
+                  onClick={() => !deploying && setPreviewModalUrl(displayFor(url))}
                   className="h-44 bg-inkbg flex items-center justify-center overflow-hidden cursor-pointer relative"
                 >
                   <img
-                    src={url}
+                    src={displayFor(url)}
                     alt={`Screenshot ${idx + 1}`}
                     className="w-full h-full object-contain group-hover:scale-102 transition-transform duration-200"
                   />
@@ -252,6 +516,11 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                   {isCover && (
                     <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#1976F3] text-white shadow-sm flex items-center gap-1">
                       <Star className="w-3 h-3 fill-white" /> Cover
+                    </span>
+                  )}
+                  {deploying && (
+                    <span className="absolute bottom-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-black/70 text-white flex items-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Deploying
                     </span>
                   )}
                 </div>
@@ -293,7 +562,7 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
                       type="button"
                       onClick={() => handleDelete(idx)}
                       className="p-1 rounded-lg text-mut hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition cursor-pointer"
-                      title="Delete screenshot"
+                      title="Remove screenshot from this draft (the repository asset is kept)"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -1,0 +1,12 @@
+name = "appmintly-publisher-api"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# Independent AppMintly publishing backend.
+# Secrets (set via `wrangler secret put`, NEVER in this file):
+#   APPMINTLY_GITHUB_TOKEN — fine-grained PAT, repo PDFly-source/appmintly-platform only
+#     (Actions: Read and write, Contents: Read and write, Metadata: Read-only)
+#   APPMINTLY_PUBLISH_KEY — publisher console key
+
+[observability]
+enabled = true

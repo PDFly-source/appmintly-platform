@@ -1886,6 +1886,8 @@ export default function PublisherPage() {
                   screenshots={form.screenshots || []}
                   coverScreenshot={form.banner}
                   detectedManifestScreenshots={detectedData?.screenshots || []}
+                  slug={form.slug || form.id}
+                  onAuthRequired={requestPublisherAuth}
                   onScreenshotsChange={(newScreenshots, newCover) =>
                     setForm({
                       ...form,

@@ -229,7 +229,69 @@ export type PublisherKeyCheck =
   | { verified: true; message: string }
   | { verified: false; kind: 'empty' | 'invalid-key' | 'unavailable'; message: string };
 
-export async function verifyPublisherKey(publishKey: string): Promise<PublisherKeyCheck> {
+/**
+ * Server-side screenshot upload (Cloudflare Worker → GitHub Contents API).
+ * Phase 10.8: local screenshot files are uploaded through the authorized
+ * Worker, which commits a permanent repository asset under
+ * public/assets/apps/<slug>/screenshots/. The canonical repository asset
+ * path that comes back is the ONLY value ever stored in a draft or catalog;
+ * temporary data:/blob: previews are never persisted.
+ */
+export const UPLOAD_SCREENSHOT_ENDPOINT = `${PUBLISHER_API_BASE}/upload-screenshot`;
+
+export interface ScreenshotUploadResult {
+  success: boolean;
+  path?: string;
+  url?: string;
+  sha?: string;
+  sizeBytes?: number;
+  uploaded?: boolean;
+  message?: string;
+}
+
+export async function uploadScreenshotToProduction(params: {
+  slug: string;
+  imageBase64: string;
+  publishKey: string;
+}): Promise<ScreenshotUploadResult> {
+  try {
+    const res = await fetch(UPLOAD_SCREENSHOT_ENDPOINT, {
+      method: 'POST',
+      headers: publisherAuthHeaders(params.publishKey),
+      body: JSON.stringify({
+        publishKey: params.publishKey,
+        slug: params.slug,
+        imageBase64: params.imageBase64,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.ok && typeof data.path === 'string' && data.path.startsWith('/assets/apps/')) {
+      return {
+        success: true,
+        path: data.path,
+        url: data.url,
+        sha: data.sha,
+        sizeBytes: data.sizeBytes,
+        uploaded: data.uploaded !== false,
+      };
+    }
+    return {
+      success: false,
+      message:
+        (data && (data.message || data.error)) ||
+        `Screenshot upload failed (HTTP ${res.status}).`,
+    };
+  } catch {
+    return {
+      success: false,
+      message: 'Screenshot upload failed — the authorized publishing layer could not be reached.',
+    };
+  }
+}
+
+export async function verifyPublisherKey(
+  publishKey: string
+): Promise<PublisherKeyCheck> {
   if (!publishKey.trim()) {
     return { verified: false, kind: 'empty', message: 'Enter your AppMintly Publisher Key.' };
   }
