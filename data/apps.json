@@ -1,5 +1,67 @@
 [
   {
+    "id": "appmintly",
+    "name": "AppMintly",
+    "shortName": "AppMintly",
+    "slug": "appmintly",
+    "developer": "pdfly-source.github.io",
+    "shortDescription": "Discover, install, and experience apps in one place.",
+    "description": "Discover. Install. Experience. Your digital world, one place — Apps, Web Apps, Games, Tools, and Websites.",
+    "icon": "https://pdfly-source.github.io/appmintly-platform/icon-512.png",
+    "screenshots": [
+      "https://pdfly-source.github.io/appmintly-platform/brand/appmintly-logo-full.png"
+    ],
+    "banner": "",
+    "category": "Tools",
+    "type": "PWA",
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ],
+    "version": "1.0.0",
+    "previousVersion": "",
+    "releaseDate": "2026-03-23",
+    "lastUpdated": "2026-09-25",
+    "size": "Installable Web App",
+    "status": "published",
+    "published": true,
+    "url": "https://pdfly-source.github.io/appmintly-platform/",
+    "webUrl": "https://pdfly-source.github.io/appmintly-platform/",
+    "pwaUrl": "https://pdfly-source.github.io/appmintly-platform/",
+    "apkUrl": "",
+    "playStoreUrl": "",
+    "appStoreUrl": "",
+    "manifestUrl": "https://pdfly-source.github.io/appmintly-platform/manifest.webmanifest",
+    "startUrl": "https://pdfly-source.github.io/appmintly-platform/",
+    "scope": "https://pdfly-source.github.io/appmintly-platform/",
+    "themeColor": "#17191C",
+    "backgroundColor": "#F8F2E7",
+    "pwa": {
+      "detected": true,
+      "installable": true,
+      "manifestDetected": true,
+      "serviceWorkerDetected": null,
+      "statusSummary": "PWA Metadata Found"
+    },
+    "features": [],
+    "tags": [],
+    "releaseNotes": [],
+    "changelog": [],
+    "featured": false,
+    "original": true,
+    "updatedAt": "2026-09-25T09:34:37.601Z",
+    "isDemo": false,
+    "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
+    "publishedAt": "2026-09-25T09:34:37.601Z",
+    "apk": {
+      "enabled": true,
+      "buildMode": "webview",
+      "packageId": "",
+      "authorized": true
+    }
+  },
+  {
     "id": "studyria",
     "slug": "studyria",
     "name": "Studyria",
