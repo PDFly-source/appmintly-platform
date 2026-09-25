@@ -47,7 +47,7 @@ import {
 } from 'lucide-react';
 import { AppItem, AppType } from '@/data/apps';
 import { CATEGORIES } from '@/data/categories';
-import { useCatalog } from '@/lib/CatalogContext';
+import { useCatalog, type DraftEnvelope } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import { AppCard } from '@/components/AppCard';
 import { AppIcon } from '@/components/AppIcon';
@@ -102,6 +102,9 @@ export default function PublisherPage() {
     getSessionEditFor,
     mergeDraftOverlay,
     clearSessionEditFor,
+    // Phase 10.7: envelope accessors for optimistic concurrency
+    getDraftEnvelopeFor,
+    getDraftEnvelopeMap,
   } = useCatalog();
 
   // Active view: 'catalog' list or 'editor' (add/edit workflow)
@@ -184,6 +187,11 @@ export default function PublisherPage() {
   const [originalRecord, setOriginalRecord] = useState<AppItem | null>(null);
   // The last form state that was actually saved (session or production).
   const lastSavedRef = React.useRef<AppItem | null>(null);
+  // Phase 10.7: revision of the draft this editor session loaded (null when
+  // the editor opened with no draft). Save Draft compares it against the
+  // stored draft's revision — a draft changed or discarded in another tab
+  // is NEVER silently overwritten.
+  const draftRevisionRef = React.useRef<number | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
@@ -340,6 +348,7 @@ export default function PublisherPage() {
   const handleStartAddApp = () => {
     setForm(emptyForm);
     lastSavedRef.current = emptyForm;
+    draftRevisionRef.current = null;
     setOriginalRecord(null);
     setIsEditingExisting(false);
     setWorkflowStep('links'); // Start at Links & Analyzer for instant magic
@@ -355,6 +364,9 @@ export default function PublisherPage() {
     // draft (canonical + sanitized draft overlay) so in-progress edits
     // survive a reload. Public pages keep showing the canonical record.
     const hasDraft = Boolean(getSessionEditFor(app.slug || app.id));
+    draftRevisionRef.current = hasDraft
+      ? (getDraftEnvelopeFor(app.slug || app.id)?.revision ?? null)
+      : null;
     const hydrated = hasDraft ? mergeDraftOverlay(app) : app;
     setForm({ ...hydrated });
     lastSavedRef.current = { ...hydrated };
@@ -760,6 +772,7 @@ export default function PublisherPage() {
       // Phase 10.6: the canonical catalog now carries this record — the
       // device draft must go, so it can never overlay newer canonical data.
       clearSessionEditFor(record.slug || record.id);
+      draftRevisionRef.current = null;
       lastSavedRef.current = record;
       setOriginalRecord(record);
       setHasUnsavedChanges(false);
@@ -806,7 +819,37 @@ export default function PublisherPage() {
       }
     }
 
+    // Phase 10.7 optimistic concurrency: refuse to silently overwrite a
+    // draft that changed (or was discarded) since this editor loaded it.
+    const draftSlugKey = (appToSave.slug || appToSave.id).toLowerCase();
+    const storedDraft = getDraftEnvelopeFor(draftSlugKey);
+    if (storedDraft && draftRevisionRef.current === null) {
+      toast(
+        `DRAFT_CONFLICT: a draft for "${draftSlugKey}" already exists but this editor did not load it (it was created or changed in another tab). Reopen the draft from the catalog list and re-apply your changes. Nothing was overwritten.`,
+        'error'
+      );
+      return;
+    }
+    if (!storedDraft && draftRevisionRef.current !== null) {
+      toast(
+        `DRAFT_CONFLICT: the draft for "${draftSlugKey}" was discarded in another tab. Reopen the app from the catalog list and re-apply your changes. Nothing was written.`,
+        'error'
+      );
+      return;
+    }
+    if (storedDraft && draftRevisionRef.current !== null && storedDraft.revision !== draftRevisionRef.current) {
+      toast(
+        `DRAFT_CONFLICT: the draft for "${draftSlugKey}" was saved again in another tab (revision ${storedDraft.revision}, this editor holds ${draftRevisionRef.current}). Reopen the draft and re-apply your changes. Nothing was overwritten.`,
+        'error'
+      );
+      return;
+    }
+
     const ok = await publishApp(appToSave);
+    if (ok.success && (ok.persisted === 'session' || ok.persisted === 'server')) {
+      // This editor now holds the freshly written draft revision.
+      draftRevisionRef.current = getDraftEnvelopeFor(draftSlugKey)?.revision ?? null;
+    }
     if (ok.success && ok.persisted === 'session') {
       // Static GitHub Pages hosting: the change is applied to the local
       // device draft (console + Store Preview only) and is NOT a permanent
@@ -834,14 +877,25 @@ export default function PublisherPage() {
   // working. The toast states exactly what was exported.
   const buildExportJson = (): string => {
     const draftMap: Record<string, Partial<AppItem>> = getSessionEditMap();
+    const draftEnvelopes: Record<string, DraftEnvelope> = getDraftEnvelopeMap();
     const inCatalog = new Set(catalog.map((a) => (a.slug || a.id).toLowerCase()));
     const mergedExisting = catalog.map((a) => {
       const slug = (a.slug || a.id).toLowerCase();
       return draftMap[slug] ? mergeDraftOverlay(a) : a;
     });
-    const newDrafts = Object.entries(draftMap)
+    // Phase 10.7: new-app drafts are exported WITH their draft metadata
+    // (revision/updatedAt/status) clearly labeled, so the manual
+    // export-and-commit fallback stays honest about what is a draft.
+    const newDrafts = Object.entries(draftEnvelopes)
       .filter(([slug]) => !inCatalog.has(slug.toLowerCase()))
-      .map(([slug, draft]) => ({ ...emptyForm, ...(draft as Partial<AppItem>), slug } as AppItem));
+      .map(([slug, envelope]) => ({
+        ...emptyForm,
+        ...envelope.data,
+        slug,
+        status: 'draft',
+        published: false,
+        draftMetadata: { revision: envelope.revision, updatedAt: envelope.updatedAt },
+      } as AppItem));
     const draftCount = Object.keys(draftMap).length;
     if (draftCount === 0) return JSON.stringify(mergedExisting, null, 2);
     return JSON.stringify([...newDrafts, ...mergedExisting], null, 2);
@@ -1106,8 +1160,8 @@ export default function PublisherPage() {
 
             {/* Phase 10.6: device-local drafts for apps not yet in the catalog */}
             {(() => {
-              const draftMap = getSessionEditMap();
-              const newDrafts = Object.entries(draftMap).filter(
+              const draftEnvelopes: Record<string, DraftEnvelope> = getDraftEnvelopeMap();
+              const newDrafts = Object.entries(draftEnvelopes).filter(
                 ([slug]) => !catalog.some((a) => (a.slug || a.id).toLowerCase() === slug.toLowerCase())
               );
               if (newDrafts.length === 0) return null;
@@ -1124,19 +1178,19 @@ export default function PublisherPage() {
                     These records exist only as device drafts. They never appear on the public marketplace until published.
                   </p>
                   <div className="space-y-2">
-                    {newDrafts.map(([slug, draft]) => (
+                    {newDrafts.map(([slug, envelope]) => (
                       <div key={slug} className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-line">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-ink truncate">{(draft as Partial<AppItem>).name || slug}</p>
+                          <p className="text-sm font-bold text-ink truncate">{envelope.data.name || slug}</p>
                           <p className="text-[11px] text-mut truncate">
-                            {slug} &bull; v{(draft as Partial<AppItem>).version || '1.0.0'} &bull; draft
+                            {slug} &bull; v{envelope.data.version || '1.0.0'} &bull; draft &bull; rev {envelope.revision} &bull; saved {new Date(envelope.updatedAt).toLocaleString()}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={() => {
-                              const rec = { ...emptyForm, ...(draft as Partial<AppItem>), slug } as AppItem;
+                              const rec = { ...emptyForm, ...envelope.data, slug } as AppItem;
                               handleEditApp(rec);
                             }}
                             className="px-3 py-1.5 rounded-full bg-page hover:bg-line text-xs font-bold text-ink border border-line transition cursor-pointer flex items-center gap-1.5"

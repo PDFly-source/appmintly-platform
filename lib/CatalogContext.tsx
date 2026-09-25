@@ -44,6 +44,11 @@ interface CatalogContextType {
   /** Phase 10.6: discard the draft for one slug (e.g. after a successful
    *  production publish, so a stale draft can never overlay newer canonical data). */
   clearSessionEditFor: (slug: string) => void;
+  /** Phase 10.7: the persisted draft envelope (revision/updatedAt) for
+   *  one slug, or null. Enables optimistic-concurrency conflict detection. */
+  getDraftEnvelopeFor: (slug: string) => DraftEnvelope | null;
+  /** Phase 10.7: all persisted draft envelopes keyed by lowercase slug. */
+  getDraftEnvelopeMap: () => Record<string, DraftEnvelope>;
   publishApp: (
     app: Partial<AppItem>
   ) => Promise<{ success: boolean; app?: AppItem; message?: string; persisted?: 'server' | 'session' }>;
@@ -51,6 +56,20 @@ interface CatalogContextType {
   deleteApp: (id: string) => Promise<boolean>;
   isLoading: boolean;
   demoMode: boolean;
+}
+
+export interface DraftEnvelope {
+  slug: string;
+  appId: string;
+  version: string;
+  /** ISO timestamp of the last Save Draft for this record. */
+  updatedAt: string;
+  status: 'draft';
+  /** Optimistic-concurrency revision; +1 on every Save Draft. */
+  revision: number;
+  /** Editable listing fields only (sanitized; protected release metadata
+   *  is stripped and never stored in a draft). */
+  data: Partial<AppItem>;
 }
 
 const CatalogContext = createContext<CatalogContextType | null>(null);
@@ -66,16 +85,64 @@ const STORAGE_KEY = 'appforge_canonical_catalog';
 // (e.g. the app was deleted), and is discarded after a successful
 // production publish. Saving a draft is never a production publish.
 const SESSION_EDITS_KEY = 'appmintly_session_edits_v1';
+// Phase 10.7: versioned draft store. Each draft is a DraftEnvelope carrying
+// revision + updatedAt so Save Draft can perform optimistic concurrency
+// (a draft modified in another tab is never silently overwritten).
+const DRAFTS_V2_KEY = 'appmintly_drafts_v2';
 
-function readSessionEdits(): Record<string, Partial<AppItem>> {
+function readDraftEnvelopes(): Record<string, DraftEnvelope> {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = window.localStorage.getItem(SESSION_EDITS_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    const rawV2 = window.localStorage.getItem(DRAFTS_V2_KEY);
+    if (rawV2) {
+      const parsed = JSON.parse(rawV2);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, DraftEnvelope>;
+      }
+    }
+    // One-time migration from the Phase 10.6 v1 store (flat overlays).
+    const rawV1 = window.localStorage.getItem(SESSION_EDITS_KEY);
+    const v1 = rawV1 ? JSON.parse(rawV1) : null;
+    if (v1 && typeof v1 === 'object' && !Array.isArray(v1)) {
+      const migrated: Record<string, DraftEnvelope> = {};
+      const now = new Date().toISOString();
+      for (const [slug, data] of Object.entries(v1)) {
+        const d = (data || {}) as Partial<AppItem>;
+        migrated[slug] = {
+          slug,
+          appId: d.id || slug,
+          version: d.version || '1.0.0',
+          updatedAt: now,
+          status: 'draft',
+          revision: 1,
+          data: d,
+        };
+      }
+      window.localStorage.setItem(DRAFTS_V2_KEY, JSON.stringify(migrated));
+      window.localStorage.removeItem(SESSION_EDITS_KEY);
+      return migrated;
+    }
+    return {};
   } catch {
     return {};
   }
+}
+
+function writeDraftEnvelopes(envelopes: Record<string, DraftEnvelope>) {
+  if (Object.keys(envelopes).length > 0) {
+    window.localStorage.setItem(DRAFTS_V2_KEY, JSON.stringify(envelopes));
+  } else {
+    window.localStorage.removeItem(DRAFTS_V2_KEY);
+  }
+}
+
+/** Data projection of the v2 draft store (existing call sites' shape). */
+function readSessionEdits(): Record<string, Partial<AppItem>> {
+  const out: Record<string, Partial<AppItem>> = {};
+  for (const [slug, env] of Object.entries(readDraftEnvelopes())) {
+    out[slug] = env.data;
+  }
+  return out;
 }
 
 
@@ -112,8 +179,21 @@ function writeSessionEdit(app: AppItem, baseline?: AppItem | null) {
   if (baseline?.apk?.enabled && baseline.apk.verified) {
     record = stripProtectedReleaseFields(record);
   }
-  edits[(app.slug || app.id).toLowerCase()] = record as Partial<AppItem>;
-  window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
+  const envelopes = readDraftEnvelopes();
+  const key = (app.slug || app.id).toLowerCase();
+  const prev = envelopes[key];
+  envelopes[key] = {
+    slug: key,
+    appId: (app as unknown as Partial<AppItem>).id || key,
+    version: app.version || '1.0.0',
+    updatedAt: new Date().toISOString(),
+    status: 'draft',
+    revision: (prev?.revision || 0) + 1,
+    data: record as Partial<AppItem>,
+  };
+  writeDraftEnvelopes(envelopes);
+  // Legacy v1 key hygiene: the envelope store is now authoritative.
+  window.localStorage.removeItem(SESSION_EDITS_KEY);
 }
 
 /** Merge the device-local session edits overlay on top of a catalog array. */
@@ -249,6 +329,7 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const clearSessionEdits = useCallback(async () => {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(SESSION_EDITS_KEY);
+      window.localStorage.removeItem(DRAFTS_V2_KEY);
     }
     setHasSessionEdits(false);
     await refreshCatalog();
@@ -277,17 +358,25 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const clearSessionEditFor = useCallback((slug: string) => {
     if (typeof window === 'undefined' || !slug) return;
     try {
-      const edits = readSessionEdits();
-      delete edits[slug.toLowerCase()];
-      if (Object.keys(edits).length > 0) {
-        window.localStorage.setItem(SESSION_EDITS_KEY, JSON.stringify(edits));
-      } else {
-        window.localStorage.removeItem(SESSION_EDITS_KEY);
-      }
-      setHasSessionEdits(Object.keys(edits).length > 0);
+      const envelopes = readDraftEnvelopes();
+      delete envelopes[slug.toLowerCase()];
+      writeDraftEnvelopes(envelopes);
+      window.localStorage.removeItem(SESSION_EDITS_KEY);
+      setHasSessionEdits(Object.keys(envelopes).length > 0);
     } catch {
       /* storage unavailable — nothing to clean */
     }
+  }, []);
+
+  // ---- Phase 10.7 envelope accessors (optimistic concurrency) -------------
+  const getDraftEnvelopeFor = useCallback((slug: string): DraftEnvelope | null => {
+    if (typeof window === 'undefined' || !slug) return null;
+    return readDraftEnvelopes()[slug.toLowerCase()] || null;
+  }, []);
+
+  const getDraftEnvelopeMap = useCallback((): Record<string, DraftEnvelope> => {
+    if (typeof window === 'undefined') return {};
+    return readDraftEnvelopes();
   }, []);
 
   useEffect(() => {
@@ -522,6 +611,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       getSessionEditFor,
       mergeDraftOverlay,
       clearSessionEditFor,
+      getDraftEnvelopeFor,
+      getDraftEnvelopeMap,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -545,6 +636,8 @@ export const CatalogProvider: React.FC<{ children: React.ReactNode }> = ({ child
       getSessionEditFor,
       mergeDraftOverlay,
       clearSessionEditFor,
+      getDraftEnvelopeFor,
+      getDraftEnvelopeMap,
       publishApp,
       saveCatalog,
       deleteApp,
@@ -576,6 +669,8 @@ export function useCatalog() {
       getSessionEditFor: () => null,
       mergeDraftOverlay: (app: AppItem) => app,
       clearSessionEditFor: () => {},
+      getDraftEnvelopeFor: () => null,
+      getDraftEnvelopeMap: () => ({}),
       publishApp: async () => ({
         success: false,
         message: 'CatalogProvider not mounted',
