@@ -27,6 +27,36 @@ const size = parseInt(get('size'), 10);
 const versionName = get('version');
 const versionCode = parseInt(get('version-code'), 10);
 const releaseTag = get('tag');
+// Phase 11.6 Part P: authoritative security evidence, written ONLY by the
+// release pipeline after every mandatory gate passed. Never editable from
+// the publisher console (Worker-protected keys).
+const minSdk = parseInt(get('min-sdk'), 10);
+const targetSdk = parseInt(get('target-sdk'), 10);
+const certificateSubject = get('cert-subject');
+const certificateSha256Fingerprint = get('cert-fingerprint');
+const signatureSchemes = {
+  v1: get('sig-v1') === 'true',
+  v2: get('sig-v2') === 'true',
+  v3: get('sig-v3') === 'true',
+};
+const securityCheckStatus = get('security-status');
+const securityCheckTimestamp = get('security-timestamp');
+const validatorVersion = get('validator-version');
+const releaseId = parseInt(get('release-id'), 10);
+const assetId = parseInt(get('asset-id'), 10);
+
+if (!Number.isFinite(minSdk) || minSdk < 21) throw new Error(`Invalid minSdk: ${minSdk}`);
+if (!Number.isFinite(targetSdk) || targetSdk < 36) {
+  throw new Error(`Refusing metadata update: targetSdk ${targetSdk} is below the modern requirement 36.`);
+}
+if (!/^[A-Za-z0-9 ._-]+$/.test(certificateSubject)) throw new Error('Invalid certificate subject.');
+if (!/^[0-9a-f]{64}$/.test(certificateSha256Fingerprint)) throw new Error('Invalid certificate fingerprint.');
+if (securityCheckStatus !== 'passed') throw new Error(`Refusing metadata update: security check status is '${securityCheckStatus}'`);
+if (!/^\d{4}-\d{2}-\d{2}T/.test(securityCheckTimestamp)) throw new Error('Invalid security check timestamp.');
+if (!/^\d+\.\d+\.\d+$/.test(validatorVersion)) throw new Error('Invalid validator version.');
+if (!Number.isFinite(releaseId) || releaseId <= 0) throw new Error('Invalid GitHub release id.');
+if (!Number.isFinite(assetId) || assetId <= 0) throw new Error('Invalid GitHub asset id.');
+if (!signatureSchemes.v2) throw new Error('Refusing metadata update: APK is not v2-signed.');
 
 if (!/^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/.test(packageId)) throw new Error(`Invalid package id: ${packageId}`);
 if (!/^[\w][\w.-]*\.apk$/.test(fileName)) throw new Error(`Invalid APK file name: ${fileName}`);
