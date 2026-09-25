@@ -445,8 +445,12 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
 
       {/* Add Screenshot by URL */}
       <form onSubmit={handleAddUrl} className="flex gap-2">
+        {/* type="text" deliberately: repo-relative asset paths
+            (/assets/apps/<slug>/screenshots/...) are a supported input form,
+            and type="url" would let the browser's native validation reject
+            them before our own normalizeScreenshotInput() ever runs. */}
         <input
-          type="url"
+          type="text"
           value={newUrl}
           onChange={(e) => {
             setNewUrl(e.target.value);
