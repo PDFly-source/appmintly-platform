@@ -963,7 +963,14 @@ function parseMultipartForm(bytes, contentType) {
   const boundary = '--' + (m[1] || m[2]);
   // latin1 decode → byte-per-character string, so String.indexOf gives
   // exact byte offsets (fast native search, safe for binary bodies).
-  const bin = new TextDecoder('latin1').decode(bytes);
+  // Byte-per-character string WITHOUT TextDecoder('latin1') — the
+  // Cloudflare Workers runtime does not implement the legacy encoding
+  // labels, so build the exact byte↔char mapping manually (chunked so
+  // large binary bodies never hit the argument-length limit).
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
   const dec = new TextDecoder();
 
   const fields = {};
@@ -1002,6 +1009,16 @@ function parseMultipartForm(bytes, contentType) {
   return { fields, files };
 }
 
+/** Standard base64 encode of raw bytes (chunked — safe for large buffers). */
+function bytesToBase64(bytes) {
+  let bin = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+}
+
 /** Strict standard-base64 decode → bytes; throws on any invalid character. */
 function decodeBase64Strict(b64) {
   if (typeof b64 !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
@@ -1029,6 +1046,7 @@ async function handleUploadScreenshot(request, env) {
   let bytes;
   let slug;
   let bodyPublishKey;
+  let imageBase64 = ''; // used by the GitHub Contents API commit below
   if (/multipart\/form-data/i.test(contentType)) {
     const raw = new Uint8Array(await request.arrayBuffer());
     if (raw.length > SCREENSHOT_MAX_BYTES + 1024 * 1024) {
@@ -1040,6 +1058,7 @@ async function handleUploadScreenshot(request, env) {
       throw new SafeError(400, 'No image file received. Attach the image as the "image" part.');
     }
     bytes = img.bytes; // raw image bytes — no data:/blob: encoding is possible
+    imageBase64 = bytesToBase64(bytes);
     slug = String(form.fields.slug || '');
     bodyPublishKey = String(form.fields.publishKey || '');
   } else {
@@ -1051,7 +1070,7 @@ async function handleUploadScreenshot(request, env) {
     }
     slug = String(body.slug || '');
     bodyPublishKey = typeof body.publishKey === 'string' ? body.publishKey : '';
-    const imageBase64 = String(body.imageBase64 || '').trim();
+    imageBase64 = String(body.imageBase64 || '').trim();
     if (imageBase64.startsWith('data:') || imageBase64.startsWith('blob:')) {
       throw new SafeError(400, 'Temporary data:/blob: images cannot be uploaded. Send the raw image bytes.');
     }
