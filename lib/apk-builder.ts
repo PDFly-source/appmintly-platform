@@ -639,7 +639,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(false);
         settings.setAllowUniversalAccessFromFileURLs(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setSupportMultipleWindows(false);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
