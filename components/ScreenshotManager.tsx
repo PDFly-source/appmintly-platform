@@ -10,7 +10,8 @@ import {
   normalizeScreenshotInput,
   resolveAssetDisplayUrl,
   verifyHttpsImageLoads,
-  REPO_SCREENSHOT_PATH_RE
+  REPO_SCREENSHOT_PATH_RE,
+  detectImageType
 } from '@/lib/screenshot-assets';
 import {
   Upload,
@@ -29,11 +30,9 @@ import {
 } from 'lucide-react';
 
 const MAX_SCREENSHOTS = 10;
-const ALLOWED_IMAGE_TYPES: Record<string, string> = {
-  'image/png': 'PNG',
-  'image/jpeg': 'JPEG',
-  'image/webp': 'WebP',
-};
+// Supported image types. NOTE: File.type alone is NOT used to accept or
+// reject files — Android providers often deliver real images with an empty
+// or "image/jpg" MIME. Actual bytes are validated in detectImageType().
 const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024; // 10 MB
 
 interface ScreenshotManagerProps {
@@ -94,23 +93,6 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
   const nextIdRef = useRef(1);
 
   const effectiveSlug = (slug || '').trim().toLowerCase();
-
-  /** Convert a File to standard base64 (no data: prefix). */
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Could not read the selected image.'));
-      reader.onload = () => {
-        const result = String(reader.result || '');
-        const comma = result.indexOf(',');
-        if (!result.startsWith('data:') || comma < 0) {
-          reject(new Error('Could not read the selected image.'));
-          return;
-        }
-        resolve(result.slice(comma + 1));
-      };
-      reader.readAsDataURL(file);
-    });
 
   /** Swap the temp blob preview for the permanent asset once Pages serves it. */
   const waitForAssetLive = useCallback((canonicalPath: string) => {
@@ -173,9 +155,16 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
       return;
     }
 
-    const queue = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES[f.type]).slice(0, slots);
+    // Phase 10.8.1: Android file providers often deliver REAL images with an
+    // empty or unusual File.type (e.g. "image/jpg"), which previously caused
+    // valid screenshots to be rejected with "Only PNG, JPEG and WebP images
+    // are supported." Selection is therefore NEVER filtered by File.type:
+    // every selected file is validated by its actual byte signature (magic
+    // bytes) with a filename-extension fallback, and the authorized Worker
+    // independently re-sniffs the bytes before committing anything.
+    const queue = Array.from(files).slice(0, slots);
     if (queue.length === 0) {
-      setUploadError('Only PNG, JPEG and WebP images are supported.');
+      setUploadError(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
       return;
     }
 
@@ -185,19 +174,30 @@ export const ScreenshotManager: React.FC<ScreenshotManagerProps> = ({
         continue;
       }
 
+      // Validate by actual bytes, not by the (often empty/incorrect on
+      // Android) File.type. Falls back to the filename extension only when
+      // the signature cannot be read; the Worker re-verifies regardless.
+      const detectedType = await detectImageType(file);
+      if (!detectedType) {
+        setUploadError(`"${file.name}" is not a supported image. Only PNG, JPEG and WebP screenshots are accepted.`);
+        continue;
+      }
+
       const id = nextIdRef.current++;
       const tempUrl = URL.createObjectURL(file);
       setPending((prev) => [...prev, { id, tempUrl, fileName: file.name, status: 'uploading' }]);
 
       try {
-        const imageBase64 = await fileToBase64(file);
         const publishKey = await onAuthRequired();
         if (!publishKey.trim()) {
           throw new Error('Authentication required to upload screenshots.');
         }
+        // Send the REAL file as multipart/form-data; the browser generates
+        // the multipart boundary (Content-Type is never set manually).
         const result: ScreenshotUploadResult = await uploadScreenshotToProduction({
           slug: effectiveSlug,
-          imageBase64,
+          image: file,
+          fileName: file.name,
           publishKey,
         });
         if (!result.success || !result.path) {

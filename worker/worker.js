@@ -949,6 +949,59 @@ async function gitBlobSha(bytes) {
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/* Phase 10.8.1 — dependency-free multipart/form-data parsing.
+ *
+ * The Publisher Console now uploads the REAL image file in a
+ * browser-generated multipart body (FormData). This parser extracts the
+ * parts directly from the raw request bytes; the client filename is read
+ * but NEVER trusted (storage names are generated server-side below).
+ * Returns { fields: {name: value}, files: [{ name, filename, bytes }] }.
+ */
+function parseMultipartForm(bytes, contentType) {
+  const m = /boundary=(?:"([^"]+)"|([^;\s]+))/i.exec(contentType || '');
+  if (!m) throw new SafeError(400, 'Invalid multipart request (missing boundary).');
+  const boundary = '--' + (m[1] || m[2]);
+  // latin1 decode → byte-per-character string, so String.indexOf gives
+  // exact byte offsets (fast native search, safe for binary bodies).
+  const bin = new TextDecoder('latin1').decode(bytes);
+  const dec = new TextDecoder();
+
+  const fields = {};
+  const files = [];
+  let pos = bin.indexOf(boundary);
+  if (pos < 0) throw new SafeError(400, 'Invalid multipart request body.');
+  pos += boundary.length;
+
+  while (pos < bytes.length) {
+    if (bin[pos] === '-' && bin[pos + 1] === '-') break; // closing "--"
+    if (bin[pos] === '\r' && bin[pos + 1] === '\n') pos += 2;
+    else break;
+
+    const headEnd = bin.indexOf('\r\n\r\n', pos);
+    if (headEnd < 0) throw new SafeError(400, 'Invalid multipart request (malformed part).');
+    const headerText = bin.slice(pos, headEnd);
+    const cd = /content-disposition:\s*form-data;([^\r\n]*)/i.exec(headerText);
+    if (!cd) throw new SafeError(400, 'Invalid multipart request (missing Content-Disposition).');
+    const nameM = /name="([^"]*)"/i.exec(cd[1]);
+    const fileM = /filename="([^"]*)"/i.exec(cd[1]);
+    const fieldName = nameM ? nameM[1] : '';
+
+    const bodyStart = headEnd + 4;
+    const next = bin.indexOf(boundary, bodyStart);
+    if (next < 0) throw new SafeError(400, 'Invalid multipart request (unterminated part).');
+    const bodyEnd = Math.max(bodyStart, next - 2); // strip the trailing CRLF
+    const body = bytes.slice(bodyStart, bodyEnd);
+
+    if (fileM) {
+      files.push({ name: fieldName, filename: fileM[1], bytes: body });
+    } else {
+      fields[fieldName] = dec.decode(body);
+    }
+    pos = next + boundary.length;
+  }
+  return { fields, files };
+}
+
 /** Strict standard-base64 decode → bytes; throws on any invalid character. */
 function decodeBase64Strict(b64) {
   if (typeof b64 !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) {
@@ -968,14 +1021,44 @@ async function handleUploadScreenshot(request, env) {
   if ((request.headers.get('origin') || '') !== ALLOWED_ORIGIN) {
     throw new SafeError(403, 'Forbidden origin.');
   }
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    throw new SafeError(400, 'Request body must be valid JSON.');
+  // Phase 10.8.1: accept BOTH the browser-native multipart/form-data upload
+  // (real image file, browser-generated boundary) and, for backward
+  // compatibility with the previously deployed console, the legacy JSON
+  // base64 body. Either way the image type is sniffed from the ACTUAL bytes.
+  const contentType = request.headers.get('content-type') || '';
+  let bytes;
+  let slug;
+  let bodyPublishKey;
+  if (/multipart\/form-data/i.test(contentType)) {
+    const raw = new Uint8Array(await request.arrayBuffer());
+    if (raw.length > SCREENSHOT_MAX_BYTES + 1024 * 1024) {
+      throw new SafeError(413, 'Screenshot is too large. Maximum 10 MB per image.');
+    }
+    const form = parseMultipartForm(raw, contentType);
+    const img = form.files.find((f) => f.name === 'image') || form.files[0];
+    if (!img || img.bytes.length === 0) {
+      throw new SafeError(400, 'No image file received. Attach the image as the "image" part.');
+    }
+    bytes = img.bytes; // raw image bytes — no data:/blob: encoding is possible
+    slug = String(form.fields.slug || '');
+    bodyPublishKey = String(form.fields.publishKey || '');
+  } else {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      throw new SafeError(400, 'Request body must be valid JSON or multipart/form-data.');
+    }
+    slug = String(body.slug || '');
+    bodyPublishKey = typeof body.publishKey === 'string' ? body.publishKey : '';
+    const imageBase64 = String(body.imageBase64 || '').trim();
+    if (imageBase64.startsWith('data:') || imageBase64.startsWith('blob:')) {
+      throw new SafeError(400, 'Temporary data:/blob: images cannot be uploaded. Send the raw image bytes.');
+    }
+    bytes = decodeBase64Strict(imageBase64);
   }
-  const provided = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '') ||
-    (typeof body.publishKey === 'string' ? body.publishKey : '');
+
+  const provided = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '') || bodyPublishKey;
   if (!provided || !keysEqual(provided, env.APPMINTLY_PUBLISH_KEY)) {
     throw new SafeError(401, 'Invalid or missing publish key.');
   }
@@ -984,16 +1067,11 @@ async function handleUploadScreenshot(request, env) {
   }
 
   // Slug validation (identical rules to the catalog editor)
-  const slug = String(body.slug || '').trim().toLowerCase();
+  slug = String(slug || '').trim().toLowerCase();
   if (!/^[a-z0-9-]{1,60}$/.test(slug)) {
     throw new SafeError(400, 'Invalid app slug. Use lowercase letters, digits and hyphens (max 60).');
   }
 
-  const imageBase64 = String(body.imageBase64 || '').trim();
-  if (imageBase64.startsWith('data:') || imageBase64.startsWith('blob:')) {
-    throw new SafeError(400, 'Temporary data:/blob: images cannot be uploaded. Send the raw image bytes.');
-  }
-  const bytes = decodeBase64Strict(imageBase64);
   if (bytes.length === 0) throw new SafeError(400, 'Empty image.');
   if (bytes.length > SCREENSHOT_MAX_BYTES) {
     throw new SafeError(413, 'Screenshot is too large. Maximum 10 MB per image.');
@@ -1070,6 +1148,7 @@ async function handleUploadScreenshot(request, env) {
     path: chosen.path.replace(/^public/, ''),
     url: `https://pdfly-source.github.io/appmintly-platform${chosen.path.replace(/^public/, '')}`,
     sha: blobSha,
+    mime,
     sizeBytes: bytes.length,
     uploaded: !chosen.alreadyStored,
   });

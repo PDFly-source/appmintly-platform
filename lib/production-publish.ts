@@ -251,18 +251,27 @@ export interface ScreenshotUploadResult {
 
 export async function uploadScreenshotToProduction(params: {
   slug: string;
-  imageBase64: string;
+  /** The real image File/Blob — sent as multipart/form-data. */
+  image: Blob;
+  fileName?: string;
   publishKey: string;
 }): Promise<ScreenshotUploadResult> {
   try {
+    // Phase 10.8.1: the image is sent as a REAL file in a browser-generated
+    // multipart/form-data body (like a native <form> upload). Content-Type
+    // is deliberately NOT set — the browser attaches it with the multipart
+    // boundary. Manually setting "multipart/form-data" without a boundary
+    // would corrupt the request.
+    const form = new FormData();
+    form.append('slug', params.slug);
+    form.append('publishKey', params.publishKey); // alongside the Authorization header
+    const safeName =
+      (params.fileName || 'screenshot').replace(/[^\w.\-]+/g, '_').slice(0, 100) || 'screenshot';
+    form.append('image', params.image, safeName);
     const res = await fetch(UPLOAD_SCREENSHOT_ENDPOINT, {
       method: 'POST',
-      headers: publisherAuthHeaders(params.publishKey),
-      body: JSON.stringify({
-        publishKey: params.publishKey,
-        slug: params.slug,
-        imageBase64: params.imageBase64,
-      }),
+      headers: { Authorization: `Bearer ${params.publishKey}` },
+      body: form,
     });
     const data = await res.json().catch(() => null);
     if (res.ok && data && data.ok && typeof data.path === 'string' && data.path.startsWith('/assets/apps/')) {
