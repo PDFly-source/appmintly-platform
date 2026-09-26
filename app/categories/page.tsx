@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIES, CategoryItem } from '@/data/categories';
 import { useCatalog } from '@/lib/CatalogContext';
+import { AppIcon } from '@/components/AppIcon';
 import { isNewApp, AppItem } from '@/data/apps';
 
 const ICON_MAP: Record<string, any> = {
@@ -256,13 +257,12 @@ export default function CategoriesPage() {
                         <ul className="mt-3 space-y-1.5">
                           {previewApps.map((app) => (
                             <li key={app.id} className="flex items-center gap-2 text-xs text-mut">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
+                              <AppIcon
                                 src={app.icon}
-                                alt=""
-                                width={18}
-                                height={18}
-                                className="w-[18px] h-[18px] rounded-md object-cover shrink-0"
+                                name={app.name}
+                                size="xs"
+                                themeColor={app.themeColor}
+                                className="shrink-0"
                               />
                               <span className="truncate font-semibold text-ink/90">
                                 {app.name}
