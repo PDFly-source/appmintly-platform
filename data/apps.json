@@ -6,7 +6,7 @@
     "shortName": "DistTest",
     "developer": "Mint Test Lab",
     "developerSlug": "mint-test-lab",
-    "type": "Android APK",
+    "type": "Web App",
     "category": "Tools",
     "description": "Temporary AppMintly Phase 16 distribution and install QA test application. Clearly identified as a test — not a production application.",
     "shortDescription": "Phase 16 distribution test fixture.",
@@ -35,7 +35,7 @@
     "changelog": [
       "v1.0.0: Phase 16 distribution test"
     ],
-    "featured": false,
+    "featured": true,
     "original": false,
     "status": "draft",
     "pwa": {
@@ -50,20 +50,20 @@
       "buildMode": "webview",
       "packageId": "com.appforge.disttest",
       "authorized": true,
+      "sha256": "6e7d3413b862d671a205ff40445be9d3c694687b433cfa528d33e62fc9ce0aa0",
       "versionName": "1.0.1",
       "versionCode": 10001,
       "fileName": "AppMintlyDistributionTest-1.0.1.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-distribution-test-v1.0.1/AppMintlyDistributionTest-1.0.1.apk",
       "fileSizeBytes": 509806,
-      "sha256": "6e7d3413b862d671a205ff40445be9d3c694687b433cfa528d33e62fc9ce0aa0",
       "releaseTag": "appmintly-distribution-test-v1.0.1",
-      "releaseDate": "2026-09-26",
       "generatedAt": "2026-09-26T11:55:48.073Z",
       "buildStatus": "released",
-      "platform": "android",
-      "architecture": "universal",
-      "downloadAvailable": true,
       "verified": true,
+      "downloadAvailable": true,
+      "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-09-26",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -81,11 +81,14 @@
     },
     "published": false,
     "lastUpdated": "2026-09-26",
-    "updatedAt": "2026-09-26T11:49:19.854Z",
+    "updatedAt": "2026-09-26T12:20:45.901Z",
     "releaseDate": "2026-09-26",
     "publishedAt": "2026-09-26T11:49:19.854Z",
     "isDemo": false,
-    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-distribution-test-v1.0.1/AppMintlyDistributionTest-1.0.1.apk"
+    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-distribution-test-v1.0.1/AppMintlyDistributionTest-1.0.1.apk",
+    "platform": [
+      "Android"
+    ]
   },
   {
     "id": "appmintly",
