@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { Sparkles, ArrowRight, Download, ExternalLink, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { BASE_PATH } from '@/lib/api-path';
+import { resolveDeveloper } from '@/data/publishers';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { AppIcon } from '@/components/AppIcon';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 
 interface FeaturedHeroCarouselProps {
@@ -37,6 +40,9 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
       ? `${Math.round(current.apk.fileSizeBytes / 1024)} KB APK`
       : current.size;
 
+  const publisher = resolveDeveloper(current);
+  const resolvedIcon =
+    current.icon && current.icon.startsWith('/') ? `${BASE_PATH}${current.icon}` : current.icon;
   const heroImage = current.banner || current.icon;
   const resolvedHeroImage = heroImage && heroImage.startsWith('/') ? `${BASE_PATH}${heroImage}` : heroImage;
 
@@ -80,6 +86,20 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             </span>
           </div>
 
+          {/* App logo emphasis — framed hero chip */}
+          {resolvedIcon && (
+            <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-1.5 shadow-md">
+              <AppIcon
+                src={current.icon}
+                name={current.name}
+                size="xl"
+                themeColor={current.themeColor}
+                category={current.category}
+                className="rounded-xl"
+              />
+            </div>
+          )}
+
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-sm leading-tight">
             {current.name}
           </h2>
@@ -88,11 +108,14 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             {current.shortDescription || current.description}
           </p>
 
-          <div className="mt-4 flex items-center gap-3 text-xs text-white/70">
-            <span>By {current.developer}</span>
-            <span>•</span>
+          <div className="mt-4 flex items-center gap-2.5 text-xs text-white/70 flex-wrap">
+            <span className="inline-flex items-center gap-1">
+              By {publisher.name}
+              {publisher.verified && <VerifiedBadge size="xs" className="[&_svg]:text-[#7FC7A3]" />}
+            </span>
+            <span aria-hidden="true">•</span>
             <span>v{current.version}</span>
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <span>{apkSizeLabel}</span>
           </div>
         </div>
@@ -101,7 +124,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
         <div className="flex items-center gap-3 pt-6 flex-wrap">
           <Link
             href={`/app/${current.slug}`}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#E52B32] hover:bg-[#b81f25] text-white font-bold text-xs sm:text-sm shadow-md transition-all transform hover:-translate-y-0.5"
+            className="btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm cursor-pointer"
           >
             {hasApkRelease ? (
               <>

@@ -43,6 +43,12 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const isInstalledLocally = useIsStandalone();
   const [downloadedState, setDownloadedState] = useState(false);
 
+  // Compact, truthful metadata for the card footer (Phase 16.2 hierarchy).
+  const sizeLabel = app.apk?.fileSizeBytes
+    ? `${Math.round(app.apk.fileSizeBytes / 1024)} KB`
+    : app.size || '';
+  const stateLabel = app.type === 'Android APK' ? 'APK Package' : 'Installable App';
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -253,7 +259,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
         <button
           onClick={handleActionClick}
-          className="shrink-0 ml-2 px-3 py-1.5 rounded-full bg-page hover:bg-inkbg hover:text-white text-xs font-bold text-ink border border-line transition-colors flex items-center gap-1 cursor-pointer"
+          className="btn-cta shrink-0 ml-2 px-3.5 py-2 rounded-full text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
         >
           {getActionLabel()}
         </button>
@@ -263,7 +269,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
   // Standard Grid Card (Store Marketplace Feel)
   return (
-    <div className="group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl bg-card border border-line hover:border-ink/40 hover:shadow-md transition-all duration-300">
+    <div className="group relative flex flex-col justify-between h-full p-4 sm:p-5 rounded-2xl bg-card border border-line card-accent">
       {/* Top Header: Public Type Badge, New Badge & Library Save */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -306,35 +312,35 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           className="group-hover:scale-105 transition-transform duration-300"
         />
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
+          <h3 className="font-black text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}
           </h3>
           <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
             <span className="truncate">{resolveDeveloper(app).name}</span>
             {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
           </p>
-          <div className="flex items-center gap-2 mt-1 text-[11px] text-mut">
-            <span className="font-medium text-ink/80">v{app.version}</span>
-            <span>•</span>
-            <span>{app.category}</span>
-          </div>
         </div>
       </Link>
 
       {/* Short Description */}
-      <p className="text-xs text-mut line-clamp-2 mb-4 leading-relaxed flex-1">
+      <p className="text-xs text-mut line-clamp-2 mb-3 leading-relaxed flex-1">
         {app.shortDescription || app.description}
       </p>
 
-      {/* Action Footer */}
+      {/* Action Footer — VERSION • SIZE / CATEGORY • STATE then Get App CTA */}
       <div className="pt-3 border-t border-line/60 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-mut font-semibold">
-          {app.type === 'Android APK' ? (app.size || 'APK Package') : 'Installable App'}
-        </span>
+        <div className="min-w-0 text-left">
+          <span className="block text-[11px] font-bold text-ink/80 truncate">
+            v{app.version}{sizeLabel ? ` • ${sizeLabel}` : ''}
+          </span>
+          <span className="block text-[10px] text-mut truncate">
+            {app.category} • {stateLabel}
+          </span>
+        </div>
 
         <button
           onClick={handleActionClick}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold shadow-xs transition-colors duration-200 cursor-pointer"
+          className="btn-cta shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold cursor-pointer"
         >
           {getActionIcon()}
           <span>{getActionLabel()}</span>

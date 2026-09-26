@@ -36,6 +36,7 @@ import { BentoShowcase } from '@/components/BentoShowcase';
 import { AppCard } from '@/components/AppCard';
 import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { Reveal } from '@/components/Reveal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -187,6 +188,26 @@ export default function HomePage() {
             </Link>
           ))}
         </div>
+
+        {/* Phase 16.2 — Trust signal strip (truthful, evidence-backed capabilities only) */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-2xl border border-line bg-card/70 px-4 py-3 shadow-xs">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Verified Releases
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <Fingerprint className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            SHA-256 Available
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <Link2 className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Official Release Links
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <FileCheck2 className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Transparent Versions
+          </span>
+        </div>
       </section>
 
       {/* 3. BENTO GRID — real catalog highlights (Phase 11) */}
@@ -195,7 +216,8 @@ export default function HomePage() {
       </div>
 
       {/* 4. FEATURED APPLICATIONS GRID */}
-      <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 mt-10" aria-label="Featured applications">
+      <Reveal>
+      <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 mt-10 rounded-3xl gradient-wash py-2" aria-label="Featured applications">
         <div className="flex items-end justify-between mb-6">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
@@ -220,8 +242,10 @@ export default function HomePage() {
 
         {featuredApps.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {featuredApps.map((app) => (
-              <AppCard key={app.id} app={app} />
+            {featuredApps.map((app, i) => (
+              <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+                <AppCard app={app} />
+              </Reveal>
             ))}
           </div>
         ) : (
@@ -230,9 +254,11 @@ export default function HomePage() {
           </div>
         )}
       </section>
+      </Reveal>
 
       {/* 4. TRENDING — CURATED (truthful: editor curation, not download analytics) */}
       {trendingApps.length > 0 && (
+        <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Trending curated picks">
           <div className="flex items-end justify-between mb-6">
             <div>
@@ -249,15 +275,19 @@ export default function HomePage() {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {trendingApps.map((app) => (
-              <AppCard key={app.id} app={app} />
+            {trendingApps.map((app, i) => (
+              <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+                <AppCard app={app} />
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
       )}
 
       {/* 5. RECENTLY ADDED */}
       {newApps.length > 0 && (
+        <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Recently added applications">
           <div className="flex items-end justify-between mb-6">
             <div>
@@ -281,14 +311,18 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {newApps.slice(0, 6).map((app) => (
-              <AppCard key={app.id} app={app} />
+            {newApps.slice(0, 6).map((app, i) => (
+              <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+                <AppCard app={app} />
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
       )}
 
       {/* 6. LATEST RELEASES & RECENT APPLICATIONS */}
+      <Reveal>
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Latest applications">
         <div className="flex items-end justify-between mb-6">
           <div>
@@ -309,14 +343,18 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {latestApps.slice(0, 6).map((app) => (
-            <AppCard key={app.id} app={app} />
+          {latestApps.slice(0, 6).map((app, i) => (
+            <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+              <AppCard app={app} />
+            </Reveal>
           ))}
         </div>
       </section>
+      </Reveal>
 
       {/* 7. EDUCATION & LEARNING HIGHLIGHT (STUDYRIA FOCUS) */}
       {educationApps.length > 0 && (
+        <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Education and exam preparation">
           <div className="p-6 sm:p-8 rounded-3xl bg-radial from-[#16A765]/10 via-card to-card border border-[#16A765]/30 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
@@ -341,16 +379,20 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {educationApps.map((app) => (
-                <AppCard key={app.id} app={app} />
+              {educationApps.map((app, i) => (
+                <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+                  <AppCard app={app} />
+                </Reveal>
               ))}
             </div>
           </div>
         </section>
+        </Reveal>
       )}
 
       {/* 8. POPULAR WEB APPS (real catalog data only) */}
       {webApps.length > 0 && (
+        <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Popular web apps">
           <div className="flex items-end justify-between mb-6">
             <div>
@@ -374,11 +416,14 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {webApps.slice(0, 6).map((app) => (
-              <AppCard key={app.id} app={app} />
+            {webApps.slice(0, 6).map((app, i) => (
+              <Reveal key={app.id} delay={Math.min(i, 5) * 0.06} className="h-full">
+                <AppCard app={app} />
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
       )}
 
       {/* 9. ANDROID APK CORNER (IF ANY REAL APKS ARE PUBLISHED) */}
@@ -407,8 +452,10 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {apkApps.map((app) => (
-                <AppCard key={app.id} app={app} variant="compact" />
+              {apkApps.map((app, i) => (
+                <Reveal key={app.id} delay={Math.min(i, 5) * 0.06}>
+                  <AppCard app={app} variant="compact" />
+                </Reveal>
               ))}
             </div>
           </div>
@@ -417,6 +464,7 @@ export default function HomePage() {
 
       {/* 10. VERIFIED PUBLISHERS (real publisher identities with live app counts) */}
       {publishersWithApps.length > 0 && (
+        <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Verified publishers">
           <div className="flex items-end justify-between mb-6">
             <div>
@@ -433,11 +481,11 @@ export default function HomePage() {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {publishersWithApps.map((p) => (
+            {publishersWithApps.map((p, i) => (
+              <Reveal key={p.slug} delay={Math.min(i, 5) * 0.06} className="h-full">
               <Link
-                key={p.slug}
                 href={`/publisher/${p.slug}`}
-                className="group flex items-center gap-4 p-5 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all"
+                className="group flex items-center gap-4 p-5 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all h-full"
               >
                 <div
                   className="w-12 h-12 rounded-xl bg-inkbg text-white flex items-center justify-center text-base font-black shrink-0"
@@ -458,9 +506,11 @@ export default function HomePage() {
                 </div>
                 <ArrowRight className="w-4 h-4 text-mut group-hover:text-[#1976F3] group-hover:translate-x-0.5 transition shrink-0" />
               </Link>
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
       )}
 
       {/* 11. DISCOVER BY PLATFORM (real catalog counts) */}
@@ -501,6 +551,7 @@ export default function HomePage() {
       )}
 
       {/* 12. WHY APPMINTLY */}
+      <Reveal>
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Why AppMintly">
         <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight mb-2">
           Why AppMintly
@@ -538,8 +589,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </Reveal>
 
       {/* 13. SECURITY / TRUST */}
+      <Reveal>
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16" aria-label="Security and trust">
         <div className="rounded-3xl bg-card border border-line shadow-xs p-6 sm:p-10">
           <div className="flex items-center gap-2.5 mb-2">
@@ -581,6 +634,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </Reveal>
 
       {/* 14. APP INSTALLATION CTA / DESKTOP RUNTIME BANNER */}
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16">

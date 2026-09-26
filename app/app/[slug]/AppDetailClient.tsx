@@ -348,7 +348,7 @@ export default function AppDetailPage() {
               <div className="flex items-center justify-center md:justify-start gap-3 pt-4 flex-wrap">
                 <button
                   onClick={handleGetApp}
-                  className="px-8 py-3.5 rounded-full bg-inkbg hover:bg-[#16A765] text-white text-sm font-black shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
+                  className="btn-cta px-8 py-3.5 rounded-full text-white text-sm font-black inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>{getPrimaryCtaText()}</span>
@@ -705,7 +705,7 @@ export default function AppDetailPage() {
 
         <button
           onClick={handleGetApp}
-          className="px-6 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-black shadow-md transition shrink-0 cursor-pointer"
+          className="btn-cta px-6 py-2.5 rounded-full text-white text-xs font-black shrink-0 cursor-pointer"
         >
           {getPrimaryCtaText()}
         </button>
