@@ -15,12 +15,12 @@ const linkClass = 'transition-colors hover:text-white focus-ring rounded-sm';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-inkbg text-[#FAF5ED] pt-14 mt-16 border-t border-ink/10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-14">
+    <footer className="bg-inkbg text-[#FAF5ED] pt-10 mt-16 border-t border-ink/10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* ---- Top: brand column + link sections ---- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-x-8 gap-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-x-8 gap-y-8">
           {/* Brand column */}
-          <div className="md:col-span-1 lg:col-span-4 space-y-4">
+          <div className="md:col-span-1 lg:col-span-4 space-y-3">
             <AppMintlyLogo variant="dark" size="md" />
             <p className="text-xs text-[#FAF5ED]/70 max-w-xs leading-relaxed">
               An independent software ecosystem of lightweight, privacy-focused web
@@ -45,7 +45,7 @@ export const Footer: React.FC = () => {
           {/* Platforms & Types — the empty Games link was removed in Phase 16.6
               (no Games content exists in the catalog); the catalog schema still
               supports games for the future. */}
-          <nav className="md:col-span-1 lg:col-span-2 space-y-3" aria-label="Platforms and types">
+          <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Platforms and types">
             <h4 className="text-xs font-black uppercase tracking-wider text-[#F7B928]">
               Platforms &amp; Types
             </h4>
@@ -80,11 +80,11 @@ export const Footer: React.FC = () => {
           {/* The Suite — PKD's applications. Destinations are the real,
               catalog-backed product sites; icons are the existing public/brand
               assets already shipped by the marketplace. */}
-          <nav className="md:col-span-1 lg:col-span-2 space-y-3" aria-label="The suite">
+          <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="The suite">
             <h4 className="text-xs font-black uppercase tracking-wider text-[#F7B928]">
               The Suite
             </h4>
-            <ul className="space-y-3 text-xs text-[#FAF5ED]/75">
+            <ul className="space-y-2.5 text-xs text-[#FAF5ED]/75">
               <li>
                 <a
                   href="https://studyria.qzz.io/"
@@ -125,26 +125,11 @@ export const Footer: React.FC = () => {
                   </span>
                 </a>
               </li>
-              <li>
-                <Link href="/app/appmintly" className={`flex items-start gap-2.5 ${linkClass}`}>
-                  <img
-                    src={`${BASE_PATH}/brand/appmintly-icon-192.png`}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="w-[18px] h-[18px] rounded-[4px] object-cover mt-0.5 shrink-0"
-                  />
-                  <span>
-                    <span className="block font-semibold text-[#FAF5ED]/90">AppMintly</span>
-                    <span className="block text-[11px] text-[#FAF5ED]/55">Lightweight App Marketplace</span>
-                  </span>
-                </Link>
-              </li>
             </ul>
           </nav>
 
           {/* Marketplace */}
-          <nav className="md:col-span-1 lg:col-span-2 space-y-3" aria-label="Marketplace">
+          <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Marketplace">
             <h4 className="text-xs font-black uppercase tracking-wider text-[#F7B928]">
               Marketplace
             </h4>
@@ -166,7 +151,7 @@ export const Footer: React.FC = () => {
 
           {/* Legal — properly separated links (Phase 16.6 fixed the previous
               merged "About AppMintlyPrivacy PolicyTerms of Service" run-on). */}
-          <nav className="md:col-span-1 lg:col-span-2 space-y-3" aria-label="Legal">
+          <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Legal">
             <h4 className="text-xs font-black uppercase tracking-wider text-[#F7B928]">
               Legal
             </h4>
@@ -187,8 +172,14 @@ export const Footer: React.FC = () => {
           </nav>
         </div>
 
-        {/* ---- Bottom: premium brand closing block ---- */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col items-center gap-2.5 text-center">
+        {/* ---- Bottom: premium brand closing signature (Phase 16.7).
+              The footer surface is always the dark inkbg (existing design
+              language), so the warm-white wordmark keeps full contrast in
+              both themes. ---- */}
+        <div className="mt-10 pt-7 border-t border-[#F7B928]/20 flex flex-col items-center gap-2.5 text-center">
+          <p className="text-[28px] lg:text-[44px] font-black tracking-tight text-[#FAF5ED] leading-none select-none">
+            AppMintly
+          </p>
           <p className="text-[11px] font-semibold tracking-[0.25em] text-[#F7B928]/90 select-none">
             DISCOVER <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> INSTALL{' '}
             <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> EXPERIENCE
@@ -202,7 +193,7 @@ export const Footer: React.FC = () => {
               PKD
             </Link>
           </p>
-          <p className="text-[11px] text-[#FAF5ED]/45">
+          <p className="text-[11px] text-[#FAF5ED]/45 pb-1">
             © {new Date().getFullYear()} AppMintly. All rights reserved.
           </p>
         </div>

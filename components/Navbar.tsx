@@ -60,19 +60,24 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
-          {/* Phase 16.5: brand name beside the logo on mobile again — a compact
-              mark + 15px wordmark replaces Phase 16.2's icon-only stop-gap while
-              staying ~43px narrower than the overflowing md horizontal lockup. */}
+          {/* Phase 16.7: stronger mobile lockup — 17px/900 wordmark beside the
+              compact mark (visibly bolder than the 16.5 15px label, still safely
+              narrower than the overflowing md horizontal lockup at 360px). */}
           <span className="sm:hidden inline-flex items-center gap-1.5">
             <span aria-hidden="true" className="inline-flex items-center">
               <AppMintlyLogo size="sm" variant="mark" />
             </span>
-            <span className="font-black tracking-tight text-ink leading-none select-none text-[15px]">
+            <span className="font-black tracking-tight text-ink leading-none select-none text-[17px]">
               AppMintly
             </span>
           </span>
-          <span className="hidden sm:inline-flex">
+          {/* Desktop lockup: md from sm, proportionally larger (lg) from xl —
+              same official artwork, no h-16 header height change. */}
+          <span className="hidden sm:inline-flex xl:hidden">
             <AppMintlyLogo size="md" variant="horizontal" />
+          </span>
+          <span className="hidden xl:inline-flex">
+            <AppMintlyLogo size="lg" variant="horizontal" />
           </span>
         </Link>
 
