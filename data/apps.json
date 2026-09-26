@@ -137,7 +137,7 @@
     "developer": "PKD",
     "type": "Web App",
     "category": "Education",
-    "description": "Studyria is an Assam-focused comprehensive educational web application built for candidates preparing for ADRE, APSC, Assam Police, and TET examinations. It provides curated PDFs, previous year question papers (PYQs), interactive quizzes, full mock tests, subject-wise MCQs, daily current affairs, and career vacancy alerts in one unified portal. [PWA-QA verify]",
+    "description": "Studyria is an Assam-focused comprehensive educational web application built for candidates preparing for ADRE, APSC, Assam Police, and TET examinations. It provides curated PDFs, previous year question papers (PYQs), interactive quizzes, full mock tests, subject-wise MCQs, daily current affairs, and career vacancy alerts in one unified portal.",
     "shortDescription": "Assam-focused study app for ADRE, APSC, Assam Police & TET with PDFs, PYQs, quizzes, mock tests, MCQs, current affairs and career updates.",
     "icon": "/brand/studyria-icon-384.png",
     "screenshots": [
@@ -234,7 +234,7 @@
       "assetId": 588781895
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-26T07:47:09.086Z",
+    "updatedAt": "2026-09-26T07:48:09.449Z",
     "privacyTech": {
       "permissions": [
         "android.permission.INTERNET",
