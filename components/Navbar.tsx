@@ -60,10 +60,16 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
-          {/* Phase 16.2 fix: icon-only mark on very narrow screens — the horizontal
-              wordmark overflowed the navbar row by ~28px at 360px viewport width */}
-          <span className="sm:hidden">
-            <AppMintlyLogo size="md" variant="mark" />
+          {/* Phase 16.5: brand name beside the logo on mobile again — a compact
+              mark + 15px wordmark replaces Phase 16.2's icon-only stop-gap while
+              staying ~43px narrower than the overflowing md horizontal lockup. */}
+          <span className="sm:hidden inline-flex items-center gap-1.5">
+            <span aria-hidden="true" className="inline-flex items-center">
+              <AppMintlyLogo size="sm" variant="mark" />
+            </span>
+            <span className="font-black tracking-tight text-ink leading-none select-none text-[15px]">
+              AppMintly
+            </span>
           </span>
           <span className="hidden sm:inline-flex">
             <AppMintlyLogo size="md" variant="horizontal" />
@@ -88,7 +94,10 @@ export const Navbar: React.FC = () => {
         {/* Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
-            const active = pathname === link.href;
+            // Trailing-slash-insensitive: static-export builds render
+            // slash-terminated URLs (see next.config.ts); server builds do not.
+            const normPath = pathname !== '/' && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+            const active = normPath === link.href;
             return (
               <Link
                 key={link.href}

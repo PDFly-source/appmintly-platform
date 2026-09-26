@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { APPS } from '@/data/apps';
 import { PUBLISHERS, getDeveloperIdentity } from '@/data/publishers';
 import PublisherPublicClient from './PublisherPublicClient';
@@ -21,7 +22,7 @@ export async function generateMetadata({
     return { title: 'Publisher not found - AppMintly' };
   }
 
-  const canonicalUrl = `${SITE_URL}publisher/${identity.slug}`;
+  const canonicalUrl = `${SITE_URL}publisher/${identity.slug}${CANONICAL_TRAILING_SLASH}`;
   const appCount = APPS.filter((a) => a.published && a.developerSlug === identity.slug).length;
   const description = `Apps by ${identity.name} on AppMintly${appCount > 0 ? ` — ${appCount} published ${appCount === 1 ? 'application' : 'applications'}` : ''}.${identity.bio ? ' ' + identity.bio : ''}`;
 

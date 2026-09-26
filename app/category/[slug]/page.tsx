@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { CATEGORIES } from '@/data/categories';
 import CategoryDetailClient from './CategoryDetailClient';
 
@@ -20,7 +21,7 @@ export async function generateMetadata({
     return { title: 'Category not found - AppMintly' };
   }
 
-  const canonicalUrl = `${SITE_URL}category/${category.slug}`;
+  const canonicalUrl = `${SITE_URL}category/${category.slug}${CANONICAL_TRAILING_SLASH}`;
   const title = `${category.name} Apps & Games - AppMintly`;
   const description = `Browse ${category.name.toLowerCase()} apps and games on AppMintly. Discover, install and experience curated ${category.name.toLowerCase()} applications.`;
 
@@ -57,13 +58,13 @@ export default async function CategoryDetailPage({
             '@type': 'ListItem',
             position: 2,
             name: 'Categories',
-            item: `${SITE_URL}categories`,
+            item: `${SITE_URL}categories${CANONICAL_TRAILING_SLASH}`,
           },
           {
             '@type': 'ListItem',
             position: 3,
             name: category.name,
-            item: `${SITE_URL}category/${category.slug}`,
+            item: `${SITE_URL}category/${category.slug}${CANONICAL_TRAILING_SLASH}`,
           },
         ],
       }

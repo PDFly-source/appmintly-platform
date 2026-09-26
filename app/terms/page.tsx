@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import Link from 'next/link';
 import { FileCheck2 } from 'lucide-react';
 
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'The terms that apply when you use the AppMintly marketplace: catalog content, publisher responsibility, and application usage.',
   alternates: {
-    canonical: 'https://pdfly-source.github.io/appmintly-platform/terms',
+    canonical: `https://pdfly-source.github.io/appmintly-platform/terms${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

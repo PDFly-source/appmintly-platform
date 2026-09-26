@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { APPS } from '@/data/apps';
 import { resolveDeveloper } from '@/data/publishers';
 import AppDetailClient from './AppDetailClient';
@@ -29,7 +30,7 @@ export async function generateMetadata({
     return { title: 'App not found - AppMintly' };
   }
 
-  const canonicalUrl = `${SITE_URL}app/${app.slug}`;
+  const canonicalUrl = `${SITE_URL}app/${app.slug}${CANONICAL_TRAILING_SLASH}`;
   const description = app.shortDescription || app.description;
   const image = absoluteIcon(app.icon);
 
@@ -93,13 +94,13 @@ export default async function AppDetailPage({ params }: { params: Promise<{ slug
               '@type': 'ListItem',
               position: 2,
               name: `${app.category} Apps`,
-              item: `${SITE_URL}category/${app.category.toLowerCase()}`,
+              item: `${SITE_URL}category/${app.category.toLowerCase()}${CANONICAL_TRAILING_SLASH}`,
             },
             {
               '@type': 'ListItem',
               position: 3,
               name: app.name,
-              item: `${SITE_URL}app/${app.slug}`,
+              item: `${SITE_URL}app/${app.slug}${CANONICAL_TRAILING_SLASH}`,
             },
           ],
         },

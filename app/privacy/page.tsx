@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'How AppMintly handles data: no account required, no third-party trackers, library data stored locally on your device.',
   alternates: {
-    canonical: 'https://pdfly-source.github.io/appmintly-platform/privacy',
+    canonical: `https://pdfly-source.github.io/appmintly-platform/privacy${CANONICAL_TRAILING_SLASH}`,
   },
 };
 
