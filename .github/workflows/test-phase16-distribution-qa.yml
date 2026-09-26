@@ -99,14 +99,14 @@ jobs:
             adb install v1.apk > diag/install-v1.txt 2>&1; grep -q Success diag/install-v1.txt || { echo 'FAIL: v1 install'; cat diag/install-v1.txt; exit 1; }
             adb shell am start -W -n ${{ inputs.package_id }}/.MainActivity > diag/launch-v1.txt 2>&1; sleep 25
             adb exec-out screencap -p > diag/screen-v1.png || true
-            adb shell uiautomator dump /sdcard/d.xml > diag/dump-v1.txt 2>&1; adb pull /sdcard/d.xml diag/ui-v1.xml > /dev/null 2>&1
+            adb shell input keyevent 82; for n in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/d.xml > diag/dump-v1.txt 2>&1; adb pull /sdcard/d.xml diag/ui-v1.xml > /dev/null 2>&1; grep -q AppMintly diag/ui-v1.xml && break; sleep 8; done
             grep -q "${{ inputs.app_label }}" diag/ui-v1.xml || { echo 'FAIL: app label not visible in v1 UI'; exit 1; }
             adb shell dumpsys package ${{ inputs.package_id }} | grep versionName | head -n1 > diag/pkg-v1.txt; grep -q "versionName=${{ inputs.version_v1 }}" diag/pkg-v1.txt || { echo 'FAIL: installed package versionName is not ${{ inputs.version_v1 }}'; cat diag/pkg-v1.txt; exit 1; }
             grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-v1.xml | head -n1 > diag/data-v1.txt; test -s diag/data-v1.txt || { echo 'FAIL: no device data token in v1 UI'; exit 1; }
             adb install -r v2.apk > diag/install-v2.txt 2>&1; grep -q Success diag/install-v2.txt || { echo 'FAIL: v2 update install'; cat diag/install-v2.txt; exit 1; }
             adb shell am force-stop ${{ inputs.package_id }}; adb shell am start -W -n ${{ inputs.package_id }}/.MainActivity > diag/launch-v2.txt 2>&1; sleep 25
             adb exec-out screencap -p > diag/screen-v2.png || true
-            adb shell uiautomator dump /sdcard/d.xml > diag/dump-v2.txt 2>&1; adb pull /sdcard/d.xml diag/ui-v2.xml > /dev/null 2>&1
+            adb shell input keyevent 82; for n in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/d.xml > diag/dump-v2.txt 2>&1; adb pull /sdcard/d.xml diag/ui-v2.xml > /dev/null 2>&1; grep -q AppMintly diag/ui-v2.xml && break; sleep 8; done
             adb shell dumpsys package ${{ inputs.package_id }} | grep versionName | head -n1 > diag/pkg-v2.txt; grep -q "versionName=${{ inputs.version_v2 }}" diag/pkg-v2.txt || { echo 'FAIL: package versionName did not update to ${{ inputs.version_v2 }}'; cat diag/pkg-v2.txt; exit 1; }
             grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-v2.xml | head -n1 > diag/data-v2.txt; test -s diag/data-v2.txt || { echo 'FAIL: no device data token after update'; exit 1; }
             test "$(cat diag/data-v2.txt)" = "$(cat diag/data-v1.txt)" || { echo 'FAIL: device data did NOT persist across update'; exit 1; }
@@ -114,12 +114,12 @@ jobs:
             adb install v2.apk > diag/install-fresh.txt 2>&1; grep -q Success diag/install-fresh.txt || { echo 'FAIL: fresh reinstall of v2'; cat diag/install-fresh.txt; exit 1; }
             adb shell am start -W -n ${{ inputs.package_id }}/.MainActivity > diag/launch-fresh.txt 2>&1; sleep 25
             adb exec-out screencap -p > diag/screen-fresh.png || true
-            adb shell uiautomator dump /sdcard/d.xml > diag/dump-fresh.txt 2>&1; adb pull /sdcard/d.xml diag/ui-fresh.xml > /dev/null 2>&1
+            adb shell input keyevent 82; for n in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/d.xml > diag/dump-fresh.txt 2>&1; adb pull /sdcard/d.xml diag/ui-fresh.xml > /dev/null 2>&1; grep -q AppMintly diag/ui-fresh.xml && break; sleep 8; done
             adb shell dumpsys package ${{ inputs.package_id }} | grep versionName | head -n1 > diag/pkg-fresh.txt; grep -q "versionName=${{ inputs.version_v2 }}" diag/pkg-fresh.txt || { echo 'FAIL: reinstalled package versionName is not ${{ inputs.version_v2 }}'; cat diag/pkg-fresh.txt; exit 1; }
             grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-fresh.xml | head -n1 > diag/data-fresh.txt; test -s diag/data-fresh.txt || { echo 'FAIL: no device data token after fresh install'; exit 1; }
             test "$(cat diag/data-fresh.txt)" != "$(cat diag/data-v1.txt)" || { echo 'FAIL: fresh install did NOT reset device data'; exit 1; }
             adb shell am force-stop ${{ inputs.package_id }}; adb shell am start -W -n ${{ inputs.package_id }}/.MainActivity > diag/launch-reopen.txt 2>&1; sleep 25
-            adb shell uiautomator dump /sdcard/d.xml > diag/dump-reopen.txt 2>&1; adb pull /sdcard/d.xml diag/ui-reopen.xml > /dev/null 2>&1
+            adb shell input keyevent 82; for n in 1 2 3 4 5; do adb shell uiautomator dump /sdcard/d.xml > diag/dump-reopen.txt 2>&1; adb pull /sdcard/d.xml diag/ui-reopen.xml > /dev/null 2>&1; grep -q AppMintly diag/ui-reopen.xml && break; sleep 8; done
             grep -q "${{ inputs.app_label }}" diag/ui-reopen.xml || { echo 'FAIL: app did not reopen'; exit 1; }
             echo '=== ALL PHASE 16 QA CHECKS PASSED ==='
       - name: Upload QA diagnostics
