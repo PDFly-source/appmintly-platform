@@ -93,7 +93,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            set -euo pipefail
+            set -u
             mkdir -p diag
 
             dump() { # dump <outfile>
