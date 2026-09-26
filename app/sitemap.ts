@@ -25,6 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}about${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
     { url: `${SITE_URL}privacy${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}terms${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}cookies${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}contact${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
   ];
 
   // Public publisher profile pages (one per repository-verified identity).
