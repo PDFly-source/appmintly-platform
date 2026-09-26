@@ -234,7 +234,7 @@
       "assetId": 588781895
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-26T07:48:09.449Z",
+    "updatedAt": "2026-09-26T07:49:19.125Z",
     "privacyTech": {
       "permissions": [
         "android.permission.INTERNET",
@@ -252,12 +252,7 @@
       "externalServices": [
         "GitHub Releases (APK distribution)"
       ]
-    },
-    "platform": [
-      "Web Browser",
-      "Desktop",
-      "Mobile"
-    ]
+    }
   },
   {
     "id": "pdfminifly",
