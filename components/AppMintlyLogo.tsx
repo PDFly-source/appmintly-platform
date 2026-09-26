@@ -34,6 +34,33 @@ const MARK_SRC_COMPACT = `${BASE_PATH}/brand/appmintly-icon-192.png`;
 const MARK_SRC_HERO = `${BASE_PATH}/brand/appmintly-icon-1024.png`;
 const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
 
+/**
+ * Phase 16.8 — the AppMintly brand wordmark, one component used everywhere
+ * (navbar, footer brand column, footer closing block).
+ * Brand treatment: "App" #0F6B4F (dark emerald) + "Mintly" #F5EBDD
+ * (warm paper cream) on the charcoal/dark surfaces.
+ * On light surfaces the cream is invisible, so Mintly falls back to the
+ * theme ink token there (dark contexts always get the exact cream);
+ * the emerald half keeps the brand color in both themes.
+ */
+interface AppMintlyWordmarkTextProps {
+  className?: string;
+  /** Mintly half color treatment; default = theme-aware ink/cream. */
+  mintlyClassName?: string;
+  style?: React.CSSProperties;
+}
+
+export const AppMintlyWordmarkText: React.FC<AppMintlyWordmarkTextProps> = ({
+  className = '',
+  mintlyClassName = 'text-ink dark:text-[#F5EBDD]',
+  style,
+}) => (
+  <span className={className} style={style}>
+    <span className="text-[#0F6B4F]">App</span>
+    <span className={mintlyClassName}>Mintly</span>
+  </span>
+);
+
 export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
   size = 'md',
   variant = 'horizontal',
@@ -64,12 +91,11 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
 
   const TextLabel = (
     <div className="flex flex-col select-none leading-none">
-      <span
-        className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-ink'}`}
+      <AppMintlyWordmarkText
+        className="font-black tracking-tight"
+        mintlyClassName={isDark ? 'text-[#F5EBDD]' : 'text-ink dark:text-[#F5EBDD]'}
         style={{ fontSize: current.text }}
-      >
-        AppMintly
-      </span>
+      />
       {showTagline && (
         <span
           className={`text-[11px] font-medium tracking-wide mt-0.5 ${

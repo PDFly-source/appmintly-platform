@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { AppMintlyLogo } from './AppMintlyLogo';
+import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
 import { Smartphone, Globe, Wrench, Sparkles } from 'lucide-react';
 
 // Base path is '' for local/server deployments and '/appmintly-platform' for
@@ -177,8 +177,8 @@ export const Footer: React.FC = () => {
               language), so the warm-white wordmark keeps full contrast in
               both themes. ---- */}
         <div className="mt-10 pt-7 border-t border-[#F7B928]/20 flex flex-col items-center gap-2.5 text-center">
-          <p className="text-[28px] lg:text-[44px] font-black tracking-tight text-[#FAF5ED] leading-none select-none">
-            AppMintly
+          <p className="text-[28px] lg:text-[44px] font-black tracking-tight leading-none select-none">
+            <AppMintlyWordmarkText mintlyClassName="text-[#F5EBDD]" />
           </p>
           <p className="text-[11px] font-semibold tracking-[0.25em] text-[#F7B928]/90 select-none">
             DISCOVER <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> INSTALL{' '}

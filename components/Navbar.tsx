@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bookmark, Menu, X, Sparkles, Shield, ArrowRight, Sun, Moon, MonitorSmartphone } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
-import { AppMintlyLogo } from './AppMintlyLogo';
+import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
 import { getLocalFavorites } from '@/lib/localLibrary';
 
 export const Navbar: React.FC = () => {
@@ -60,16 +60,14 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
-          {/* Phase 16.7: stronger mobile lockup — 17px/900 wordmark beside the
-              compact mark (visibly bolder than the 16.5 15px label, still safely
-              narrower than the overflowing md horizontal lockup at 360px). */}
+          {/* Phase 16.8: two-tone brand wordmark (App emerald / Mintly cream)
+              beside the compact mark — 18px/900, still safely narrower than the
+              overflowing md horizontal lockup at 360px. */}
           <span className="sm:hidden inline-flex items-center gap-1.5">
             <span aria-hidden="true" className="inline-flex items-center">
               <AppMintlyLogo size="sm" variant="mark" />
             </span>
-            <span className="font-black tracking-tight text-ink leading-none select-none text-[17px]">
-              AppMintly
-            </span>
+            <AppMintlyWordmarkText className="font-black tracking-tight leading-none select-none text-[18px]" />
           </span>
           {/* Desktop lockup: md from sm, proportionally larger (lg) from xl —
               same official artwork, no h-16 header height change. */}
