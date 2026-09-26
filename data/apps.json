@@ -37,7 +37,7 @@
     ],
     "featured": true,
     "original": false,
-    "status": "published",
+    "status": "draft",
     "pwa": {
       "detected": true,
       "installable": true,
@@ -79,7 +79,7 @@
       "releaseId": 397218326,
       "assetId": 590575501
     },
-    "published": true,
+    "published": false,
     "lastUpdated": "2026-09-26",
     "updatedAt": "2026-09-26T12:20:45.901Z",
     "releaseDate": "2026-09-26",
