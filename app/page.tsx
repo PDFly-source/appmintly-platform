@@ -156,7 +156,7 @@ export default function HomePage() {
                 <Sparkles className="w-5 h-5 text-mut" aria-hidden="true" />
                 <p className="text-sm font-bold text-ink">No Featured Apps right now</p>
                 <p className="text-xs text-mut max-w-xs">
-                  Publishers choose which published apps to feature from the Publisher Console.
+                  The AppMintly team curates which published apps are featured here.
                 </p>
               </div>
             )}

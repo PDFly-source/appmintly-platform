@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bookmark, Menu, X, Sparkles, Wrench, Shield, ArrowRight, Sun, Moon, MonitorSmartphone } from 'lucide-react';
+import { Search, Bookmark, Menu, X, Sparkles, Shield, ArrowRight, Sun, Moon, MonitorSmartphone } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo } from './AppMintlyLogo';
@@ -131,16 +131,6 @@ export const Navbar: React.FC = () => {
             <CommandPaletteTrigger />
           </span>
 
-          {/* Publisher Console Link (Clean owner link) */}
-          <Link
-            href="/publisher"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-inkbg text-white hover:bg-neutral-800 text-xs font-bold transition shadow-xs"
-            title="Publisher Console"
-          >
-            <Wrench className="w-3.5 h-3.5 text-[#F7B928]" />
-            <span>Publisher</span>
-          </Link>
-
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -182,14 +172,6 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="border-t border-line pt-2 flex items-center justify-between">
-            <Link
-              href="/publisher"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 text-xs font-bold text-ink hover:text-[#1976F3] p-1"
-            >
-              <Wrench className="w-4 h-4 text-[#F7B928]" />
-              <span>Owner Publisher Console</span>
-            </Link>
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}

@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, CornerDownLeft, Home, Compass, LayoutGrid, Bookmark, Wrench, AppWindow } from 'lucide-react';
+import { Search, CornerDownLeft, Home, Compass, LayoutGrid, Bookmark, AppWindow } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { useCatalog } from '@/lib/CatalogContext';
 
@@ -31,7 +31,6 @@ const NAV_ACTIONS: NavAction[] = [
   { id: 'explore', label: 'Go to Explore', hint: 'Browse all apps', href: '/explore', icon: <Compass className="w-4 h-4" />, keywords: 'explore browse all apps search' },
   { id: 'categories', label: 'Go to Categories', hint: 'App categories', href: '/categories', icon: <LayoutGrid className="w-4 h-4" />, keywords: 'categories category directory' },
   { id: 'library', label: 'Go to Library', hint: 'Your saved apps', href: '/library', icon: <Bookmark className="w-4 h-4" />, keywords: 'library saved favorites bookmarks' },
-  { id: 'publisher', label: 'Go to Publisher Console', hint: 'Publish and manage apps', href: '/publisher', icon: <Wrench className="w-4 h-4" />, keywords: 'publisher console publish manage developer' },
 ];
 
 /** Lightweight fuzzy subsequence score: higher = better match, 0 = no match. */

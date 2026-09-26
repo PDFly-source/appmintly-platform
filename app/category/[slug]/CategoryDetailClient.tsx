@@ -137,12 +137,6 @@ export default function CategoryDetailPage() {
             >
               Explore All Apps
             </Link>
-            <Link
-              href="/publisher"
-              className="px-5 py-2.5 rounded-full bg-card border border-line text-ink text-xs font-bold hover:bg-page transition"
-            >
-              Publisher Console
-            </Link>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { AppMintlyLogo } from './AppMintlyLogo';
-import { Smartphone, Globe, Gamepad2, Wrench, Sparkles, BookOpen, Layers } from 'lucide-react';
+import { Smartphone, Globe, Gamepad2, Wrench, Sparkles, BookOpen } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -81,29 +81,6 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Publishing Console */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#1976F3]">Publishing</h4>
-            <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
-              <li>
-                <Link href="/publisher" className="hover:text-white transition flex items-center gap-1.5">
-                  <Wrench className="w-3.5 h-3.5 text-[#F7B928]" />
-                  <span>Publisher Console</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/publisher?tab=export" className="hover:text-white transition flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-[#16A765]" />
-                  <span>Export Catalog JSON</span>
-                </Link>
-              </li>
-              <li>
-                <p className="text-[#FAF5ED]/40 text-[11px] leading-relaxed pt-1">
-                  Local content management tool for preparing and testing app listings.
-                </p>
-              </li>
-            </ul>
-          </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#FAF5ED]/50">
@@ -112,8 +89,6 @@ export const Footer: React.FC = () => {
             <Link href="/about" className="hover:text-white transition">About</Link>
             <span>•</span>
             <Link href="/library" className="hover:text-white transition">Local Library</Link>
-            <span>•</span>
-            <Link href="/publisher" className="hover:text-white transition">Publisher</Link>
           </div>
         </div>
       </div>
