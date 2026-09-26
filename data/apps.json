@@ -37,7 +37,7 @@
     ],
     "featured": true,
     "original": false,
-    "status": "draft",
+    "status": "published",
     "pwa": {
       "detected": true,
       "installable": true,
