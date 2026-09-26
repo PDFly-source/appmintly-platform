@@ -1,5 +1,64 @@
 [
   {
+    "id": "distribution-test",
+    "slug": "distribution-test",
+    "name": "AppMintly Distribution Test",
+    "shortName": "DistTest",
+    "developer": "Mint Test Lab",
+    "developerSlug": "mint-test-lab",
+    "type": "Android APK",
+    "category": "Tools",
+    "description": "Temporary AppMintly Phase 16 distribution and install QA test application. Clearly identified as a test — not a production application.",
+    "shortDescription": "Phase 16 distribution test fixture.",
+    "icon": "https://pdfly-source.github.io/appmintly-distribution-test/icon-192.png",
+    "screenshots": [],
+    "url": "https://pdfly-source.github.io/appmintly-distribution-test/",
+    "webUrl": "https://pdfly-source.github.io/appmintly-distribution-test/",
+    "launchUrl": "https://pdfly-source.github.io/appmintly-distribution-test/",
+    "startUrl": "https://pdfly-source.github.io/appmintly-distribution-test/",
+    "scope": "https://pdfly-source.github.io/appmintly-distribution-test/",
+    "manifestUrl": "https://pdfly-source.github.io/appmintly-distribution-test/manifest.webmanifest",
+    "version": "1.0.0",
+    "themeColor": "#1b62d6",
+    "backgroundColor": "#f4f7ff",
+    "features": [
+      "Clearly identified temporary test app"
+    ],
+    "tags": [
+      "test",
+      "phase-16",
+      "distribution-test"
+    ],
+    "releaseNotes": [
+      "Phase 16 QA fixture"
+    ],
+    "changelog": [
+      "v1.0.0: Phase 16 distribution test"
+    ],
+    "featured": false,
+    "original": false,
+    "status": "draft",
+    "pwa": {
+      "detected": true,
+      "installable": true,
+      "manifestDetected": true,
+      "serviceWorkerDetected": null,
+      "statusSummary": "PWA Metadata Found"
+    },
+    "apk": {
+      "enabled": false,
+      "buildMode": "webview",
+      "packageId": "com.appforge.disttest",
+      "authorized": true
+    },
+    "published": false,
+    "lastUpdated": "2026-09-26",
+    "updatedAt": "2026-09-26T11:49:19.854Z",
+    "releaseDate": "2026-09-26",
+    "publishedAt": "2026-09-26T11:49:19.854Z",
+    "isDemo": false
+  },
+  {
     "id": "appmintly",
     "name": "AppMintly",
     "shortName": "AppMintly",
