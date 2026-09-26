@@ -1,0 +1,164 @@
+name: Phase 16 distribution QA (temporary)
+
+# Temporary AppMintly Phase 16 test workflow. Verifies a test APK's real
+# install / launch / update / reinstall behavior on an Android emulator,
+# downloading the APK from the REAL public distribution URL (GitHub
+# release asset), never from a local build artifact.
+# NOTE: adb installs do not exercise Google Play Protect's device-side UI
+# (ADB is a trusted install source and the emulator has no Play Store) —
+# the real-device Play Protect observation is a separate manual test.
+# This file is removed as part of Phase 16 cleanup.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_label:
+        description: Expected app label in the UI
+        required: true
+        type: string
+      package_id:
+        description: Android package id
+        required: true
+        type: string
+      apk_url_v1:
+        description: Public release URL of v1
+        required: true
+        type: string
+      sha256_v1:
+        description: Expected SHA-256 of v1
+        required: true
+        type: string
+      version_v1:
+        description: Expected version string shown by v1
+        required: true
+        type: string
+      apk_url_v2:
+        description: Public release URL of v2 (update test; empty to skip)
+        required: false
+        type: string
+        default: ''
+      sha256_v2:
+        description: Expected SHA-256 of v2
+        required: false
+        type: string
+        default: ''
+      version_v2:
+        description: Expected version string shown by v2
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Download v1 from the real public distribution path
+        run: |
+          set -euo pipefail
+          curl -sL --fail --retry 3 -o v1.apk "$APK_URL_V1"
+          echo "$SHA256_V1  v1.apk" | sha256sum -c -
+          stat -c 'v1 size: %s bytes' v1.apk
+          head -c 2 v1.apk | od -An -tx1 | grep -q '504b' || { echo 'v1 is not a ZIP/APK'; exit 1; }
+        env:
+          APK_URL_V1: ${{ inputs.apk_url_v1 }}
+          SHA256_V1: ${{ inputs.sha256_v1 }}
+
+      - name: Download v2 from the real public distribution path
+        if: ${{ inputs.apk_url_v2 != '' }}
+        run: |
+          set -euo pipefail
+          curl -sL --fail --retry 3 -o v2.apk "$APK_URL_V2"
+          echo "$SHA256_V2  v2.apk" | sha256sum -c -
+          stat -c 'v2 size: %s bytes' v2.apk
+          head -c 2 v2.apk | od -An -tx1 | grep -q '504b' || { echo 'v2 is not a ZIP/APK'; exit 1; }
+        env:
+          APK_URL_V2: ${{ inputs.apk_url_v2 }}
+          SHA256_V2: ${{ inputs.sha256_v2 }}
+
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install, launch, update and reinstall on Android 16 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            set -euo pipefail
+            mkdir -p diag
+
+            dump() { # dump <outfile>
+              adb shell uiautomator dump /sdcard/d.xml >/dev/null 2>&1 || true
+              adb pull /sdcard/d.xml "diag/$1" >/dev/null 2>&1 || true
+              adb exec-out screencap -p > "diag/$1.png" || true
+            }
+            launch_and_wait() { # launch, wait for WebView render
+              adb shell am force-stop "$PKG" || true
+              adb shell am start -W -n "$PKG/.MainActivity" | tee -a diag/launches.txt
+              sleep 25
+            }
+
+            PKG="${{ inputs.package_id }}"
+            V1="${{ inputs.version_v1 }}"
+            V2="${{ inputs.version_v2 }}"
+
+            adb shell getprop ro.build.version.release | tee diag/android-version.txt
+            adb shell getprop ro.product.manufacturer | tee diag/manufacturer.txt
+            adb shell getprop ro.product.model | tee diag/model.txt
+
+            echo '=== STEP 1: fresh install v1 ==='
+            adb install v1.apk | tee diag/install-v1.txt
+            launch_and_wait
+            dump ui-v1.xml
+            grep -q "AppMintly Distribution Test" diag/ui-v1.xml || { echo 'FAIL: app label not visible in v1'; cat diag/ui-v1.xml; exit 1; }
+            grep -q "$V1" diag/ui-v1.xml || { echo 'FAIL: expected version '$V1' not visible in v1'; exit 1; }
+            DEVICE_DATA_V1="$(grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-v1.xml | head -n1 || true)"
+            test -n "$DEVICE_DATA_V1" || { echo 'FAIL: device data not found in v1 UI'; exit 1; }
+            echo "v1 device data: $DEVICE_DATA_V1" | tee diag/device-data.txt
+            echo '=== v1 install + launch + identity: PASS ==='
+
+            if [ -f v2.apk ]; then
+              echo '=== STEP 2: in-place UPDATE to v2 (data must persist) ==='
+              adb install -r v2.apk | tee diag/install-v2-update.txt
+              launch_and_wait
+              dump ui-v2.xml
+              grep -q "$V2" diag/ui-v2.xml || { echo 'FAIL: expected version '$V2' not visible after update'; exit 1; }
+              DEVICE_DATA_V2="$(grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-v2.xml | head -n1 || true)"
+              echo "v2 device data: $DEVICE_DATA_V2" | tee -a diag/device-data.txt
+              test "$DEVICE_DATA_V2" = "$DEVICE_DATA_V1" || { echo 'FAIL: device data did NOT persist across update'; exit 1; }
+              echo '=== update v1 -> v2: PASS (data preserved, version updated) ==='
+
+              echo '=== STEP 3: uninstall + fresh reinstall of v2 (data must reset) ==='
+              adb uninstall "$PKG" | tee diag/uninstall.txt
+              adb install v2.apk | tee diag/install-v2-fresh.txt
+              launch_and_wait
+              dump ui-v2-fresh.xml
+              grep -q "$V2" diag/ui-v2-fresh.xml || { echo 'FAIL: version not visible after reinstall'; exit 1; }
+              DEVICE_DATA_FRESH="$(grep -oE 'DISTTEST-[A-Z0-9]+' diag/ui-v2-fresh.xml | head -n1 || true)"
+              test -n "$DEVICE_DATA_FRESH" && test "$DEVICE_DATA_FRESH" != "$DEVICE_DATA_V1" \
+                || { echo 'FAIL: fresh install should reset device data'; exit 1; }
+              echo '=== reinstall: PASS (fresh data after reinstall) ==='
+            fi
+
+            echo '=== STEP 4: close + reopen stability ==='
+            adb shell am force-stop "$PKG"
+            launch_and_wait
+            dump ui-reopen.xml
+            grep -q "AppMintly Distribution Test" diag/ui-reopen.xml || { echo 'FAIL: app did not reopen'; exit 1; }
+            echo '=== close/reopen: PASS ==='
+
+      - name: Upload QA diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase16-qa-diagnostics
+          path: diag/
