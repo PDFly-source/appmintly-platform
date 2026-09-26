@@ -46,17 +46,46 @@
       "statusSummary": "PWA Metadata Found"
     },
     "apk": {
-      "enabled": false,
+      "enabled": true,
       "buildMode": "webview",
       "packageId": "com.appforge.disttest",
-      "authorized": true
+      "authorized": true,
+      "versionName": "1.0.0",
+      "versionCode": 10000,
+      "fileName": "AppMintlyDistributionTest-1.0.0.apk",
+      "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-distribution-test-v1.0.0/AppMintlyDistributionTest-1.0.0.apk",
+      "fileSizeBytes": 509806,
+      "sha256": "85856d7d233bdb80d0aa35b4495ac0819aab62d537382d9c1d796523208df005",
+      "releaseTag": "appmintly-distribution-test-v1.0.0",
+      "releaseDate": "2026-09-26",
+      "generatedAt": "2026-09-26T11:52:12.357Z",
+      "buildStatus": "released",
+      "platform": "android",
+      "architecture": "universal",
+      "downloadAvailable": true,
+      "verified": true,
+      "minSdk": 21,
+      "targetSdk": 36,
+      "certificateSubject": "AppMintly",
+      "certificateSha256Fingerprint": "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368",
+      "signatureSchemes": {
+        "v1": true,
+        "v2": true,
+        "v3": true
+      },
+      "securityCheckStatus": "passed",
+      "securityCheckTimestamp": "2026-09-26T11:52:08.625Z",
+      "validatorVersion": "11.6.0",
+      "releaseId": 397217373,
+      "assetId": 590570351
     },
     "published": false,
     "lastUpdated": "2026-09-26",
     "updatedAt": "2026-09-26T11:49:19.854Z",
     "releaseDate": "2026-09-26",
     "publishedAt": "2026-09-26T11:49:19.854Z",
-    "isDemo": false
+    "isDemo": false,
+    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-distribution-test-v1.0.0/AppMintlyDistributionTest-1.0.0.apk"
   },
   {
     "id": "appmintly",
