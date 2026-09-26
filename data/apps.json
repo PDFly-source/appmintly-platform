@@ -1,7 +1,7 @@
 [
   {
     "id": "appmintly",
-    "name": "AppMintly",
+    "name": "AppMintly QA",
     "shortName": "AppMintly",
     "slug": "appmintly",
     "developer": "PKD",
@@ -63,7 +63,7 @@
     "changelog": [],
     "featured": true,
     "original": true,
-    "updatedAt": "2026-09-26T09:57:48.499Z",
+    "updatedAt": "2026-09-26T10:35:26.201Z",
     "isDemo": false,
     "launchUrl": "https://pdfly-source.github.io/appmintly-platform/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
