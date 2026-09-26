@@ -60,7 +60,14 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
-          <AppMintlyLogo size="md" variant="horizontal" />
+          {/* Phase 16.2 fix: icon-only mark on very narrow screens — the horizontal
+              wordmark overflowed the navbar row by ~28px at 360px viewport width */}
+          <span className="sm:hidden">
+            <AppMintlyLogo size="md" variant="mark" />
+          </span>
+          <span className="hidden sm:inline-flex">
+            <AppMintlyLogo size="md" variant="horizontal" />
+          </span>
         </Link>
 
         {/* Desktop Search Bar */}
