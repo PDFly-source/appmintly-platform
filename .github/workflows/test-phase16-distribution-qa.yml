@@ -62,7 +62,7 @@ jobs:
           curl -sL --fail --retry 3 -o v1.apk "$APK_URL_V1"
           echo "$SHA256_V1  v1.apk" | sha256sum -c -
           stat -c 'v1 size: %s bytes' v1.apk
-          head -c 2 v1.apk | od -An -tx1 | grep -q '504b' || { echo 'v1 is not a ZIP/APK'; exit 1; }
+          [ "$(head -c 2 v1.apk | od -An -tx1 | tr -d ' \n')" = '504b' ] || { echo 'v1 is not a ZIP/APK'; exit 1; }
         env:
           APK_URL_V1: ${{ inputs.apk_url_v1 }}
           SHA256_V1: ${{ inputs.sha256_v1 }}
@@ -74,7 +74,7 @@ jobs:
           curl -sL --fail --retry 3 -o v2.apk "$APK_URL_V2"
           echo "$SHA256_V2  v2.apk" | sha256sum -c -
           stat -c 'v2 size: %s bytes' v2.apk
-          head -c 2 v2.apk | od -An -tx1 | grep -q '504b' || { echo 'v2 is not a ZIP/APK'; exit 1; }
+          [ "$(head -c 2 v2.apk | od -An -tx1 | tr -d ' \n')" = '504b' ] || { echo 'v2 is not a ZIP/APK'; exit 1; }
         env:
           APK_URL_V2: ${{ inputs.apk_url_v2 }}
           SHA256_V2: ${{ inputs.sha256_v2 }}
