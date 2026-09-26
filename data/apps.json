@@ -137,7 +137,7 @@
     "developer": "PKD",
     "type": "Web App",
     "category": "Education",
-    "description": "Studyria is an Assam-focused comprehensive educational web application built for candidates preparing for ADRE, APSC, Assam Police, and TET examinations. It provides curated PDFs, previous year question papers (PYQs), interactive quizzes, full mock tests, subject-wise MCQs, daily current affairs, and career vacancy alerts in one unified portal.",
+    "description": "Studyria is an Assam-focused comprehensive educational web application built for candidates preparing for ADRE, APSC, Assam Police, and TET examinations. It provides curated PDFs, previous year question papers (PYQs), interactive quizzes, full mock tests, subject-wise MCQs, daily current affairs, and career vacancy alerts in one unified portal. [PWA-QA verify]",
     "shortDescription": "Assam-focused study app for ADRE, APSC, Assam Police & TET with PDFs, PYQs, quizzes, mock tests, MCQs, current affairs and career updates.",
     "icon": "/brand/studyria-icon-384.png",
     "screenshots": [
@@ -153,7 +153,7 @@
     "version": "2.0.2",
     "previousVersion": "1.9.0",
     "releaseDate": "2026-09-20",
-    "lastUpdated": "2026-09-25",
+    "lastUpdated": "2026-09-26",
     "publishedAt": "2026-09-20T10:00:00.000Z",
     "themeColor": "#16A765",
     "backgroundColor": "#F8F2E7",
@@ -202,22 +202,22 @@
       "enabled": true,
       "buildMode": "webview",
       "packageId": "com.appforge.studyria",
+      "authorized": true,
+      "sha256": "93dde889d331e13ae5dd684deab911e204d5ef2f0b8a4bb0726fa828dffdc36b",
       "versionName": "2.0.2",
       "versionCode": 20002,
       "fileName": "Studyria-2.0.2.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/studyria-v2.0.2/Studyria-2.0.2.apk",
       "fileSizeBytes": 382830,
-      "sha256": "93dde889d331e13ae5dd684deab911e204d5ef2f0b8a4bb0726fa828dffdc36b",
-      "generatedAt": "2026-09-25T16:43:18.819Z",
-      "buildStatus": "released",
-      "buildId": "build_1790181966849_8hp2v2",
-      "authorized": true,
       "releaseTag": "studyria-v2.0.2",
-      "releaseDate": "2026-09-25",
-      "platform": "android",
-      "architecture": "universal",
-      "downloadAvailable": true,
+      "generatedAt": "2026-09-25T16:43:18.819Z",
+      "buildId": "build_1790181966849_8hp2v2",
+      "buildStatus": "released",
       "verified": true,
+      "downloadAvailable": true,
+      "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-09-25",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -234,7 +234,7 @@
       "assetId": 588781895
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-24T08:58:47.555Z",
+    "updatedAt": "2026-09-26T07:47:09.086Z",
     "privacyTech": {
       "permissions": [
         "android.permission.INTERNET",
@@ -252,7 +252,12 @@
       "externalServices": [
         "GitHub Releases (APK distribution)"
       ]
-    }
+    },
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ]
   },
   {
     "id": "pdfminifly",
