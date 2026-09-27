@@ -22,6 +22,13 @@
  *   GET  /publish-catalog    -> { configured, message }
  *   POST /publish-catalog    -> { success, message, commitSha, commitUrl, actionsUrl, deployedUrl }
  *
+ *   Service inbox (Phase 16.12; marketplace users submit without GitHub):
+ *   POST /service-submission         -> { ok } (anonymous, validated,
+ *                                        honeypot + time-gate + rate limits;
+ *                                        stored in Workers KV "SUBMISSIONS")
+ *   GET  /service-submission/list    -> { success, submissions } (publish-key)
+ *   POST /service-submission/update  -> { success, status }   (publish-key)
+ *
  * Security:
  *   - APPMINTLY_GITHUB_TOKEN and APPMINTLY_PUBLISH_KEY exist ONLY as
  *     Worker secrets (server-side env); never in the frontend bundle,
@@ -1230,6 +1237,230 @@ async function handleUploadScreenshot(request, env) {
   });
 }
 
+/* ====================== service submissions ====================== */
+/* Phase 16.12 — native marketplace service inbox.                    */
+/* Public route (anonymous, validated, honeypot + time-gate +          */
+/* per-IP/global rate limits, KV-persisted):                           */
+/*   POST /service-submission                                          */
+/* Admin routes (publish-key authorized; consumed server-side by the   */
+/* AppMintly administrator's agent console, never by the public        */
+/* frontend bundle):                                                   */
+/*   GET  /service-submission/list                                     */
+/*   POST /service-submission/update   { id, status }                  */
+/* Storage: Workers KV namespace bound as SUBMISSIONS.                 */
+
+const SUB_MAX = { title: 120, email: 254, url: 500, short: 80, text: 2000 };
+const SUB_TYPES = ['request_app', 'feature_suggestion', 'issue_report'];
+const SUB_FORMATS = ['Android APK', 'PWA', 'Web App', 'Web Game'];
+const SUB_ISSUE_TYPES = [
+  'Broken download', 'Broken link', 'Incorrect app information', 'Incorrect version',
+  'Incorrect screenshot', 'UI / layout problem', 'Other',
+];
+const SUB_WHERE = ['Home', 'Explore', 'Categories', 'Library', 'App Details', 'Services', 'Other'];
+const SUB_STATUSES = ['new', 'in_review', 'resolved', 'rejected'];
+
+function subClean(value, cap = SUB_MAX.text) {
+  if (typeof value !== 'string') return '';
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, cap);
+}
+
+function subIsEmail(v) {
+  return /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/.test(v);
+}
+
+function subIsHttpUrl(v) {
+  if (!/^https?:\/\//i.test(v) || v.length > SUB_MAX.url) return false;
+  try {
+    const u = new URL(v);
+    return u.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
+
+// Small non-cryptographic hash (FNV-1a) for opaque rate-limit and
+// dedupe keys. IPs are never stored raw; content hashes are only
+// used for short-lived idempotency keys.
+function subHash(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
+function subValidate(body) {
+  if (!body || typeof body !== 'object') throw new SafeError(400, 'Invalid request.');
+
+  // Honeypot: hidden from real users; bots that fill it get a fake success.
+  if (subClean(body.hp, 50)) return { honeypot: true };
+
+  const type = body.type;
+  if (!SUB_TYPES.includes(type)) throw new SafeError(400, 'Invalid submission type.');
+
+  // Time gate: the form must have been open for at least 2 seconds.
+  const elapsed = Number(body.ts);
+  const started = Number(body.form_ts);
+  if (!Number.isFinite(started) || !Number.isFinite(elapsed) || elapsed - started < 2000) {
+    throw new SafeError(400, 'Please review the form and try again.');
+  }
+
+  const rec = {
+    type,
+    status: 'new',
+    title: '',
+    description: '',
+    email: subClean(body.email, SUB_MAX.email).toLowerCase(),
+    page_url: '',
+    reference_url: '',
+  };
+  if (rec.email && !subIsEmail(rec.email)) throw new SafeError(400, 'Please check the email address.');
+
+  if (type === 'request_app') {
+    rec.title = subClean(body.app_name, SUB_MAX.title);
+    rec.reference_url = subClean(body.app_link, SUB_MAX.url);
+    rec.format = subClean(body.format, SUB_MAX.short);
+    rec.category = subClean(body.category, SUB_MAX.short);
+    rec.description = subClean(body.use_case, SUB_MAX.text);
+    rec.additional_details = subClean(body.details, SUB_MAX.text);
+    if (!rec.title || rec.title.length < 2) throw new SafeError(400, 'Please provide the app name.');
+    if (!SUB_FORMATS.includes(rec.format)) throw new SafeError(400, 'Please choose a format.');
+    if (!rec.description || rec.description.length < 10) throw new SafeError(400, 'Please describe what you would use it for.');
+    if (rec.reference_url && !subIsHttpUrl(rec.reference_url)) throw new SafeError(400, 'Please check the app link.');
+  } else if (type === 'feature_suggestion') {
+    rec.title = subClean(body.feature_title, SUB_MAX.title);
+    rec.description = subClean(body.problem, SUB_MAX.text);
+    rec.where = subClean(body.where, SUB_MAX.short);
+    rec.solution = subClean(body.solution, SUB_MAX.text);
+    rec.reference_url = subClean(body.reference_link, SUB_MAX.url);
+    if (!rec.title || rec.title.length < 3) throw new SafeError(400, 'Please provide a feature title.');
+    if (!rec.description || rec.description.length < 10) throw new SafeError(400, 'Please describe the problem to solve.');
+    if (!SUB_WHERE.includes(rec.where)) throw new SafeError(400, 'Please choose where it should work.');
+    if (rec.reference_url && !subIsHttpUrl(rec.reference_url)) throw new SafeError(400, 'Please check the reference link.');
+  } else {
+    rec.issue_type = subClean(body.issue_type, SUB_MAX.short);
+    rec.app_name = subClean(body.app_name, SUB_MAX.title);
+    rec.app_version = subClean(body.app_version, SUB_MAX.short);
+    rec.page_url = subClean(body.page_url, SUB_MAX.url);
+    rec.description = subClean(body.what_happened, SUB_MAX.text);
+    rec.expected = subClean(body.expected, SUB_MAX.text);
+    rec.device = subClean(body.device, SUB_MAX.short);
+    if (!SUB_ISSUE_TYPES.includes(rec.issue_type)) throw new SafeError(400, 'Please choose an issue type.');
+    if (!rec.description || rec.description.length < 10) throw new SafeError(400, 'Please describe what happened.');
+    if (!rec.expected || rec.expected.length < 3) throw new SafeError(400, 'Please describe what you expected.');
+    if (rec.page_url && !subIsHttpUrl(rec.page_url)) throw new SafeError(400, 'Please check the page URL.');
+  }
+  return { rec };
+}
+
+// KV-backed rolling hourly rate limit. Per-IP limit 5/hour (IP hashed,
+// never stored raw), global limit 50/hour as an abuse ceiling.
+async function subRateLimited(env, request) {
+  const hour = Math.floor(Date.now() / 3_600_000);
+  const ipKey = `srl:${subHash(clientIp(request))}:${hour}`;
+  const globalKey = `srl:g:${hour}`;
+  const [ip, glob] = await Promise.all([
+    env.SUBMISSIONS.get(ipKey),
+    env.SUBMISSIONS.get(globalKey),
+  ]);
+  if (Number(ip) >= 5 || Number(glob) >= 50) return true;
+  await Promise.all([
+    env.SUBMISSIONS.put(ipKey, String(Number(ip || 0) + 1), { expirationTtl: 7200 }),
+    env.SUBMISSIONS.put(globalKey, String(Number(glob || 0) + 1), { expirationTtl: 7200 }),
+  ]);
+  return false;
+}
+
+async function handleServiceSubmissionPost(request, env) {
+  if (!env.SUBMISSIONS) throw new SafeError(503, 'Submissions are not available right now.');
+  if ((request.headers.get('origin') || '') !== ALLOWED_ORIGIN) {
+    throw new SafeError(403, 'Origin not allowed.');
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    throw new SafeError(400, 'Request body must be valid JSON.');
+  }
+  const { honeypot, rec } = subValidate(body);
+  if (honeypot) return json(request, 200, { ok: true }); // bot: pretend success
+
+  if (await subRateLimited(env, request)) {
+    throw new SafeError(429, 'Too many submissions right now. Please try again later.');
+  }
+
+  // Idempotency: identical type+content within 10 minutes counts once.
+  const dedupeKey = `sd:${subHash(rec.type + '|' + rec.title + '|' + rec.description)}`;
+  const seen = await env.SUBMISSIONS.get(dedupeKey);
+  if (seen) return json(request, 200, { ok: true });
+  await env.SUBMISSIONS.put(dedupeKey, '1', { expirationTtl: 600 });
+
+  const now = Date.now();
+  const id = `${(0x1000000000000 - now).toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const record = { id, created_at: new Date(now).toISOString(), ...rec };
+  await env.SUBMISSIONS.put(`sub:${id}`, JSON.stringify(record));
+  return json(request, 200, { ok: true });
+}
+
+async function requireSubmissionsAdmin(request, env) {
+  if (!env.APPMINTLY_PUBLISH_KEY || !env.SUBMISSIONS) {
+    throw new SafeError(503, 'Submissions service is not fully configured (server secrets missing).');
+  }
+  const provided = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!provided || !keysEqual(provided, env.APPMINTLY_PUBLISH_KEY)) {
+    throw new SafeError(401, 'Invalid or missing key.');
+  }
+}
+
+async function handleServiceSubmissionList(request, env) {
+  await requireSubmissionsAdmin(request, env);
+  const url = new URL(request.url);
+  const status = url.searchParams.get('status') || '';
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit')) || 100));
+  const listed = await env.SUBMISSIONS.list({ prefix: 'sub:', limit });
+  const values = await Promise.all(listed.keys.map((k) => env.SUBMISSIONS.get(k.name)));
+  const submissions = values
+    .filter(Boolean)
+    .map((v) => { try { return JSON.parse(v); } catch { return null; } })
+    .filter(Boolean)
+    .filter((s) => !status || SUB_STATUSES.includes(status) && s.status === status);
+  return json(request, 200, { success: true, count: submissions.length, submissions });
+}
+
+async function handleServiceSubmissionUpdate(request, env) {
+  await requireSubmissionsAdmin(request, env);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    throw new SafeError(400, 'Request body must be valid JSON.');
+  }
+  const id = typeof body.id === 'string' ? body.id.replace(/[^a-z0-9-]/gi, '') : '';
+  const status = typeof body.status === 'string' ? body.status : '';
+  if (!id || !SUB_STATUSES.includes(status)) {
+    throw new SafeError(400, 'Valid id and status are required.');
+  }
+  const key = `sub:${id}`;
+  const raw = await env.SUBMISSIONS.get(key);
+  if (!raw) throw new SafeError(404, 'Submission not found.');
+  let record;
+  try {
+    record = JSON.parse(raw);
+  } catch {
+    throw new SafeError(500, 'Stored submission is unreadable.');
+  }
+  record.status = status;
+  record.updated_at = new Date().toISOString();
+  await env.SUBMISSIONS.put(key, JSON.stringify(record));
+  return json(request, 200, { success: true, status });
+}
+
 /* ============================= router ============================= */
 
 export default {
@@ -1249,9 +1480,18 @@ export default {
           service: 'AppMintly Publisher API',
           status: 'online',
           version: '1.1.0',
-          endpoints: ['/analyze-url', '/build-apk', '/publish-catalog', '/upload-screenshot'],
+          endpoints: ['/analyze-url', '/build-apk', '/publish-catalog', '/upload-screenshot', '/service-submission'],
           configured: Boolean(env.APPMINTLY_PUBLISH_KEY && env.APPMINTLY_GITHUB_TOKEN),
         });
+      }
+      if (path === '/service-submission' && request.method === 'POST') {
+        return await handleServiceSubmissionPost(request, env);
+      }
+      if (path === '/service-submission/list' && request.method === 'GET') {
+        return await handleServiceSubmissionList(request, env);
+      }
+      if (path === '/service-submission/update' && request.method === 'POST') {
+        return await handleServiceSubmissionUpdate(request, env);
       }
       if (path === '/upload-screenshot' && request.method === 'POST') {
         return await handleUploadScreenshot(request, env);

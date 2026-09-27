@@ -8,5 +8,12 @@ compatibility_date = "2026-09-01"
 #     (Actions: Read and write, Contents: Read and write, Metadata: Read-only)
 #   APPMINTLY_PUBLISH_KEY — publisher console key
 
+# Service submissions inbox (Phase 16.12). One-time setup before deploying:
+#   npx wrangler kv namespace create APPMINTLY_SUBMISSIONS
+#   -> paste the printed "id" below (binding name must stay SUBMISSIONS)
+[[kv_namespaces]]
+binding = "SUBMISSIONS"
+id = "REPLACE_WITH_APPMINTLY_SUBMISSIONS_KV_ID"
+
 [observability]
 enabled = true
