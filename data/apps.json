@@ -270,7 +270,13 @@
       "Curated study materials, downloadable PDFs, and previous years question papers (PYQs)",
       "Interactive timed mock tests, chapter-wise MCQs, and real-time score tracking",
       "Daily Assam & Northeast current affairs digest and syllabus-focused notes",
-      "Instant career announcements and government recruitment notification updates"
+      "Instant career announcements and government recruitment notification updates",
+      "Real-Time Competitive Arena Battles — Challenge other learners, compete live, and sharpen your exam skills.",
+      "Daily Assam & Northeast Current Affairs",
+      "Offline PDF Prep & ADRE Grade III/IV Mock Tests",
+      "Government Recruitment & Career Alerts",
+      "Syllabus-focused Study Resources",
+      "Chapter-wise & Subject-wise MCQs"
     ],
     "tags": [
       "education",
@@ -285,7 +291,9 @@
       "pyq"
     ],
     "releaseNotes": [
-      "v2.0.0: Full launch with ADRE Grade III & IV mock tests and offline PDF prep."
+      "Full launch with ADRE Grade III & IV mock tests and offline PDF preparation.",
+      "Updated production release with refreshed study resources, career updates and the latest Android APK.",
+      "v2.0.2: Latest production release of Studyria with updated app and marketplace metadata."
     ],
     "changelog": [
       "v2.0.0: Added interactive quizzes, full-length mock tests, and latest current affairs syllabus."
@@ -332,7 +340,7 @@
       "assetId": 588781895
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-27T10:51:59.963Z",
+    "updatedAt": "2026-09-27T10:55:57.754Z",
     "privacyTech": {
       "permissions": [
         "android.permission.INTERNET",
