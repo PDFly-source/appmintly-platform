@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Sparkles, ArrowRight, Download, ExternalLink, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Sparkles, ArrowRight, Download, ExternalLink, ChevronLeft, ChevronRight, Layers, Bookmark } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { BASE_PATH } from '@/lib/api-path';
 import { resolveDeveloper } from '@/data/publishers';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { AppIcon } from '@/components/AppIcon';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { useLocalFavorite, toggleLocalFavorite } from '@/lib/localLibrary';
+import { useToast } from '@/lib/ToastContext';
 
 interface FeaturedHeroCarouselProps {
   featuredApps: AppItem[];
@@ -16,6 +18,12 @@ interface FeaturedHeroCarouselProps {
 
 export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ featuredApps }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { toast } = useToast();
+  // Hook is called unconditionally BEFORE any early return so the hook
+  // order is stable across renders (Phase 18 robustness). An empty appId
+  // simply resolves to "not favorited" (isLocalFavorite('') === false).
+  const current = featuredApps?.[currentIndex];
+  const isFavorite = useLocalFavorite(current?.id || '');
 
   useEffect(() => {
     if (featuredApps.length <= 1) return;
@@ -27,7 +35,11 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
 
   if (!featuredApps || featuredApps.length === 0) return null;
 
-  const current = featuredApps[currentIndex];
+  const handleBookmark = () => {
+    if (!current) return;
+    const isNowFav = toggleLocalFavorite(current.id);
+    toast(isNowFav ? `Saved ${current.name} to Library` : `Removed ${current.name} from Library`, 'info');
+  };
 
   // Catalog image paths are repository-relative (e.g. "/brand/x.png").
   // Resolve them against the deployment base path so the hero background
@@ -70,8 +82,9 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
       {/* Content Container */}
       <div className="relative z-10 p-6 sm:p-10 lg:p-12 max-w-2xl min-h-[350px] sm:min-h-[400px] flex flex-col justify-between">
         <div>
-          {/* Top badge */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {/* Top badge row + bookmark control (Phase 18) */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E52B32] text-white text-xs font-black tracking-wide uppercase shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Featured App</span>
@@ -84,6 +97,15 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/10 text-white/90 text-xs font-medium backdrop-blur-xs">
               {current.category}
             </span>
+          </div>
+            <button
+              onClick={handleBookmark}
+              aria-label={isFavorite ? `Remove ${current.name} from Library` : `Save ${current.name} to Library`}
+              aria-pressed={isFavorite}
+              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xs transition"
+            >
+              <Bookmark className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+            </button>
           </div>
 
           {/* App logo emphasis — framed hero chip */}

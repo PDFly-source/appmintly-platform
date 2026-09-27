@@ -26,7 +26,10 @@ import {
   Fingerprint,
   Lock,
   Eye,
-  FileCheck2
+  FileCheck2,
+  SlidersHorizontal,
+  Flame,
+  Star
 } from 'lucide-react';
 import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
@@ -37,6 +40,9 @@ import { AppCard } from '@/components/AppCard';
 import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Reveal } from '@/components/Reveal';
+import { HeroEcosystemVisual } from '@/components/HeroEcosystemVisual';
+import { HeroFeatureIndicators } from '@/components/HeroFeatureIndicators';
+import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 
 export default function HomePage() {
   const router = useRouter();
@@ -79,6 +85,26 @@ export default function HomePage() {
     appCount: publishedApps.filter((a) => a.developerSlug === p.slug).length,
   })).filter((p) => p.appCount > 0);
 
+  // Popular Categories — Phase 18. Real counts only: platform-type families
+  // (Android/Web) from authoritative catalog signals, plus real CATEGORIES
+  // entries. A count of 0 is shown honestly as "Coming Soon" (same
+  // convention as the existing /categories page) rather than hidden or
+  // padded with fabricated content.
+  const popularCategoryTiles = React.useMemo(() => {
+    const androidCount = publishedApps.filter((a) => hasAuthoritativeApkRelease(a)).length;
+    const webAppCount = webApps.length;
+    const countForCategory = (slug: string) =>
+      publishedApps.filter((a) => (a.category || '').toLowerCase().replace(/\s+/g, '-') === slug).length;
+    return [
+      { label: 'Android Apps', href: '/explore?type=Android+APK', Icon: Smartphone, color: '#16A765', count: androidCount },
+      { label: 'Web Apps', href: '/explore?type=Web+App', Icon: Globe, color: '#1565E8', count: webAppCount },
+      { label: 'Games', href: '/explore?category=games', Icon: Gamepad2, color: '#E31E24', count: countForCategory('games') },
+      { label: 'Tools', href: '/explore?category=tools', Icon: Wrench, color: '#F4B400', count: countForCategory('tools') },
+      { label: 'Utilities', href: '/explore?category=utilities', Icon: Layers, color: '#1248A8', count: countForCategory('utilities') },
+      { label: 'More', href: '/categories', Icon: FolderOpen, color: '#6F6F6F', count: -1 },
+    ];
+  }, [publishedApps, webApps]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchQuery.trim();
@@ -87,109 +113,144 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page text-ink">
-      {/* 1. HERO SECTION + GLOBAL SEARCH */}
-      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-8 sm:mb-12">
-          {/* Hero Text */}
-          <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-            <AppMintlyLogo variant="horizontal" size="sm" />
+      {/* 1. HERO — Phase 18 Homepage Experience 2.0 */}
+      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-8 sm:mb-10">
+          {/* Hero copy */}
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#087A5B]/10 border border-[#087A5B]/25 text-[#087A5B] text-[11px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3 h-3" aria-hidden="true" />
+              Verified Apps &amp; Tools
+            </span>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-ink leading-[1.08]">
-              Discover. Install.<br />Experience.
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08]">
+              <span className="block text-ink">Discover.</span>
+              <span className="block" style={{ color: '#087A5B' }}>Install.</span>
+              <span className="block" style={{ color: '#1565E8' }}>Experience.</span>
             </h1>
 
             <p className="text-base sm:text-lg text-mut max-w-xl leading-relaxed">
-              Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, zero tracking bloat, directly accessible on any device.
+              Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
             </p>
 
-            {/* Global Search — instant entry into catalog search */}
-            <form
-              onSubmit={handleSearch}
-              role="search"
-              aria-label="Search the AppMintly catalog"
-              className="flex items-center gap-2 bg-card border border-line rounded-full p-1.5 pl-4 shadow-sm max-w-xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 transition"
-            >
-              <Search className="w-4 h-4 text-mut shrink-0" aria-hidden="true" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search apps, web apps, games, tools..."
-                aria-label="Search apps, web apps, games, tools"
-                className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-mut/70 min-w-0"
-              />
-              <button
-                type="submit"
-                className="shrink-0 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition"
-              >
-                Search
-              </button>
-            </form>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="pt-1">
               <Link
                 href="/explore"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                style={{ backgroundColor: '#087A5B' }}
               >
-                <Compass className="w-4 h-4" />
                 Explore Apps
-              </Link>
-              <Link
-                href="/categories"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-sm font-bold transition"
-              >
-                <Layers className="w-4 h-4" />
-                Categories
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
+
+            {/* Feature indicators — truthful product-level labels only */}
+            <HeroFeatureIndicators className="max-w-md pt-2" />
           </div>
 
-          {/* Hero Featured Spotlight Carousel — data-driven only:
-              exactly the records with published === true AND featured === true.
-              NO fallback to arbitrary published apps (Phase 10.6 fix). */}
-          <div className="lg:col-span-6">
-            {featuredApps.length > 0 ? (
-              <FeaturedHeroCarousel featuredApps={featuredApps} />
-            ) : (
-              /* Explicit empty state when no published app is featured */
-              <div className="h-full min-h-[220px] rounded-3xl border border-dashed border-ink/15 bg-card/60 flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <Sparkles className="w-5 h-5 text-mut" aria-hidden="true" />
-                <p className="text-sm font-bold text-ink">No Featured Apps right now</p>
-                <p className="text-xs text-mut max-w-xs">
-                  The AppMintly team curates which published apps are featured here.
-                </p>
-              </div>
-            )}
+          {/* Hero ecosystem visual — code-built, real AppMintly mark, no stock imagery */}
+          <div className="lg:col-span-5 flex justify-center">
+            <HeroEcosystemVisual />
           </div>
         </div>
 
-        {/* 2. CATEGORY QUICK CHIPS */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0" aria-label="Browse categories">
+        {/* Dominant search */}
+        <form
+          onSubmit={handleSearch}
+          role="search"
+          aria-label="Search the AppMintly catalog"
+          className="flex items-center gap-2 bg-card border border-line rounded-full p-1.5 pl-4 shadow-sm max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 transition"
+        >
+          <Search className="w-4 h-4 text-mut shrink-0" aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search apps, web apps, games, tools, websites..."
+            aria-label="Search apps, web apps, games, tools, websites"
+            className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-mut/70 min-w-0"
+          />
           <Link
             href="/explore"
-            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-inkbg text-white text-xs font-bold border border-ink transition"
+            aria-label="Open filters and sorting on the Explore page"
+            title="Filters"
+            className="hidden sm:inline-flex shrink-0 items-center justify-center w-9 h-9 rounded-full text-mut hover:text-ink hover:bg-page transition"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            All Apps
+            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
           </Link>
-          {CATEGORIES.slice(0, 10).map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/explore?category=${encodeURIComponent(cat.slug)}`}
-              className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
-            >
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: cat.color }}
-                aria-hidden="true"
-              />
-              {cat.name}
-            </Link>
-          ))}
+          <button
+            type="submit"
+            className="shrink-0 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition"
+          >
+            Search
+          </button>
+        </form>
+
+        {/* Quick discovery buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 max-w-2xl">
+          <Link
+            href="/explore"
+            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+            style={{ backgroundColor: '#087A5B' }}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Compass className="w-4 h-4" />
+              Explore Apps
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/categories"
+            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl bg-inkbg text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Layers className="w-4 h-4" />
+              Categories
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        {/* Phase 16.2 — Trust signal strip (truthful, evidence-backed capabilities only) */}
+        {/* Discovery chips — real filters on the Explore page */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mt-4 -mx-4 px-4 sm:mx-0 sm:px-0" aria-label="Quick discovery">
+          <Link
+            href="/explore?featured=true"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E31E24] text-white text-xs font-bold transition"
+          >
+            <Star className="w-3.5 h-3.5" />
+            Featured
+          </Link>
+          <Link
+            href="/explore?sort=newest"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Flame className="w-3.5 h-3.5 text-[#F4B400]" />
+            New
+          </Link>
+          <Link
+            href="/explore?category=games"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Gamepad2 className="w-3.5 h-3.5 text-[#E31E24]" />
+            Games
+          </Link>
+          <Link
+            href="/explore?category=tools"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Wrench className="w-3.5 h-3.5 text-[#F4B400]" />
+            Tools
+          </Link>
+          <Link
+            href="/explore?type=Web+App"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Globe className="w-3.5 h-3.5 text-[#1565E8]" />
+            Web Apps
+          </Link>
+        </div>
+
+        {/* Trust strip (truthful, evidence-backed capabilities only) */}
         <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-2xl border border-line bg-card/70 px-4 py-3 shadow-xs">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
             <ShieldCheck className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
@@ -210,7 +271,74 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. BENTO GRID — real catalog highlights (Phase 11) */}
+      {/* 2. FEATURED APP SPOTLIGHT — Phase 18: dedicated section, single real
+          featured app (rotates through every featured=true record). */}
+      {featuredApps.length > 0 ? (
+        <Reveal>
+          <section className="px-4 sm:px-6 max-w-7xl mx-auto mt-10 mb-10" aria-label="Featured app">
+            <div className="flex items-end justify-between mb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight">Featured App</h2>
+              <Link
+                href="/explore?featured=true"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+              >
+                See All
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <FeaturedHeroCarousel featuredApps={featuredApps} />
+          </section>
+        </Reveal>
+      ) : (
+        <div className="px-4 sm:px-6 max-w-7xl mx-auto mt-10 mb-10">
+          <div className="rounded-3xl border border-dashed border-ink/15 bg-card/60 flex flex-col items-center justify-center gap-2 p-8 text-center">
+            <Sparkles className="w-5 h-5 text-mut" aria-hidden="true" />
+            <p className="text-sm font-bold text-ink">No Featured Apps right now</p>
+            <p className="text-xs text-mut max-w-xs">
+              The AppMintly team curates which published apps are featured here.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 3. POPULAR CATEGORIES — Phase 18: real taxonomy + real live counts;
+          zero-count categories are honestly labeled "Coming Soon" rather
+          than hidden or fabricated, matching the existing /categories page
+          convention (Categories Experience 2.0). */}
+      <Reveal>
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-10" aria-label="Popular categories">
+          <div className="flex items-end justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight">Popular Categories</h2>
+            <Link
+              href="/categories"
+              className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+            >
+              See All
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {popularCategoryTiles.map((tile) => (
+              <Link
+                key={tile.label}
+                href={tile.href}
+                className="flex flex-col items-center gap-2 rounded-2xl bg-card border border-line hover:border-ink/30 px-3 py-4 text-center transition"
+              >
+                <span
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-xl shrink-0"
+                  style={{ backgroundColor: `${tile.color}1F` }}
+                >
+                  <tile.Icon className="w-5 h-5" style={{ color: tile.color }} aria-hidden="true" />
+                </span>
+                <span className="text-xs font-bold text-ink leading-tight">{tile.label}</span>
+                <span className="text-[10px] text-mut leading-tight">
+                  {tile.count > 0 ? `${tile.count} app${tile.count === 1 ? '' : 's'}` : tile.count === -1 ? 'Explore all' : 'Coming Soon'}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </Reveal>
       <div className="px-4 sm:px-6 max-w-7xl mx-auto">
         <BentoShowcase featuredApps={featuredApps} publishedApps={publishedApps} latestApps={latestApps} />
       </div>

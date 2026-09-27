@@ -93,7 +93,7 @@ export const Navbar: React.FC = () => {
       onClick={cycleMode}
       aria-label={themeLabel}
       title={themeLabel}
-      className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-card border border-line text-ink hover:bg-line/60 transition cursor-pointer"
+      className="inline-flex items-center justify-center w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-card border border-line text-ink hover:bg-line/60 transition cursor-pointer"
     >
       {React.createElement(themeIcon, { className: 'w-4 h-4' })}
     </button>
@@ -128,7 +128,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 glass transition-colors motion-reduce:transition-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg">
+        <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg min-h-[44px]">
           {/* Phase 17: per-letter brand wordmark colors beside the compact
               mark — 18px/900, still safely narrower than the overflowing md
               horizontal lockup at 360px. */}
@@ -174,7 +174,7 @@ export const Navbar: React.FC = () => {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                className={`inline-flex items-center min-h-[44px] px-3 py-1.5 rounded-full text-xs font-bold transition ${
                   active
                     ? 'bg-inkbg text-white shadow-xs'
                     : 'text-ink/80 hover:text-ink hover:bg-page'
@@ -187,11 +187,11 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Mobile search / quick-action toggle: opens the command palette */}
           <button
             onClick={() => window.dispatchEvent(new Event('appmintly:open-command-palette'))}
-            className="md:hidden p-2 rounded-full text-ink hover:bg-page transition"
+            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-page transition"
             aria-label="Search apps and quick actions"
           >
             <Search className="w-5 h-5" />
@@ -202,7 +202,7 @@ export const Navbar: React.FC = () => {
           {/* Library Link (Favorites & History) */}
           <Link
             href="/library"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-page hover:bg-line text-ink text-xs font-bold transition border border-line"
+            className="flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-bold transition border border-line"
             title="Local Library & Saved Apps"
           >
             <Bookmark className="w-4 h-4 text-[#E52B32]" />
@@ -222,7 +222,7 @@ export const Navbar: React.FC = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-full text-ink hover:bg-page transition"
+            className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-page transition"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
