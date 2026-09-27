@@ -111,6 +111,124 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page text-ink">
+      {/* SEARCH & DISCOVERY — recovered from the pre-removal Hero section per
+          user request: dominant search, quick discovery buttons, discovery
+          chips and the trust strip only. The decorative eyebrow badge,
+          "Discover. Install. Experience." headline, description paragraph
+          and phone visual stay removed as explicitly requested earlier;
+          the "Web Apps" chip stays removed per the earlier explicit
+          instruction to drop Web Apps from the Hero. */}
+      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
+        {/* Dominant search */}
+        <form
+          onSubmit={handleSearch}
+          role="search"
+          aria-label="Search the AppMintly catalog"
+          className="flex items-center gap-2 bg-card border border-line rounded-full p-1.5 pl-4 shadow-sm max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 transition"
+        >
+          <Search className="w-4 h-4 text-mut shrink-0" aria-hidden="true" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search apps, web apps, games, tools, websites..."
+            aria-label="Search apps, web apps, games, tools, websites"
+            className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-mut/70 min-w-0"
+          />
+          <Link
+            href="/explore"
+            aria-label="Open filters and sorting on the Explore page"
+            title="Filters"
+            className="hidden sm:inline-flex shrink-0 items-center justify-center w-9 h-9 rounded-full text-mut hover:text-ink hover:bg-page transition"
+          >
+            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+          </Link>
+          <button
+            type="submit"
+            className="shrink-0 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition"
+          >
+            Search
+          </button>
+        </form>
+
+        {/* Quick discovery buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 max-w-2xl">
+          <Link
+            href="/explore"
+            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+            style={{ backgroundColor: '#087A5B' }}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Compass className="w-4 h-4" />
+              Explore Apps
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/categories"
+            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl bg-inkbg text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Layers className="w-4 h-4" />
+              Categories
+            </span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* Discovery chips — real filters on the Explore page */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2 mt-4 -mx-4 px-4 sm:mx-0 sm:px-0" aria-label="Quick discovery">
+          <Link
+            href="/explore?featured=true"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#E31E24] text-white text-xs font-bold transition"
+          >
+            <Star className="w-3.5 h-3.5" />
+            Featured
+          </Link>
+          <Link
+            href="/explore?sort=newest"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Flame className="w-3.5 h-3.5 text-[#F4B400]" />
+            New
+          </Link>
+          <Link
+            href="/explore?category=games"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Gamepad2 className="w-3.5 h-3.5 text-[#E31E24]" />
+            Games
+          </Link>
+          <Link
+            href="/explore?category=tools"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Wrench className="w-3.5 h-3.5 text-[#F4B400]" />
+            Tools
+          </Link>
+        </div>
+
+        {/* Trust strip (truthful, evidence-backed capabilities only) */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-2xl border border-line bg-card/70 px-4 py-3 shadow-xs">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Verified Releases
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <Fingerprint className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            SHA-256 Available
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <Link2 className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Official Release Links
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
+            <FileCheck2 className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+            Transparent Versions
+          </span>
+        </div>
+      </section>
+
       {/* 2. FEATURED APP SPOTLIGHT — Phase 18: dedicated section, single real
           featured app (rotates through every featured=true record). */}
       {featuredApps.length > 0 ? (
