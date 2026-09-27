@@ -94,6 +94,9 @@ export default function LibraryPage() {
   );
 
   const { saved, recent, downloads } = useMemo(() => {
+    // SSR/hydration guard: only read localStorage after mount so the first
+    // client render matches the server HTML (no React #418 text mismatch).
+    if (!mountedTime) return { saved: [], recent: [], downloads: [] };
     const savedApps = getLocalFavorites()
       .map(resolveApp)
       .filter((a): a is AppItem => Boolean(a));
