@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'Suggest a feature for the AppMintly marketplace. Ideas are reviewed by the AppMintly team.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/services/suggest-feature${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/services/suggest-feature${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

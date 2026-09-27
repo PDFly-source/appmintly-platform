@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'How to reach the AppMintly marketplace and the PKD publisher: app support, publisher pages, and the public GitHub repository.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/contact${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/contact${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

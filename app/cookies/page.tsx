@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'AppMintly uses no tracking, advertising, or analytics cookies. How the marketplace handles cookies and browser storage.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/cookies${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/cookies${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

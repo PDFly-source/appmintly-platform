@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     'Request an app, tool, or web app for the AppMintly marketplace. Requests are reviewed by the AppMintly team.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/services/request-app${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/services/request-app${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

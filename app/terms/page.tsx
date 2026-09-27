@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'The terms that apply when you use the AppMintly marketplace: catalog content, publisher responsibility, and application usage.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/terms${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/terms${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

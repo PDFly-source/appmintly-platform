@@ -11,7 +11,7 @@ export function generateStaticParams() {
   return APPS.map((a) => ({ slug: a.slug }));
 }
 
-const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
+const SITE_URL = 'https://appmintly.pages.dev/';
 
 /** Resolve a catalog icon path (possibly base-path-relative) to an absolute URL. */
 function absoluteIcon(icon: string): string {

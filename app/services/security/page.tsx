@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'How AppMintly verifies releases: official GitHub release links, SHA-256 checksums, transparent versions, and what is not automated.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/services/security${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/services/security${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

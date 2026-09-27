@@ -4,7 +4,7 @@ import { APPS } from '@/data/apps';
 import { PUBLISHERS, getDeveloperIdentity } from '@/data/publishers';
 import PublisherPublicClient from './PublisherPublicClient';
 
-const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
+const SITE_URL = 'https://appmintly.pages.dev/';
 
 // Static export (GitHub Pages) requires all publisher slugs at build time.
 export function generateStaticParams() {

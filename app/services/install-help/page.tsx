@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'Practical guidance for installing Android APKs from AppMintly releases, understanding Play Protect prompts, and installing PWAs.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/services/install-help${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/services/install-help${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

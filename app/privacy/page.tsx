@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'How AppMintly handles data: no account required, no third-party trackers, library data stored locally on your device.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/privacy${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/privacy${CANONICAL_TRAILING_SLASH}`,
   },
 };
 

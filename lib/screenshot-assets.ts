@@ -20,8 +20,12 @@ import { BASE_PATH } from '@/lib/api-path';
 export const REPO_SCREENSHOT_PATH_RE =
   /^\/assets\/apps\/([a-z0-9-]{1,60})\/screenshots\/([A-Za-z0-9][A-Za-z0-9._-]{0,120})$/;
 
-const APPMINTLY_SITE_PREFIX = 'https://pdfly-source.github.io/appmintly-platform';
-const APPMINTLY_SITE_PREFIX_SLASH = APPMINTLY_SITE_PREFIX + '/';
+// Current and legacy production origins: screenshot URLs from either are
+// canonicalized to repository-relative paths.
+const APPMINTLY_SITE_PREFIXES = [
+  'https://appmintly.pages.dev',
+  'https://pdfly-source.github.io/appmintly-platform'
+];
 const GITHUB_BLOB_RE =
   /^https:\/\/github\.com\/PDFly-source\/appmintly-platform\/blob\/([^/]+)\/(.+)$/i;
 const GITHUB_RAW_RE =
@@ -60,8 +64,9 @@ export function normalizeScreenshotInput(raw: string): NormalizedScreenshot {
   }
 
   // Deployed AppMintly URL → repository-relative path
-  if (input.startsWith(APPMINTLY_SITE_PREFIX_SLASH)) {
-    const rel = input.slice(APPMINTLY_SITE_PREFIX_SLASH.length).split('?')[0];
+  const deployedPrefix = APPMINTLY_SITE_PREFIXES.find((p) => input.startsWith(p + '/'));
+  if (deployedPrefix) {
+    const rel = input.slice(deployedPrefix.length + 1).split('?')[0];
     if (!REPO_SCREENSHOT_PATH_RE.test('/' + rel.replace(/^\//, '')) &&
         !REPO_SCREENSHOT_PATH_RE.test('/' + rel)) {
       return {

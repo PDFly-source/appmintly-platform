@@ -8,7 +8,7 @@ export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: c.slug }));
 }
 
-const SITE_URL = 'https://pdfly-source.github.io/appmintly-platform/';
+const SITE_URL = 'https://appmintly.pages.dev/';
 
 export async function generateMetadata({
   params,

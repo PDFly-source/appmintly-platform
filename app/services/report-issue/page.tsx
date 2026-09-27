@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     'Report a broken download, incorrect information, or a layout problem on the AppMintly marketplace.',
   alternates: {
-    canonical: `https://pdfly-source.github.io/appmintly-platform/services/report-issue${CANONICAL_TRAILING_SLASH}`,
+    canonical: `https://appmintly.pages.dev/services/report-issue${CANONICAL_TRAILING_SLASH}`,
   },
 };
 
@@ -60,7 +60,7 @@ export default function ReportIssuePage() {
             {
               name: 'page_url',
               label: 'Page URL',
-              placeholder: 'https://pdfly-source.github.io/appmintly-platform/...',
+              placeholder: 'https://appmintly.pages.dev/...',
               hint: 'Optional — the page where you saw the problem.',
             },
             {
