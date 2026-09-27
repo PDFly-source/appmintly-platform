@@ -4,34 +4,19 @@ import React from 'react';
  * Official AppMintly brand mark.
  *
  * Renders the exact supplied AppMintly logo artwork (public/brand/*.png).
- * The artwork itself is never redrawn, recolored, or recreated in HTML/CSS —
- * only technical crops/arrangements of the same official master asset are
- * used, each containing the exact multicolor wordmark and gold tagline
- * artwork wherever the wordmark appears:
- *   - appmintly-logo-full.png    -> the complete supplied vertical lockup
- *                                   (symbol + wordmark + gold lines +
- *                                   DISCOVER • INSTALL • EXPERIENCE),
- *                                   used for hero, about, footer signature
- *                                   and OG/Twitter branding.
- *   - appmintly-logo-compact.png -> the same official artwork segments
- *                                   arranged horizontally (symbol left,
- *                                   exact wordmark + gold tagline block
- *                                   right), used for compact horizontal
- *                                   placements (navbar, footer brand
- *                                   column, hero badge) where the square
- *                                   lockup does not fit.
- *   - appmintly-icon*.png        -> the official symbol-only crop, used
- *                                   strictly for icon-only contexts
- *                                   (favicon, PWA icons, app icon,
- *                                   compact mobile/icon-only placements).
+ * The artwork itself is never redrawn, recolored, or recreated — only
+ * technical crops/resizes of the same official asset are used:
+ *   - appmintly-icon.png     -> square emblem-only crop (mark/icon contexts)
+ *   - appmintly-logo-full.png -> the complete supplied lockup (hero/about/OG)
  *
- * No CSS/text reconstruction of the wordmark or tagline exists anywhere in
- * this component — every visible logo rendering is the approved artwork.
+ * For compact horizontal placements (navbar, footer) where the full square
+ * artwork does not fit well, the emblem crop is paired with a plain-text
+ * wordmark in the app's own UI font — this is a UI label, not a recreated
+ * logo/wordmark graphic.
  */
 interface AppMintlyLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'full' | 'horizontal' | 'mark' | 'dark';
-  /** Kept for API compatibility; the tagline is part of the lockup artwork. */
   showTagline?: boolean;
   className?: string;
 }
@@ -46,24 +31,69 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 // original artwork still use the untouched official source assets.
 const MARK_SRC = `${BASE_PATH}/brand/appmintly-icon-512.png`;
 const MARK_SRC_COMPACT = `${BASE_PATH}/brand/appmintly-icon-192.png`;
+const MARK_SRC_HERO = `${BASE_PATH}/brand/appmintly-icon-1024.png`;
 const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
-const COMPACT_SRC = `${BASE_PATH}/brand/appmintly-logo-compact.png`;
+
+/**
+ * Phase 17 — the AppMintly brand wordmark, one shared component used
+ * everywhere (navbar, hero, footer brand column, footer closing block).
+ * Brand treatment: exact letter-by-letter brand colors, replacing the
+ * earlier two-tone system. Fixed brand colors in all placements and both
+ * themes (logotype treatment); the logo/icon artwork images themselves
+ * are never recolored.
+ *   A p p = #087A5B Deep Emerald   M = #1248A8 Deep Sapphire
+ *   i = #1565E8 Bright Blue         n = #E31E24 Brand Red
+ *   t = #F4B400 Rich Gold           l = #1267E8 Royal Blue
+ *   y = #E31E24 Brand Red
+ */
+const WORDMARK = 'AppMintly';
+const WORDMARK_LETTER_COLORS = [
+  '#087A5B', // A — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#1248A8', // M — Deep Sapphire
+  '#1565E8', // i — Bright Blue
+  '#E31E24', // n — Brand Red
+  '#F4B400', // t — Rich Gold
+  '#1267E8', // l — Royal Blue
+  '#E31E24', // y — Brand Red
+];
+
+interface AppMintlyWordmarkTextProps {
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export const AppMintlyWordmarkText: React.FC<AppMintlyWordmarkTextProps> = ({
+  className = '',
+  style,
+}) => (
+  <span className={className} style={style} aria-label="AppMintly">
+    <span aria-hidden="true">
+      {WORDMARK.split('').map((letter, i) => (
+        <span key={i} style={{ color: WORDMARK_LETTER_COLORS[i] }}>
+          {letter}
+        </span>
+      ))}
+    </span>
+  </span>
+);
 
 export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
   size = 'md',
   variant = 'horizontal',
+  showTagline = false,
   className = '',
 }) => {
   const scaleMap = {
-    // mark: square symbol edge; horizontal: compact lockup height;
-    // full: complete vertical lockup edge.
-    xs: { mark: 26, horizontal: 24, full: 96 },
-    sm: { mark: 34, horizontal: 32, full: 128 },
-    md: { mark: 42, horizontal: 40, full: 160 },
-    lg: { mark: 58, horizontal: 52, full: 220 },
-    xl: { mark: 84, horizontal: 72, full: 320 },
+    xs: { mark: 26, text: 15, full: 96 },
+    sm: { mark: 34, text: 18, full: 128 },
+    md: { mark: 42, text: 21, full: 160 },
+    lg: { mark: 58, text: 27, full: 220 },
+    xl: { mark: 84, text: 36, full: 320 },
   };
   const current = scaleMap[size];
+  const isDark = variant === 'dark';
 
   const Mark = (
     // eslint-disable-next-line @next/next/no-img-element
@@ -75,6 +105,24 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
       className="shrink-0 rounded-md object-contain"
       style={{ width: current.mark, height: current.mark }}
     />
+  );
+
+  const TextLabel = (
+    <div className="flex flex-col select-none leading-none">
+      <AppMintlyWordmarkText
+        className="font-black tracking-tight"
+        style={{ fontSize: current.text }}
+      />
+      {showTagline && (
+        <span
+          className={`text-[11px] font-medium tracking-wide mt-0.5 ${
+            isDark ? 'text-white/70' : 'text-mut'
+          }`}
+        >
+          Discover. Install. Experience.
+        </span>
+      )}
+    </div>
   );
 
   if (variant === 'mark') {
@@ -97,19 +145,11 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
     );
   }
 
-  // 'horizontal' (and legacy 'dark'): the complete official lockup artwork —
-  // exact multicolor wordmark + gold DISCOVER • INSTALL • EXPERIENCE tagline —
-  // arranged compactly for horizontal placements. Rendered as one image asset.
   return (
-    <div className={`inline-flex items-center ${className}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={COMPACT_SRC}
-        alt="AppMintly — Discover. Install. Experience."
-        height={current.horizontal}
-        className="shrink-0 rounded-md object-contain"
-        style={{ height: current.horizontal, width: 'auto' }}
-      />
+    <div className={`inline-flex items-center gap-2.5 ${className}`}>
+      {Mark}
+      {TextLabel}
     </div>
   );
 };
+
