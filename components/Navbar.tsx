@@ -232,7 +232,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer Menu — Phase 16.10 Menu Experience 2.0 */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-card border-b border-line px-4 pt-4 pb-5 space-y-5 animate-in fade-in slide-in-from-top-2 motion-reduce:animate-none">
+        <div className="lg:hidden max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain bg-card border-b border-line px-4 pt-4 pb-5 space-y-5 animate-in fade-in slide-in-from-top-2 motion-reduce:animate-none">
           {/* Brand area */}
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-3">
