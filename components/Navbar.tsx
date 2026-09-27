@@ -383,12 +383,12 @@ export const Navbar: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1 py-1.5">
+                <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/cookies" onClick={() => setMobileMenuOpen(false)} className="text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1 py-1.5">
+                <Link href="/cookies" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
                   Cookie Policy
                 </Link>
               </li>
