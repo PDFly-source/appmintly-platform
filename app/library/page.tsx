@@ -34,6 +34,7 @@ import {
   clearRecentlyDownloaded,
   clearAllLocalData,
   trackAppDownloaded,
+  trackAppOpened,
   LocalHistoryItem,
 } from '@/lib/localLibrary';
 
@@ -400,6 +401,7 @@ function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) =>
               href={launchUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackAppOpened(app.id)}
               className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-inkbg text-white text-xs font-bold hover:bg-cta transition"
             >
               <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
