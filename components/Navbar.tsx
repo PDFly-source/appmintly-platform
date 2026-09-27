@@ -239,7 +239,7 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40"
+                className="flex items-center gap-1.5 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40"
               >
                 <span aria-hidden="true" className="inline-flex items-center">
                   <AppMintlyLogo size="sm" variant="mark" />
@@ -378,7 +378,7 @@ export const Navbar: React.FC = () => {
           <nav aria-label="Legal" className="pt-2 border-t border-line/60">
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <li>
-                <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1 py-1.5">
+                <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
                   Privacy Policy
                 </Link>
               </li>
