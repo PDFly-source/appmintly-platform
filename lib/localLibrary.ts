@@ -118,6 +118,23 @@ export function trackAppDownloaded(appId: string) {
   safeSet(DOWNLOADED_KEY, updated);
 }
 
+// Remove a single recently-opened entry (Library 2.0 manage action).
+// Uses the same OPENED_KEY store — no new storage system.
+export function removeRecentlyOpenedItem(appId: string) {
+  const current: LocalHistoryItem[] = safeGet(OPENED_KEY);
+  safeSet(OPENED_KEY, current.filter((item) => item.appId !== appId));
+}
+
+// Clear only the recently-opened history (same OPENED_KEY store).
+export function clearRecentlyOpened() {
+  safeSet(OPENED_KEY, []);
+}
+
+// Clear only the download history (same DOWNLOADED_KEY store).
+export function clearRecentlyDownloaded() {
+  safeSet(DOWNLOADED_KEY, []);
+}
+
 // Clear all local data
 export function clearAllLocalData() {
   if (typeof window === 'undefined') return;
