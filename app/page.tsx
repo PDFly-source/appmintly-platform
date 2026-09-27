@@ -92,12 +92,10 @@ export default function HomePage() {
   // padded with fabricated content.
   const popularCategoryTiles = React.useMemo(() => {
     const androidCount = publishedApps.filter((a) => hasAuthoritativeApkRelease(a)).length;
-    const webAppCount = webApps.length;
     const countForCategory = (slug: string) =>
       publishedApps.filter((a) => (a.category || '').toLowerCase().replace(/\s+/g, '-') === slug).length;
     return [
       { label: 'Android Apps', href: '/explore?type=Android+APK', Icon: Smartphone, color: '#16A765', count: androidCount },
-      { label: 'Web Apps', href: '/explore?type=Web+App', Icon: Globe, color: '#1565E8', count: webAppCount },
       { label: 'Games', href: '/explore?category=games', Icon: Gamepad2, color: '#E31E24', count: countForCategory('games') },
       { label: 'Tools', href: '/explore?category=tools', Icon: Wrench, color: '#F4B400', count: countForCategory('tools') },
       { label: 'Utilities', href: '/explore?category=utilities', Icon: Layers, color: '#1248A8', count: countForCategory('utilities') },
@@ -146,7 +144,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
-                Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
+                Your digital world, one place. Browse verified apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
               </p>
 
               <div className="pt-1">
@@ -340,7 +338,7 @@ export default function HomePage() {
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {popularCategoryTiles.map((tile) => (
               <Link
                 key={tile.label}
