@@ -27,6 +27,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}terms${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}cookies${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}contact${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
+    { url: `${SITE_URL}services/security${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}services/install-help${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}services/request-app${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}services/suggest-feature${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}services/report-issue${CANONICAL_TRAILING_SLASH}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   // Public publisher profile pages (one per repository-verified identity).

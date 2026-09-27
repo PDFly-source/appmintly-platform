@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bookmark, Menu, X, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail } from 'lucide-react';
+import { Search, Bookmark, Menu, X, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
@@ -330,6 +330,31 @@ export const Navbar: React.FC = () => {
                   desc={favCount > 0 ? `${favCount} saved` : 'Your bookmarked apps'}
                   onNavigate={() => setMobileMenuOpen(false)}
                 />
+              </li>
+            </ul>
+          </nav>
+
+          {/* Services */}
+          <nav aria-label="Services">
+            <MenuSectionLabel>Services</MenuSectionLabel>
+            <ul className="space-y-1">
+              <li>
+                <MenuRow href="/services/security" label="Security & Verification" icon={ShieldCheck} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/services/install-help" label="App Install Help" icon={Package} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/services/request-app" label="Request an App" icon={PackagePlus} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/services/suggest-feature" label="Suggest a Feature" icon={Lightbulb} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/services/report-issue" label="Report an Issue" icon={Bug} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/contact" label="Support" icon={MessageCircle} onNavigate={() => setMobileMenuOpen(false)} />
               </li>
             </ul>
           </nav>
