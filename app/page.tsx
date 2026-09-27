@@ -206,6 +206,27 @@ export default function HomePage() {
             <Wrench className="w-3.5 h-3.5 text-[#F4B400]" />
             Tools
           </Link>
+          <Link
+            href="/explore?type=Android+APK"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-[#16A765]" />
+            Android Apps
+          </Link>
+          <Link
+            href="/explore?category=utilities"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <Layers className="w-3.5 h-3.5 text-[#1976F3]" />
+            Utilities
+          </Link>
+          <Link
+            href="/explore?category=education"
+            className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-[#16A765]" />
+            Education
+          </Link>
         </div>
 
         {/* Trust strip (truthful, evidence-backed capabilities only) */}
