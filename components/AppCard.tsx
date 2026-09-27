@@ -33,7 +33,7 @@ import {
 
 interface AppCardProps {
   app: AppItem;
-  variant?: 'grid' | 'compact' | 'featured';
+  variant?: 'grid' | 'compact' | 'featured' | 'explore';
 }
 
 export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
@@ -264,6 +264,119 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           {getActionLabel()}
         </button>
       </Link>
+    );
+  }
+
+  // Explore variant (Phase 16.11 Explore Experience 2.0).
+  // Premium editorial card used ONLY on the Explore page: at most two
+  // data-driven badges (platform/type stays metadata text, not a badge),
+  // a larger icon, a tighter hierarchy, and the exact same battle-tested
+  // bookmark + Get App download behavior as every other variant.
+  if (variant === 'explore') {
+    const dev = resolveDeveloper(app);
+
+    // Badge reduction: strictly data-driven, max two prominent badges.
+    const exploreBadges: React.ReactNode[] = [];
+    if (isNewApp(app)) {
+      exploreBadges.push(
+        <span
+          key="new"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cta/12 text-cta border border-cta/25"
+        >
+          New
+        </span>
+      );
+    }
+    if (app.original) {
+      exploreBadges.push(
+        <span
+          key="original"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#F7B928]/15 text-[#8C6000] dark:text-[#F7B928] border border-[#F7B928]/30"
+        >
+          <Sparkles className="w-3 h-3 text-[#F7B928]" aria-hidden="true" />
+          Original
+        </span>
+      );
+    }
+    if (app.featured) {
+      exploreBadges.push(
+        <span
+          key="featured"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border border-line text-mut"
+        >
+          Featured
+        </span>
+      );
+    }
+
+    return (
+      <div className="group relative flex flex-col h-full p-4 sm:p-5 rounded-2xl bg-card border border-line card-accent">
+        {/* Badges (max 2) + Library bookmark (44px touch target) */}
+        <div className="flex items-center justify-between gap-2 min-h-11 mb-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {exploreBadges.slice(0, 2)}
+          </div>
+          <button
+            onClick={handleFavoriteClick}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-cta hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
+            title={favorite ? 'Remove from Library' : 'Save to Library'}
+            aria-label={favorite ? `Remove ${app.name} from Library` : `Save ${app.name} to Library`}
+            aria-pressed={favorite}
+          >
+            <Bookmark
+              className={`w-4 h-4 ${favorite ? 'fill-cta text-cta' : ''}`}
+            />
+          </button>
+        </div>
+
+        {/* Identity: large app icon + name + publisher + category / format */}
+        <Link
+          href={`/app/${app.slug}`}
+          className="flex items-start gap-3.5 sm:gap-4 mb-3 focus:outline-hidden"
+        >
+          <AppIcon
+            src={app.icon}
+            name={app.name}
+            size="xl"
+            themeColor={app.themeColor}
+            category={app.category}
+            className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
+          />
+          <div className="min-w-0 flex-1 pt-1">
+            <h3 className="text-base sm:text-lg font-black text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
+              {app.name}
+            </h3>
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-mut min-w-0">
+              <span className="truncate">{dev.name}</span>
+              {dev.verified && <VerifiedBadge size="xs" />}
+            </p>
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-mut/90 uppercase tracking-wide">
+              <span>{app.category}</span>
+              <span aria-hidden="true" className="w-1 h-1 rounded-full bg-cta/70 shrink-0" />
+              <span>{app.type}</span>
+            </p>
+          </div>
+        </Link>
+
+        {/* Two-line clamped description keeps card heights consistent */}
+        <p className="text-xs sm:text-[13px] text-mut line-clamp-2 leading-relaxed flex-1 mb-3">
+          {app.shortDescription || app.description}
+        </p>
+
+        {/* Editorial footer: version · size + emerald Get App CTA */}
+        <div className="pt-3.5 border-t border-line/60 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-bold text-mut truncate">
+            v{app.version}{sizeLabel ? ` · ${sizeLabel}` : ''}
+          </span>
+          <button
+            onClick={handleActionClick}
+            className="btn-cta shrink-0 inline-flex items-center gap-1.5 h-11 px-5 rounded-full text-xs font-bold cursor-pointer"
+          >
+            {getActionIcon()}
+            <span>{getActionLabel()}</span>
+          </button>
+        </div>
+      </div>
     );
   }
 
