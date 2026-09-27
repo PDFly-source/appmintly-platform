@@ -24,7 +24,7 @@ export interface RepoBrandAsset {
 export const REPO_BRAND_ASSETS: RepoBrandAsset[] = [
   { path: '/brand/appmintly-icon-192.png', sha256: '78356ab81991996cc99fb7685dd2c0d249c33d406b3547191eeb4edd64fd8e64', size: 41797 },
   { path: '/brand/appmintly-icon.png', sha256: 'd32bf84b96f72572ca759e96aa9ecb5b2ea552571f20ef0edcd25bae727d5384', size: 365106 },
-  { path: '/brand/appmintly-logo-compact.png', sha256: '9342230b79af19ede7ed504d0eef81354760f42c34aef8758dc236d1f3211b1f', size: 449543 },
+  { path: '/brand/appmintly-logo-compact.png', sha256: 'a97aec087cebb5f30da301bef6b5675a6e94b1cbe536a89c2d07437b48543d2d', size: 661750 },
   { path: '/brand/appmintly-logo-full.png', sha256: 'e9c9528121d0f93d2a1a9ad334fd4132b31623019f9bdde20f44e3dac932cd22', size: 830602 },
   { path: '/brand/pdfminifly-icon-384.png', sha256: '2645cb6fe7118e34d2941d23245cefabb80b23f0660f33052bf82bcd6f82ba63', size: 88287 },
   { path: '/brand/studyria-icon-384.png', sha256: 'd73721749806d27c2df00aea8a6c4bf675465d49591c0a97578101db9a71896b', size: 142118 },

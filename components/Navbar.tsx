@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bookmark, Menu, X, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
-import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
+import { AppMintlyLogo } from './AppMintlyLogo';
 import { AppIcon } from '@/components/AppIcon';
 import { getLocalFavorites } from '@/lib/localLibrary';
 
@@ -132,11 +132,8 @@ export const Navbar: React.FC = () => {
           {/* Phase 17: per-letter brand wordmark colors beside the compact
               mark — 18px/900, still safely narrower than the overflowing md
               horizontal lockup at 360px. */}
-          <span className="sm:hidden inline-flex items-center gap-1.5">
-            <span aria-hidden="true" className="inline-flex items-center">
-              <AppMintlyLogo size="sm" variant="mark" />
-            </span>
-            <AppMintlyWordmarkText className="font-black tracking-tight leading-none select-none text-[18px]" />
+          <span className="sm:hidden">
+            <AppMintlyLogo size="sm" variant="horizontal" />
           </span>
           {/* Desktop lockup: md from sm, proportionally larger (lg) from xl —
               same official artwork, no h-16 header height change. */}
@@ -241,10 +238,7 @@ export const Navbar: React.FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-1.5 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40"
               >
-                <span aria-hidden="true" className="inline-flex items-center">
-                  <AppMintlyLogo size="sm" variant="mark" />
-                </span>
-                <AppMintlyWordmarkText className="font-black tracking-tight leading-none select-none text-[18px]" />
+                <AppMintlyLogo size="md" variant="horizontal" />
               </Link>
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-mut shrink-0">
                 <span
