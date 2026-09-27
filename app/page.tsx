@@ -40,7 +40,7 @@ import { AppCard } from '@/components/AppCard';
 import { AppMintlyLogo } from '@/components/AppMintlyLogo';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { Reveal } from '@/components/Reveal';
-import { HeroEcosystemVisual } from '@/components/HeroEcosystemVisual';
+import { PremiumHeroVisual } from '@/components/PremiumHeroVisual';
 import { HeroFeatureIndicators } from '@/components/HeroFeatureIndicators';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 
@@ -113,44 +113,67 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page text-ink">
-      {/* 1. HERO — Phase 18 Homepage Experience 2.0 */}
+      {/* 1. HERO — Phase 19: premium dark hero banner. Replaces the Phase 18
+          light-card hero visual entirely (component removed, not hidden). */}
       <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center mb-8 sm:mb-10">
-          {/* Hero copy */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#087A5B]/10 border border-[#087A5B]/25 text-[#087A5B] text-[11px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3 h-3" aria-hidden="true" />
-              Verified Apps &amp; Tools
-            </span>
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-2xl border border-white/10 mb-8 sm:mb-10">
+          {/* Restrained atmospheric glow — brand accents only, no stock imagery */}
+          <div
+            className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-30 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(22,167,101,0.5), transparent 70%)', filter: 'blur(50px)' }}
+          />
+          <div
+            className="absolute -bottom-24 -right-10 w-80 h-80 rounded-full opacity-25 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(21,101,232,0.5), transparent 70%)', filter: 'blur(55px)' }}
+          />
+          <div
+            className="absolute top-1/2 right-1/3 w-56 h-56 rounded-full opacity-15 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(244,180,0,0.5), transparent 70%)', filter: 'blur(45px)' }}
+          />
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08]">
-              <span className="block text-ink">Discover.</span>
-              <span className="block" style={{ color: '#087A5B' }}>Install.</span>
-              <span className="block" style={{ color: '#1565E8' }}>Experience.</span>
-            </h1>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center p-5 sm:p-10 lg:p-14">
+            {/* Hero copy */}
+            <div className="lg:col-span-7 space-y-4 sm:space-y-5 order-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white text-[11px] font-black uppercase tracking-wider">
+                <Sparkles className="w-3 h-3" aria-hidden="true" />
+                Verified Apps &amp; Tools
+              </span>
 
-            <p className="text-base sm:text-lg text-mut max-w-xl leading-relaxed">
-              Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
-            </p>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08]">
+                <span className="block text-white">Discover.</span>
+                <span className="block" style={{ color: '#16A765' }}>Install.</span>
+                <span className="block" style={{ color: '#3B93FF' }}>Experience.</span>
+              </h1>
 
-            <div className="pt-1">
-              <Link
-                href="/explore"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
-                style={{ backgroundColor: '#087A5B' }}
-              >
-                Explore Apps
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <p className="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
+                Your digital world, one place. Browse verified apps, web apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
+              </p>
+
+              <div className="pt-1">
+                <Link
+                  href="/explore"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                  style={{ backgroundColor: '#16A765' }}
+                >
+                  Explore Apps
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
 
-            {/* Feature indicators — truthful product-level labels only */}
-            <HeroFeatureIndicators className="max-w-md pt-2" />
-          </div>
+            {/* Premium hero visual — code-built, real AppMintly mark, no stock imagery */}
+            <div className="lg:col-span-5 flex justify-center order-2">
+              <PremiumHeroVisual />
+            </div>
 
-          {/* Hero ecosystem visual — code-built, real AppMintly mark, no stock imagery */}
-          <div className="lg:col-span-5 flex justify-center">
-            <HeroEcosystemVisual />
+            {/* Feature indicators — truthful product-level labels only, full width beneath
+                both columns. Hidden below sm: the Phase 19 mobile hero order is strictly
+                eyebrow -> headline -> description -> CTA -> compact visual, and this keeps
+                the mobile hero from growing tall with duplicate content (the same 4 facts
+                are also always visible in the trust strip just below the search bar). */}
+            <div className="hidden sm:block col-span-1 lg:col-span-12 order-3">
+              <HeroFeatureIndicators dark className="max-w-xl lg:max-w-none" />
+            </div>
           </div>
         </div>
 
