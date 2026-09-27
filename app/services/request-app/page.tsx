@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
-import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
-import Link from 'next/link';
 import { PackagePlus } from 'lucide-react';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
+import { CATEGORIES } from '@/data/categories';
+import SubmissionForm from '@/components/services/SubmissionForm';
 
 export const metadata: Metadata = {
   title: 'Request an App - AppMintly',
   description:
-    'How to request an app for the AppMintly marketplace: what to include and where requests are reviewed.',
+    'Request an app, tool, or web app for the AppMintly marketplace. Requests are reviewed by the AppMintly team.',
   alternates: {
     canonical: `https://pdfly-source.github.io/appmintly-platform/services/request-app${CANONICAL_TRAILING_SLASH}`,
   },
@@ -15,56 +16,78 @@ export const metadata: Metadata = {
 export default function RequestAppPage() {
   return (
     <div className="min-h-screen bg-page text-ink">
-      <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
+      <div className="px-4 sm:px-6 max-w-[760px] mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <PackagePlus className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Request an App</h1>
         </div>
-        <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
+        <p className="text-sm text-mut mb-8">
+          Tell us which app, tool, or web app you&apos;d like to see in AppMintly.
+        </p>
 
-        <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
-          <section aria-labelledby="req-how">
-            <h2 id="req-how" className="text-base font-black mb-2">How Requests Work</h2>
-            <p>
-              AppMintly has no request form or mailbox — the marketplace is developed in a public
-              GitHub repository, and that is where app requests are collected and reviewed. Open a
-              request in the repository&apos;s issues with the details below, and it will be
-              considered alongside the publishing plans of the marketplace&apos;s publishers.
-            </p>
-            <p className="mt-2">
-              <a
-                href="https://github.com/PDFly-source/appmintly-platform/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
-              >
-                Open a request on GitHub →
-              </a>
-            </p>
-          </section>
+        <SubmissionForm
+          submissionType="request_app"
+          submitLabel="Submit Request"
+          successTitle="Request received"
+          successMessage="Thanks — your request has been sent to the AppMintly team."
+          fields={[
+            {
+              name: 'app_name',
+              label: 'App name *',
+              required: true,
+              placeholder: 'For example: Flashcard Trainer',
+            },
+            {
+              name: 'app_link',
+              label: 'App link / website',
+              placeholder: 'https://example.com',
+              hint: 'Optional — if the app already exists somewhere.',
+            },
+            {
+              name: 'format',
+              label: 'Desired format *',
+              required: true,
+              kind: 'select',
+              options: ['Android APK', 'PWA', 'Web App', 'Web Game'],
+              placeholder: 'Choose a format',
+            },
+            {
+              name: 'category',
+              label: 'Category',
+              kind: 'select',
+              options: CATEGORIES.map((c) => c.name),
+              placeholder: 'Choose a category',
+            },
+            {
+              name: 'use_case',
+              label: 'What would you use it for? *',
+              required: true,
+              kind: 'textarea',
+              rows: 4,
+              placeholder: 'A short use case helps us prioritize the right apps.',
+            },
+            {
+              name: 'details',
+              label: 'Additional details',
+              kind: 'textarea',
+              rows: 3,
+              placeholder: 'Anything else worth knowing (optional).',
+            },
+            {
+              name: 'email',
+              label: 'Email',
+              autoComplete: 'email',
+              placeholder: 'you@example.com',
+              hint: 'Optional — only used if the team needs to follow up.',
+            },
+          ]}
+        />
 
-          <section aria-labelledby="req-include">
-            <h2 id="req-include" className="text-base font-black mb-2">What to Include</h2>
-            <ul className="list-disc pl-5 space-y-1.5">
-              <li>The app name and, if it exists elsewhere, a link to it.</li>
-              <li>The type you would like it published as: Android APK, PWA, web app, or web game.</li>
-              <li>What you would use it for — a short use case helps prioritize.</li>
-            </ul>
-          </section>
-
-          <section aria-labelledby="req-honest">
-            <h2 id="req-honest" className="text-base font-black mb-2">What to Expect</h2>
-            <p>
-              Requests are wishes, not orders: publishing depends on a publisher deciding to build
-              and release the app, and every published app still goes through the marketplace&apos;s{' '}
-              <Link href="/services/security" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
-                verification practices
-              </Link>
-              . There is no queue position or delivery date, and AppMintly does not republish apps
-              from other developers without their involvement.
-            </p>
-          </section>
-        </div>
+        <p className="mt-8 text-xs text-mut leading-relaxed">
+          Requests are wishes, not orders: publishing depends on a publisher deciding to build and
+          release the app, and every published app still goes through the marketplace&apos;s
+          verification practices. There is no queue position or delivery date.
+        </p>
       </div>
     </div>
   );

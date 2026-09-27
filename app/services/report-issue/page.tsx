@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
-import Link from 'next/link';
 import { Bug } from 'lucide-react';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
+import SubmissionForm from '@/components/services/SubmissionForm';
 
 export const metadata: Metadata = {
   title: 'Report an Issue - AppMintly',
   description:
-    'Report broken links, incorrect information, or problems with AppMintly apps and pages.',
+    'Report a broken download, incorrect information, or a layout problem on the AppMintly marketplace.',
   alternates: {
     canonical: `https://pdfly-source.github.io/appmintly-platform/services/report-issue${CANONICAL_TRAILING_SLASH}`,
   },
@@ -15,65 +15,89 @@ export const metadata: Metadata = {
 export default function ReportIssuePage() {
   return (
     <div className="min-h-screen bg-page text-ink">
-      <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
+      <div className="px-4 sm:px-6 max-w-[760px] mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <Bug className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Report an Issue</h1>
         </div>
-        <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
+        <p className="text-sm text-mut mb-8">
+          Found something broken or incorrect? Send the details and we&apos;ll review it.
+        </p>
 
-        <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
-          <section aria-labelledby="rep-what">
-            <h2 id="rep-what" className="text-base font-black mb-2">What to Report</h2>
-            <ul className="list-disc pl-5 space-y-1.5">
-              <li>Broken download or release links on an app detail page.</li>
-              <li>A SHA-256 checksum that does not match the downloaded file.</li>
-              <li>Incorrect app information, versions, or screenshots.</li>
-              <li>Anything on the site that renders incorrectly or fails to work.</li>
-            </ul>
-          </section>
+        <SubmissionForm
+          submissionType="issue_report"
+          submitLabel="Submit Report"
+          successTitle="Report received"
+          successMessage="Thanks — the issue has been submitted for review."
+          fields={[
+            {
+              name: 'issue_type',
+              label: 'Issue type *',
+              required: true,
+              kind: 'select',
+              options: [
+                'Broken download',
+                'Broken link',
+                'Incorrect app information',
+                'Incorrect version',
+                'Incorrect screenshot',
+                'UI / layout problem',
+                'Other',
+              ],
+              placeholder: 'Choose an issue type',
+            },
+            {
+              name: 'app_name',
+              label: 'App name',
+              placeholder: 'For example: PDFMiniFly',
+              hint: 'Optional — if the issue is about a specific app.',
+            },
+            {
+              name: 'app_version',
+              label: 'App version',
+              placeholder: 'For example: 2.1.1',
+            },
+            {
+              name: 'page_url',
+              label: 'Page URL',
+              placeholder: 'https://pdfly-source.github.io/appmintly-platform/...',
+              hint: 'Optional — the page where you saw the problem.',
+            },
+            {
+              name: 'what_happened',
+              label: 'What happened? *',
+              required: true,
+              kind: 'textarea',
+              rows: 4,
+              placeholder: 'What you did and what went wrong.',
+            },
+            {
+              name: 'expected',
+              label: 'What did you expect? *',
+              required: true,
+              kind: 'textarea',
+              rows: 3,
+              placeholder: 'What you expected to happen instead.',
+            },
+            {
+              name: 'device',
+              label: 'Device / browser',
+              placeholder: 'For example: Pixel 7, Chrome',
+            },
+            {
+              name: 'email',
+              label: 'Email',
+              autoComplete: 'email',
+              placeholder: 'you@example.com',
+              hint: 'Optional — only used if the team needs to follow up.',
+            },
+          ]}
+        />
 
-          <section aria-labelledby="rep-how">
-            <h2 id="rep-how" className="text-base font-black mb-2">How to Report</h2>
-            <p>
-              Technical issues with the marketplace are handled in the public GitHub repository.
-              Open an issue there with the details below — reports are public and are triaged with
-              the normal site work.
-            </p>
-            <p className="mt-2">
-              <a
-                href="https://github.com/PDFly-source/appmintly-platform/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
-              >
-                Open an issue on GitHub →
-              </a>
-            </p>
-          </section>
-
-          <section aria-labelledby="rep-details">
-            <h2 id="rep-details" className="text-base font-black mb-2">What to Include</h2>
-            <ul className="list-disc pl-5 space-y-1.5">
-              <li>The app name and version (for app issues) or the page URL.</li>
-              <li>What you expected and what actually happened.</li>
-              <li>Your device/browser, if it affects the behavior.</li>
-            </ul>
-          </section>
-
-          <section aria-labelledby="rep-security">
-            <h2 id="rep-security" className="text-base font-black mb-2">Security-Related Reports</h2>
-            <p>
-              If something looks like a security problem (a suspicious file, a mismatched checksum),
-              say so in the title so it is seen quickly. Background on what AppMintly verifies is
-              on the{' '}
-              <Link href="/services/security" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
-                Security &amp; Verification
-              </Link>{' '}
-              page.
-            </p>
-          </section>
-        </div>
+        <p className="mt-8 text-xs text-mut leading-relaxed">
+          Reports are reviewed by the AppMintly team against the current production deployment.
+          Nothing changes until a fix is verified — production apps and downloads stay untouched.
+        </p>
       </div>
     </div>
   );
