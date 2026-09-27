@@ -116,7 +116,7 @@ export default function HomePage() {
       {/* 1. HERO — Phase 19: premium dark hero banner. Replaces the Phase 18
           light-card hero visual entirely (component removed, not hidden). */}
       <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
-        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-2xl border border-white/10 mb-8 sm:mb-10">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-2xl border border-white/10 mb-6 sm:mb-10">
           {/* Restrained atmospheric glow — brand accents only, no stock imagery */}
           <div
             className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-30 pointer-events-none"
@@ -131,9 +131,9 @@ export default function HomePage() {
             style={{ background: 'radial-gradient(circle, rgba(244,180,0,0.5), transparent 70%)', filter: 'blur(45px)' }}
           />
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center p-5 sm:p-10 lg:p-14">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 lg:gap-10 items-center p-4 sm:p-10 lg:p-14">
             {/* Hero copy */}
-            <div className="lg:col-span-7 space-y-4 sm:space-y-5 order-1">
+            <div className="lg:col-span-7 space-y-3 sm:space-y-5 order-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white text-[11px] font-black uppercase tracking-wider">
                 <Sparkles className="w-3 h-3" aria-hidden="true" />
                 Verified Apps &amp; Tools
@@ -329,7 +329,7 @@ export default function HomePage() {
           than hidden or fabricated, matching the existing /categories page
           convention (Categories Experience 2.0). */}
       <Reveal>
-        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-10" aria-label="Popular categories">
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-8" aria-label="Popular categories">
           <div className="flex items-end justify-between mb-4">
             <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight">Popular Categories</h2>
             <Link
@@ -340,22 +340,24 @@ export default function HomePage() {
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {popularCategoryTiles.map((tile) => (
               <Link
                 key={tile.label}
                 href={tile.href}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-card border border-line hover:border-ink/30 px-3 py-4 text-center transition"
+                className="flex items-center gap-2.5 rounded-xl bg-card border border-line hover:border-ink/30 px-3 py-2.5 transition"
               >
                 <span
-                  className="inline-flex items-center justify-center w-11 h-11 rounded-xl shrink-0"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
                   style={{ backgroundColor: `${tile.color}1F` }}
                 >
-                  <tile.Icon className="w-5 h-5" style={{ color: tile.color }} aria-hidden="true" />
+                  <tile.Icon className="w-4 h-4" style={{ color: tile.color }} aria-hidden="true" />
                 </span>
-                <span className="text-xs font-bold text-ink leading-tight">{tile.label}</span>
-                <span className="text-[10px] text-mut leading-tight">
-                  {tile.count > 0 ? `${tile.count} app${tile.count === 1 ? '' : 's'}` : tile.count === -1 ? 'Explore all' : 'Coming Soon'}
+                <span className="flex flex-col min-w-0 text-left leading-tight">
+                  <span className="text-xs font-bold text-ink truncate">{tile.label}</span>
+                  <span className="text-[10px] text-mut">
+                    {tile.count > 0 ? `${tile.count} app${tile.count === 1 ? '' : 's'}` : tile.count === -1 ? 'Explore all' : 'Coming Soon'}
+                  </span>
                 </span>
               </Link>
             ))}
