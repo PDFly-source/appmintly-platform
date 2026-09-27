@@ -232,7 +232,14 @@
     "shortDescription": "Assam-focused study app for ADRE, APSC, Assam Police & TET with PDFs, PYQs, quizzes, mock tests, MCQs, current affairs and career updates.",
     "icon": "/brand/studyria-icon-384.png",
     "screenshots": [
-      "https://studyria.qzz.io/og-image.png"
+      "/assets/apps/studyria/screenshots/screenshot-1-fc38125d79.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-87411be853.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-3e7965569e.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-d870e61b5f.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-8276f1da80.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-98478952b0.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-539eb33075.png",
+      "/assets/apps/studyria/screenshots/screenshot-1-91c7cdda79.png"
     ],
     "url": "https://studyria.qzz.io/",
     "launchUrl": "https://studyria.qzz.io/",
@@ -244,7 +251,7 @@
     "version": "2.0.2",
     "previousVersion": "1.9.0",
     "releaseDate": "2026-09-20",
-    "lastUpdated": "2026-09-26",
+    "lastUpdated": "2026-09-27",
     "publishedAt": "2026-09-20T10:00:00.000Z",
     "themeColor": "#16A765",
     "backgroundColor": "#F8F2E7",
@@ -263,7 +270,13 @@
       "Curated study materials, downloadable PDFs, and previous years question papers (PYQs)",
       "Interactive timed mock tests, chapter-wise MCQs, and real-time score tracking",
       "Daily Assam & Northeast current affairs digest and syllabus-focused notes",
-      "Instant career announcements and government recruitment notification updates"
+      "Instant career announcements and government recruitment notification updates",
+      "Real-Time Competitive Arena Battles — Challenge other learners, compete live, and sharpen your exam skills.",
+      "Daily Assam & Northeast Current Affairs",
+      "Offline PDF Prep & ADRE Grade III/IV Mock Tests",
+      "Government Recruitment & Career Alerts",
+      "Syllabus-focused Study Resources",
+      "Chapter-wise & Subject-wise MCQs"
     ],
     "tags": [
       "education",
@@ -278,7 +291,9 @@
       "pyq"
     ],
     "releaseNotes": [
-      "v2.0.0: Full launch with ADRE Grade III & IV mock tests and offline PDF prep."
+      "Full launch with ADRE Grade III & IV mock tests and offline PDF preparation.",
+      "Updated production release with refreshed study resources, career updates and the latest Android APK.",
+      "v2.0.2: Latest production release of Studyria with updated app and marketplace metadata."
     ],
     "changelog": [
       "v2.0.0: Added interactive quizzes, full-length mock tests, and latest current affairs syllabus."
@@ -325,7 +340,7 @@
       "assetId": 588781895
     },
     "developerSlug": "pkd",
-    "updatedAt": "2026-09-26T07:49:19.125Z",
+    "updatedAt": "2026-09-27T10:49:35.025Z",
     "privacyTech": {
       "permissions": [
         "android.permission.INTERNET",
@@ -343,7 +358,12 @@
       "externalServices": [
         "GitHub Releases (APK distribution)"
       ]
-    }
+    },
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ]
   },
   {
     "id": "pdfminifly",
