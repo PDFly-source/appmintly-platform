@@ -35,29 +35,47 @@ const MARK_SRC_HERO = `${BASE_PATH}/brand/appmintly-icon-1024.png`;
 const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
 
 /**
- * Phase 16.8 — the AppMintly brand wordmark, one component used everywhere
- * (navbar, footer brand column, footer closing block).
- * Brand treatment: "App" #0F6B4F (dark emerald) + "Mintly" #F5EBDD
- * (warm paper cream) on the charcoal/dark surfaces.
- * On light surfaces the cream is invisible, so Mintly falls back to the
- * theme ink token there (dark contexts always get the exact cream);
- * the emerald half keeps the brand color in both themes.
+ * Phase 17 — the AppMintly brand wordmark, one shared component used
+ * everywhere (navbar, hero, footer brand column, footer closing block).
+ * Brand treatment: exact letter-by-letter brand colors, replacing the
+ * earlier two-tone system. Fixed brand colors in all placements and both
+ * themes (logotype treatment); the logo/icon artwork images themselves
+ * are never recolored.
+ *   A p p = #087A5B Deep Emerald   M = #1248A8 Deep Sapphire
+ *   i = #1565E8 Bright Blue         n = #E31E24 Brand Red
+ *   t = #F4B400 Rich Gold           l = #1267E8 Royal Blue
+ *   y = #E31E24 Brand Red
  */
+const WORDMARK = 'AppMintly';
+const WORDMARK_LETTER_COLORS = [
+  '#087A5B', // A — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#1248A8', // M — Deep Sapphire
+  '#1565E8', // i — Bright Blue
+  '#E31E24', // n — Brand Red
+  '#F4B400', // t — Rich Gold
+  '#1267E8', // l — Royal Blue
+  '#E31E24', // y — Brand Red
+];
+
 interface AppMintlyWordmarkTextProps {
   className?: string;
-  /** Mintly half color treatment; default = theme-aware ink/cream. */
-  mintlyClassName?: string;
   style?: React.CSSProperties;
 }
 
 export const AppMintlyWordmarkText: React.FC<AppMintlyWordmarkTextProps> = ({
   className = '',
-  mintlyClassName = 'text-ink dark:text-[#F5EBDD]',
   style,
 }) => (
-  <span className={className} style={style}>
-    <span className="text-[#0F6B4F]">App</span>
-    <span className={mintlyClassName}>Mintly</span>
+  <span className={className} style={style} aria-label="AppMintly">
+    <span aria-hidden="true">
+      {WORDMARK.split('').map((letter, i) => (
+        <span key={i} style={{ color: WORDMARK_LETTER_COLORS[i] }}>
+          {letter}
+        </span>
+      ))}
+    </span>
   </span>
 );
 
@@ -93,7 +111,6 @@ export const AppMintlyLogo: React.FC<AppMintlyLogoProps> = ({
     <div className="flex flex-col select-none leading-none">
       <AppMintlyWordmarkText
         className="font-black tracking-tight"
-        mintlyClassName={isDark ? 'text-[#F5EBDD]' : 'text-ink dark:text-[#F5EBDD]'}
         style={{ fontSize: current.text }}
       />
       {showTagline && (

@@ -174,11 +174,11 @@ export const Footer: React.FC = () => {
 
         {/* ---- Bottom: premium brand closing signature (Phase 16.7).
               The footer surface is always the dark inkbg (existing design
-              language), so the warm-white wordmark keeps full contrast in
-              both themes. ---- */}
+              language); the wordmark uses the shared Phase 17 per-letter
+              brand colors. ---- */}
         <div className="mt-10 pt-7 border-t border-[#F7B928]/20 flex flex-col items-center gap-2.5 text-center">
           <p className="text-[28px] lg:text-[44px] font-black tracking-tight leading-none select-none">
-            <AppMintlyWordmarkText mintlyClassName="text-[#F5EBDD]" />
+            <AppMintlyWordmarkText />
           </p>
           <p className="text-[11px] font-semibold tracking-[0.25em] text-[#F7B928]/90 select-none">
             DISCOVER <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> INSTALL{' '}
