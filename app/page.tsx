@@ -111,6 +111,67 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page text-ink">
+      {/* NEW HERO BANNER — added per user request, positioned above the
+          Search & Discovery section below. Reuses the existing code-built
+          brand components (AppMintlyLogo, HeroFeatureIndicators,
+          PremiumHeroVisual) — no stock/AI raster imagery, matching the
+          site's established "no fabricated imagery" convention. Copy
+          intentionally omits "web apps" per the earlier explicit
+          instruction to remove that phrase from the hero. */}
+      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-2xl border border-white/10 mb-6 sm:mb-10">
+          {/* Restrained atmospheric glow — brand accents only, no stock imagery */}
+          <div
+            className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-30 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(22,167,101,0.5), transparent 70%)', filter: 'blur(50px)' }}
+          />
+          <div
+            className="absolute -bottom-24 -right-10 w-80 h-80 rounded-full opacity-25 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(21,101,232,0.5), transparent 70%)', filter: 'blur(55px)' }}
+          />
+          <div
+            className="absolute top-1/2 right-1/3 w-56 h-56 rounded-full opacity-15 pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(244,180,0,0.5), transparent 70%)', filter: 'blur(45px)' }}
+          />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 lg:gap-10 items-center p-4 sm:p-10 lg:p-14">
+            {/* Hero copy */}
+            <div className="lg:col-span-7 space-y-3 sm:space-y-5 order-1">
+              <AppMintlyLogo variant="dark" size="sm" showTagline />
+
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08]">
+                <span className="block text-white">Discover.</span>
+                <span className="block" style={{ color: '#16A765' }}>Install.</span>
+                <span className="block" style={{ color: '#3B93FF' }}>Experience.</span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
+                Your digital world, one place. Browse verified apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
+              </p>
+
+              <HeroFeatureIndicators dark className="max-w-xl" />
+
+              <div className="pt-1">
+                <Link
+                  href="/explore"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                  style={{ backgroundColor: '#16A765' }}
+                >
+                  <Compass className="w-4 h-4" />
+                  Explore Apps
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Premium hero visual — code-built, real AppMintly mark, no stock imagery */}
+            <div className="lg:col-span-5 flex justify-center order-2">
+              <PremiumHeroVisual />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* SEARCH & DISCOVERY — recovered from the pre-removal Hero section per
           user request: dominant search, quick discovery buttons, discovery
           chips and the trust strip only. The decorative eyebrow badge,
