@@ -28,6 +28,9 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   useEffect(() => {
     if (featuredApps.length <= 1) return;
     const timer = setInterval(() => {
+      // Do not advance (or repaint the cross-fading hero image) while the
+      // tab is hidden — pure CPU/GPU saver, visible behavior unchanged.
+      if (document.hidden) return;
       setCurrentIndex((prev) => (prev + 1) % featuredApps.length);
     }, 6500);
     return () => clearInterval(timer);
@@ -180,7 +183,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
       <div className="absolute right-4 bottom-4 sm:right-6 sm:bottom-6 z-20 flex items-center gap-2">
         <button
           onClick={handlePrev}
-          className="p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-xs transition"
+          className="relative p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-xs transition after:absolute after:inset-[-6px] after:content-['']"
           aria-label="Previous featured app"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -202,7 +205,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
 
         <button
           onClick={handleNext}
-          className="p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-xs transition"
+          className="relative p-2 rounded-full bg-black/40 hover:bg-black/70 text-white/80 hover:text-white backdrop-blur-xs transition after:absolute after:inset-[-6px] after:content-['']"
           aria-label="Next featured app"
         >
           <ChevronRight className="w-4 h-4" />

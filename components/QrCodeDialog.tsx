@@ -108,6 +108,16 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Lock background scrolling while the dialog is open — mobile polish
+  // so touch drags on the backdrop never scroll the page behind it.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   // Escape closes the dialog
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

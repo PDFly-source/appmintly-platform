@@ -30,7 +30,7 @@ export const BottomNav: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition-all ${
                 isActive
                   ? 'text-[#E52B32] font-black scale-105'
                   : 'text-mut hover:text-ink font-semibold'

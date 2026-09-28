@@ -101,6 +101,17 @@ export function CommandPalette() {
     return () => window.removeEventListener('appmintly:open-command-palette', openPalette);
   }, []);
 
+  // Lock background scrolling while the palette is open — mobile polish
+  // so touch drags on the backdrop never scroll the page behind it.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   // Focus management: trap focus while open, restore on close
   useEffect(() => {
     if (!open) return;

@@ -283,3 +283,47 @@ body {
     box-shadow: none;
   }
 }
+
+/* ============================================================
+   Interaction smoothness pass (touch/scroll/tap polish).
+   Pure interaction improvements — zero visual redesign:
+   same colors, typography, spacing, layout and branding.
+   ============================================================ */
+
+/* Remove the default gray tap flash on mobile; feedback comes from
+   the deliberate press states below instead. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Kill the legacy double-tap-zoom tap delay on interactive controls
+   (touch-action: manipulation keeps pan + pinch zoom fully intact,
+   so accessibility and native gestures are preserved). */
+button,
+[role="button"],
+a,
+input,
+select,
+summary {
+  touch-action: manipulation;
+}
+
+/* Touch-only press feedback: a tiny, instant shrink on tap gives
+   immediate confirmation without adding hover-artifacts to touch.
+   Uses the individual `scale` property so it composes safely with
+   existing transform-based hover/centering styles. Excluded:
+   .btn-cta (has its own active state) and disabled controls.
+   Keyboard focus outlines and reduced-motion rules are untouched. */
+@media (hover: none) {
+  button:not(:disabled):not(.btn-cta):active,
+  [role="button"]:not(:disabled):active {
+    scale: 0.97;
+  }
+}
+
+/* Horizontal chip/carousel rows: contain overscroll so reaching the
+   end of the row never chains into a page scroll jump. Native
+   momentum panning is fully preserved. */
+.no-scrollbar {
+  overscroll-behavior-x: contain;
+}
