@@ -672,6 +672,41 @@ export default function AppDetailPage() {
           </section>
         </div>
 
+        {/* 3.5 DEVELOPER ECOSYSTEM CTA — discover more official apps
+            by the same verified developer. Rendered only for verified
+            publishers so the "official apps" claim stays truthful. */}
+        {resolveDeveloper(app).verified && (
+          <section
+            aria-label={`Discover more official apps by ${resolveDeveloper(app).name}`}
+            className="max-w-3xl mx-auto"
+          >
+            <div className="relative overflow-hidden rounded-[20px] bg-inkbg border border-white/10 p-5 sm:p-6 shadow-xs">
+              {/* Subtle depth: faint emerald glow */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-[#16A765]/10 blur-3xl"
+              />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#F7B928]">
+                    <span aria-hidden="true">✦ </span>Discover more from {resolveDeveloper(app).name}
+                  </p>
+                  <p className="mt-1.5 text-xs sm:text-[13px] text-white/70 font-semibold leading-relaxed">
+                    Explore official apps crafted by the same developer.
+                  </p>
+                </div>
+                <Link
+                  href="/"
+                  aria-label={`Discover official apps by ${resolveDeveloper(app).name} on AppMintly`}
+                  className="inline-flex items-center justify-center gap-1.5 mx-auto sm:mx-0 px-5 min-h-[44px] rounded-full bg-[#16A765] text-[#0A1F14] text-xs font-black tracking-wide hover:bg-[#128551] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16A765] focus-visible:ring-offset-2 focus-visible:ring-offset-inkbg transition-colors"
+                >
+                  Discover Apps <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* 4. MORE APPS IN CATEGORY */}
         {relatedApps.length > 0 && (
           <section className="space-y-4 pt-4">
