@@ -145,7 +145,7 @@ export default function HomePage() {
                 <span className="block" style={{ color: '#3B93FF' }}>Experience.</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed">
+              <p className="text-base sm:text-lg text-white/75 max-w-xl leading-relaxed">
                 Your digital world, one place. Browse verified apps, games, tools and websites &mdash; fast, lightweight and directly accessible on any device.
               </p>
 
@@ -154,7 +154,7 @@ export default function HomePage() {
               <div className="pt-1">
                 <Link
                   href="/explore"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-white text-sm font-bold shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50"
                   style={{ backgroundColor: '#16A765' }}
                 >
                   <Compass className="w-4 h-4" />
@@ -179,13 +179,13 @@ export default function HomePage() {
           and phone visual stay removed as explicitly requested earlier;
           the "Web Apps" chip stays removed per the earlier explicit
           instruction to drop Web Apps from the Hero. */}
-      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
+      <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 pb-14 max-w-7xl mx-auto overflow-hidden">
         {/* Dominant search */}
         <form
           onSubmit={handleSearch}
           role="search"
           aria-label="Search the AppMintly catalog"
-          className="flex items-center gap-2 bg-card border border-line rounded-full p-1.5 pl-4 shadow-sm max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 transition"
+          className="flex items-center gap-2 bg-card border border-line rounded-full py-1.5 pl-5 pr-1.5 shadow-sm max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 focus-within:border-[#1976F3]/50 focus-within:shadow-md transition-all duration-200"
         >
           <Search className="w-4 h-4 text-mut shrink-0" aria-hidden="true" />
           <input
@@ -206,7 +206,7 @@ export default function HomePage() {
           </Link>
           <button
             type="submit"
-            className="shrink-0 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition"
+            className="shrink-0 px-6 py-3 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-sm font-bold transition cursor-pointer"
           >
             Search
           </button>
@@ -217,7 +217,7 @@ export default function HomePage() {
           <Link
             href="/explore"
             className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
-            style={{ backgroundColor: '#087A5B' }}
+            style={{ backgroundColor: '#16A765' }}
           >
             <span className="inline-flex items-center gap-2">
               <Compass className="w-4 h-4" />
@@ -315,9 +315,9 @@ export default function HomePage() {
           featured app (rotates through every featured=true record). */}
       {featuredApps.length > 0 ? (
         <Reveal>
-          <section className="px-4 sm:px-6 max-w-7xl mx-auto mt-10 mb-10" aria-label="Featured app">
-            <div className="flex items-end justify-between mb-4">
-              <h2 className="text-xl sm:text-2xl font-black text-ink tracking-tight">Featured App</h2>
+          <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Featured app">
+            <div className="flex items-end justify-between mb-5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">Featured App</h2>
               <Link
                 href="/explore?featured=true"
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
@@ -347,14 +347,14 @@ export default function HomePage() {
 
       {/* 4. FEATURED APPLICATIONS GRID */}
       <Reveal>
-      <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 mt-10 rounded-3xl gradient-wash py-2" aria-label="Featured applications">
-        <div className="flex items-end justify-between mb-6">
+      <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 rounded-3xl gradient-wash py-2" aria-label="Featured applications">
+        <div className="flex items-end justify-between mb-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
               <Sparkles className="w-3.5 h-3.5 text-[#E52B32]" />
               <span>Featured App Spotlight</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
               Featured Applications
             </h2>
             <p className="text-xs sm:text-sm text-mut mt-1">
@@ -390,13 +390,13 @@ export default function HomePage() {
       {trendingApps.length > 0 && (
         <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Trending curated picks">
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
                 <TrendingUp className="w-3.5 h-3.5 text-[#E52B32]" />
                 <span>Curated Selection</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                 Trending on AppMintly
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
@@ -419,13 +419,13 @@ export default function HomePage() {
       {newApps.length > 0 && (
         <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Recently added applications">
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#16A765] bg-[#16A765]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#16A765]/25">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#16A765] bg-[#16A765]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#16A765]/25">
                 <Clock className="w-3.5 h-3.5 text-[#16A765]" />
                 <span>Fresh Arrivals</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                 Recently Added
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
@@ -454,9 +454,9 @@ export default function HomePage() {
       {/* 6. LATEST RELEASES & RECENT APPLICATIONS */}
       <Reveal>
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Latest applications">
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex items-end justify-between mb-5">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
               Latest Applications
             </h2>
             <p className="text-xs sm:text-sm text-mut mt-1">
@@ -492,7 +492,7 @@ export default function HomePage() {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30 mb-2">
                   <GraduationCap className="w-3.5 h-3.5" /> Education &amp; Career
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-ink tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                   Learning &amp; Exam Preparation
                 </h3>
                 <p className="text-xs sm:text-sm text-mut mt-1 leading-relaxed">
@@ -524,13 +524,13 @@ export default function HomePage() {
       {webApps.length > 0 && (
         <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Popular web apps">
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#1976F3] bg-[#1976F3]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#1976F3]/25">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#1976F3] bg-[#1976F3]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#1976F3]/25">
                 <Globe className="w-3.5 h-3.5 text-[#1976F3]" />
                 <span>Run in Your Browser</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                 Popular Web Apps
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
@@ -565,7 +565,7 @@ export default function HomePage() {
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30 mb-2">
                   <Smartphone className="w-3.5 h-3.5" /> Direct Android APKs
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-ink tracking-tight">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                   Download Verified Android Packages
                 </h3>
                 <p className="text-xs sm:text-sm text-mut mt-1 leading-relaxed">
@@ -596,13 +596,13 @@ export default function HomePage() {
       {publishersWithApps.length > 0 && (
         <Reveal>
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Verified publishers">
-          <div className="flex items-end justify-between mb-6">
+          <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#F7B928] bg-[#F7B928]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#F7B928]/25">
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#F7B928] bg-[#F7B928]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#F7B928]/25">
                 <BadgeCheck className="w-3.5 h-3.5 text-[#F7B928]" />
                 <span>Trusted Developers</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
                 Verified Publishers
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
@@ -618,14 +618,14 @@ export default function HomePage() {
                 className="group flex items-center gap-4 p-5 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all h-full"
               >
                 <div
-                  className="w-12 h-12 rounded-xl bg-inkbg text-white flex items-center justify-center text-base font-black shrink-0"
+                  className="w-12 h-12 rounded-xl bg-inkbg text-white flex items-center justify-center text-base font-bold shrink-0"
                   aria-hidden="true"
                 >
                   {p.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-black truncate group-hover:text-[#1976F3] transition-colors">
+                    <h3 className="text-sm font-bold truncate group-hover:text-[#1976F3] transition-colors">
                       {p.name}
                     </h3>
                     {p.verified && <VerifiedBadge size="xs" />}
@@ -646,7 +646,7 @@ export default function HomePage() {
       {/* 11. DISCOVER BY PLATFORM (real catalog counts) */}
       {platformCounts.length > 0 && (
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Discover by platform">
-          <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight mb-2">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-2">
             Discover by Platform
           </h2>
           <p className="text-xs sm:text-sm text-mut mb-6">
@@ -666,7 +666,7 @@ export default function HomePage() {
                   {!type.toLowerCase().includes('apk') && !type.toLowerCase().includes('android') && (
                     <Globe className="w-4 h-4 text-[#1976F3]" aria-hidden="true" />
                   )}
-                  <h3 className="text-sm font-black group-hover:text-[#1976F3] transition-colors">
+                  <h3 className="text-sm font-bold group-hover:text-[#1976F3] transition-colors">
                     {type}
                   </h3>
                 </div>
@@ -683,7 +683,7 @@ export default function HomePage() {
       {/* 12. WHY APPMINTLY */}
       <Reveal>
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Why AppMintly">
-        <h2 className="text-2xl sm:text-3xl font-black text-ink tracking-tight mb-2">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight mb-2">
           Why AppMintly
         </h2>
         <p className="text-xs sm:text-sm text-mut mb-6">
@@ -694,7 +694,7 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#E52B32]/10 flex items-center justify-center mb-3" aria-hidden="true">
               <Zap className="w-5 h-5 text-[#E52B32]" />
             </div>
-            <h3 className="text-sm font-black mb-1.5">Direct Access</h3>
+            <h3 className="text-sm font-bold mb-1.5">Direct Access</h3>
             <p className="text-xs text-mut leading-relaxed">
               Apps launch straight from the publisher. No walled gardens, no lock-in — web apps open directly, APKs download from official release links.
             </p>
@@ -703,7 +703,7 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#16A765]/10 flex items-center justify-center mb-3" aria-hidden="true">
               <FolderOpen className="w-5 h-5 text-[#16A765]" />
             </div>
-            <h3 className="text-sm font-black mb-1.5">One Unified Catalog</h3>
+            <h3 className="text-sm font-bold mb-1.5">One Unified Catalog</h3>
             <p className="text-xs text-mut leading-relaxed">
               Web apps, PWAs, Android packages, games, tools, and websites — organized in a single searchable marketplace.
             </p>
@@ -712,7 +712,7 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-[#1976F3]/10 flex items-center justify-center mb-3" aria-hidden="true">
               <ShieldCheck className="w-5 h-5 text-[#1976F3]" />
             </div>
-            <h3 className="text-sm font-black mb-1.5">Honest Metadata</h3>
+            <h3 className="text-sm font-bold mb-1.5">Honest Metadata</h3>
             <p className="text-xs text-mut leading-relaxed">
               Versions, sizes, and checksums come from real release data — verified before anything reaches the storefront.
             </p>
@@ -727,7 +727,7 @@ export default function HomePage() {
         <div className="rounded-3xl bg-card border border-line shadow-xs p-6 sm:p-10">
           <div className="flex items-center gap-2.5 mb-2">
             <ShieldCheck className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">Trust &amp; Safety</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Trust &amp; Safety</h2>
           </div>
           <p className="text-xs sm:text-sm text-mut mb-6 max-w-2xl leading-relaxed">
             Every application on AppMintly is served with verifiable release information.
@@ -735,28 +735,28 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-page border border-line">
               <Link2 className="w-5 h-5 text-[#16A765] mb-2" aria-hidden="true" />
-              <h3 className="text-xs font-black mb-1">Official Release Links</h3>
+              <h3 className="text-xs font-bold mb-1">Official Release Links</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 APK downloads point directly to the publisher&apos;s official GitHub release assets.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
               <BadgeCheck className="w-5 h-5 text-[#16A765] mb-2" aria-hidden="true" />
-              <h3 className="text-xs font-black mb-1">Verified Publishers</h3>
+              <h3 className="text-xs font-bold mb-1">Verified Publishers</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Publisher identities are verified at the repository level by the AppMintly team.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
               <Fingerprint className="w-5 h-5 text-[#16A765] mb-2" aria-hidden="true" />
-              <h3 className="text-xs font-black mb-1">SHA-256 Checksums</h3>
+              <h3 className="text-xs font-bold mb-1">SHA-256 Checksums</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Every published APK lists its SHA-256 checksum so you can verify integrity.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
               <Eye className="w-5 h-5 text-[#16A765] mb-2" aria-hidden="true" />
-              <h3 className="text-xs font-black mb-1">Transparent Versions</h3>
+              <h3 className="text-xs font-bold mb-1">Transparent Versions</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Version numbers, sizes, and update dates are shown as they were released.
               </p>
@@ -773,7 +773,7 @@ export default function HomePage() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1976F3] text-white text-xs font-bold uppercase tracking-wider">
               <Rocket className="w-3.5 h-3.5" /> APPMINTLY PLATFORM
             </span>
-            <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
               Install AppMintly Directly to Your Home Screen
             </h3>
             <p className="text-xs sm:text-sm text-white/75 leading-relaxed">

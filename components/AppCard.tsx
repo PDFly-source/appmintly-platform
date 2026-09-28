@@ -164,27 +164,27 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const getPublicBadge = () => {
     if (app.type === 'Web Game' || app.type === 'Game') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
           <Gamepad2 className="w-3 h-3" /> GAME
         </span>
       );
     }
     if (app.type === 'Tool') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/35">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/35">
           <Wrench className="w-3 h-3" /> TOOL
         </span>
       );
     }
     if (app.type === 'Android APK') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#16A765]/10 text-[#16A765] border border-[#16A765]/25">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#16A765]/10 text-[#16A765] border border-[#16A765]/25">
           <Smartphone className="w-3 h-3" /> APK
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/25">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/25">
         <Layers className="w-3 h-3" /> APP
       </span>
     );
@@ -241,7 +241,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
                 {app.name}
               </h4>
               {isNewApp(app) && (
-                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-black bg-[#16A765]/20 text-[#16A765]">
+                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#16A765]/20 text-[#16A765]">
                   NEW
                 </span>
               )}
@@ -281,7 +281,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       exploreBadges.push(
         <span
           key="new"
-          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cta/12 text-cta border border-cta/25"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-cta/12 text-cta border border-cta/25"
         >
           New
         </span>
@@ -344,7 +344,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
             className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
           />
           <div className="min-w-0 flex-1 pt-1">
-            <h3 className="text-base sm:text-lg font-black text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
+            <h3 className="text-base sm:text-lg font-bold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
               {app.name}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-mut min-w-0">
@@ -389,7 +389,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
         <div className="flex items-center gap-1.5 flex-wrap">
           {getPublicBadge()}
           {isNewApp(app) && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
               NEW
             </span>
           )}
@@ -429,7 +429,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           className="group-hover:scale-105 transition-transform duration-300"
         />
         <div className="min-w-0 flex-1">
-          <h3 className="font-black text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
+          <h3 className="font-bold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}
           </h3>
           <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
@@ -447,7 +447,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       {/* Action Footer — VERSION • SIZE / CATEGORY • STATE then Get App CTA */}
       <div className="pt-3 border-t border-line/60 flex items-center justify-between gap-2">
         <div className="min-w-0 text-left">
-          <span className="block text-[11px] font-bold text-ink/80 truncate">
+          <span className="block text-[11px] font-semibold text-ink/80 truncate">
             v{app.version}{sizeLabel ? ` • ${sizeLabel}` : ''}
           </span>
           <span className="block text-[10px] text-mut truncate">

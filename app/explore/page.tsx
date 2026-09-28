@@ -315,11 +315,11 @@ function ExploreContent() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-8">
       {/* ---------- Compact editorial hero ---------- */}
       <div className="max-w-2xl mb-6 sm:mb-8">
-        <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-mut mb-2.5">
+        <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-mut mb-2.5">
           <span aria-hidden="true" className="w-6 h-px bg-cta" />
           Discover the Catalog
         </p>
-        <h1 className="text-2xl sm:text-4xl font-black text-ink tracking-tight leading-tight">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-ink tracking-tight leading-tight">
           Explore the AppMintly Catalog
         </h1>
         <p className="text-sm text-mut mt-2 leading-relaxed">
@@ -436,7 +436,7 @@ function ExploreContent() {
           <SlidersHorizontal className="w-4 h-4 text-cta" aria-hidden="true" />
           Filters
           {activeChips.length > 0 && (
-            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-cta text-[10px] font-black text-white">
+            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-cta text-[10px] font-bold text-white">
               {activeChips.length}
             </span>
           )}
@@ -456,7 +456,7 @@ function ExploreContent() {
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
         </div>
-        <span className="h-11 px-3 inline-flex items-center rounded-xl bg-cta/10 text-cta text-sm font-black shrink-0" aria-live="polite">
+        <span className="h-11 px-3 inline-flex items-center rounded-xl bg-cta/10 text-cta text-sm font-bold shrink-0" aria-live="polite">
           {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
         </span>
       </div>
@@ -615,7 +615,7 @@ function ExploreContent() {
           <div className="w-14 h-14 rounded-2xl border border-line bg-page text-mut flex items-center justify-center mx-auto mb-4">
             <SearchX className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-ink tracking-tight">No apps found</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">No apps found</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
             Try another search or browse categories.
           </p>
@@ -640,7 +640,7 @@ function ExploreContent() {
           <div className="w-14 h-14 rounded-2xl border border-line bg-page text-mut flex items-center justify-center mx-auto mb-4">
             <FilterX className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-ink tracking-tight">No matching apps</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">No matching apps</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
             Try removing a filter.
           </p>
@@ -664,7 +664,7 @@ function ExploreContent() {
           <div className="absolute inset-x-0 bottom-0 bg-card border-t border-line rounded-t-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-300">
             {/* Sheet header */}
             <div className="flex items-center justify-between gap-3 mb-5">
-              <h2 className="text-base font-black text-ink">Filters</h2>
+              <h2 className="text-base font-bold text-ink">Filters</h2>
               <button
                 onClick={() => setSheetOpen(false)}
                 aria-label="Close filters"
@@ -676,7 +676,7 @@ function ExploreContent() {
 
             {/* FORMAT */}
             <fieldset className="mb-5">
-              <legend className="text-[11px] font-black uppercase tracking-wider text-mut mb-2.5">Format</legend>
+              <legend className="text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">Format</legend>
               <div className="flex flex-wrap gap-1.5">
                 {SHEET_FORMATS.map((f) => {
                   const active = draft.type === f.value;
@@ -700,7 +700,7 @@ function ExploreContent() {
 
             {/* CATEGORY */}
             <div className="mb-5">
-              <label htmlFor="sheet-category" className="block text-[11px] font-black uppercase tracking-wider text-mut mb-2.5">
+              <label htmlFor="sheet-category" className="block text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">
                 Category
               </label>
               <div className="relative">
@@ -723,7 +723,7 @@ function ExploreContent() {
 
             {/* PUBLISHER */}
             <div className="mb-5">
-              <label htmlFor="sheet-publisher" className="block text-[11px] font-black uppercase tracking-wider text-mut mb-2.5">
+              <label htmlFor="sheet-publisher" className="block text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">
                 Publisher
               </label>
               <div className="relative">
@@ -746,7 +746,7 @@ function ExploreContent() {
 
             {/* OPTION: Originals Only */}
             <div className="mb-5">
-              <span className="block text-[11px] font-black uppercase tracking-wider text-mut mb-2.5">Option</span>
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">Option</span>
               <button
                 onClick={() => setDraft((d) => ({ ...d, originals: !d.originals }))}
                 aria-pressed={draft.originals}
@@ -773,7 +773,7 @@ function ExploreContent() {
 
             {/* SORT */}
             <fieldset className="mb-6">
-              <legend className="text-[11px] font-black uppercase tracking-wider text-mut mb-2.5">Sort</legend>
+              <legend className="text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">Sort</legend>
               <div className="grid grid-cols-2 gap-1.5">
                 {SORT_OPTIONS.map((o) => {
                   const active = draft.sort === o.value;

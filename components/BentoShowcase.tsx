@@ -74,7 +74,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           <p className="text-[10px] font-black uppercase tracking-widest text-[#E52B32]">
             Discover
           </p>
-          <h2 id="bento-heading" className="text-xl sm:text-2xl font-black text-ink tracking-tight">
+          <h2 id="bento-heading" className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
             The AppMintly bento
           </h2>
           <p className="text-xs text-mut mt-1">
@@ -115,7 +115,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
                   {tiles.spotlight.category}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-2xl font-black tracking-tight">{tiles.spotlight.name}</h3>
+              <h3 className="text-lg sm:text-2xl font-bold tracking-tight">{tiles.spotlight.name}</h3>
               <p className="text-xs sm:text-sm text-white/80 line-clamp-2 mt-1">
                 {tiles.spotlight.shortDescription || tiles.spotlight.description}
               </p>

@@ -305,7 +305,7 @@ export default function AppDetailPage() {
               </div>
 
               <div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-ink tracking-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-ink tracking-tight">
                   {app.name}
                 </h1>
                 <p className="text-sm sm:text-base font-semibold text-mut mt-1 flex items-center gap-1.5">
