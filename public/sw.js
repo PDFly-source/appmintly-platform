@@ -62,6 +62,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Content-hashed Next build output (/_next/static/*) is immutable: the
+  // filename changes whenever the content does, so a cached copy is ALWAYS
+  // the correct copy. Serving these cache-first removes a network
+  // round-trip for every chunk on repeat visits and gives the offline
+  // shell the full app bundle. Data, HTML and non-hashed assets below
+  // remain network-first, so the catalog can never go stale.
+  if (requestUrl.pathname.includes('/_next/static/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then((response) => {
+            if (response && response.status === 200 && (response.type === 'basic' || requestUrl.origin === location.origin)) {
+              const clone = response.clone();
+              caches.open(STATIC_CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => cached);
+      })
+    );
+    return;
+  }
+
   // Handle data requests (apps.json, api)
   if (requestUrl.pathname.includes('/data/apps.json') || requestUrl.pathname.startsWith('/api/')) {
     // Network-first: canonical production data ALWAYS wins when the network

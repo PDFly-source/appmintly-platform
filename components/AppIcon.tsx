@@ -68,6 +68,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
   isMaskable = false,
   maskShape = 'rounded',
   className = '',
+  priority = false,
 }) => {
   const [hasError, setHasError] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
@@ -130,7 +131,9 @@ export const AppIcon: React.FC<AppIconProps> = ({
         src={resolvedSrc}
         alt={`${name} icon`}
         className="w-full h-full object-cover select-none"
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
+        decoding="async"
         referrerPolicy="no-referrer"
         onError={() => setHasError(true)}
       />

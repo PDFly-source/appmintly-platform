@@ -77,6 +77,8 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           src={resolvedHeroImage}
           alt={current.name}
           className="w-full h-full object-cover opacity-30 filter brightness-75 scale-105 transition-all duration-700 ease-out"
+          decoding="async"
+          fetchPriority={currentIndex === 0 ? 'high' : 'low'}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-inkbg via-inkbg/85 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-inkbg via-transparent to-black/30" />
@@ -121,6 +123,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
                 themeColor={current.themeColor}
                 category={current.category}
                 className="rounded-xl"
+                priority
               />
             </div>
           )}
