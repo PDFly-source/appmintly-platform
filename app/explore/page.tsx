@@ -240,7 +240,15 @@ function ExploreContent() {
     featuredOnly ||
     selectedPublisher !== 'all';
 
-  const clearAllFilters = () => {
+  /* Categories that actually have published apps — used to turn an empty
+     filter result into a guided next step instead of a dead end. Computed
+     from the real catalog, never hardcoded. */
+  const categoriesWithResults = useMemo(
+    () => [...new Set(publishedApps.map((a) => a.category).filter(Boolean))] as string[],
+    [publishedApps]
+  );
+
+const clearAllFilters = () => {
     setQuery('');
     setSelectedCategory('all');
     setSelectedType('all');
@@ -642,14 +650,34 @@ function ExploreContent() {
           </div>
           <h2 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">No matching apps</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
-            Try removing a filter.
+            Try removing a filter{categoriesWithResults.length > 0 ? ' or browse a category with apps.' : '.'}
           </p>
-          <button
-            onClick={clearAllFilters}
-            className="btn-cta mt-6 h-11 px-6 rounded-full text-xs font-bold cursor-pointer"
-          >
-            Clear Filters
-          </button>
+          <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+            <button
+              onClick={clearAllFilters}
+              className="btn-cta h-11 px-6 rounded-full text-xs font-bold cursor-pointer"
+            >
+              Clear Filters
+            </button>
+            {categoriesWithResults
+              .filter((c) => c.toLowerCase() !== selectedCategory.toLowerCase())
+              .slice(0, 4)
+              .map((c) => (
+                <button
+                  key={c}
+                  onClick={() => {
+                    /* Use the lowercase slug so the quick-discovery chip and
+                       desktop category select reflect the pressed state. */
+                    setSelectedCategory(c.toLowerCase());
+                    setFeaturedOnly(false);
+                    setFilterOriginals(false);
+                  }}
+                  className="inline-flex items-center justify-center h-11 px-5 rounded-full border border-line bg-card text-ink text-xs font-bold hover:border-cta/50 hover:text-cta transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 cursor-pointer"
+                >
+                  {c}
+                </button>
+              ))}
+          </div>
         </div>
       )}
 

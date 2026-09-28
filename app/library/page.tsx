@@ -150,7 +150,7 @@ export default function LibraryPage() {
       {/* ---------------- header ---------------- */}
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-ink tracking-tight leading-none">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight leading-none">
             MY LIBRARY
           </h1>
           <p className="text-xs sm:text-sm text-mut mt-2">
@@ -221,7 +221,7 @@ export default function LibraryPage() {
               <span>{VIEW_META[v].label}</span>
               <span
                 aria-hidden="true"
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   active ? 'bg-white/15' : 'bg-card border border-line'
                 }`}
               >
@@ -292,7 +292,7 @@ export default function LibraryPage() {
       {/* ---------------- continue exploring ---------------- */}
       {recent.length > 0 && (
         <section className="pt-2" aria-labelledby="continue-exploring-label">
-          <h2 id="continue-exploring-label" className="text-[10px] font-black uppercase tracking-widest text-mut">
+          <h2 id="continue-exploring-label" className="text-[10px] font-bold uppercase tracking-widest text-mut">
             Continue exploring
           </h2>
           <div className="mt-2.5 flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card">
@@ -305,7 +305,7 @@ export default function LibraryPage() {
               className="shrink-0"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-black text-ink truncate">{recent[0].app.name}</p>
+              <p className="text-sm font-bold text-ink truncate">{recent[0].app.name}</p>
               <p className="text-[11px] text-mut mt-0.5">
                 Recently opened • {timeLabel(recent[0].timestamp, mountedTime)}
               </p>
@@ -381,7 +381,7 @@ function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) =>
           <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
         </Link>
         <div className="flex-1 min-w-0">
-          <Link href={`/app/${app.slug}`} className="text-sm font-black text-ink hover:text-cta transition truncate block">
+          <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
             {app.name}
           </Link>
           <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-mut min-w-0">
@@ -457,7 +457,7 @@ function HistoryRow({
         <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
       </Link>
       <div className="flex-1 min-w-0">
-        <Link href={`/app/${app.slug}`} className="text-sm font-black text-ink hover:text-cta transition truncate block">
+        <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
           {app.name}
         </Link>
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-mut">
@@ -495,7 +495,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
         <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
       </Link>
       <div className="flex-1 min-w-0">
-        <Link href={`/app/${app.slug}`} className="text-sm font-black text-ink hover:text-cta transition truncate block">
+        <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
           {app.name}
         </Link>
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-mut">
@@ -582,7 +582,7 @@ function ManageDialog({
         className="relative w-full sm:max-w-md bg-page border border-line rounded-t-3xl sm:rounded-3xl p-5 space-y-4 focus:outline-none"
       >
         <div className="flex items-center justify-between">
-          <h2 id="manage-dialog-label" className="text-sm font-black text-ink">
+          <h2 id="manage-dialog-label" className="text-sm font-bold text-ink">
             Manage library
           </h2>
           <button
@@ -598,7 +598,7 @@ function ManageDialog({
         {confirmingAll ? (
           <div className="space-y-4">
             <div className="rounded-2xl border border-[#E52B32]/30 bg-[#E52B32]/10 p-4 space-y-1">
-              <p className="text-sm font-black text-ink">Clear local library?</p>
+              <p className="text-sm font-bold text-ink">Clear local library?</p>
               <p className="text-xs text-mut">
                 This will remove saved apps, recent history and local download records from this device.
               </p>
@@ -626,7 +626,7 @@ function ManageDialog({
           <div className="space-y-3">
             {savedApps.length > 0 && (
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-mut mb-2">Saved apps</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-mut mb-2">Saved apps</p>
                 <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                   {savedApps.map((app) => (
                     <li key={app.id} className="flex items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2">
