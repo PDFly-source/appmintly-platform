@@ -107,7 +107,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://pdfly-source.github.io/pdfly-app/"
+                  href="https://pdfminifly.pages.dev/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`flex items-start gap-2.5 ${linkClass}`}

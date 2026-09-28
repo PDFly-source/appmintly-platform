@@ -384,9 +384,9 @@
       "/assets/apps/pdfminifly/screenshots/screenshot-1-f29c11194f.png",
       "/assets/apps/pdfminifly/screenshots/screenshot-1-2735e41d1a.png"
     ],
-    "url": "https://pdfly-source.github.io/pdfly-app/",
-    "webUrl": "https://pdfly-source.github.io/pdfly-app/",
-    "pwaUrl": "https://pdfly-source.github.io/pdfly-app/",
+    "url": "https://pdfminifly.pages.dev/",
+    "webUrl": "https://pdfminifly.pages.dev/",
+    "pwaUrl": "https://pdfminifly.pages.dev/",
     "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/pdfminifly-v2.1.1/PDFMiniFly-2.1.1.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
@@ -396,9 +396,9 @@
     "lastUpdated": "2026-09-28",
     "themeColor": "#7A1635",
     "backgroundColor": "#F6EFE3",
-    "manifestUrl": "https://pdfly-source.github.io/pdfly-app/manifest.webmanifest",
-    "startUrl": "https://pdfly-source.github.io/pdfly-app/",
-    "scope": "https://pdfly-source.github.io/pdfly-app/",
+    "manifestUrl": "https://pdfminifly.pages.dev/manifest.webmanifest",
+    "startUrl": "https://pdfminifly.pages.dev/",
+    "scope": "https://pdfminifly.pages.dev/",
     "pwa": {
       "detected": true,
       "installable": true,
@@ -499,7 +499,7 @@
         "GitHub Releases (APK distribution)"
       ]
     },
-    "launchUrl": "https://pdfly-source.github.io/pdfly-app/",
+    "launchUrl": "https://pdfminifly.pages.dev/",
     "platform": [
       "Web Browser",
       "Desktop",

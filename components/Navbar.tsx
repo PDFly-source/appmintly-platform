@@ -375,7 +375,7 @@ export const Navbar: React.FC = () => {
               </li>
               <li>
                 <MenuRow
-                  href="https://pdfly-source.github.io/pdfly-app/"
+                  href="https://pdfminifly.pages.dev/"
                   label="PDFMiniFly"
                   iconSrc="/brand/pdfminifly-icon-384.png"
                   desc="Private PDF Suite"
