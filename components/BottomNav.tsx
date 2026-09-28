@@ -30,6 +30,7 @@ export const BottomNav: React.FC = () => {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition-all ${
                 isActive
                   ? 'text-[#E52B32] font-black scale-105'

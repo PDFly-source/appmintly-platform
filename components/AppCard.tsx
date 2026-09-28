@@ -324,7 +324,8 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
             aria-pressed={favorite}
           >
             <Bookmark
-              className={`w-4 h-4 ${favorite ? 'fill-cta text-cta' : ''}`}
+              key={`fav-${favorite}`}
+              className={`w-4 h-4 ${favorite ? 'fill-cta text-cta' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
             />
           </button>
         </div>
@@ -410,7 +411,10 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           title={favorite ? 'Remove from Library' : 'Save to Library'}
           aria-label={favorite ? 'Remove from Library' : 'Save to Library'}
         >
-          <Bookmark className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''}`} />
+          <Bookmark
+            key={`fav-${favorite}`}
+            className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
+          />
         </button>
       </div>
 

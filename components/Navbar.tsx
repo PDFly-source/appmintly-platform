@@ -174,6 +174,7 @@ export const Navbar: React.FC = () => {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? 'page' : undefined}
                 className={`inline-flex items-center min-h-[44px] px-3 py-1.5 rounded-full text-xs font-bold transition ${
                   active
                     ? 'bg-inkbg text-white shadow-xs'

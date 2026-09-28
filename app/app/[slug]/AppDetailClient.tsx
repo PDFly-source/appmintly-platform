@@ -367,12 +367,14 @@ export default function AppDetailPage() {
 
                 <button
                   onClick={handleFavoriteClick}
-                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer"
+                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
                   title={favorite ? 'Remove from Library' : 'Save to Library'}
-                  aria-label="Save to Library"
+                  aria-label={favorite ? 'Remove from Library' : 'Save to Library'}
+                  aria-pressed={favorite}
                 >
                   <Bookmark
-                    className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''}`}
+                    key={`fav-${favorite}`}
+                    className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
                   />
                 </button>
 
