@@ -371,13 +371,18 @@
     "name": "PDFMiniFly",
     "shortName": "PDFMiniFly",
     "developer": "PKD",
-    "type": "PWA",
+    "type": "Web App",
     "category": "Tools",
     "description": "Private PDF tools designed to edit, convert, organize and protect documents directly inside the browser. No cloud uploads. No account required. All files are processed locally using your device's memory for maximum speed and complete data privacy.",
     "shortDescription": "Private PDF Tools. Powerful. Fast. Local.",
     "icon": "/brand/pdfminifly-icon-384.png",
     "screenshots": [
-      "https://pdfly-source.github.io/pdfly-app/og-image.png"
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-c9cb0293ed.png",
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-30fc593cc2.png",
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-eee9ee14f2.png",
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-306fce89db.png",
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-f29c11194f.png",
+      "/assets/apps/pdfminifly/screenshots/screenshot-1-2735e41d1a.png"
     ],
     "url": "https://pdfly-source.github.io/pdfly-app/",
     "webUrl": "https://pdfly-source.github.io/pdfly-app/",
@@ -388,7 +393,7 @@
     "version": "2.1.1",
     "previousVersion": "",
     "releaseDate": "2026-03-01",
-    "lastUpdated": "2026-09-25",
+    "lastUpdated": "2026-09-28",
     "themeColor": "#7A1635",
     "backgroundColor": "#F6EFE3",
     "manifestUrl": "https://pdfly-source.github.io/pdfly-app/manifest.webmanifest",
@@ -406,7 +411,13 @@
       "Merge, split, compress, and reorder PDF pages in real time",
       "Protect sensitive documents with client-side password encryption",
       "Works 100% offline once opened or installed as a PWA",
-      "Zero account required, no tracking, completely private"
+      "Zero account required, no tracking, completely private",
+      "Local-first PDF processing with zero cloud uploads",
+      "Merge, split, compress & organize PDF pages",
+      "Edit, annotate, sign & protect documents locally",
+      "OCR text extraction with multilingual support",
+      "Offline-ready PWA with no account required",
+      "Automated PDF workflows for multi-step tasks"
     ],
     "tags": [
       "pdf",
@@ -417,7 +428,10 @@
       "local-first"
     ],
     "releaseNotes": [
-      "Initial release with full offline support and local client-side PDF tools"
+      "Initial release with full offline support and local client-side PDF tools",
+      "Initial release with full offline support and local client-side PDF tools",
+      "Added a complete local PDF workspace for editing, organizing & document management",
+      "Improved privacy with zero cloud uploads and no account requirement"
     ],
     "changelog": [
       "v1.0.0: Initial public release of PDFMiniFly PWA workspace"
@@ -435,22 +449,22 @@
       "enabled": true,
       "buildMode": "webview",
       "packageId": "com.appforge.pdfminifly",
+      "authorized": true,
+      "sha256": "911e9e4be053a6bab43b053e7c586d5893c2ea4ce8af5c77fe68f64c734f6960",
       "versionName": "2.1.1",
       "versionCode": 20101,
       "fileName": "PDFMiniFly-2.1.1.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/pdfminifly-v2.1.1/PDFMiniFly-2.1.1.apk",
       "fileSizeBytes": 259950,
-      "sha256": "911e9e4be053a6bab43b053e7c586d5893c2ea4ce8af5c77fe68f64c734f6960",
-      "generatedAt": "2026-09-25T16:44:22.757Z",
-      "buildStatus": "released",
-      "buildId": "build_1790168108188_k72r3v",
-      "authorized": true,
       "releaseTag": "pdfminifly-v2.1.1",
-      "releaseDate": "2026-09-25",
-      "platform": "android",
-      "architecture": "universal",
-      "downloadAvailable": true,
+      "generatedAt": "2026-09-25T16:44:22.757Z",
+      "buildId": "build_1790168108188_k72r3v",
+      "buildStatus": "released",
       "verified": true,
+      "downloadAvailable": true,
+      "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-09-25",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -484,6 +498,14 @@
       "externalServices": [
         "GitHub Releases (APK distribution)"
       ]
-    }
+    },
+    "launchUrl": "https://pdfly-source.github.io/pdfly-app/",
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ],
+    "updatedAt": "2026-09-28T17:08:26.933Z",
+    "publishedAt": "2026-09-28T17:08:26.933Z"
   }
 ]
