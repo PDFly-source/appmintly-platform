@@ -16,3 +16,4 @@ coverage/
 dist/
 out/
 tsconfig.tsbuildinfo
+preview/

@@ -18,13 +18,13 @@ export default function ContactPage() {
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <MailQuestion className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Contact</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Contact</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 26, 2026</p>
 
         <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="contact-no-accounts">
-            <h2 id="contact-no-accounts" className="text-base font-black mb-2">No Accounts, No Mailbox</h2>
+            <h2 id="contact-no-accounts" className="text-base font-bold mb-2">No Accounts, No Mailbox</h2>
             <p>
               AppMintly does not require registration and does not collect personal
               information, so there is no contact form or mailbox attached to the
@@ -37,7 +37,7 @@ export default function ContactPage() {
           </section>
 
           <section aria-labelledby="contact-apps">
-            <h2 id="contact-apps" className="text-base font-black mb-2">App Support</h2>
+            <h2 id="contact-apps" className="text-base font-bold mb-2">App Support</h2>
             <p>
               Each application in the catalog has a detail page with release notes and
               download options. Applications published by PKD are listed together on the{' '}
@@ -49,7 +49,7 @@ export default function ContactPage() {
           </section>
 
           <section aria-labelledby="contact-repo">
-            <h2 id="contact-repo" className="text-base font-black mb-2">Marketplace Source</h2>
+            <h2 id="contact-repo" className="text-base font-bold mb-2">Marketplace Source</h2>
             <p>
               The AppMintly marketplace is developed in a public GitHub repository. Technical
               issues with the site itself can be reported there:

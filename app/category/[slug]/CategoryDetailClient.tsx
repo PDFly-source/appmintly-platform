@@ -94,7 +94,7 @@ export default function CategoryDetailPage() {
                 {matchingApps.length} {matchingApps.length === 1 ? 'app' : 'apps'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-ink tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-ink tracking-tight">
               {categoryName}
             </h1>
             <p className="text-xs sm:text-sm text-mut mt-1 max-w-xl leading-relaxed">
@@ -124,7 +124,7 @@ export default function CategoryDetailPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8" />
           </div>
-          <h3 className="text-lg sm:text-xl font-black text-ink tracking-tight">
+          <h3 className="text-lg sm:text-xl font-bold text-ink tracking-tight">
             No applications in {categoryName} yet
           </h3>
           <p className="text-xs sm:text-sm text-mut mt-1 max-w-sm mx-auto">

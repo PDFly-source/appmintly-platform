@@ -18,13 +18,13 @@ export default function TermsPage() {
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <FileCheck2 className="w-6 h-6 text-[#1976F3]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Terms of Service</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Terms of Service</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 24, 2026</p>
 
         <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="terms-use">
-            <h2 id="terms-use" className="text-base font-black mb-2">Using AppMintly</h2>
+            <h2 id="terms-use" className="text-base font-bold mb-2">Using AppMintly</h2>
             <p>
               AppMintly is a catalog and marketplace for discovering applications, web apps,
               games, tools, and websites. You may browse and use the marketplace for personal,
@@ -33,7 +33,7 @@ export default function TermsPage() {
           </section>
 
           <section aria-labelledby="terms-content">
-            <h2 id="terms-content" className="text-base font-black mb-2">Catalog Content</h2>
+            <h2 id="terms-content" className="text-base font-bold mb-2">Catalog Content</h2>
             <p>
               Catalog listings, descriptions, screenshots, and release metadata are supplied by
               publishers. AppMintly verifies publisher identity and the integrity metadata of
@@ -43,7 +43,7 @@ export default function TermsPage() {
           </section>
 
           <section aria-labelledby="terms-publisher">
-            <h2 id="terms-publisher" className="text-base font-black mb-2">Publisher Responsibility</h2>
+            <h2 id="terms-publisher" className="text-base font-bold mb-2">Publisher Responsibility</h2>
             <p>
               Publishers are responsible for the applications they publish, including legality,
               licensing, content, and behavior. Applications that violate these terms may be
@@ -52,7 +52,7 @@ export default function TermsPage() {
           </section>
 
           <section aria-labelledby="terms-downloads">
-            <h2 id="terms-downloads" className="text-base font-black mb-2">Downloads &amp; Installations</h2>
+            <h2 id="terms-downloads" className="text-base font-bold mb-2">Downloads &amp; Installations</h2>
             <p>
               Downloads are delivered directly from the publisher&apos;s official release
               infrastructure. Install Android packages only from sources you trust, and verify
@@ -61,7 +61,7 @@ export default function TermsPage() {
           </section>
 
           <section aria-labelledby="terms-liability">
-            <h2 id="terms-liability" className="text-base font-black mb-2">No Warranty</h2>
+            <h2 id="terms-liability" className="text-base font-bold mb-2">No Warranty</h2>
             <p>
               The marketplace is provided &ldquo;as is&rdquo; without warranties of any kind.
               AppMintly is not liable for damages arising from the use of third-party
@@ -70,7 +70,7 @@ export default function TermsPage() {
           </section>
 
           <section aria-labelledby="terms-changes">
-            <h2 id="terms-changes" className="text-base font-black mb-2">Changes to These Terms</h2>
+            <h2 id="terms-changes" className="text-base font-bold mb-2">Changes to These Terms</h2>
             <p>
               If these terms change, the updated version will be published on this page with a
               revised date.

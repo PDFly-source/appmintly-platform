@@ -18,13 +18,13 @@ export default function InstallHelpPage() {
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <Package className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">App Install Help</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">App Install Help</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
 
         <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="help-apk">
-            <h2 id="help-apk" className="text-base font-black mb-2">Installing an Android APK</h2>
+            <h2 id="help-apk" className="text-base font-bold mb-2">Installing an Android APK</h2>
             <ol className="list-decimal pl-5 space-y-1.5">
               <li>Open the app&apos;s detail page and tap <strong className="text-ink">Get App / Download APK</strong>. The download always comes from the publisher&apos;s official GitHub release.</li>
               <li>
@@ -41,7 +41,7 @@ export default function InstallHelpPage() {
           </section>
 
           <section aria-labelledby="help-protect">
-            <h2 id="help-protect" className="text-base font-black mb-2">About Play Protect Prompts</h2>
+            <h2 id="help-protect" className="text-base font-bold mb-2">About Play Protect Prompts</h2>
             <p>
               Google Play Protect scans apps installed from outside the Play Store. Two common
               prompts and what they mean:
@@ -66,7 +66,7 @@ export default function InstallHelpPage() {
           </section>
 
           <section aria-labelledby="help-pwa">
-            <h2 id="help-pwa" className="text-base font-black mb-2">Installing a PWA or Web App</h2>
+            <h2 id="help-pwa" className="text-base font-bold mb-2">Installing a PWA or Web App</h2>
             <p>
               Web apps and PWAs run directly in the browser — no APK needed. To install a PWA to your
               home screen, open the app, then use your browser menu and choose{' '}
@@ -77,7 +77,7 @@ export default function InstallHelpPage() {
           </section>
 
           <section aria-labelledby="help-stuck">
-            <h2 id="help-stuck" className="text-base font-black mb-2">Still Stuck?</h2>
+            <h2 id="help-stuck" className="text-base font-bold mb-2">Still Stuck?</h2>
             <p>
               For app-specific questions, check the release notes on the app&apos;s detail page or the{' '}
               <Link href="/contact" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">

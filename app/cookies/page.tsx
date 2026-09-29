@@ -18,13 +18,13 @@ export default function CookiePolicyPage() {
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <Cookie className="w-6 h-6 text-[#F7B928]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Cookie Policy</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Cookie Policy</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 26, 2026</p>
 
         <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="cookies-none">
-            <h2 id="cookies-none" className="text-base font-black mb-2">No Tracking Cookies</h2>
+            <h2 id="cookies-none" className="text-base font-bold mb-2">No Tracking Cookies</h2>
             <p>
               AppMintly does not use cookies for tracking, advertising, or analytics. The
               marketplace is a static site hosted on GitHub Pages and sets no cookies when
@@ -33,7 +33,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section aria-labelledby="cookies-local">
-            <h2 id="cookies-local" className="text-base font-black mb-2">Browser Storage</h2>
+            <h2 id="cookies-local" className="text-base font-bold mb-2">Browser Storage</h2>
             <p>
               Some features store data directly in your browser&apos;s local storage instead of
               using cookies:
@@ -51,7 +51,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section aria-labelledby="cookies-third">
-            <h2 id="cookies-third" className="text-base font-black mb-2">Third-Party Content</h2>
+            <h2 id="cookies-third" className="text-base font-bold mb-2">Third-Party Content</h2>
             <p>
               AppMintly embeds no third-party trackers, advertising networks, or social
               widgets. Downloading an APK opens a release page on GitHub, which is
@@ -60,7 +60,7 @@ export default function CookiePolicyPage() {
           </section>
 
           <section aria-labelledby="cookies-privacy">
-            <h2 id="cookies-privacy" className="text-base font-black mb-2">Related Policy</h2>
+            <h2 id="cookies-privacy" className="text-base font-bold mb-2">Related Policy</h2>
             <p>
               For the full details of how AppMintly handles data, see the{' '}
               <Link href="/privacy" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">

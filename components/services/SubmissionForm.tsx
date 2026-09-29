@@ -139,7 +139,7 @@ export default function SubmissionForm({
         <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#16A765]/15 border border-[#16A765]/30 mb-4">
           <Check className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
         </span>
-        <h2 className="text-lg font-black mb-1.5">{successTitle}</h2>
+        <h2 className="text-lg font-bold mb-1.5">{successTitle}</h2>
         <p className="text-sm text-mut mb-6">{successMessage}</p>
         <button
           type="button"

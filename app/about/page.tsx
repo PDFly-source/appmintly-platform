@@ -33,7 +33,7 @@ export default function AboutPage() {
         <div className="inline-flex justify-center mb-2">
           <AppMintlyLogo size="lg" variant="full" showTagline />
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-ink tracking-tight">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-ink tracking-tight">
           An Independent Application Marketplace
         </h1>
         <p className="text-base sm:text-lg text-mut max-w-2xl mx-auto leading-relaxed">
@@ -76,35 +76,35 @@ export default function AboutPage() {
 
       {/* Frequently Asked Questions */}
       <div className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
-        <h2 className="text-2xl font-black text-ink tracking-tight flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
           <HelpCircle className="w-6 h-6 text-[#1976F3]" />
           <span>Frequently Asked Questions</span>
         </h2>
 
         <div className="space-y-5 text-sm divide-y divide-line/60">
           <div className="pt-3">
-            <h4 className="font-bold text-ink">How do I install an Android APK file?</h4>
+            <h4 className="font-semibold text-ink">How do I install an Android APK file?</h4>
             <p className="text-mut text-xs sm:text-sm mt-1 leading-relaxed">
               When you click &apos;Download APK&apos;, the file is saved to your device&apos;s Downloads folder. Tap the downloaded file in your notification drawer or files app. If your device displays a prompt about installing from unknown sources, tap settings and enable permission for your browser. The app will install cleanly.
             </p>
           </div>
 
           <div className="pt-4">
-            <h4 className="font-bold text-ink">What is a Progressive Web App (PWA)?</h4>
+            <h4 className="font-semibold text-ink">What is a Progressive Web App (PWA)?</h4>
             <p className="text-mut text-xs sm:text-sm mt-1 leading-relaxed">
               A Progressive Web App is a modern web application that can be added directly to your home screen or desktop. It loads instantly, works offline, and runs without a browser navigation bar, behaving just like a native app.
             </p>
           </div>
 
           <div className="pt-4">
-            <h4 className="font-bold text-ink">Are AppMintly applications verified?</h4>
+            <h4 className="font-semibold text-ink">Are AppMintly applications verified?</h4>
             <p className="text-mut text-xs sm:text-sm mt-1 leading-relaxed">
               Yes. Every application listed in the AppMintly content registry is compiled, audited, and curated by AppMintly before publication. We never include malware, predatory advertisements, or background crypto miners.
             </p>
           </div>
 
           <div className="pt-4">
-            <h4 className="font-bold text-ink">Why is there no sign-up or login?</h4>
+            <h4 className="font-semibold text-ink">Why is there no sign-up or login?</h4>
             <p className="text-mut text-xs sm:text-sm mt-1 leading-relaxed">
               We believe a software marketplace should be as open as downloading files from the open internet. You don&apos;t need an account to discover, open, or install apps. Your library and favorites stay stored locally on your device.
             </p>
@@ -114,7 +114,7 @@ export default function AboutPage() {
 
       {/* CTA Box */}
       <div className="rounded-3xl bg-inkbg text-white p-8 sm:p-10 text-center space-y-4">
-        <h3 className="text-2xl font-black">Ready to Discover?</h3>
+        <h3 className="text-2xl font-bold">Ready to Discover?</h3>
         <p className="text-xs sm:text-sm text-white/70 max-w-md mx-auto">
           Explore our complete catalog of verified Android APKs, Web Apps, games, and tools.
         </p>

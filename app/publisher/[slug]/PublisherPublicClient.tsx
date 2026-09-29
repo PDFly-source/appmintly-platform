@@ -47,7 +47,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
       <div className="min-h-screen bg-page text-ink flex items-center justify-center px-4">
         <div className="text-center max-w-md py-20">
           <SearchX className="w-12 h-12 mx-auto text-line mb-4" aria-hidden="true" />
-          <h1 className="text-2xl font-black tracking-tight mb-2">Publisher Not Found</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight mb-2">Publisher Not Found</h1>
           <p className="text-sm text-mut mb-6">
             No publisher with the address &ldquo;{slug}&rdquo; exists on AppMintly.
           </p>
@@ -86,7 +86,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-4xl font-black tracking-tight">{identity.name}</h1>
+                <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">{identity.name}</h1>
                 {identity.verified && <VerifiedBadge />}
               </div>
               {identity.bio && (
@@ -149,7 +149,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mt-10" aria-label="Published applications">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
               Apps by {identity.name}
             </h2>
             <p className="text-xs sm:text-sm text-mut mt-1">
@@ -177,7 +177,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
       {/* Recently updated */}
       {updatedApps.length > 0 && (
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mt-12" aria-label="Recently updated applications">
-          <h2 className="text-lg sm:text-xl font-black tracking-tight mb-4">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight mb-4">
             Latest Updates
           </h2>
           <div className="rounded-2xl bg-card border border-line shadow-xs divide-y divide-line">

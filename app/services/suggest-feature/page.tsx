@@ -18,7 +18,7 @@ export default function SuggestFeaturePage() {
       <div className="px-4 sm:px-6 max-w-[760px] mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <Lightbulb className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Suggest a Feature</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Suggest a Feature</h1>
         </div>
         <p className="text-sm text-mut mb-8">
           Have an idea that could make AppMintly better? Tell us what problem you want to solve.

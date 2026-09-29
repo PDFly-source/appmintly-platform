@@ -18,13 +18,13 @@ export default function SecurityPage() {
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <ShieldCheck className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Security &amp; Verification</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Security &amp; Verification</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
 
         <div className="space-y-6 text-sm text-ink/85 leading-relaxed">
           <section aria-labelledby="sec-what">
-            <h2 id="sec-what" className="text-base font-black mb-2">What AppMintly Verifies</h2>
+            <h2 id="sec-what" className="text-base font-bold mb-2">What AppMintly Verifies</h2>
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
                 <strong className="text-ink">Official release links.</strong> Every download on an
@@ -58,7 +58,7 @@ export default function SecurityPage() {
           </section>
 
           <section aria-labelledby="sec-how">
-            <h2 id="sec-how" className="text-base font-black mb-2">Verify a Download Yourself</h2>
+            <h2 id="sec-how" className="text-base font-bold mb-2">Verify a Download Yourself</h2>
             <p>
               On the app&apos;s detail page, copy the SHA-256 checksum, then compare it against your
               downloaded file. On Windows run{' '}
@@ -70,7 +70,7 @@ export default function SecurityPage() {
           </section>
 
           <section aria-labelledby="sec-limits">
-            <h2 id="sec-limits" className="text-base font-black mb-2">Honest Limits</h2>
+            <h2 id="sec-limits" className="text-base font-bold mb-2">Honest Limits</h2>
             <p>
               AppMintly does not run automated malware scanning, dynamic analysis, or sandbox
               testing, and it does not claim to. Verification here means traceable sources and
@@ -89,7 +89,7 @@ export default function SecurityPage() {
           </section>
 
           <section aria-labelledby="sec-report">
-            <h2 id="sec-report" className="text-base font-black mb-2">Found Something Wrong?</h2>
+            <h2 id="sec-report" className="text-base font-bold mb-2">Found Something Wrong?</h2>
             <p>
               If a checksum does not match or a link looks suspicious, report it through the{' '}
               <Link href="/services/report-issue" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">

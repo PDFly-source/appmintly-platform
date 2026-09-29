@@ -14,7 +14,7 @@ export default function NotFound() {
         <div className="w-14 h-14 rounded-2xl border border-line bg-page text-mut flex items-center justify-center mx-auto mb-4">
           <Compass className="w-7 h-7" aria-hidden="true" />
         </div>
-        <h1 className="text-lg sm:text-xl font-black text-ink tracking-tight">Page not found</h1>
+        <h1 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">Page not found</h1>
         <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
           The page you&apos;re looking for doesn&apos;t exist or may have moved.
         </p>

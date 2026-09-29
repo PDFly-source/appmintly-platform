@@ -18,7 +18,7 @@ export default function ReportIssuePage() {
       <div className="px-4 sm:px-6 max-w-[760px] mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
           <Bug className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Report an Issue</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Report an Issue</h1>
         </div>
         <p className="text-sm text-mut mb-8">
           Found something broken or incorrect? Send the details and we&apos;ll review it.
