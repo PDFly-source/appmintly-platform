@@ -276,33 +276,18 @@ export default function AppDetailPage() {
         <section className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-8">
             {/* App Icon */}
-            <AppIcon
-              src={app.icon}
-              name={app.name}
-              size="2xl"
-              themeColor={app.themeColor}
-              category={app.category}
-              className="shadow-md mx-auto md:mx-0 shrink-0"
-            />
+            <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
+              <AppIcon
+                src={app.icon}
+                name={app.name}
+                size="2xl"
+                themeColor={app.themeColor}
+                category={app.category}
+              />
+            </div>
 
             {/* App Header Info */}
             <div className="flex-1 min-w-0 text-center md:text-left space-y-3">
-              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
-                {getPublicTypeBadge()}
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-page text-ink border border-line">
-                  {app.category}
-                </span>
-                {app.original && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
-                    <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" /> Original
-                  </span>
-                )}
-                {isStandaloneInstalled && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Installed on device
-                  </span>
-                )}
-              </div>
 
               <div>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-ink tracking-tight">
@@ -326,23 +311,6 @@ export default function AppDetailPage() {
               <p className="text-sm sm:text-base text-ink/80 max-w-2xl leading-relaxed pt-1">
                 {app.shortDescription || app.description}
               </p>
-
-              {/* Version & Metadata Row */}
-              <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-semibold text-mut pt-1 flex-wrap">
-                <span className="bg-page px-2.5 py-1 rounded-md border border-line/80">
-                  Version {app.version}
-                </span>
-                <span>•</span>
-                <span>
-                  {app.type === 'Android APK'
-                    ? app.size || 'APK Package'
-                    : hasApk
-                    ? `${app.type} + Android APK`
-                    : app.type}
-                </span>
-                <span>•</span>
-                <span>Updated {app.lastUpdated || app.releaseDate}</span>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-center md:justify-start gap-3 pt-4 flex-wrap">
@@ -395,6 +363,40 @@ export default function AppDetailPage() {
                 >
                   <QrCodeIcon className="w-4 h-4" />
                 </button>
+              </div>
+
+              {/* Version & Metadata Row */}
+              <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-semibold text-mut pt-1 flex-wrap">
+                <span className="bg-page px-2.5 py-1 rounded-md border border-line/80">
+                  Version {app.version}
+                </span>
+                <span>•</span>
+                <span>
+                  {app.type === 'Android APK'
+                    ? app.size || 'APK Package'
+                    : hasApk
+                    ? `${app.type} + Android APK`
+                    : app.type}
+                </span>
+                <span>•</span>
+                <span>Updated {app.lastUpdated || app.releaseDate}</span>
+              </div>
+
+              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                {getPublicTypeBadge()}
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-page text-ink border border-line">
+                  {app.category}
+                </span>
+                {app.original && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
+                    <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" /> Original
+                  </span>
+                )}
+                {isStandaloneInstalled && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Installed on device
+                  </span>
+                )}
               </div>
 
               {/* Verified Android APK Distribution Specs */}
