@@ -20,7 +20,6 @@ import {
   GraduationCap,
   Link2,
   Rocket,
-  TrendingUp,
   Clock,
   BadgeCheck,
   Fingerprint,
@@ -58,7 +57,7 @@ export default function HomePage() {
     ['web app', 'pwa', 'web_app'].includes((a.type || '').toLowerCase())
   );
 
-  // Curated trending picks: explicit curation (featured apps, most recent first).
+  // Recently Updated: explicit curation (featured apps, most recent first).
   // This is NOT analytics-based; the label says "Curated".
   const trendingApps = [...featuredApps]
     .sort((a, b) => {
@@ -389,15 +388,15 @@ export default function HomePage() {
       {/* 4. TRENDING — CURATED (truthful: editor curation, not download analytics) */}
       {trendingApps.length > 0 && (
         <Reveal>
-        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Trending curated picks">
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Recently updated curated picks">
           <div className="flex items-end justify-between mb-5">
             <div>
               <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#E52B32] bg-[#E52B32]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#E52B32]/25">
-                <TrendingUp className="w-3.5 h-3.5 text-[#E52B32]" />
+                <Clock className="w-3.5 h-3.5 text-[#E52B32]" />
                 <span>Curated Selection</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
-                Trending on AppMintly
+                Recently Updated
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
                 Hand-picked highlights from the AppMintly editors — curated, not click-counted.
@@ -523,7 +522,7 @@ export default function HomePage() {
       {/* 8. POPULAR WEB APPS (real catalog data only) */}
       {webApps.length > 0 && (
         <Reveal>
-        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Popular web apps">
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Web apps and PWAs">
           <div className="flex items-end justify-between mb-5">
             <div>
               <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#1976F3] bg-[#1976F3]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#1976F3]/25">
@@ -531,7 +530,7 @@ export default function HomePage() {
                 <span>Run in Your Browser</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
-                Popular Web Apps
+                Web Apps &amp; PWAs
               </h2>
               <p className="text-xs sm:text-sm text-mut mt-1">
                 Installable web apps and PWAs — no store required.

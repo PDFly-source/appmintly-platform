@@ -51,7 +51,7 @@ const SHEET_FORMATS = [
 ];
 
 // Popular searches — compact, data-relevant, never more than five.
-const POPULAR_SEARCHES = ['Education', 'Tools', 'Study', 'PDF'];
+const SUGGESTED_SEARCHES = ['Education', 'Tools', 'Study', 'PDF'];
 
 function ExploreContent() {
   const { publishedApps, isLoading } = useCatalog();
@@ -368,10 +368,10 @@ const clearAllFilters = () => {
         )}
       </div>
 
-      {/* ---------- Popular searches (compact, max 5) ---------- */}
+      {/* ---------- Suggested searches (real catalog topics, max 5) ---------- */}
       <div className="flex items-center gap-1.5 flex-wrap mb-3.5">
-        <span className="text-xs font-bold text-mut mr-0.5">Popular:</span>
-        {POPULAR_SEARCHES.map((term) => (
+        <span className="text-xs font-bold text-mut mr-0.5">Try:</span>
+        {SUGGESTED_SEARCHES.map((term) => (
           <button
             key={term}
             onClick={() => setQuery(term)}
