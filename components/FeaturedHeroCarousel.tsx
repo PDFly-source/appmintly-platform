@@ -70,7 +70,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-xl border border-ink/20">
+    <div className="group/hero relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-xl border border-ink/20 transition-shadow duration-300 hover:shadow-2xl">
       {/* Background Banner Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -85,7 +85,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 p-6 sm:p-10 lg:p-12 max-w-2xl min-h-[350px] sm:min-h-[400px] flex flex-col justify-between">
+      <div className="relative p-6 sm:p-10 lg:p-12 max-w-2xl min-h-[350px] sm:min-h-[400px] flex flex-col justify-between">
         <div>
           {/* Top badge row + bookmark control (Phase 18) */}
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -107,7 +107,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
               onClick={handleBookmark}
               aria-label={isFavorite ? `Remove ${current.name} from Library` : `Save ${current.name} to Library`}
               aria-pressed={isFavorite}
-              className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xs transition"
+              className="relative z-20 shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-xs transition"
             >
               <Bookmark className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
@@ -152,7 +152,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
         <div className="flex items-center gap-3 pt-6 flex-wrap">
           <Link
             href={`/app/${current.slug}`}
-            className="btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm cursor-pointer"
+            className="relative z-20 btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm cursor-pointer"
           >
             {hasApkRelease ? (
               <>
@@ -174,13 +174,25 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
 
           <Link
             href={`/app/${current.slug}`}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm border border-white/20 backdrop-blur-xs transition"
+            className="relative z-20 flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm border border-white/20 backdrop-blur-xs transition"
           >
             <span>Details & Features</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
+
+      {/* Stretched card link — the whole Featured App card is an app-entry
+          surface. It stacks above the card content (z-10) but below the
+          card's own controls (z-20: bookmark, Get App, Details, arrows),
+          so every nested control keeps its own action and nothing nests
+          inside the link. Keyboard: one extra tab stop with a visible
+          focus ring; the href stays catalog-driven. */}
+      <Link
+        href={`/app/${current.slug}`}
+        aria-label={`View ${current.name} — app details`}
+        className="absolute inset-0 z-10 rounded-3xl cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-inset"
+      />
 
       {/* Pagination & Next/Prev Controls */}
       <div className="absolute right-4 bottom-4 sm:right-6 sm:bottom-6 z-20 flex items-center gap-2">
