@@ -118,7 +118,7 @@ export default function HomePage() {
           intentionally omits "web apps" per the earlier explicit
           instruction to remove that phrase from the hero. */}
       <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
-        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_24px_80px_-32px_rgba(23,25,28,0.4)] border border-white/[0.08] mb-6 sm:mb-10">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_24px_80px_-32px_rgba(23,25,28,0.26)] border border-white/[0.08] mb-6 sm:mb-10">
           {/* Restrained atmospheric glow — brand accents only, no stock imagery */}
           <div
             className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-20 pointer-events-none"
@@ -772,7 +772,7 @@ export default function HomePage() {
 
       {/* 14. APP INSTALLATION CTA / DESKTOP RUNTIME BANNER */}
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16">
-        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white p-6 sm:p-10 border border-ink/10 shadow-[0_24px_80px_-40px_rgba(23,25,28,0.45)] flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white p-6 sm:p-10 border border-ink/10 shadow-[0_24px_80px_-40px_rgba(23,25,28,0.28)] flex flex-col md:flex-row items-center justify-between gap-8">
           <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none" />
           <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none" />
           <div className="space-y-3 max-w-xl">
