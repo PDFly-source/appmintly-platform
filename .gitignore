@@ -17,4 +17,6 @@ dist/
 out/
 tsconfig.tsbuildinfo
 preview/
-srv/
+srv*/
+preview*/
+srv*/
