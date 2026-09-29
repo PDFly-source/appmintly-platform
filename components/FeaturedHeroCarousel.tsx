@@ -70,7 +70,9 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   };
 
   return (
-    <div className="group/hero relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-xl border border-ink/20 transition-shadow duration-300 hover:shadow-2xl">
+    <div className="group/hero relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_20px_60px_-30px_rgba(23,25,28,0.35)] border border-ink/10 transition-shadow duration-300 hover:shadow-[0_28px_70px_-32px_rgba(23,25,28,0.45)]">
+        <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none z-0" />
+        <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none z-0" />
       {/* Background Banner Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -115,7 +117,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
 
           {/* App logo emphasis — framed hero chip */}
           {resolvedIcon && (
-            <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-1.5 shadow-md">
+            <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-2 shadow-md">
               <AppIcon
                 src={current.icon}
                 name={current.name}

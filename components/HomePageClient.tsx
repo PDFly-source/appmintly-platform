@@ -118,20 +118,25 @@ export default function HomePage() {
           intentionally omits "web apps" per the earlier explicit
           instruction to remove that phrase from the hero. */}
       <section className="relative px-4 sm:px-6 pt-6 sm:pt-10 max-w-7xl mx-auto overflow-hidden">
-        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-2xl border border-white/10 mb-6 sm:mb-10">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_24px_80px_-32px_rgba(23,25,28,0.4)] border border-white/[0.08] mb-6 sm:mb-10">
           {/* Restrained atmospheric glow — brand accents only, no stock imagery */}
           <div
-            className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-30 pointer-events-none"
+            className="absolute -top-24 -left-16 w-72 h-72 rounded-full opacity-20 pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(22,167,101,0.5), transparent 70%)', filter: 'blur(50px)' }}
           />
           <div
-            className="absolute -bottom-24 -right-10 w-80 h-80 rounded-full opacity-25 pointer-events-none"
+            className="absolute -bottom-24 -right-10 w-80 h-80 rounded-full opacity-[0.16] pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(21,101,232,0.5), transparent 70%)', filter: 'blur(55px)' }}
           />
           <div
             className="absolute top-1/2 right-1/3 w-56 h-56 rounded-full opacity-15 pointer-events-none"
             style={{ background: 'radial-gradient(circle, rgba(244,180,0,0.5), transparent 70%)', filter: 'blur(45px)' }}
           />
+
+          {/* Fine grid texture + controlled gold keyline: premium
+              product-launch surface detail, ~0 render cost. */}
+          <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none" />
+          <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none" />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 lg:gap-10 items-center p-4 sm:p-10 lg:p-14">
             {/* Hero copy */}
@@ -184,7 +189,7 @@ export default function HomePage() {
           onSubmit={handleSearch}
           role="search"
           aria-label="Search the AppMintly catalog"
-          className="flex items-center gap-2 bg-card border border-line rounded-full py-1.5 pl-5 pr-1.5 shadow-sm max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 focus-within:border-[#1976F3]/50 focus-within:shadow-md transition-all duration-200"
+          className="flex items-center gap-2 bg-card border border-line rounded-full py-2 pl-5 pr-2 shadow-sm hover:shadow-md hover:border-ink/20 max-w-2xl focus-within:ring-2 focus-within:ring-[#1976F3]/40 focus-within:border-[#1976F3]/50 focus-within:shadow-lg focus-within:-translate-y-px transition-all duration-200"
         >
           <Search className="w-4 h-4 text-mut shrink-0" aria-hidden="true" />
           <input
@@ -193,7 +198,7 @@ export default function HomePage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search apps, web apps, games, tools, websites..."
             aria-label="Search apps, web apps, games, tools, websites"
-            className="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-mut/70 min-w-0"
+            className="flex-1 bg-transparent outline-none text-[15px] text-ink placeholder:text-mut/70 min-w-0"
           />
           <Link
             href="/explore"
@@ -340,7 +345,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <div className="px-4 sm:px-6 max-w-7xl mx-auto">
+      <div className="section-stage rounded-[2.5rem] px-4 sm:px-6 max-w-7xl mx-auto">
         <BentoShowcase featuredApps={featuredApps} publishedApps={publishedApps} latestApps={latestApps} />
       </div>
 
@@ -767,7 +772,9 @@ export default function HomePage() {
 
       {/* 14. APP INSTALLATION CTA / DESKTOP RUNTIME BANNER */}
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16">
-        <div className="rounded-3xl bg-inkbg text-white p-6 sm:p-10 border border-ink/20 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="relative overflow-hidden rounded-3xl bg-inkbg text-white p-6 sm:p-10 border border-ink/10 shadow-[0_24px_80px_-40px_rgba(23,25,28,0.45)] flex flex-col md:flex-row items-center justify-between gap-8">
+          <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none" />
+          <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none" />
           <div className="space-y-3 max-w-xl">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1976F3] text-white text-xs font-bold uppercase tracking-wider">
               <Rocket className="w-3.5 h-3.5" /> APPMINTLY PLATFORM

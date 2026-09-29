@@ -335,14 +335,16 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           href={`/app/${app.slug}`}
           className="flex items-start gap-3.5 sm:gap-4 mb-3 focus:outline-hidden"
         >
-          <AppIcon
-            src={app.icon}
-            name={app.name}
-            size="xl"
-            themeColor={app.themeColor}
-            category={app.category}
-            className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
-          />
+                    <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
+  <AppIcon
+              src={app.icon}
+              name={app.name}
+              size="xl"
+              themeColor={app.themeColor}
+              category={app.category}
+              className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
+            />
+          </div>
           <div className="min-w-0 flex-1 pt-1">
             <h3 className="text-base sm:text-lg font-semibold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
               {app.name}
@@ -420,14 +422,16 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
       {/* Main Body: App Icon, Title, Developer, Version */}
       <Link href={`/app/${app.slug}`} className="flex items-start gap-3.5 mb-3 focus:outline-hidden">
-        <AppIcon
-          src={app.icon}
-          name={app.name}
-          size="lg"
-          themeColor={app.themeColor}
-          category={app.category}
-          className="group-hover:scale-105 transition-transform duration-300"
-        />
+                <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
+  <AppIcon
+            src={app.icon}
+            name={app.name}
+            size="lg"
+            themeColor={app.themeColor}
+            category={app.category}
+            className="group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}

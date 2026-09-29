@@ -327,3 +327,59 @@ summary {
 .no-scrollbar {
   overscroll-behavior-x: contain;
 }
+
+/* ============================================================
+   Phase 19 — Next-level surface language.
+   Hero texture, controlled gold keylines, card resting depth,
+   section stages, and premium icon shelves. All CSS-only,
+   GPU-light, reduced-motion-safe (static, no animation).
+   ============================================================ */
+
+/* Fine grid texture for dark hero/CTA surfaces — CSS-only, ~0 cost */
+.hero-texture {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(130% 120% at 50% 0%, black 25%, transparent 72%);
+  mask-image: radial-gradient(130% 120% at 50% 0%, black 25%, transparent 72%);
+}
+
+/* Controlled gold keyline — the single warm accent on dark surfaces */
+.gold-keyline {
+  background: linear-gradient(90deg, transparent 0%, rgba(247,185,40,0.45) 50%, transparent 100%);
+}
+
+/* Card resting depth: cards sit ON the page instead of lying flat.
+   Hover/focus keep the existing lift from .card-accent above. */
+.card-accent {
+  box-shadow:
+    0 1px 2px rgba(23,25,28,0.04),
+    0 1px 6px -2px rgba(23,25,28,0.05);
+}
+.dark .card-accent {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.35), 0 1px 6px -2px rgba(0,0,0,0.3);
+}
+
+/* Section stage: soft tinted band that visually groups a section
+   without a hard background block. Creates page rhythm. */
+.section-stage {
+  background:
+    radial-gradient(90% 100% at 50% 0%, rgba(23,25,28,0.028) 0%, rgba(23,25,28,0.012) 55%, transparent 100%);
+}
+.dark .section-stage {
+  background: radial-gradient(90% 100% at 50% 0%, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.012) 55%, transparent 100%);
+}
+
+/* Icon shelf: app icons presented as product assets — a subtle
+   warm gradient tile with a fine border and inner top light. */
+.icon-shelf {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--c-card) 72%, #ffffff 28%), color-mix(in srgb, var(--c-page) 88%, var(--c-card) 12%));
+  border: 1px solid color-mix(in srgb, var(--c-line) 85%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 3px -1px rgba(23,25,28,0.06);
+}
+.dark .icon-shelf {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--c-card) 92%, #ffffff 3%), var(--c-page));
+  border-color: color-mix(in srgb, var(--c-line) 90%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 3px -1px rgba(0,0,0,0.4);
+}
