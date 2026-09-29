@@ -1,5 +1,17 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SITE_URL } from '@/app/layout';
+import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
+
+/* Unique metadata + canonical for the About page (was the only sitemap
+   route without one). */
+export const metadata: Metadata = {
+  title: 'About AppMintly — An Independent App Marketplace | AppMintly',
+  description:
+    'AppMintly is an independent software ecosystem of lightweight, privacy-focused web applications and utilities, crafted by PKD.',
+  alternates: { canonical: `${SITE_URL}about${CANONICAL_TRAILING_SLASH}` },
+};
 import {
   Sparkles,
   ShieldCheck,
