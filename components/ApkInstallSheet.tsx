@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Download,
   AlertCircle,
@@ -30,6 +30,37 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedSha, setCopiedSha] = useState(false);
   const [verifiedSha256, setVerifiedSha256] = useState<string>('');
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  /* Dialog hygiene — mirrors QrCodeDialog: scroll lock, Escape to close,
+     focus moved into the sheet and restored on close. The component stays
+     mounted (renders null when closed), so every effect is gated on isOpen. */
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
+    return () => {
+      previouslyFocused?.focus?.();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -203,8 +234,13 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Install ${app.name}`}
         onClick={(e) => e.stopPropagation()}
-        className="bg-card border border-line rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 space-y-6"
+        className="bg-card border border-line rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative my-8 animate-in fade-in zoom-in-95 space-y-6 focus:outline-none"
       >
         {/* Top Header */}
         <div className="flex items-start justify-between border-b border-line pb-4">
@@ -219,7 +255,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
             />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-black text-xl text-ink tracking-tight">{app.name}</h3>
+                <h3 className="font-extrabold text-xl text-ink tracking-tight">{app.name}</h3>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
                   <Smartphone className="w-3 h-3" /> Android App
                 </span>
@@ -232,7 +268,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
           <button
             onClick={onClose}
             className="p-1.5 rounded-full hover:bg-page text-mut hover:text-ink transition cursor-pointer"
-            aria-label="Close"
+            aria-label="Close install sheet"
           >
             <X className="w-5 h-5" />
           </button>
