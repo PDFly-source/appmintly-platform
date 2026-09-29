@@ -175,7 +175,7 @@ export const Navbar: React.FC = () => {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
-                className={`inline-flex items-center min-h-[44px] px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                className={`inline-flex items-center min-h-[44px] px-3 py-1.5 rounded-full text-xs font-semibold transition ${
                   active
                     ? 'bg-inkbg text-white shadow-xs'
                     : 'text-ink/80 hover:text-ink hover:bg-page'
@@ -203,7 +203,7 @@ export const Navbar: React.FC = () => {
           {/* Library Link (Favorites & History) */}
           <Link
             href="/library"
-            className="flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-bold transition border border-line"
+            className="flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-semibold transition border border-line"
             title="Local Library & Saved Apps"
           >
             <Bookmark className="w-4 h-4 text-[#E52B32]" />

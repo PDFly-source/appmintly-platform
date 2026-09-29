@@ -319,7 +319,7 @@ export default function HomePage() {
               <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">Featured App</h2>
               <Link
                 href="/explore?featured=true"
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#1976F3] hover:text-[#0f55b8] transition"
               >
                 See All
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -362,7 +362,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/explore"
-            className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+            className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-[#1976F3] hover:text-[#0f55b8] transition"
           >
             <span>View All Apps</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -433,7 +433,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/explore?sort=newest"
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#1976F3] hover:text-[#0f55b8] transition"
             >
               <span>See All</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -464,7 +464,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/explore?sort=newest"
-            className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1976F3] hover:text-[#0f55b8] transition"
           >
             <span>See All Latest</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -538,7 +538,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/explore?type=Web+App"
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#1976F3] hover:text-[#0f55b8] transition"
             >
               <span>All Web Apps</span>
               <ArrowRight className="w-3.5 h-3.5" />
