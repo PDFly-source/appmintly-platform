@@ -102,7 +102,7 @@ export default function AppDetailPage() {
         <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
           <Info className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black text-ink">Application Not Found</h1>
+        <h1 className="text-2xl font-extrabold text-ink">Application Not Found</h1>
         <p className="text-sm text-mut mt-2">
           The requested application is not present in the AppMintly content registry.
         </p>
@@ -440,7 +440,7 @@ export default function AppDetailPage() {
         {(validScreenshots.length > 0 || app.previewMedia) && (
           <section className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black text-ink">Screenshots &amp; Preview</h2>
+              <h2 className="text-lg font-bold text-ink">Screenshots &amp; Preview</h2>
               <span className="text-xs text-mut font-semibold">
                 Tap image to view full screen
               </span>
@@ -484,7 +484,7 @@ export default function AppDetailPage() {
           {/* Main Description */}
           <section className="lg:col-span-8 bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div>
-              <h2 className="text-xl font-black text-ink mb-3">About this app</h2>
+              <h2 className="text-xl font-bold text-ink mb-3">About this app</h2>
               <p className="text-sm sm:text-base text-ink/85 leading-relaxed whitespace-pre-line">
                 {app.description}
               </p>
@@ -493,7 +493,7 @@ export default function AppDetailPage() {
             {/* Features Checklist */}
             {app.features && app.features.length > 0 && (
               <div className="border-t border-line pt-6">
-                <h3 className="text-base font-black text-ink mb-3">Key Features</h3>
+                <h3 className="text-base font-semibold text-ink mb-3">Key Features</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {app.features.map((feature, idx) => (
                     <div
@@ -514,7 +514,7 @@ export default function AppDetailPage() {
             {app.releaseNotes && app.releaseNotes.length > 0 && (
               <div className="border-t border-line pt-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-black text-ink">
+                  <h3 className="text-base font-semibold text-ink">
                     What’s New in Version {app.version}
                   </h3>
                   <span className="text-xs font-semibold text-mut">
@@ -536,7 +536,7 @@ export default function AppDetailPage() {
           {/* Sidebar: App Information (App Store Specs) */}
           <section className="lg:col-span-4 space-y-6">
             <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
-              <h2 className="text-base font-black text-ink border-b border-line pb-3">
+              <h2 className="text-base font-bold text-ink border-b border-line pb-3">
                 App Information
               </h2>
 
@@ -635,7 +635,7 @@ export default function AppDetailPage() {
             {/* APK Installation Instructions (truthful, static guidance) */}
             {app.apk?.enabled && (
               <div className="w-full p-4 rounded-2xl bg-card border border-line shadow-2xs">
-                <h4 className="text-xs font-bold text-ink mb-2 flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold text-ink mb-2 flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-[#1976F3]" />
                   How to install this APK on Android
                 </h4>
@@ -655,7 +655,7 @@ export default function AppDetailPage() {
                 className="w-full p-4 rounded-2xl bg-card hover:bg-white border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
               >
                 <div>
-                  <h4 className="text-xs font-bold text-ink group-hover:text-[#1976F3] transition-colors">
+                  <h4 className="text-xs font-semibold text-ink group-hover:text-[#1976F3] transition-colors">
                     How to install this app?
                   </h4>
                   <p className="text-[11px] text-mut">
@@ -712,7 +712,7 @@ export default function AppDetailPage() {
         {/* 4. MORE APPS IN CATEGORY */}
         {relatedApps.length > 0 && (
           <section className="space-y-4 pt-4">
-            <h2 className="text-xl font-black text-ink">
+            <h2 className="text-xl font-bold text-ink">
               More in {app.category}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -735,7 +735,7 @@ export default function AppDetailPage() {
             category={app.category}
           />
           <div className="min-w-0">
-            <h4 className="font-bold text-xs text-ink truncate">{app.name}</h4>
+            <h4 className="font-semibold text-xs text-ink truncate">{app.name}</h4>
             <p className="text-[10px] text-mut truncate">v{app.version} • {app.category}</p>
           </div>
         </div>
@@ -852,7 +852,7 @@ export default function AppDetailPage() {
                   category={app.category}
                 />
                 <div>
-                  <h3 className="font-black text-lg text-ink">
+                  <h3 className="font-semibold text-lg text-ink">
                     Install {app.name}
                   </h3>
                   <p className="text-xs text-mut">

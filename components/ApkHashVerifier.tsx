@@ -155,7 +155,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
                 : 'bg-[#E52B32]/10 border-[#E52B32]/40'
             }`}
           >
-            <p className="flex items-center gap-2 text-sm font-black">
+            <p className="flex items-center gap-2 text-sm font-bold">
               {result.match && result.sizeMatch ? (
                 <>
                   <ShieldCheck className="w-4.5 h-4.5 text-[#16A765]" aria-hidden />

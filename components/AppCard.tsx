@@ -237,7 +237,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h4 className="font-bold text-sm text-ink truncate group-hover:text-[#1976F3] transition-colors">
+              <h4 className="font-semibold text-sm text-ink truncate group-hover:text-[#1976F3] transition-colors">
                 {app.name}
               </h4>
               {isNewApp(app) && (
@@ -344,7 +344,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
             className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
           />
           <div className="min-w-0 flex-1 pt-1">
-            <h3 className="text-base sm:text-lg font-bold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
+            <h3 className="text-base sm:text-lg font-semibold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
               {app.name}
             </h3>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-mut min-w-0">
@@ -387,22 +387,22 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       {/* Top Header: Public Type Badge, New Badge & Library Save */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Badge discipline: platform badge + at most ONE status badge —
+              matches the Explore variant's cap so cards never look noisy. */}
           {getPublicBadge()}
-          {isNewApp(app) && (
+          {(isNewApp(app) ? (
             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
               NEW
             </span>
-          )}
-          {app.original && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
+          ) : app.original ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
               <Sparkles className="w-3 h-3 text-[#F7B928]" /> Original
             </span>
-          )}
-          {app.featured && (
+          ) : app.featured ? (
             <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
               Featured
             </span>
-          )}
+          ) : null)}
         </div>
 
         <button
@@ -429,7 +429,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           className="group-hover:scale-105 transition-transform duration-300"
         />
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
+          <h3 className="font-semibold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
             {app.name}
           </h3>
           <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">

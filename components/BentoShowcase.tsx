@@ -74,7 +74,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           <p className="text-[10px] font-black uppercase tracking-widest text-[#E52B32]">
             Discover
           </p>
-          <h2 id="bento-heading" className="text-xl sm:text-2xl font-extrabold text-ink tracking-tight">
+          <h2 id="bento-heading" className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
             The AppMintly bento
           </h2>
           <p className="text-xs text-mut mt-1">
@@ -115,7 +115,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
                   {tiles.spotlight.category}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-2xl font-bold tracking-tight">{tiles.spotlight.name}</h3>
+              <h3 className="text-lg sm:text-2xl font-semibold tracking-tight">{tiles.spotlight.name}</h3>
               <p className="text-xs sm:text-sm text-white/80 line-clamp-2 mt-1">
                 {tiles.spotlight.shortDescription || tiles.spotlight.description}
               </p>
@@ -132,7 +132,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
         >
           <Download className="w-5 h-5 text-[#E52B32]" aria-hidden />
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-ink">{apkCount}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-ink">{apkCount}</p>
           <p className="text-xs font-semibold text-ink">verified Android APK{apkCount === 1 ? '' : 's'}</p>
           <p className="mt-1 text-[11px] text-mut leading-snug">
             {apkCount > 0
@@ -147,7 +147,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
         >
           <Sparkles className="w-5 h-5 text-[#F7B928]" aria-hidden />
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-ink">{originalsCount}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-ink">{originalsCount}</p>
           <p className="text-xs font-semibold text-ink">AppMintly Original{originalsCount === 1 ? '' : 's'}</p>
           <p className="mt-1 text-[11px] text-mut leading-snug">
             First-party products published on the marketplace.
@@ -161,7 +161,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
             <Star className="w-5 h-5 text-[#16A765]" aria-hidden />
-            <p className="mt-2 text-sm sm:text-base font-black text-ink line-clamp-1">
+            <p className="mt-2 text-sm sm:text-base font-bold text-ink line-clamp-1">
               {tiles.newestRelease.name}
             </p>
             <p className="text-xs font-semibold text-mut">
@@ -184,7 +184,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
             <AppWindow className="w-5 h-5 text-[#1976F3]" aria-hidden />
-            <p className="mt-2 text-sm sm:text-base font-black text-ink">{c.label}</p>
+            <p className="mt-2 text-sm sm:text-base font-bold text-ink">{c.label}</p>
             <p className="text-xs font-semibold text-mut">
               {c.apps.length} published app{c.apps.length === 1 ? '' : 's'}
             </p>

@@ -107,7 +107,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
   if (!resolvedSrc || hasError) {
     return (
       <div
-        className={`relative shrink-0 flex items-center justify-center font-black select-none shadow-2xs overflow-hidden transition-all duration-200 border ${sizeClass} ${shapeClass} ${className}`}
+        className={`relative shrink-0 flex items-center justify-center font-extrabold select-none shadow-2xs overflow-hidden transition-all duration-200 border ${sizeClass} ${shapeClass} ${className}`}
         style={{
           backgroundColor: colors.bg,
           color: colors.text,

@@ -255,7 +255,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
             />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-xl text-ink tracking-tight">{app.name}</h3>
+                <h3 className="font-semibold text-xl text-ink tracking-tight">{app.name}</h3>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
                   <Smartphone className="w-3 h-3" /> Android App
                 </span>
@@ -280,7 +280,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
             <>
               <button
                 onClick={handleDownload}
-                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-[#16A765] text-white font-black text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
+                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-[#16A765] text-white font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
               >
                 <Download className="w-5 h-5" />
                 <span>Download APK</span>
@@ -294,7 +294,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
           {downloadState === 'downloading' && (
             <div className="py-3 space-y-2">
-              <div className="inline-flex items-center gap-2 text-sm font-black text-ink">
+              <div className="inline-flex items-center gap-2 text-sm font-bold text-ink">
                 <div className="w-4 h-4 border-2 border-[#16A765] border-t-transparent rounded-full animate-spin" />
                 <span>Downloading {fileName}...</span>
               </div>
@@ -306,7 +306,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
           {downloadState === 'started' && (
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#16A765]/15 text-[#16A765] text-sm font-black border border-[#16A765]/30">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#16A765]/15 text-[#16A765] text-sm font-bold border border-[#16A765]/30">
                 <Download className="w-4 h-4" />
                 <span>APK download started</span>
               </div>

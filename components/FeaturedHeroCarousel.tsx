@@ -128,7 +128,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             </div>
           )}
 
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-sm leading-tight">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-sm leading-tight">
             {current.name}
           </h2>
 

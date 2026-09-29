@@ -579,7 +579,7 @@ const clearAllFilters = () => {
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5">
         <p className="text-sm text-mut">
           <span className="hidden sm:inline">
-            <span className="font-black text-ink">{filteredApps.length}</span>{' '}
+            <span className="font-extrabold text-ink">{filteredApps.length}</span>{' '}
             {filteredApps.length === 1 ? 'app' : 'apps'} ·{' '}
           </span>
           Curated from the AppMintly catalog
@@ -623,7 +623,7 @@ const clearAllFilters = () => {
           <div className="w-14 h-14 rounded-2xl border border-line bg-page text-mut flex items-center justify-center mx-auto mb-4">
             <SearchX className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">No apps found</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight">No apps found</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
             Try another search or browse categories.
           </p>
@@ -648,7 +648,7 @@ const clearAllFilters = () => {
           <div className="w-14 h-14 rounded-2xl border border-line bg-page text-mut flex items-center justify-center mx-auto mb-4">
             <FilterX className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-ink tracking-tight">No matching apps</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight">No matching apps</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
             Try removing a filter{categoriesWithResults.length > 0 ? ' or browse a category with apps.' : '.'}
           </p>

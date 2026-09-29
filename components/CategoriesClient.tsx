@@ -127,7 +127,7 @@ export default function CategoriesPage() {
         <p className="text-[11px] font-black tracking-[0.2em] text-[#17805F] dark:text-[#3AC49B] mb-3">
           EXPLORE THE CATALOG
         </p>
-        <h1 className="text-3xl sm:text-5xl font-black text-ink tracking-tight">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-ink tracking-tight">
           Find what you need.
         </h1>
         <p className="text-sm sm:text-base text-mut mt-2 leading-relaxed">
@@ -183,7 +183,7 @@ export default function CategoriesPage() {
       {noResults && (
         <div className="py-16 flex flex-col items-center text-center" role="status">
           <SearchX aria-hidden="true" className="w-8 h-8 text-mut mb-3" />
-          <p className="text-base font-black text-ink">No categories found</p>
+          <p className="text-base font-bold text-ink">No categories found</p>
           <p className="text-sm text-mut mt-1">Try another search term.</p>
         </div>
       )}
@@ -192,7 +192,7 @@ export default function CategoriesPage() {
       {!noResults && publishedApps.length === 0 && (
         <div className="py-16 flex flex-col items-center text-center" role="status">
           <Box aria-hidden="true" className="w-8 h-8 text-mut mb-3" />
-          <p className="text-base font-black text-ink">No apps available yet</p>
+          <p className="text-base font-bold text-ink">No apps available yet</p>
           <p className="text-sm text-mut mt-1">
             New apps will appear here as they are published.
           </p>
@@ -204,7 +204,7 @@ export default function CategoriesPage() {
         <section aria-labelledby="active-categories-heading">
           <h2
             id="active-categories-heading"
-            className="text-lg font-black text-ink tracking-tight mb-4"
+            className="text-lg font-bold text-ink tracking-tight mb-4"
           >
             Active Categories
           </h2>
@@ -241,7 +241,7 @@ export default function CategoriesPage() {
                           >
                             <Icon aria-hidden="true" className="w-5 h-5" />
                           </div>
-                          <h3 className="text-base font-black text-ink truncate">{cat.name}</h3>
+                          <h3 className="text-base font-semibold text-ink truncate">{cat.name}</h3>
                         </div>
                         <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-page text-mut border border-line shrink-0">
                           {count} {count === 1 ? 'app' : 'apps'}
@@ -304,7 +304,7 @@ export default function CategoriesPage() {
         <section aria-labelledby="coming-soon-heading" className="mt-10 sm:mt-12">
           <h2
             id="coming-soon-heading"
-            className="text-xs font-black tracking-[0.15em] text-mut uppercase mb-3"
+            className="text-xs font-bold tracking-[0.15em] text-mut uppercase mb-3"
           >
             Coming Soon
           </h2>
