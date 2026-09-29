@@ -386,7 +386,28 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   // Standard Grid Card (Store Marketplace Feel)
   return (
     <div className="group relative flex flex-col justify-between h-full p-4 sm:p-5 rounded-2xl bg-card border border-line card-accent">
-      {/* Top Header: Public Type Badge, New Badge & Library Save */}
+      {/* Identity first: icon, name, publisher — the app IS the card, badges are supporting metadata */}
+      <Link href={`/app/${app.slug}`} className="flex items-start gap-3.5 mb-3 focus:outline-hidden">
+                <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
+  <AppIcon
+            src={app.icon}
+            name={app.name}
+            size="lg"
+            themeColor={app.themeColor}
+            category={app.category}
+            className="group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
+            {app.name}
+          </h3>
+          <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
+            <span className="truncate">{resolveDeveloper(app).name}</span>
+            {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
+          </p>
+        </div>
+      </Link>      {/* Supporting metadata row: platform/status badges + Library save (44px target) */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Badge discipline: platform badge + at most ONE status badge —
@@ -409,9 +430,10 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
         <button
           onClick={handleFavoriteClick}
-          className="p-1.5 rounded-full text-mut hover:text-[#E52B32] hover:bg-page transition shrink-0 cursor-pointer"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-[#E52B32] hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#E52B32]/50"
           title={favorite ? 'Remove from Library' : 'Save to Library'}
-          aria-label={favorite ? 'Remove from Library' : 'Save to Library'}
+          aria-label={favorite ? `Remove ${app.name} from Library` : `Save ${app.name} to Library`}
+          aria-pressed={favorite}
         >
           <Bookmark
             key={`fav-${favorite}`}
@@ -419,29 +441,6 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
         </button>
       </div>
-
-      {/* Main Body: App Icon, Title, Developer, Version */}
-      <Link href={`/app/${app.slug}`} className="flex items-start gap-3.5 mb-3 focus:outline-hidden">
-                <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
-  <AppIcon
-            src={app.icon}
-            name={app.name}
-            size="lg"
-            themeColor={app.themeColor}
-            category={app.category}
-            className="group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
-            {app.name}
-          </h3>
-          <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
-            <span className="truncate">{resolveDeveloper(app).name}</span>
-            {resolveDeveloper(app).verified && <VerifiedBadge size="xs" />}
-          </p>
-        </div>
-      </Link>
 
       {/* Short Description */}
       <p className="text-xs text-mut line-clamp-2 mb-3 leading-relaxed flex-1">

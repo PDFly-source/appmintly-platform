@@ -158,7 +158,7 @@ export default function HomePage() {
               <div className="pt-1">
                 <Link
                   href="/explore"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-white text-sm font-bold shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50"
                   style={{ backgroundColor: '#16A765' }}
                 >
                   <Compass className="w-4 h-4" />
@@ -220,8 +220,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 max-w-2xl">
           <Link
             href="/explore"
-            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5"
-            style={{ backgroundColor: '#16A765' }}
+            className="inline-flex items-center justify-between gap-2 px-5 py-3.5 rounded-2xl text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5 bg-inkbg"
           >
             <span className="inline-flex items-center gap-2">
               <Compass className="w-4 h-4" />

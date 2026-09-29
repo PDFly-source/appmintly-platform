@@ -134,11 +134,11 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             {current.name}
           </h2>
 
-          <p className="mt-3 text-sm sm:text-base text-white/80 line-clamp-2 max-w-lg leading-relaxed">
+          <p className="mt-4 text-sm sm:text-base text-white/80 line-clamp-2 max-w-lg leading-relaxed">
             {current.shortDescription || current.description}
           </p>
 
-          <div className="mt-4 flex items-center gap-2.5 text-xs text-white/70 flex-wrap">
+          <div className="mt-5 flex items-center gap-2.5 text-xs text-white/70 flex-wrap">
             <span className="inline-flex items-center gap-1">
               By {publisher.name}
               {publisher.verified && <VerifiedBadge size="xs" className="[&_svg]:text-[#7FC7A3]" />}
@@ -151,7 +151,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
         </div>
 
         {/* Action CTAs */}
-        <div className="flex items-center gap-3 pt-6 flex-wrap">
+        <div className="flex items-center gap-3 pt-7 flex-wrap">
           <Link
             href={`/app/${current.slug}`}
             className="relative z-20 btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm cursor-pointer"
