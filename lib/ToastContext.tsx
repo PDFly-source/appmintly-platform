@@ -64,10 +64,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Screen-reader announcement region: success/info politely,
           errors assertively. Mirrors the aria-live pattern already
           used by the offline/update banners. */}
+      {/* The container is deliberately NOT a live region: each toast below
+          already carries its own role="status" (polite) or role="alert"
+          (assertive). A live container plus live children makes screen
+          readers announce every toast twice, so the container stays
+          silent and the item-level roles speak exactly once. */}
       <div
         className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"
-        role="status"
-        aria-live="polite"
       >
         {toasts.map((t) => (
           <div
