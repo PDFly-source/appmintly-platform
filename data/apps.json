@@ -507,5 +507,115 @@
     ],
     "updatedAt": "2026-09-28T17:09:07.166Z",
     "publishedAt": "2026-09-28T17:08:26.933Z"
+  },
+  {
+    "id": "niramay",
+    "slug": "niramay",
+    "name": "Niramay",
+    "shortName": "Niramay",
+    "developer": "PKD",
+    "developerSlug": "pkd",
+    "type": "Web App",
+    "category": "Health",
+    "description": "Niramay is a private, offline-ready wellness reference inspired by traditional Assamese and Indian kitchen wisdom. Explore a 105-symptom directory, search by ailment or household ingredient, discover traditional preparation guidance, and browse practical wellness knowledge in English, Assamese, or Dual mode.\n\nThe experience brings together symptom-based discovery, ingredient matching, seasonal Ritucharya guidance, a Plant Scanner, a Knowledge Bank, and Saved Remedies in one calm, accessible interface. Niramay is designed as an educational reference for exploring traditional wellness practices and household knowledge.\n\nIt is not a substitute for professional medical diagnosis or treatment. Always follow the safety guidance provided inside the app and seek qualified medical care when symptoms are serious, persistent, or urgent.",
+    "shortDescription": "Explore traditional Assamese & Indian wellness wisdom through 105 symptoms, kitchen ingredients, remedies, seasonal guidance and bilingual health knowledge.",
+    "icon": "/brand/niramay-icon-384.png",
+    "screenshots": [
+      "/assets/apps/niramay/screenshots/screenshot-1-dbd4b3480e.png",
+      "/assets/apps/niramay/screenshots/screenshot-2-c0e3d02397.png",
+      "/assets/apps/niramay/screenshots/screenshot-3-235aba9cf7.png"
+    ],
+    "banner": "",
+    "url": "https://pdfly-source.github.io/niramay/symptoms/",
+    "launchUrl": "https://pdfly-source.github.io/niramay/symptoms/",
+    "webUrl": "https://pdfly-source.github.io/niramay/symptoms/",
+    "pwaUrl": "https://pdfly-source.github.io/niramay/",
+    "apkUrl": "",
+    "playStoreUrl": "",
+    "appStoreUrl": "",
+    "version": "2.1.0",
+    "previousVersion": "",
+    "releaseDate": "2026-09-30",
+    "lastUpdated": "2026-09-30",
+    "publishedAt": "2026-09-30T19:50:00.000Z",
+    "themeColor": "#1B4332",
+    "backgroundColor": "#F6F1E4",
+    "manifestUrl": "https://pdfly-source.github.io/niramay/manifest.webmanifest",
+    "startUrl": "https://pdfly-source.github.io/niramay/",
+    "scope": "https://pdfly-source.github.io/niramay/",
+    "pwa": {
+      "detected": true,
+      "installable": true,
+      "manifestDetected": true,
+      "serviceWorkerDetected": true,
+      "statusSummary": "PWA Metadata Found"
+    },
+    "features": [
+      "105-Symptom Directory: explore a broad directory of 105 common symptoms and wellness concerns",
+      "Ailment & Spice Search: search by symptom, ailment, or household spice/ingredient",
+      "Ingredient Matching: check traditional remedy information against commonly available kitchen ingredients",
+      "Assamese + English + Dual: switch between English, Assamese, or a combined bilingual experience",
+      "Traditional Remedy Guidance: explore traditional kitchen-based preparation and wellness reference information",
+      "Plant Scanner: use the built-in Plant Scanner module for plant-related identification/reference",
+      "Ritucharya Guidance: explore seasonal wellness and traditional routine guidance",
+      "Knowledge Bank: browse additional traditional wellness and herbal knowledge",
+      "Saved Remedies: save useful remedy references for easier access later",
+      "Private & Offline-Ready: designed around local/private use with offline-ready access where supported by the current implementation"
+    ],
+    "tags": [
+      "health",
+      "wellness",
+      "assamese",
+      "remedies",
+      "ayurveda",
+      "kitchen-wisdom"
+    ],
+    "releaseNotes": [
+      "Expanded the wellness reference with a 105-symptom directory and improved symptom discovery.",
+      "Improved bilingual navigation across English, Assamese and Dual language modes.",
+      "Improved the mobile experience with keyboard-safe layout, smart scrolling and accessibility refinements."
+    ],
+    "changelog": [],
+    "featured": true,
+    "original": true,
+    "published": true,
+    "isDemo": false,
+    "size": "",
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ],
+    "apk": {
+      "enabled": false,
+      "buildMode": "webview",
+      "packageId": "com.appforge.niramay",
+      "authorized": true,
+      "versionName": "2.1.0",
+      "versionCode": 20100,
+      "fileName": "",
+      "apkUrl": "",
+      "sha256": "",
+      "fileSizeBytes": 0,
+      "generatedAt": "2026-09-30T19:50:00.000Z",
+      "buildStatus": "pending",
+      "downloadAvailable": false
+    },
+    "privacyTech": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
+      "permissionsSource": "platform-code",
+      "dataCollection": "Not verified — the app is published by its developer; AppMintly has not audited its internal data handling.",
+      "tracking": "Not verified — AppMintly has not audited the app for trackers.",
+      "networkRequirement": "online-only",
+      "offlineSupport": "Not specified",
+      "pwaSupport": "verified-installable",
+      "installationType": "Web App + signed Android APK package",
+      "externalServices": []
+    },
+    "updatedAt": "2026-09-30T19:50:00.000Z"
   }
 ]
