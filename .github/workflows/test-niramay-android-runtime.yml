@@ -39,13 +39,21 @@ jobs:
             adb shell getprop ro.build.version.release | tee runtime-diagnostics/android-version.txt
             adb install test-apk/Niramay-2.1.0.apk | tee runtime-diagnostics/install.txt
             adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell wm dismiss-keyguard || true
+            sleep 3
             adb shell input keyevent KEYCODE_HOME
-            sleep 2
-            adb shell input swipe 540 2300 540 500 250 || true
-            sleep 4
+            sleep 5
+            adb shell input swipe 540 2200 540 700 400 || true
+            sleep 6
             adb shell uiautomator dump /sdcard/launcher.xml || true
             adb pull /sdcard/launcher.xml runtime-diagnostics/launcher.xml || true
             adb exec-out screencap -p > runtime-diagnostics/launcher.png || true
+            (test -s runtime-diagnostics/launcher.xml && echo 'DRAWER_DUMP: captured') || echo 'WARN: drawer dump empty on first attempt'
+            adb shell input swipe 540 2200 540 700 400 || true
+            sleep 5
+            adb shell uiautomator dump --compressed /sdcard/launcher2.xml || true
+            adb pull /sdcard/launcher2.xml runtime-diagnostics/launcher2.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/launcher2.png || true
             (grep -Fq 'Niramay' runtime-diagnostics/launcher.xml && echo 'LAUNCHER_LABEL: Niramay label visible in app drawer') || echo 'WARN: label not found in launcher dump (drawer may not have opened)'
             adb logcat -c
             adb shell am start -W -n com.appforge.niramay/.MainActivity | tee runtime-diagnostics/launch.txt
