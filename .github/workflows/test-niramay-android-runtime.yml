@@ -1,0 +1,82 @@
+name: Test Niramay Android runtime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  launch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Download released Niramay APK
+        run: |
+          mkdir -p test-apk
+          curl -fsSL -o test-apk/Niramay-2.1.0.apk \
+            "https://github.com/PDFly-source/appmintly-releases/releases/download/niramay-v2.1.0/Niramay-2.1.0.apk"
+      - name: Verify release integrity
+        run: |
+          EXPECTED="797ff68335c5f2a94a30ea25770e46b13504c075211668f077548f0fccf41eb1"
+          ACTUAL=$(sha256sum test-apk/Niramay-2.1.0.apk | cut -d' ' -f1)
+          test "$ACTUAL" = "$EXPECTED" && echo 'APK integrity verified against published catalog checksum'
+      - name: Install, launch and verify on Android 16 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            mkdir -p runtime-diagnostics
+            adb shell getprop ro.build.version.release | tee runtime-diagnostics/android-version.txt
+            adb install test-apk/Niramay-2.1.0.apk | tee runtime-diagnostics/install.txt
+            # Launcher label + icon check: home, open app drawer, dump UI and screenshot
+            adb shell input keyevent KEYCODE_HOME
+            sleep 2
+            adb shell input swipe 540 1900 540 500 300
+            sleep 4
+            adb shell uiautomator dump /sdcard/launcher.xml || true
+            adb pull /sdcard/launcher.xml runtime-diagnostics/launcher.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/launcher.png
+            grep -Fq 'Niramay' runtime-diagnostics/launcher.xml \
+              && echo 'LAUNCHER_LABEL: Niramay label visible in app drawer' \
+              || echo 'WARN: label not found in launcher dump'
+            # Launch the app
+            adb logcat -c
+            adb shell am start -W -n com.appforge.niramay/.MainActivity | tee runtime-diagnostics/launch.txt
+            sleep 50
+            adb shell uiautomator dump /sdcard/niramay-ui.xml || true
+            adb pull /sdcard/niramay-ui.xml runtime-diagnostics/ui.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/app-screen.png
+            adb logcat -d > runtime-diagnostics/logcat.txt
+            adb shell pidof com.appforge.niramay | grep -Eq '[0-9]' \
+              && echo 'APP_ALIVE: Niramay process running'
+            ! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.niramay' \
+              && echo 'NO_FATAL: no fatal exceptions from Niramay'
+            grep -Eiq 'Niramay|Symptom|Ritucharya|Knowledge' runtime-diagnostics/ui.xml \
+              && echo 'PAGE_VISIBLE: webapp content shown in accessibility tree' \
+              || echo 'PAGE_VISUAL_UNVERIFIED: no page text captured in accessibility tree'
+            # Close and reopen
+            adb shell input keyevent KEYCODE_HOME
+            sleep 2
+            adb shell monkey -p com.appforge.niramay -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+            sleep 20
+            adb shell pidof com.appforge.niramay | grep -Eq '[0-9]' \
+              && echo 'REOPEN_OK: app relaunches after close'
+            adb exec-out screencap -p > runtime-diagnostics/reopen-screen.png
+      - name: Upload launch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: niramay-android-16-runtime-diagnostics
+          path: runtime-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
