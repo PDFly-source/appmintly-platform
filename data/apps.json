@@ -536,7 +536,7 @@
     "version": "2.1.0",
     "previousVersion": "",
     "releaseDate": "2026-09-30",
-    "lastUpdated": "2026-09-30",
+    "lastUpdated": "2026-10-01",
     "publishedAt": "2026-09-30T19:50:00.000Z",
     "themeColor": "#1B4332",
     "backgroundColor": "#F6F1E4",
@@ -595,13 +595,13 @@
       "versionCode": 20100,
       "fileName": "Niramay-2.1.0.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/niramay-v2.1.0/Niramay-2.1.0.apk",
-      "sha256": "3b186d69799f3df82aa403f40f8adc265521eae97e9f1cfd67e1cd4414121e73",
-      "fileSizeBytes": 747374,
-      "generatedAt": "2026-09-30T19:55:32.120Z",
+      "sha256": "797ff68335c5f2a94a30ea25770e46b13504c075211668f077548f0fccf41eb1",
+      "fileSizeBytes": 280430,
+      "generatedAt": "2026-10-01T06:28:35.999Z",
       "buildStatus": "released",
       "downloadAvailable": true,
       "releaseTag": "niramay-v2.1.0",
-      "releaseDate": "2026-09-30",
+      "releaseDate": "2026-10-01",
       "platform": "android",
       "architecture": "universal",
       "verified": true,
@@ -615,10 +615,10 @@
         "v3": true
       },
       "securityCheckStatus": "passed",
-      "securityCheckTimestamp": "2026-09-30T19:55:26.973Z",
+      "securityCheckTimestamp": "2026-10-01T06:28:30.180Z",
       "validatorVersion": "11.6.0",
       "releaseId": 400390192,
-      "assetId": 601689776
+      "assetId": 602607673
     },
     "privacyTech": {
       "permissions": [
