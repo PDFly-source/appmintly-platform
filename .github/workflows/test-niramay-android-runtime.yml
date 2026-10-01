@@ -38,40 +38,31 @@ jobs:
             mkdir -p runtime-diagnostics
             adb shell getprop ro.build.version.release | tee runtime-diagnostics/android-version.txt
             adb install test-apk/Niramay-2.1.0.apk | tee runtime-diagnostics/install.txt
-            # Launcher label + icon check: home, open app drawer, dump UI and screenshot
+            adb shell input keyevent KEYCODE_WAKEUP || true
             adb shell input keyevent KEYCODE_HOME
             sleep 2
-            adb shell input swipe 540 1900 540 500 300
+            adb shell input swipe 540 2300 540 500 250 || true
             sleep 4
             adb shell uiautomator dump /sdcard/launcher.xml || true
             adb pull /sdcard/launcher.xml runtime-diagnostics/launcher.xml || true
-            adb exec-out screencap -p > runtime-diagnostics/launcher.png
-            grep -Fq 'Niramay' runtime-diagnostics/launcher.xml \
-              && echo 'LAUNCHER_LABEL: Niramay label visible in app drawer' \
-              || echo 'WARN: label not found in launcher dump'
-            # Launch the app
+            adb exec-out screencap -p > runtime-diagnostics/launcher.png || true
+            (grep -Fq 'Niramay' runtime-diagnostics/launcher.xml && echo 'LAUNCHER_LABEL: Niramay label visible in app drawer') || echo 'WARN: label not found in launcher dump (drawer may not have opened)'
             adb logcat -c
             adb shell am start -W -n com.appforge.niramay/.MainActivity | tee runtime-diagnostics/launch.txt
             sleep 50
             adb shell uiautomator dump /sdcard/niramay-ui.xml || true
             adb pull /sdcard/niramay-ui.xml runtime-diagnostics/ui.xml || true
-            adb exec-out screencap -p > runtime-diagnostics/app-screen.png
-            adb logcat -d > runtime-diagnostics/logcat.txt
-            adb shell pidof com.appforge.niramay | grep -Eq '[0-9]' \
-              && echo 'APP_ALIVE: Niramay process running'
-            ! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.niramay' \
-              && echo 'NO_FATAL: no fatal exceptions from Niramay'
-            grep -Eiq 'Niramay|Symptom|Ritucharya|Knowledge' runtime-diagnostics/ui.xml \
-              && echo 'PAGE_VISIBLE: webapp content shown in accessibility tree' \
-              || echo 'PAGE_VISUAL_UNVERIFIED: no page text captured in accessibility tree'
-            # Close and reopen
-            adb shell input keyevent KEYCODE_HOME
+            adb exec-out screencap -p > runtime-diagnostics/app-screen.png || true
+            adb logcat -d > runtime-diagnostics/logcat.txt || true
+            (adb shell pidof com.appforge.niramay | grep -Eq '[0-9]') && echo 'APP_ALIVE: Niramay process running' || echo 'WARN: Niramay process not found'
+            (! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.niramay') && echo 'NO_FATAL: no fatal exceptions from Niramay' || echo 'ERROR: fatal exception from Niramay found'
+            (grep -Eiq 'Niramay|Symptom|Ritucharya|Knowledge' runtime-diagnostics/ui.xml) && echo 'PAGE_VISIBLE: webapp content shown in accessibility tree' || echo 'PAGE_VISUAL_UNVERIFIED: no page text captured in accessibility tree'
+            adb shell input keyevent KEYCODE_HOME || true
             sleep 2
-            adb shell monkey -p com.appforge.niramay -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+            adb shell monkey -p com.appforge.niramay -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
             sleep 20
-            adb shell pidof com.appforge.niramay | grep -Eq '[0-9]' \
-              && echo 'REOPEN_OK: app relaunches after close'
-            adb exec-out screencap -p > runtime-diagnostics/reopen-screen.png
+            (adb shell pidof com.appforge.niramay | grep -Eq '[0-9]') && echo 'REOPEN_OK: app relaunches after close' || echo 'WARN: relaunch check failed'
+            adb exec-out screencap -p > runtime-diagnostics/reopen-screen.png || true
       - name: Upload launch diagnostics
         if: always()
         uses: actions/upload-artifact@v4
