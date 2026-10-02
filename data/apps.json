@@ -521,9 +521,13 @@
     "shortDescription": "Explore traditional Assamese & Indian wellness wisdom through 105 symptoms, kitchen ingredients, remedies, seasonal guidance and bilingual health knowledge.",
     "icon": "/brand/niramay-icon-384.png",
     "screenshots": [
-      "/assets/apps/niramay/screenshots/screenshot-1-dbd4b3480e.png",
-      "/assets/apps/niramay/screenshots/screenshot-2-c0e3d02397.png",
-      "/assets/apps/niramay/screenshots/screenshot-3-235aba9cf7.png"
+      "/assets/apps/niramay/screenshots/screenshot-1-9e5a4bc76c.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-ce8a040f20.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-0b03526e3c.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-ffba8322fa.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-2246581550.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-84ef85173a.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-bc5466be32.png"
     ],
     "banner": "",
     "url": "https://pdfly-source.github.io/niramay/symptoms/",
@@ -536,7 +540,7 @@
     "version": "2.1.0",
     "previousVersion": "",
     "releaseDate": "2026-09-30",
-    "lastUpdated": "2026-10-01",
+    "lastUpdated": "2026-10-02",
     "publishedAt": "2026-09-30T19:50:00.000Z",
     "themeColor": "#1B4332",
     "backgroundColor": "#F6F1E4",
@@ -591,20 +595,20 @@
       "buildMode": "webview",
       "packageId": "com.appforge.niramay",
       "authorized": true,
+      "sha256": "797ff68335c5f2a94a30ea25770e46b13504c075211668f077548f0fccf41eb1",
       "versionName": "2.1.0",
       "versionCode": 20100,
       "fileName": "Niramay-2.1.0.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/niramay-v2.1.0/Niramay-2.1.0.apk",
-      "sha256": "797ff68335c5f2a94a30ea25770e46b13504c075211668f077548f0fccf41eb1",
       "fileSizeBytes": 280430,
+      "releaseTag": "niramay-v2.1.0",
       "generatedAt": "2026-10-01T06:28:35.999Z",
       "buildStatus": "released",
-      "downloadAvailable": true,
-      "releaseTag": "niramay-v2.1.0",
-      "releaseDate": "2026-10-01",
-      "platform": "android",
-      "architecture": "universal",
       "verified": true,
+      "downloadAvailable": true,
+      "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-10-01",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -635,6 +639,7 @@
       "installationType": "Web App + signed Android APK package",
       "externalServices": []
     },
-    "updatedAt": "2026-09-30T19:50:00.000Z"
+    "updatedAt": "2026-10-02T15:24:08.690Z",
+    "status": "published"
   }
 ]
