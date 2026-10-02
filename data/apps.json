@@ -522,12 +522,12 @@
     "icon": "/brand/niramay-icon-384.png",
     "screenshots": [
       "/assets/apps/niramay/screenshots/screenshot-1-9e5a4bc76c.png",
-      "/assets/apps/niramay/screenshots/screenshot-1-ce8a040f20.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-bc5466be32.png",
       "/assets/apps/niramay/screenshots/screenshot-1-0b03526e3c.png",
+      "/assets/apps/niramay/screenshots/screenshot-1-ce8a040f20.png",
       "/assets/apps/niramay/screenshots/screenshot-1-ffba8322fa.png",
       "/assets/apps/niramay/screenshots/screenshot-1-2246581550.png",
-      "/assets/apps/niramay/screenshots/screenshot-1-84ef85173a.png",
-      "/assets/apps/niramay/screenshots/screenshot-1-bc5466be32.png"
+      "/assets/apps/niramay/screenshots/screenshot-1-84ef85173a.png"
     ],
     "banner": "",
     "url": "https://pdfly-source.github.io/niramay/symptoms/",
@@ -639,7 +639,7 @@
       "installationType": "Web App + signed Android APK package",
       "externalServices": []
     },
-    "updatedAt": "2026-10-02T15:24:52.916Z",
+    "updatedAt": "2026-10-02T15:28:33.121Z",
     "status": "published"
   }
 ]
