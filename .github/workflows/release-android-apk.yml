@@ -153,6 +153,12 @@ jobs:
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
 
+      - name: WebView ownership anti-regression gate (fail-closed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
+
       - name: Compile production-signed APK
         shell: bash
         env:

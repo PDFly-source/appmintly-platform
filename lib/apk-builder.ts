@@ -131,6 +131,58 @@ export function semanticVersionToCode(version: string): number {
 }
 
 /**
+ * WEBVIEW OWNERSHIP BOUNDARY — single source of truth.
+ *
+ * The native APK keeps a URL inside its own WebView only when it starts with
+ * the ownership prefix derived from the app's OWN launch URL. Nothing else is
+ * ever owned: NOT sibling paths on shared hosts (e.g. other apps published
+ * under the same *.github.io origin), NOT other publishers' domains, NOT URLs
+ * that merely contain or reference the owned host.
+ *
+ * Invariants enforced by scripts/test-webview-ownership.ts (run as a gate in
+ * the release workflow before every APK compile):
+ *  1. Ownership is a pure function of the launch URL. The marketplace catalog
+ *     (data/apps.json) can NEVER expand the WebView ownership boundary.
+ *  2. The prefix always ends with "/" so a suffix-domain such as
+ *     "https://appmintly.pages.dev.evil.example/" is NOT owned.
+ *  3. Launching a shared-origin host (e.g. *.github.io) at its ROOT path is
+ *     forbidden — that is the bare-origin rule that captured sibling apps.
+ *  4. Malformed URLs and non-http(s) schemes (javascript:, data:, file:)
+ *     are never owned.
+ */
+export function computeWebViewOwnershipPrefix(launchUrl: string): string {
+  const parsed = new URL(launchUrl);
+  const origin = parsed.origin;
+  const pathname = parsed.pathname.replace(/\/+$/, '');
+  const prefix = `${origin}${pathname}/`;
+  // Shared project-hosting origins (GitHub Pages project sites) host many
+  // unrelated apps as sibling PATHS; owning the bare origin would capture
+  // them all. Fail closed instead.
+  if (/\.github\.io$/i.test(new URL(origin).hostname) && pathname === '') {
+    throw new Error(
+      `Refusing bare shared-origin WebView ownership "${origin}/": ` +
+      `sibling apps on this host would be captured. Launch from the app's own namespace path instead.`
+    );
+  }
+  return prefix;
+}
+
+/**
+ * Test/query-side mirror of the compiled Android ownership check
+ * (shouldOverrideUrlLoading: url.startsWith(ALLOWED_ORIGIN)). Returns true
+ * only for URLs inside the app's own ownership boundary.
+ */
+export function isWebViewOwnedUrl(url: string, launchUrl: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    return url.startsWith(computeWebViewOwnershipPrefix(launchUrl));
+  } catch {
+    return false; // malformed URLs are never owned; handled externally
+  }
+}
+
+/**
  * Checks eligibility of an application for APK generation
  */
 export function checkApkEligibility(options: ApkBuildOptions): { eligible: boolean; reason?: string } {
@@ -572,10 +624,9 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // Android Back). The prefix is derived from the FULL launch URL path so
       // e.g. "https://host/appmintly-platform/" stays in-app while sibling paths
       // like "/niramay/" or "/nexdrop/" open in the normal browser.
-      const launchUrl = new URL(options.launchUrl);
-      launchUrl.search = '';
-      launchUrl.hash = '';
-      const allowedPrefix = `${launchUrl.origin}${launchUrl.pathname}`.replace(/\/+$/, '') + '/';
+      // Ownership prefix — derived ONLY from this app's own launch URL via the
+      // single-source-of-truth helper above. Never from any published app URL.
+      const allowedPrefix = computeWebViewOwnershipPrefix(options.launchUrl);
       const isTwa = buildMode === 'twa';
 
       const javaCode = `package ${packageId};
