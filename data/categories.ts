@@ -11,6 +11,16 @@ export interface CategoryItem {
 
 export const CATEGORIES: CategoryItem[] = [
   {
+    id: 'marketplace',
+    name: 'Marketplace',
+    slug: 'marketplace',
+    description: 'App marketplaces, storefronts, and platforms for discovering and installing applications.',
+    icon: 'ShoppingBag',
+    color: '#7C3AED',
+    bgColor: 'rgba(124, 58, 237, 0.08)',
+    borderColor: 'rgba(124, 58, 237, 0.25)',
+  },
+  {
     id: 'productivity',
     name: 'Productivity',
     slug: 'productivity',
