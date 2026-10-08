@@ -1,5 +1,5 @@
 // AppMintly Service Worker - Cache Versioning
-const CACHE_VERSION = 'appmintly-v3.0.0';
+const CACHE_VERSION = 'appmintly-v3.1.0';
 const STATIC_CACHE_NAME = `appmintly-static-${CACHE_VERSION}`;
 const DATA_CACHE_NAME = `appmintly-data-${CACHE_VERSION}`;
 

@@ -565,7 +565,17 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       await fs.promises.writeFile(path.join(buildDir, 'AndroidManifest.xml'), manifestXml, 'utf8');
 
       // MainActivity.java: Hardened, production-ready WebView wrapper
-      const targetOrigin = new URL(options.launchUrl).origin;
+      // Keep ONLY the app's own deployment namespace inside the WebView — not the
+      // whole origin. On shared-origin hosts (e.g. GitHub Pages project sites) the
+      // origin also hosts unrelated sibling apps; routing those into this app's
+      // window breaks the expected normal-browser context (history, address bar,
+      // Android Back). The prefix is derived from the FULL launch URL path so
+      // e.g. "https://host/appmintly-platform/" stays in-app while sibling paths
+      // like "/niramay/" or "/nexdrop/" open in the normal browser.
+      const launchUrl = new URL(options.launchUrl);
+      launchUrl.search = '';
+      launchUrl.hash = '';
+      const allowedPrefix = `${launchUrl.origin}${launchUrl.pathname}`.replace(/\/+$/, '') + '/';
       const isTwa = buildMode === 'twa';
 
       const javaCode = `package ${packageId};
@@ -599,7 +609,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileUploadCallback;
     private final static int FILE_CHOOSER_RESULT_CODE = 1001;
     private final String TARGET_URL = "${escapeJava(options.launchUrl)}";
-    private final String ALLOWED_ORIGIN = "${escapeJava(targetOrigin)}";
+    private final String ALLOWED_ORIGIN = "${escapeJava(allowedPrefix)}";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -653,7 +663,7 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (url.startsWith(ALLOWED_ORIGIN)) {
-                    return false; // Stay within application origin
+                    return false; // Stay within this app's own namespace only
                 }
                 // Open external links safely in external browser
                 try {
