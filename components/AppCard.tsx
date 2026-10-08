@@ -150,10 +150,12 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     }
 
     // 2. Web App / Installable App / Game / Tool / Website
+    // Same-context navigation (Phase 10.11): pushes the destination onto
+    // this tab's history so Back returns to AppMintly (no new tab).
     const targetUrl = app.launchUrl || app.webUrl || app.pwaUrl || app.url;
     if (targetUrl) {
       trackAppOpened(app.id);
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+      window.location.assign(targetUrl);
       toast(`Opening ${app.name}...`, 'info');
     } else {
       toast('Application address is not configured.', 'error');

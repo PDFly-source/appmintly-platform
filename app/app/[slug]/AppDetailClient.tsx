@@ -193,8 +193,9 @@ export default function AppDetailPage() {
       }
     }
 
-    // Open destination app in new window / tab
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    // Same-context navigation (Phase 10.11): the destination is pushed onto
+    // this tab's history, so browser/Android Back returns to AppMintly.
+    window.location.assign(targetUrl);
 
     // Show install guide if applicable
     if ((app.type === 'PWA' || app.pwa?.installable) && !isStandaloneInstalled) {
@@ -205,13 +206,16 @@ export default function AppDetailPage() {
     }
   };
 
-  const handleOpenDirect = () => {
-    const targetUrl = app.launchUrl || app.webUrl || app.pwaUrl || app.url;
-    if (targetUrl) {
-      trackAppOpened(app.id);
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
-      toast(`Opening ${app.name}...`, 'info');
-    }
+  // Same-context navigation (Phase 10.11): opening the web app pushes the
+  // destination onto THIS tab's history instead of a separate browsing
+  // context, so the natural browser/Android Back gesture returns the user
+  // to this exact app detail page. Catalog-driven URL only.
+  const webTargetUrl = app.launchUrl || app.webUrl || app.pwaUrl || app.url;
+  const handleOpenDirect = (e?: React.MouseEvent<HTMLAnchorElement>) => {
+    // Let modified clicks (Ctrl/Cmd/middle) keep their default behavior;
+    // only plain activations navigate this tab (tracked, same-context).
+    if (e && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0)) return;
+    if (webTargetUrl) trackAppOpened(app.id);
   };
 
   // Public category & type badges (App Store feel)
@@ -322,15 +326,16 @@ export default function AppDetailPage() {
                   <span>{getPrimaryCtaText()}</span>
                 </button>
 
-                {hasApk && (app.webUrl || app.pwaUrl || app.url || app.launchUrl) && (
-                  <button
+                {hasApk && webTargetUrl && (
+                  <a
+                    href={webTargetUrl}
                     onClick={handleOpenDirect}
-                    className="px-6 py-3.5 rounded-full bg-page hover:bg-line text-ink text-sm font-bold border border-line transition flex items-center gap-1.5 cursor-pointer"
-                    title="Launch app directly in new browser tab"
+                    className="px-6 py-3.5 rounded-full bg-page hover:bg-line text-ink text-sm font-bold border border-line transition flex items-center gap-1.5 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
+                    title={`Open ${app.name} on the web`}
                   >
                     <span>Open on Web</span>
                     <ArrowUpRight className="w-4 h-4" />
-                  </button>
+                  </a>
                 )}
 
                 <button
