@@ -58,6 +58,21 @@ const externals: Array<[string, string]> = [
   ['[9] unrelated site → external', 'https://example.com/'],
   ['[10] suffix-domain attack → external', `https://${suffixDomainHost}/`],
   ['[11] query-string attack → external', `https://evil.example/?url=${encodeURIComponent(launchUrl)}`],
+  ['[18a] path-trick → external', `https://evil.example/${new URL(launchUrl).hostname}/`],
+  ['[18b] sibling pages.dev subdomain → external', 'https://another-app.pages.dev/'],
+  ['[18c] other pages.dev subdomain → external', 'https://newapp.pages.dev/'],
+  ['[18d] evil pages.dev subdomain → external', 'https://evil.pages.dev/'],
+  ['[18e] user-site github.io root → external', 'https://foo.github.io/'],
+  ['[18f] other user github.io root → external', 'https://newapp.github.io/'],
+  ['[18g] bare shared project host root → external', 'https://pdfly-source.github.io/'],
+  ['[18h] vercel tenant → external', 'https://someapp.vercel.app/'],
+  ['[18i] netlify tenant → external', 'https://someapp.netlify.app/'],
+  ['[18j] firebase tenant → external', 'https://someapp.web.app/'],
+  ['[18k] workers.dev tenant → external', 'https://someapp.workers.dev/'],
+  ['[18l] arbitrary custom domain → external', 'https://another-cloudflare-domain.pages.dev/'],
+  ['[18m] custom domain with path → external', 'https://newapp.example.com/'],
+  ['[18n] userinfo credential trick → external (fail-closed)', `https://user@${new URL(launchUrl).host}/`],
+  ['[18o] bare origin without trailing slash → external (fail-closed)', new URL(launchUrl).origin],
 ];
 for (const [name, url] of externals) ok(name, !isWebViewOwnedUrl(url, launchUrl));
 
@@ -166,6 +181,76 @@ for (const app of catalog) {
   ok(`ownership of "${app.name}" URL matches boundary (${expectedOwned ? 'WEBVIEW' : 'CHROME'})`,
      isWebViewOwnedUrl(target, launchUrl) === expectedOwned, target);
 }
+
+// ---------------------------------------------------------------------------
+// PART 5 — FUTURE-APP PUBLISHING TEST (Section 9) — in-memory only, no dummy
+// data is ever written to the real catalog.
+// ---------------------------------------------------------------------------
+const futureApps: Array<[string, string]> = [
+  ['App A (github.io sibling path)', 'https://pdfly-source.github.io/app-a/'],
+  ['App B (other pages.dev subdomain)', 'https://newapp.pages.dev/'],
+  ['App C (custom domain with path)', 'https://example.com/app/'],
+  ['App D (user-site github.io root)', 'https://foo.github.io/'],
+  ['App E (another pages.dev subdomain)', 'https://another.pages.dev/'],
+];
+for (const [name, webUrl] of futureApps) {
+  ok(`publishing ${name} → NOT WebView-owned`, !isWebViewOwnedUrl(webUrl, launchUrl), webUrl);
+}
+const catalogFuture = [...catalog, ...futureApps.map(([name, webUrl], i) => ({ name: name.split(' ')[0], slug: `future-${i}`, webUrl }))];
+ok(
+  'after publishing Apps A–E, AppMintly own URL REMAINS WebView-owned',
+  catalogFuture.filter((a) => {
+    const t = resolveOpenOnWebUrl(a);
+    return t ? isWebViewOwnedUrl(t, launchUrl) : false;
+  }).length === ownedBefore.length
+);
+ok('no future app became WebView-owned', !futureApps.some(([, webUrl]) => isWebViewOwnedUrl(webUrl, launchUrl)));
+
+// ---------------------------------------------------------------------------
+// PART 6 — CATALOG MUTATION + URL-CHANGE INVARIANTS (Sections 10 & 11)
+// All in-memory; the real data/apps.json is never modified by this gate.
+// ---------------------------------------------------------------------------
+const ownedBy = (c: CatalogApp[]) => c.filter((a) => {
+  const t = resolveOpenOnWebUrl(a);
+  return t ? isWebViewOwnedUrl(t, launchUrl) : false;
+}).map((a) => a.name);
+
+const c1 = [...catalog, { name: 'TestApp', slug: 'testapp', type: 'Web App', webUrl: 'https://pdfly-source.github.io/testapp/' }];
+ok('after publishing TestApp: AppMintly ownership TRUE, TestApp FALSE',
+   JSON.stringify(ownedBy(c1)) === JSON.stringify(ownedBefore) && !isWebViewOwnedUrl('https://pdfly-source.github.io/testapp/', launchUrl));
+
+const c2 = [...c1, { name: 'TestApp2', slug: 'testapp2', type: 'Web App', webUrl: 'https://testapp2.example.com/' }];
+ok('after publishing TestApp2: AppMintly TRUE, TestApp FALSE, TestApp2 FALSE',
+   JSON.stringify(ownedBy(c2)) === JSON.stringify(ownedBefore) &&
+   !isWebViewOwnedUrl('https://pdfly-source.github.io/testapp/', launchUrl) &&
+   !isWebViewOwnedUrl('https://testapp2.example.com/', launchUrl));
+
+// Mutating a published app's webUrl must never touch AppMintly ownership.
+const c3 = c2.map((a) => (a.slug === 'testapp' ? { ...a, webUrl: 'https://testapp.example.com/' } : a));
+ok('changing TestApp webUrl never changes AppMintly ownership',
+   JSON.stringify(ownedBy(c3)) === JSON.stringify(ownedBefore));
+ok('after webUrl change, Open on Web uses the NEW exact URL',
+   resolveOpenOnWebUrl(c3.find((a: any) => a.slug === 'testapp')!) === 'https://testapp.example.com/');
+ok('NEW URL after change remains NOT WebView-owned', !isWebViewOwnedUrl('https://testapp.example.com/', launchUrl));
+
+// Editing publisher/category/APK fields is irrelevant to ownership by construction:
+// ownership depends only on the launch URL. Prove it stays stable across a full
+// catalog field storm.
+const c4 = c3.map((a) => ({ ...a, publisher: 'Someone Else', category: 'Changed', apkUrl: 'https://x/y.apk' }));
+ok('metadata edits (publisher/category/apkUrl) never change ownership', JSON.stringify(ownedBy(c4)) === JSON.stringify(ownedBefore));
+
+// ---------------------------------------------------------------------------
+// PART 7 — MISSING-URL FAIL-SAFE (Section 12)
+// ---------------------------------------------------------------------------
+const emptyApp = { name: 'NoUrl', slug: 'nourl', type: 'Web App' };
+ok('missing URL resolves to undefined, never to AppMintly own URL',
+   resolveOpenOnWebUrl(emptyApp) === undefined && resolveOpenOnWebUrl(emptyApp) !== launchUrl);
+ok('catalog records resolve to https URL or undefined — never a silent fallback',
+   catalog.every((a) => {
+     const t = resolveOpenOnWebUrl(a);
+     if (t === undefined) return true;
+     try { return new URL(t).protocol === 'https:'; } catch { return false; }
+   }));
 
 // ---------------------------------------------------------------------------
 console.log(`\n[gate] ${checks} checks, ${failures} failure(s)`);
