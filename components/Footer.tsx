@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
-import { Smartphone, Globe, Wrench, Sparkles } from 'lucide-react';
+import { Smartphone, Globe, Wrench, Sparkles, Instagram } from 'lucide-react';
 
 // Base path is '' for local/server deployments and '/appmintly-platform' for
 // the static GitHub Pages build (injected at build time) — same pattern as
@@ -49,6 +49,21 @@ export const Footer: React.FC = () => {
               <p className="text-[11px] text-[#FAF5ED]/50 mt-1 pl-4">
                 Marketplace services are running normally.
               </p>
+            </div>
+
+            {/* Official social links — authentic Instagram brand glyph from
+                the existing icon library (no new dependency). 44px touch
+                target; subtle hover/focus matching the gold-accent footer. */}
+            <div className="pt-2 flex items-center gap-2">
+              <a
+                href="https://www.instagram.com/krprasanta_"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram — PKD Official Profile"
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-[#F7B928]/25 bg-[#FAF5ED]/[0.04] text-[#FAF5ED]/75 transition-colors hover:border-[#F7B928]/60 hover:bg-[#F7B928]/[0.08] hover:text-[#F7B928] focus-ring"
+              >
+                <Instagram className="w-5 h-5" aria-hidden="true" />
+              </a>
             </div>
           </div>
 
