@@ -144,8 +144,10 @@ function versionLabel(a: PkdAppSource): string {
 }
 
 function descriptionLabel(a: PkdAppSource): string {
-  if (a.shortDescription) return a.shortDescription;
-  const d = a.description || '';
+  const s = (a.shortDescription || '').trim();
+  if (s) return s;
+  const d = (a.description || '').trim();
+  if (!d) return MISSING; // neutral fallback, never an empty showcase field
   if (d.length <= 220) return d;
   const cut = d.slice(0, 220);
   const sp = cut.lastIndexOf(' ');

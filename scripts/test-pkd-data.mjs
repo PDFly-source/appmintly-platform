@@ -121,7 +121,7 @@ test('missing optional metadata gets neutral fallbacks', () => {
   assert.match(a.i, /^data:image\/svg\+xml/); // monogram fallback
   assert.equal(a.g, 0x4c8dff); // default accent
   assert.equal(a.ty, 'App');
-  assert.equal(a.d, '');
+  assert.equal(a.d, '\u2014'); // neutral fallback, never an empty showcase field
   assert.equal(d.stats.latest, '\u2014');
   assert.equal(d.updates[0].date, '\u2014');
   assert.equal(d.updates[0].version, '\u2014');
