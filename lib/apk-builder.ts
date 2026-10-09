@@ -1437,7 +1437,7 @@ public final class UpdateEngine {
         return null;
     }
 
-    private static JSONObject buildBaseline(JSONArray apps) {
+    private static JSONObject buildBaseline(JSONArray apps) throws org.json.JSONException {
         JSONObject out = new JSONObject();
         for (int i = 0; i < apps.length(); i++) {
             JSONObject a = apps.optJSONObject(i);
