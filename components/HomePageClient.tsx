@@ -42,6 +42,8 @@ import { Reveal } from '@/components/Reveal';
 import { PremiumHeroVisual } from '@/components/PremiumHeroVisual';
 import { HeroFeatureIndicators } from '@/components/HeroFeatureIndicators';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { computePlatformCounts, summarizePublishers } from '@/lib/publisher-stats';
+import { PublisherIdentityCard } from '@/components/PublisherIdentityCard';
 
 export default function HomePage() {
   const router = useRouter();
@@ -67,22 +69,16 @@ export default function HomePage() {
     })
     .slice(0, 6);
 
-  // Platform/type discovery — real counts from the published catalog.
-  const platformCounts = React.useMemo(() => {
-    const counts = new Map<string, { type: string; count: number }>();
-    for (const a of publishedApps) {
-      const key = a.type || 'Other';
-      const entry = counts.get(key);
-      counts.set(key, { type: key, count: entry ? entry.count + 1 : 1 });
-    }
-    return [...counts.values()].sort((a, b) => b.count - a.count);
-  }, [publishedApps]);
+  // Platform/type discovery — real counts from the published catalog, via the
+  // shared aggregation layer (each app counted exactly once).
+  const platformCounts = React.useMemo(() => computePlatformCounts(publishedApps), [publishedApps]);
 
-  // Verified publishers with truthful, live app counts.
-  const publishersWithApps = PUBLISHERS.map((p) => ({
-    ...p,
-    appCount: publishedApps.filter((a) => a.developerSlug === p.slug).length,
-  })).filter((p) => p.appCount > 0);
+  // Verified publishers with truthful, live app counts — the SAME aggregation
+  // the publisher profile page uses, so the two screens can never disagree.
+  const publishersWithApps = React.useMemo(
+    () => summarizePublishers(publishedApps, PUBLISHERS),
+    [publishedApps]
+  );
 
   // Popular Categories — Phase 18. Real counts only: platform-type families
   // (Android/Web) from authoritative catalog signals, plus real CATEGORIES
@@ -595,134 +591,128 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 10. VERIFIED PUBLISHERS (real publisher identities with live app counts) */}
-      {publishersWithApps.length > 0 && (
-        <Reveal>
-        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Verified publishers">
-          <div className="flex items-end justify-between mb-5">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#F7B928] bg-[#F7B928]/10 px-2.5 py-1 rounded-md mb-1.5 border border-[#F7B928]/25">
-                <BadgeCheck className="w-3.5 h-3.5 text-[#F7B928]" />
-                <span>Trusted Developers</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
-                Verified Publishers
-              </h2>
-              <p className="text-xs sm:text-sm text-mut mt-1">
-                Publisher identities verified by the AppMintly team.
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {publishersWithApps.map((p, i) => (
-              <Reveal key={p.slug} delay={Math.min(i, 5) * 0.06} className="h-full">
-              <Link
-                href={`/publisher/${p.slug}`}
-                className="group flex items-center gap-4 p-5 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all h-full"
-              >
-                <div
-                  className="w-12 h-12 rounded-xl bg-inkbg text-white flex items-center justify-center text-base font-bold shrink-0"
-                  aria-hidden="true"
-                >
-                  {p.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-semibold truncate group-hover:text-[#1976F3] transition-colors">
-                      {p.name}
-                    </h3>
-                    {p.verified && <VerifiedBadge size="xs" />}
-                  </div>
-                  <p className="text-xs text-mut mt-0.5">
-                    {p.appCount} published {p.appCount === 1 ? 'application' : 'applications'}
+      {/* 10-12. PREMIUM 3D STAGE: Verified Publishers + Discover by Platform + Why AppMintly.
+          Every number comes from lib/publisher-stats.ts (real published catalog). */}
+      {(publishersWithApps.length > 0 || platformCounts.length > 0) && (
+        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Publishers, platforms and why AppMintly">
+          <div className="p3d-stage p-5 sm:p-8 lg:p-10">
+
+            {/* 10. VERIFIED PUBLISHERS */}
+            {publishersWithApps.length > 0 && (
+              <div aria-label="Verified publishers" className="mb-10 sm:mb-12">
+                <Reveal>
+                  <span className="p3d-eyebrow mb-3">
+                    <BadgeCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                    Trusted Developers
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-3">
+                    Verified <span className="p3d-grad">Publishers</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm p3d-mute mt-1.5 mb-5">
+                    Publisher identities verified by the AppMintly team.
                   </p>
+                </Reveal>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {publishersWithApps.map((p, i) => (
+                    <Reveal key={p.slug} delay={Math.min(i, 5) * 0.06} className="h-full">
+                      <Link
+                        href={`/publisher/${p.slug}`}
+                        aria-label={`${p.name}${p.verified ? ', verified publisher' : ''}, ${p.appCount} published ${p.appCount === 1 ? 'application' : 'applications'}`}
+                        className="group block h-full rounded-[26px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7dd3fc]"
+                      >
+                        <PublisherIdentityCard
+                          name={p.name}
+                          verified={p.verified}
+                          subtitle={`${p.appCount} published ${p.appCount === 1 ? 'application' : 'applications'}`}
+                          avatarSize={60}
+                          footer={[
+                            { label: 'View profile', value: 'Open' },
+                            { label: 'Apps', value: String(p.appCount) },
+                          ]}
+                        />
+                      </Link>
+                    </Reveal>
+                  ))}
                 </div>
-                <ArrowRight className="w-4 h-4 text-mut group-hover:text-[#1976F3] group-hover:translate-x-0.5 transition shrink-0" />
-              </Link>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-        </Reveal>
-      )}
+              </div>
+            )}
 
-      {/* 11. DISCOVER BY PLATFORM (real catalog counts) */}
-      {platformCounts.length > 0 && (
-        <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Discover by platform">
-          <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight mb-2">
-            Discover by Platform
-          </h2>
-          <p className="text-xs sm:text-sm text-mut mb-6">
-            Every format in the catalog, with live application counts.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {platformCounts.map(({ type, count }) => (
-              <Link
-                key={type}
-                href={`/explore?type=${encodeURIComponent(type)}`}
-                className="group p-5 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all text-center"
-              >
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  {(type.toLowerCase().includes('apk') || type.toLowerCase().includes('android')) && (
-                    <Smartphone className="w-4 h-4 text-[#16A765]" aria-hidden="true" />
-                  )}
-                  {!type.toLowerCase().includes('apk') && !type.toLowerCase().includes('android') && (
-                    <Globe className="w-4 h-4 text-[#1976F3]" aria-hidden="true" />
-                  )}
-                  <h3 className="text-sm font-semibold group-hover:text-[#1976F3] transition-colors">
-                    {type}
-                  </h3>
+            {/* 11. DISCOVER BY PLATFORM */}
+            {platformCounts.length > 0 && (
+              <div aria-label="Discover by platform" className="mb-10 sm:mb-12">
+                <Reveal>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    Discover by <span className="p3d-grad">Platform</span>
+                  </h2>
+                  <p className="text-xs sm:text-sm p3d-mute mt-1.5 mb-5">
+                    Every format in the catalog, with live application counts.
+                  </p>
+                </Reveal>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {platformCounts.map(({ type, count }, i) => {
+                    const isApk = type.toLowerCase().includes('apk') || type.toLowerCase().includes('android');
+                    return (
+                      <Reveal key={type} delay={Math.min(i, 5) * 0.06} className="h-full">
+                        <Link
+                          href={`/explore?type=${encodeURIComponent(type)}`}
+                          className="p3d-glass p3d-lift group flex flex-col items-center justify-center text-center p-4 sm:p-6 h-full min-h-[132px]"
+                        >
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            {isApk ? (
+                              <Smartphone className="w-4 h-4 text-[#3fd797]" aria-hidden="true" />
+                            ) : (
+                              <Globe className="w-4 h-4 text-[#7dd3fc]" aria-hidden="true" />
+                            )}
+                            <h3 className="text-sm font-semibold">{type}</h3>
+                          </div>
+                          <p className="p3d-stat-num text-3xl sm:text-4xl font-extrabold">{count}</p>
+                          <p className="text-[11px] p3d-mute mt-0.5">
+                            {count === 1 ? 'application' : 'applications'}
+                          </p>
+                        </Link>
+                      </Reveal>
+                    );
+                  })}
                 </div>
-                <p className="text-2xl font-extrabold text-ink">{count}</p>
-                <p className="text-[11px] text-mut mt-0.5">
-                  {count === 1 ? 'application' : 'applications'}
+              </div>
+            )}
+
+            {/* 12. WHY APPMINTLY */}
+            <div aria-label="Why AppMintly">
+              <Reveal>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  Why <span className="p3d-grad">AppMintly</span>
+                </h2>
+                <p className="text-xs sm:text-sm p3d-mute mt-1.5 mb-5">
+                  A marketplace built around transparency, directness, and user control.
                 </p>
-              </Link>
-            ))}
+              </Reveal>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                {[
+                  { Icon: Zap, tint: '#ff6b6f', title: 'Direct Access', body: 'Apps launch straight from the publisher. No walled gardens, no lock-in — web apps open directly, APKs download from official release links.' },
+                  { Icon: FolderOpen, tint: '#3fd797', title: 'One Unified Catalog', body: 'Web apps, PWAs, Android packages, games, tools, and websites — organized in a single searchable marketplace.' },
+                  { Icon: ShieldCheck, tint: '#7dd3fc', title: 'Honest Metadata', body: 'Versions, sizes, and checksums come from real release data — verified before anything reaches the storefront.' },
+                ].map(({ Icon, tint, title, body }, i) => (
+                  <Reveal key={title} delay={i * 0.07} className="h-full">
+                    <div className="p3d-glass p3d-lift p-5 sm:p-6 h-full">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                        style={{ background: `${tint}1f`, border: `1px solid ${tint}40` }}
+                        aria-hidden="true"
+                      >
+                        <Icon className="w-5 h-5" style={{ color: tint }} />
+                      </div>
+                      <h3 className="text-sm font-semibold mb-1.5">{title}</h3>
+                      <p className="text-xs p3d-mute leading-relaxed">{body}</p>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+
           </div>
         </section>
       )}
-
-      {/* 12. WHY APPMINTLY */}
-      <Reveal>
-      <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Why AppMintly">
-        <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight mb-2">
-          Why AppMintly
-        </h2>
-        <p className="text-xs sm:text-sm text-mut mb-6">
-          A marketplace built around transparency, directness, and user control.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="p-6 rounded-2xl bg-card border border-line">
-            <div className="w-10 h-10 rounded-xl bg-[#E52B32]/10 flex items-center justify-center mb-3" aria-hidden="true">
-              <Zap className="w-5 h-5 text-[#E52B32]" />
-            </div>
-            <h3 className="text-sm font-semibold mb-1.5">Direct Access</h3>
-            <p className="text-xs text-mut leading-relaxed">
-              Apps launch straight from the publisher. No walled gardens, no lock-in — web apps open directly, APKs download from official release links.
-            </p>
-          </div>
-          <div className="p-6 rounded-2xl bg-card border border-line">
-            <div className="w-10 h-10 rounded-xl bg-[#16A765]/10 flex items-center justify-center mb-3" aria-hidden="true">
-              <FolderOpen className="w-5 h-5 text-[#16A765]" />
-            </div>
-            <h3 className="text-sm font-semibold mb-1.5">One Unified Catalog</h3>
-            <p className="text-xs text-mut leading-relaxed">
-              Web apps, PWAs, Android packages, games, tools, and websites — organized in a single searchable marketplace.
-            </p>
-          </div>
-          <div className="p-6 rounded-2xl bg-card border border-line">
-            <div className="w-10 h-10 rounded-xl bg-[#1976F3]/10 flex items-center justify-center mb-3" aria-hidden="true">
-              <ShieldCheck className="w-5 h-5 text-[#1976F3]" />
-            </div>
-            <h3 className="text-sm font-semibold mb-1.5">Honest Metadata</h3>
-            <p className="text-xs text-mut leading-relaxed">
-              Versions, sizes, and checksums come from real release data — verified before anything reaches the storefront.
-            </p>
-          </div>
-        </div>
-      </section>
-      </Reveal>
 
       {/* 13. SECURITY / TRUST */}
       <Reveal>

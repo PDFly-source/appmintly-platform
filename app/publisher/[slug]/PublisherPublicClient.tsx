@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { useCatalog } from '@/lib/CatalogContext';
 import { getDeveloperIdentity } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
-import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { Reveal } from '@/components/Reveal';
+import type { AppItem } from '@/data/apps';
+import { PublisherIdentityCard } from '@/components/PublisherIdentityCard';
+import { computePublisherStats } from '@/lib/publisher-stats';
 import {
   ArrowLeft,
   Globe,
@@ -27,20 +30,16 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
   const { publishedApps } = useCatalog();
   const identity = getDeveloperIdentity(slug);
 
-  const apps = React.useMemo(
-    () => (identity ? publishedApps.filter((a) => a.developerSlug === identity.slug) : []),
+  // One shared, tested aggregation layer (lib/publisher-stats.ts). `publishedApps`
+  // is already filtered by the project's public-publication rules, so drafts
+  // and archived records can never reach these numbers.
+  const stats = React.useMemo(
+    () => (identity ? computePublisherStats(publishedApps, identity.slug) : null),
     [publishedApps, identity]
   );
-
-  const latestApps = React.useMemo(() => [...apps].slice(0, 6), [apps]);
-
-  const updatedApps = React.useMemo(() => {
-    return [...apps].sort((a, b) => {
-      const dateA = new Date(a.lastUpdated || a.updatedAt || a.releaseDate || 0).getTime();
-      const dateB = new Date(b.lastUpdated || b.updatedAt || b.releaseDate || 0).getTime();
-      return dateB - dateA;
-    });
-  }, [apps]);
+  const apps = stats?.apps ?? [];
+  // `apps` is already sorted newest-update-first from real metadata.
+  const updatedApps = apps;
 
   if (!identity) {
     return (
@@ -64,82 +63,89 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-page text-ink pb-16">
-      {/* Publisher header */}
+      {/* Publisher header — premium 3D stage */}
       <section className="px-4 sm:px-6 pt-8 sm:pt-12 max-w-7xl mx-auto">
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition mb-6"
+          className="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Explore</span>
         </Link>
 
-        <div className="rounded-3xl bg-card border border-line p-6 sm:p-10 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Publisher avatar/monogram */}
-            <div
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-inkbg text-white flex items-center justify-center text-2xl sm:text-3xl font-black shrink-0 shadow-md"
-              aria-hidden="true"
-            >
-              {identity.name.slice(0, 2).toUpperCase()}
+        <div className="p3d-stage p-4 sm:p-8 lg:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-6 lg:gap-10 items-center">
+            <div className="p3d-rise" style={{ ['--p3d-d' as string]: '0s' }}>
+              <PublisherIdentityCard
+                name={identity.name}
+                verified={identity.verified}
+                eyebrow="Verified Developer & Publisher"
+                subtitle={
+                  stats && stats.totalApps > 0
+                    ? `${stats.publishedApps} published ${stats.publishedApps === 1 ? 'application' : 'applications'}`
+                    : undefined
+                }
+                avatarSize={76}
+                footer={[
+                  { label: 'Publisher ID', value: identity.slug },
+                  { label: 'Marketplace', value: 'AppMintly' },
+                ]}
+              />
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">{identity.name}</h1>
-                {identity.verified && <VerifiedBadge />}
-              </div>
+            <div className="p3d-rise min-w-0" style={{ ['--p3d-d' as string]: '0.1s' }}>
               {identity.bio && (
-                <p className="text-sm sm:text-base text-mut mt-2 max-w-2xl leading-relaxed">
-                  {identity.bio}
-                </p>
+                <p className="text-sm sm:text-base p3d-mute leading-relaxed max-w-xl">{identity.bio}</p>
               )}
               {identity.website && (
                 <a
                   href={identity.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#1976F3] hover:text-[#0f55b8] transition"
+                  className="mt-3 inline-flex items-center gap-1.5 min-h-[44px] text-xs font-bold text-[#7dd3fc] hover:text-white transition"
                 >
                   <Globe className="w-3.5 h-3.5" />
                   <span>Official Website</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               )}
-            </div>
-          </div>
 
-          {/* Truthful publisher stats (derived from live catalog) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8" role="list" aria-label="Publisher statistics">
-            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
-                <Package className="w-3.5 h-3.5" /> Total Apps
+              {/* Truthful publisher stats (derived from the live published catalog) */}
+              <div
+                className="grid grid-cols-2 gap-3 mt-5 lg:mt-6"
+                role="list"
+                aria-label="Publisher statistics"
+              >
+                <div className="p3d-glass p-4" role="listitem">
+                  <div className="flex items-center gap-1.5 p3d-mute text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                    <Package className="w-3.5 h-3.5" aria-hidden="true" /> Total Apps
+                  </div>
+                  <p className="p3d-stat-num text-3xl font-extrabold mt-1.5">{stats?.totalApps ?? 0}</p>
+                </div>
+                <div className="p3d-glass p-4" role="listitem">
+                  <div className="flex items-center gap-1.5 p3d-mute text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                    <Sparkles className="w-3.5 h-3.5" aria-hidden="true" /> Published
+                  </div>
+                  <p className="p3d-stat-num text-3xl font-extrabold mt-1.5">{stats?.publishedApps ?? 0}</p>
+                </div>
+                <div className="p3d-glass p-4" role="listitem">
+                  <div className="flex items-center gap-1.5 p3d-mute text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                    <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Recently Updated
+                  </div>
+                  <p className="p3d-stat-num text-3xl font-extrabold mt-1.5 p3d-grad">
+                    {stats?.latestVersion ? `v${stats.latestVersion}` : '—'}
+                  </p>
+                  {stats?.latestVersionApp && (
+                    <p className="text-[0.7rem] p3d-mute mt-0.5 truncate">{stats.latestVersionApp}</p>
+                  )}
+                </div>
+                <div className="p3d-glass p-4" role="listitem">
+                  <div className="flex items-center gap-1.5 p3d-mute text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                    <Globe className="w-3.5 h-3.5" aria-hidden="true" /> Categories
+                  </div>
+                  <p className="p3d-stat-num text-3xl font-extrabold mt-1.5">{stats?.categoryCount ?? 0}</p>
+                </div>
               </div>
-              <p className="text-2xl font-black mt-1.5">{apps.length}</p>
-            </div>
-            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
-                <Sparkles className="w-3.5 h-3.5" /> Published
-              </div>
-              <p className="text-2xl font-black mt-1.5">
-                {apps.filter((a) => a.published).length}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
-                <RefreshCw className="w-3.5 h-3.5" /> Recently Updated
-              </div>
-              <p className="text-2xl font-black mt-1.5">
-                {updatedApps[0]?.version ? `v${updatedApps[0].version}` : '—'}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-page border border-line p-4" role="listitem">
-              <div className="flex items-center gap-1.5 text-mut text-xs font-bold uppercase tracking-wide">
-                <Globe className="w-3.5 h-3.5" /> Categories
-              </div>
-              <p className="text-2xl font-black mt-1.5">
-                {new Set(apps.map((a) => a.category)).size}
-              </p>
             </div>
           </div>
         </div>
@@ -158,10 +164,12 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
           </div>
         </div>
 
-        {latestApps.length > 0 ? (
+        {apps.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {latestApps.map((app) => (
-              <AppCard key={app.id} app={app} />
+            {apps.map((app, i) => (
+              <Reveal key={app.slug} delay={Math.min(i, 5) * 0.06} className="h-full">
+                <AppCard app={app as AppItem} />
+              </Reveal>
             ))}
           </div>
         ) : (

@@ -383,3 +383,125 @@ summary {
   border-color: color-mix(in srgb, var(--c-line) 90%, transparent);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 1px 3px -1px rgba(0,0,0,0.4);
 }
+
+/* ============================================================
+   Premium 3D publisher surfaces (Verified Publishers section +
+   publisher profile ONLY). Fully scoped under `.p3d-*` classes so
+   no other screen is affected. Dark charcoal stage in both themes,
+   cyan/blue light + restrained gold accents (from the supplied PKD
+   design). Static by default; motion is opt-in and disabled for
+   prefers-reduced-motion. Only transform/opacity animate (GPU).
+   ============================================================ */
+.p3d-stage {
+  --p3d-bg: #0b0e15;
+  --p3d-glass: rgba(22, 27, 40, 0.62);
+  --p3d-line: rgba(255, 255, 255, 0.1);
+  --p3d-fg: #eef2fa;
+  --p3d-mute: #9aa4b8;
+  --p3d-blue: #4c8dff;
+  --p3d-cyan: #7dd3fc;
+  --p3d-gold: #f5b50a;
+  position: relative;
+  isolation: isolate;
+  border-radius: 28px;
+  background:
+    radial-gradient(520px 340px at 88% 0%, rgba(76, 141, 255, 0.2), transparent 70%),
+    radial-gradient(420px 320px at 0% 100%, rgba(245, 181, 10, 0.09), transparent 70%),
+    var(--p3d-bg);
+  border: 1px solid var(--p3d-line);
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  color: var(--p3d-fg);
+  overflow: hidden;
+}
+/* faint engineering grid, masked to fade out (as in the reference) */
+.p3d-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 56px 56px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 56px 56px;
+  -webkit-mask: radial-gradient(ellipse at 50% 30%, #000 25%, transparent 80%);
+  mask: radial-gradient(ellipse at 50% 30%, #000 25%, transparent 80%);
+}
+.p3d-mute { color: var(--p3d-mute); }
+.p3d-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--p3d-gold);
+  border: 1px solid rgba(245, 181, 10, 0.45);
+  background: rgba(245, 181, 10, 0.1);
+}
+.p3d-glass {
+  position: relative;
+  background: var(--p3d-glass);
+  border: 1px solid var(--p3d-line);
+  border-radius: 22px;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 14px 34px -18px rgba(0, 0, 0, 0.7);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.p3d-glass:hover,
+.p3d-glass:focus-visible,
+.p3d-glass:focus-within {
+  border-color: rgba(76, 141, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 22px 44px -18px rgba(76, 141, 255, 0.35);
+}
+@media (hover: hover) {
+  .p3d-glass.p3d-lift:hover { transform: translateY(-4px); }
+}
+.p3d-glass:focus-visible { outline: 2px solid var(--p3d-cyan); outline-offset: 3px; }
+/* gradient headline (reference .sub b / h2 em) */
+.p3d-grad {
+  background: linear-gradient(120deg, var(--p3d-blue), var(--p3d-cyan));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.p3d-stat-num { font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+
+/* Identity card: 3D perspective tilt host + moving specular highlight */
+.p3d-persp { perspective: 1100px; }
+.p3d-card {
+  position: relative; overflow: hidden;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(76, 141, 255, 0.38), rgba(18, 22, 34, 0.94) 50%, rgba(245, 181, 10, 0.26));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 34px 70px -22px rgba(0, 0, 0, 0.7), 0 0 60px -10px rgba(76, 141, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: rotateX(var(--p3d-rx, 0deg)) rotateY(var(--p3d-ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+.p3d-card::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(360px circle at var(--p3d-sx, 30%) var(--p3d-sy, 0%), rgba(255, 255, 255, 0.2), transparent 55%);
+}
+.p3d-avatar {
+  display: grid; place-items: center;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #2a3246, #171c29);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  color: var(--p3d-fg); font-weight: 800; letter-spacing: -0.02em;
+  transform: translateZ(28px);
+}
+.p3d-badge-glow { filter: drop-shadow(0 0 8px rgba(76, 141, 255, 0.7)); }
+
+/* Entrance: opacity + translate only. Disabled for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .p3d-rise { animation: p3d-rise 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) both; animation-delay: var(--p3d-d, 0s); }
+  @keyframes p3d-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .p3d-card { transform: none !important; transition: none; will-change: auto; }
+  .p3d-glass { transition: none; }
+  .p3d-glass.p3d-lift:hover { transform: none; }
+}
+/* Touch / small screens: no tilt, lighter shadows (battery + legibility) */
+@media (hover: none), (max-width: 640px) {
+  .p3d-card { transform: none !important; will-change: auto; }
+  .p3d-stage { border-radius: 22px; }
+}
