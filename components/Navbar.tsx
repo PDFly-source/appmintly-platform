@@ -108,6 +108,12 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('appmintly_local_updated', updateFavCount);
   }, []);
 
+  // The dedicated PKD 3D publisher profile renders its own full-page
+  // experience — no marketplace chrome on that route.
+  if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd') {
+    return null;
+  }
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {

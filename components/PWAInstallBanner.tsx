@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Download, Share2, X, Smartphone } from 'lucide-react';
 import { AppMintlyLogo } from './AppMintlyLogo';
@@ -9,8 +10,10 @@ export const PWAInstallBanner: React.FC = () => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const pathname = usePathname();
 
-  if (isInstalled || dismissed) {
+  // The PKD 3D publisher profile is a standalone full-page experience.
+  if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd' || isInstalled || dismissed) {
     return null;
   }
 

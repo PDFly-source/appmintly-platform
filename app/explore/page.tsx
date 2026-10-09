@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL } from '@/app/layout';
+import { SITE_URL } from '@/lib/site-url';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import ExploreClient from '@/components/ExploreClient';
 

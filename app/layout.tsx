@@ -9,7 +9,7 @@ import { Footer } from '@/components/Footer';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SystemStatus } from '@/components/SystemStatus';
 
-export const SITE_URL = 'https://appmintly.pages.dev/';
+import { SITE_URL } from '@/lib/site-url';
 
 // Base path is '' for local/server deployments and '/appmintly-platform' for
 // the static GitHub Pages build (injected at build time).

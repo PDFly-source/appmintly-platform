@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
 import { Smartphone, Globe, Wrench, Sparkles } from 'lucide-react';
 
@@ -14,6 +17,13 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const linkClass = 'transition-colors hover:text-white focus-ring rounded-sm';
 
 export const Footer: React.FC = () => {
+  const pathname = usePathname();
+  // The PKD 3D publisher profile ships its own footer as part of the
+  // supplied design — no duplicate marketplace footer on that route.
+  if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd') {
+    return null;
+  }
+
   return (
     <footer className="bg-inkbg text-[#FAF5ED] pt-10 mt-16 border-t border-ink/10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">

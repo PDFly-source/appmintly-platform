@@ -8,7 +8,9 @@ const SITE_URL = 'https://appmintly.pages.dev/';
 
 // Static export (GitHub Pages) requires all publisher slugs at build time.
 export function generateStaticParams() {
-  return PUBLISHERS.map((p) => ({ slug: p.slug }));
+  // 'pkd' has a dedicated full 3D profile route (app/publisher/pkd);
+  // exclude it here so the static export emits no conflicting page.
+  return PUBLISHERS.filter((p) => p.slug !== 'pkd').map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({

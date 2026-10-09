@@ -12,10 +12,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { WifiOff, RefreshCw, X } from 'lucide-react';
 import { CommandPalette } from '@/components/CommandPalette';
 
 export function SystemStatus() {
+  const pathname = usePathname();
   const [offline, setOffline] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -48,6 +50,11 @@ export function SystemStatus() {
     return () =>
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
   }, []);
+
+  // The PKD 3D publisher profile is a standalone full-page experience.
+  if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd') {
+    return null;
+  }
 
   return (
     <>

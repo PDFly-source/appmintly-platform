@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_URL } from '@/app/layout';
+import { SITE_URL } from '@/lib/site-url';
 import HomePageClient from '@/components/HomePageClient';
 
 /* Server wrapper for the homepage so the route can export metadata.

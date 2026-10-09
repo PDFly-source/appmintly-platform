@@ -8,6 +8,11 @@ import { Sparkles, Compass, Grid, Bookmark } from 'lucide-react';
 export const BottomNav: React.FC = () => {
   const pathname = usePathname();
 
+  // The PKD 3D publisher profile supplies its own navigation.
+  if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd') {
+    return null;
+  }
+
   const navItems = [
     { label: 'Home', href: '/', icon: Sparkles },
     { label: 'Explore', href: '/explore', icon: Compass },

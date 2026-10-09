@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SITE_URL } from '@/app/layout';
+import { SITE_URL } from '@/lib/site-url';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 
 /* Unique metadata + canonical for the About page (was the only sitemap

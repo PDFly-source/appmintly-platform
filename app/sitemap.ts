@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 // Required for the static GitHub Pages export.
 export const dynamic = 'force-static';
 
-import { SITE_URL } from '@/app/layout';
+import { SITE_URL } from '@/lib/site-url';
 import { APPS } from '@/data/apps';
 import { PUBLISHERS } from '@/data/publishers';
 import { CATEGORIES } from '@/data/categories';

@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./.pkd-test-out",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "incremental": false,
+    "tsBuildInfoFile": null
+  },
+  "include": ["./lib/pkd-data.ts"],
+  "exclude": ["node_modules"]
+}
