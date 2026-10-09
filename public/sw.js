@@ -1,5 +1,5 @@
 // AppMintly Service Worker - Cache Versioning
-const CACHE_VERSION = 'appmintly-v3.1.0';
+const CACHE_VERSION = 'appmintly-v3.2.0';
 const STATIC_CACHE_NAME = `appmintly-static-${CACHE_VERSION}`;
 const DATA_CACHE_NAME = `appmintly-data-${CACHE_VERSION}`;
 
@@ -159,5 +159,61 @@ self.addEventListener('fetch', (event) => {
           headers: { 'Content-Type': 'text/plain' },
         });
       })
+  );
+});
+
+// ---------------------------------------------------------------------
+// NOTIFICATIONS (AppMintly release & update alerts)
+//
+// The page (foreground checker) calls registration.showNotification().
+// This handler owns what happens when the user TAPS a notification:
+// it focuses an already-open marketplace window and navigates it, or
+// opens exactly one new window when none exists. The deep link is
+// validated against the service worker's own scope: only same-origin,
+// in-scope destinations are honored; anything else falls back to the
+// scope root. No arbitrary/external URLs are ever opened from a
+// notification payload.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // Only in-scope same-origin URLs may be opened.
+  let target = new URL(self.registration.scope).href;
+  try {
+    const scopeUrl = new URL(self.registration.scope);
+    const raw = event.notification && event.notification.data ? event.notification.data.url : '';
+    if (typeof raw === 'string' && raw.length > 0) {
+      const u = new URL(raw, scopeUrl.origin);
+      const scopePath = scopeUrl.pathname.endsWith('/') ? scopeUrl.pathname : scopeUrl.pathname + '/';
+      if (u.origin === scopeUrl.origin && (u.pathname + '/').startsWith(scopePath)) {
+        target = u.href;
+      }
+    }
+  } catch (e) {
+    /* invalid payload -> stay on scope root */
+  }
+
+  event.waitUntil(
+    (async () => {
+      const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of windowClients) {
+        try {
+          const clientUrl = new URL(client.url);
+          const scopeUrl = new URL(self.registration.scope);
+          const scopePath = scopeUrl.pathname.endsWith('/') ? scopeUrl.pathname : scopeUrl.pathname + '/';
+          if (clientUrl.origin === scopeUrl.origin && (clientUrl.pathname + '/').startsWith(scopePath)) {
+            // Reuse the existing window: no duplicate tabs.
+            if ('focus' in client) await client.focus();
+            if (client.url !== target && 'navigate' in client) {
+              try { await client.navigate(target); } catch (e) { /* cross-origin guard */ }
+            }
+            return;
+          }
+        } catch (e) {
+          /* ignore malformed client urls */
+        }
+      }
+      // No open marketplace window: open exactly one.
+      try { await self.clients.openWindow(target); } catch (e) { /* SW inactive */ }
+    })()
   );
 });

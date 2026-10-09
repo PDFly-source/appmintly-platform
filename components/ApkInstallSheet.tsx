@@ -17,6 +17,7 @@ import {
 import { AppItem } from '@/data/apps';
 import { AppIcon } from './AppIcon';
 import { apiUrl } from '@/lib/api-path';
+import { useNotifications } from '@/components/NotificationsProvider';
 
 interface ApkInstallSheetProps {
   app: AppItem;
@@ -29,6 +30,8 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'started' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedSha, setCopiedSha] = useState(false);
+  const [trackForUpdates, setTrackForUpdates] = useState(false);
+  const notifications = useNotifications();
   const [verifiedSha256, setVerifiedSha256] = useState<string>('');
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +91,16 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   // manager owns the transfer end-to-end; this UI never claims completion.
   const handleDownload = async () => {
     setErrorMessage(null);
+
+    // Explicit opt-in recorded at the moment the download starts: the
+    // version being downloaded is the version the user has installed.
+    if (trackForUpdates && versionName) {
+      notifications.trackApp({
+        appId: app.id,
+        version: versionName,
+        packageId: app.apk?.packageId,
+      });
+    }
 
     // The verified public production release asset (authoritative source).
     const releaseUrl = apkMeta?.apkUrl;
@@ -278,6 +291,15 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
         <div className="bg-page border border-line rounded-2xl p-5 text-center space-y-4">
           {downloadState === 'idle' && (
             <>
+              <label className="flex items-center justify-center gap-2 text-xs text-ink font-semibold cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={trackForUpdates}
+                  onChange={(e) => setTrackForUpdates(e.target.checked)}
+                  className="w-4 h-4 accent-[#16A765] cursor-pointer"
+                />
+                Get update notifications for this app (v{versionName} recorded as installed)
+              </label>
               <button
                 onClick={handleDownload}
                 className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-[#16A765] text-white font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"

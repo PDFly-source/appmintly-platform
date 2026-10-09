@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bookmark, Menu, X, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
+import { Search, Bookmark, Menu, X, Bell, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
@@ -205,6 +205,16 @@ export const Navbar: React.FC = () => {
           </button>
 
           {ThemeToggle}
+
+          {/* Notifications Link (update & release alerts) */}
+          <Link
+            href="/notifications"
+            className="flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-page transition"
+            title="Notifications"
+            aria-label="Notification settings"
+          >
+            <Bell className="w-5 h-5" />
+          </Link>
 
           {/* Library Link (Favorites & History) */}
           <Link

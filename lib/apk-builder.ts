@@ -579,6 +579,30 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
 
+      // ----------------------------------------------------------------
+      // NATIVE UPDATE CHECKER GATE (AppMintly notifications).
+      // ONLY the marketplace's own APK (com.appmintly.appmintly) receives
+      // the native update-checker engine; every other app build is
+      // byte-identical to before this feature existed.
+      // ----------------------------------------------------------------
+      const NATIVE_UPDATE_PACKAGE = 'com.appmintly.appmintly';
+      const isNativeUpdatesBuild = packageId === NATIVE_UPDATE_PACKAGE;
+      let nativeCatalogUrl = '';
+      let nativeDeepLinkPrefix = '';
+      if (isNativeUpdatesBuild) {
+        // Fail closed: the engine bakes the canonical marketplace catalog
+        // origin. A different origin for the marketplace's own package is
+        // a build configuration error and refuses to compile.
+        const catalogOrigin = new URL(options.launchUrl).origin;
+        if (catalogOrigin !== 'https://appmintly.pages.dev') {
+          throw new Error(
+            'Native update checker refused: the AppMintly APK launch URL must be the canonical https://appmintly.pages.dev deployment.'
+          );
+        }
+        nativeCatalogUrl = catalogOrigin + '/data/apps.json';
+        nativeDeepLinkPrefix = computeWebViewOwnershipPrefix(options.launchUrl);
+      }
+
       // AndroidManifest.xml
       const manifestXml = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -590,7 +614,13 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
+    <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />${
+          isNativeUpdatesBuild
+            ? `
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />`
+            : ''
+        }
 
     <application
         android:label="@string/app_name"
@@ -611,7 +641,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity>${
+          isNativeUpdatesBuild
+            ? `
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>`
+            : ''
+        }
     </application>
 </manifest>`;
       await fs.promises.writeFile(path.join(buildDir, 'AndroidManifest.xml'), manifestXml, 'utf8');
@@ -627,6 +672,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // Ownership prefix — derived ONLY from this app's own launch URL via the
       // single-source-of-truth helper above. Never from any published app URL.
       const allowedPrefix = computeWebViewOwnershipPrefix(options.launchUrl);
+
       const isTwa = buildMode === 'twa';
 
       const javaCode = `package ${packageId};
@@ -638,7 +684,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
+import android.os.Bundle;${
+          isNativeUpdatesBuild
+            ? `
+import android.os.Handler;
+import android.os.Looper;
+import android.webkit.JavascriptInterface;`
+            : ''
+        }
 import android.os.Environment;
 import android.view.View;
 import android.view.Window;
@@ -784,10 +837,110 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.loadUrl(TARGET_URL);
+${
+          isNativeUpdatesBuild
+            ? `// AppMintly native update checker: expose the JS bridge to the
+        // marketplace page (only pages inside the ownership boundary ever
+        // load here) and schedule the ~6h background catalog check.
+        webView.addJavascriptInterface(new NativeBridge(), "AppMintlyNative");
+        UpdateEngine.schedule(this);
+
+        // Notification deep link (cold start): only the app's own ownership
+        // prefix is ever honored.
+        String deepLink = getIntent().getStringExtra(UpdateEngine.EXTRA_DEEP_LINK);
+        if (deepLink != null && deepLink.startsWith(ALLOWED_ORIGIN)) {
+            webView.loadUrl(deepLink);
+        } else {
+            webView.loadUrl(TARGET_URL);
+        }`
+            : `webView.loadUrl(TARGET_URL);`
+        }
         setContentView(webView);
     }
 
+${
+          isNativeUpdatesBuild
+            ? `
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent == null || webView == null) return;
+        String deepLink = intent.getStringExtra(UpdateEngine.EXTRA_DEEP_LINK);
+        if (deepLink != null && deepLink.startsWith(ALLOWED_ORIGIN)) {
+            webView.loadUrl(deepLink);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == UpdateEngine.PERMISSION_REQUEST_CODE) {
+            if (grantResults != null && grantResults.length > 0
+                    && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(MainActivity.this, "AppMintly notifications enabled", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Notifications blocked in Android settings", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /**
+     * JS bridge (marketplace page -> native). Only @JavascriptInterface
+     * methods are reachable from the page, and the only page that ever
+     * loads in this WebView is the marketplace's own owned deployment.
+     */
+    private class NativeBridge {
+
+        @JavascriptInterface
+        public boolean isNativeApp() {
+            return true;
+        }
+
+        @JavascriptInterface
+        public void requestPermission() {
+            final Activity activity = MainActivity.this;
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    UpdateEngine.requestNotificationPermission(activity);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void setPreferences(String json) {
+            try {
+                UpdateEngine.applyPreferences(MainActivity.this, json);
+            } catch (Throwable ignored) {
+            }
+        }
+
+        @JavascriptInterface
+        public void setTrackedApps(String json) {
+            try {
+                UpdateEngine.setTrackedApps(MainActivity.this, json);
+            } catch (Throwable ignored) {
+            }
+        }
+
+        @JavascriptInterface
+        public void checkNow() {
+            UpdateEngine.checkNow(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public String getStatus() {
+            try {
+                return UpdateEngine.getStatusJson(MainActivity.this);
+            } catch (Throwable t) {
+                return "{}";
+            }
+        }
+    }
+`
+            : ''
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
@@ -820,6 +973,590 @@ public class MainActivity extends Activity {
       await fs.promises.writeFile(path.join(srcDir, 'MainActivity.java'), javaCode, 'utf8');
       job.stepsCompleted.push('Preparing Android project');
 
+      // ----------------------------------------------------------------
+      // NATIVE UPDATE CHECKER SOURCES (marketplace APK only).
+      // UpdateEngine mirrors lib/notifications/engine.ts exactly:
+      // published-only records, real numeric version comparison, explicit
+      // publisher-set severity, deterministic dedup keys, silent first-run
+      // baseline, offline-skip. No push service of any kind is involved:
+      // this is an honest periodic poll (target ~6h, subject to Android
+      // batching/Doze), never an instant push.
+      // ----------------------------------------------------------------
+      if (isNativeUpdatesBuild) {
+        const updateEngineJava = `package ${packageId};
+
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Build;
+import android.os.SystemClock;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
+
+/**
+ * AppMintly native update checker (marketplace APK only).
+ * Mirrors the TypeScript engine in lib/notifications/engine.ts.
+ */
+public final class UpdateEngine {
+
+    private UpdateEngine() {
+    }
+
+    public static final String EXTRA_DEEP_LINK = "appmintly_deeplink";
+    public static final int PERMISSION_REQUEST_CODE = 2001;
+    public static final String ACTION_CHECK_UPDATES = "${packageId}.ACTION_CHECK_UPDATES";
+    private static final String PREFS = "appmintly_updates";
+    private static final String CHANNEL_ID = "appmintly_updates";
+    private static final long CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L;
+    private static final String CATALOG_URL = "${escapeJava(nativeCatalogUrl)}";
+    private static final String OWNED_PREFIX = "${escapeJava(nativeDeepLinkPrefix)}";
+    private static final int CONNECT_TIMEOUT_MS = 15000;
+    private static final int READ_TIMEOUT_MS = 20000;
+    private static final int MAX_CATALOG_BYTES = 8 * 1024 * 1024;
+
+    /* ---------------- scheduling (~6h inexact repeating alarm) ---------- */
+
+    public static void schedule(Context ctx) {
+        try {
+            AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+            if (am == null) return;
+            Intent i = new Intent(ctx, AlarmReceiver.class);
+            i.setAction(ACTION_CHECK_UPDATES);
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= 23) flags |= PendingIntent.FLAG_IMMUTABLE;
+            PendingIntent pi = PendingIntent.getBroadcast(ctx, 1001, i, flags);
+            // Inexact repeating: Android may batch/delay for battery. This
+            // is a target cadence, never a guaranteed execution time.
+            am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME,
+                    SystemClock.elapsedRealtime() + CHECK_INTERVAL_MS, CHECK_INTERVAL_MS, pi);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static boolean isEnabled(Context ctx) {
+        try {
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            return p.getBoolean("master", false);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /* ---------------- JS bridge surface ---------------- */
+
+    public static void applyPreferences(Context ctx, String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            SharedPreferences.Editor e = p.edit();
+            e.putBoolean("master", o.optBoolean("master", false));
+            e.putBoolean("updates", o.optBoolean("updates", true));
+            e.putBoolean("newAndroid", o.optBoolean("newAndroid", true));
+            e.putBoolean("newWeb", o.optBoolean("newWeb", true));
+            e.putBoolean("important", o.optBoolean("important", true));
+            e.putBoolean("security", o.optBoolean("security", true));
+            e.apply();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void setTrackedApps(Context ctx, String json) {
+        try {
+            new JSONArray(json); // validate: never store corrupt input
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            p.edit().putString("tracked", json).apply();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void requestNotificationPermission(Activity activity) {
+        // Android 13+ runtime notification permission. Called only from an
+        // explicit user action in the marketplace notification settings.
+        if (Build.VERSION.SDK_INT >= 33) {
+            try {
+                activity.requestPermissions(
+                        new String[]{"android.permission.POST_NOTIFICATIONS"},
+                        PERMISSION_REQUEST_CODE);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    public static void checkNow(Context ctx) {
+        final Context appCtx = ctx.getApplicationContext();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    doCheck(appCtx);
+                } catch (Throwable ignored) {
+                }
+            }
+        }).start();
+    }
+
+    public static String getStatusJson(Context ctx) {
+        try {
+            NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            boolean granted = true;
+            if (Build.VERSION.SDK_INT >= 33) {
+                granted = ctx.checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                        == PackageManager.PERMISSION_GRANTED;
+            }
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            return new JSONObject()
+                    .put("installed", true)
+                    .put("permissionGranted", granted)
+                    .put("notificationsEnabled", nm == null || Build.VERSION.SDK_INT < 24 || nm.areNotificationsEnabled())
+                    .put("lastCheck", p.getLong("lastCheck", 0L))
+                    .put("lastCheckState", p.getString("lastCheckState", ""))
+                    .put("checkIntervalHours", 6)
+                    .toString();
+        } catch (Throwable t) {
+            return "{}";
+        }
+    }
+
+    /* ---------------- core check ---------------- */
+
+    static void doCheck(Context ctx) throws Exception {
+        if (!isEnabled(ctx)) {
+            return;
+        }
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) {
+            // OS-level notification permission denied: skip honestly,
+            // record state; never post or claim delivery.
+            recordCheck(ctx, "notifications_disabled");
+            return;
+        }
+        if (!isOnline(ctx)) {
+            // Offline: no unverified data is ever surfaced. The next
+            // scheduled check retries.
+            recordCheck(ctx, "offline");
+            return;
+        }
+        byte[] raw = fetchCatalog(CATALOG_URL);
+        if (raw == null || raw.length == 0) {
+            recordCheck(ctx, "fetch_failed");
+            return;
+        }
+        JSONArray apps = new JSONArray(new String(raw, "UTF-8"));
+        if (apps.length() == 0) {
+            recordCheck(ctx, "empty_catalog");
+            return;
+        }
+
+        SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        JSONObject baseline = null;
+        try {
+            baseline = new JSONObject(p.getString("baseline", ""));
+        } catch (Throwable t) {
+            baseline = null;
+        }
+        JSONObject delivered = new JSONObject();
+        try {
+            delivered = new JSONObject(p.getString("delivered", "{}"));
+        } catch (Throwable t) {
+            delivered = new JSONObject();
+        }
+        SharedPreferences.Editor editor = p.edit();
+
+        // First run (or corrupted state): initialize the baseline silently.
+        // Existing catalog entries never appear as "new" publications.
+        if (baseline == null || baseline.length() == 0) {
+            JSONObject fresh = buildBaseline(apps);
+            editor.putString("baseline", fresh.toString());
+            editor.putLong("lastCheck", System.currentTimeMillis());
+            editor.putString("lastCheckState", "initialized");
+            editor.apply();
+            return;
+        }
+
+        JSONArray tracked = new JSONArray(p.getString("tracked", "[]"));
+        boolean prefUpdates = p.getBoolean("updates", true);
+        boolean prefNewAndroid = p.getBoolean("newAndroid", true);
+        boolean prefNewWeb = p.getBoolean("newWeb", true);
+        boolean prefImportant = p.getBoolean("important", true);
+        boolean prefSecurity = p.getBoolean("security", true);
+
+        JSONObject next = new JSONObject();
+        long now = System.currentTimeMillis();
+        int posted = 0;
+
+        // Pass 1: baseline snapshot + genuinely-new publication events.
+        for (int i = 0; i < apps.length(); i++) {
+            JSONObject a = apps.optJSONObject(i);
+            if (a == null || !isPublished(a)) {
+                continue;
+            }
+            String id = a.optString("id", "");
+            if (id.isEmpty()) id = a.optString("slug", "");
+            if (id.isEmpty()) continue;
+            String version = releaseVersion(a);
+            boolean isAndroidApp = "android apk".equalsIgnoreCase(a.optString("type", "").trim());
+            String severity = parseSeverity(a);
+            next.put(id, new JSONObject()
+                    .put("version", version)
+                    .put("android", isAndroidApp)
+                    .put("severity", severity));
+
+            if (baseline.has(id)) {
+                continue;
+            }
+            String key = (isAndroidApp ? "new-android-app:" : "new-web-app:") + id + ":" + version;
+            if (delivered.has(key)) continue;
+            if (isAndroidApp ? !prefNewAndroid : !prefNewWeb) continue;
+            String name = a.optString("name", id);
+            String deepLink = OWNED_PREFIX + "app/" + id + "/";
+            String title;
+            String body;
+            if (isAndroidApp) {
+                title = "New on AppMintly";
+                body = "Discover " + name + ", a new Android app now available.";
+            } else {
+                title = "New Web App on AppMintly";
+                body = "Try " + name + "'s latest web experience.";
+            }
+            if (postNotification(ctx, nm, key, title, body, deepLink)) {
+                delivered.put(key, now);
+                posted++;
+            }
+        }
+
+        // Pass 2: version upgrades for user-tracked apps only. Real numeric
+        // comparison; downgrades and equal versions never notify.
+        for (int t = 0; t < tracked.length(); t++) {
+            JSONObject tr = tracked.optJSONObject(t);
+            if (tr == null) continue;
+            String appId = tr.optString("appId", "");
+            String installedVersion = tr.optString("version", "").trim();
+            if (appId.isEmpty() || installedVersion.isEmpty()) continue;
+            if (!next.has(appId)) continue;
+            JSONObject cur = next.optJSONObject(appId);
+            if (cur == null) continue;
+            String version = cur.optString("version", "");
+            if (compareVersions(version, installedVersion) <= 0) continue;
+
+            String severity = cur.optString("severity", "normal");
+            String kind;
+            if ("security".equals(severity) || "critical".equals(severity)) {
+                kind = "security-update";
+            } else if ("important".equals(severity)) {
+                kind = "important-update";
+            } else {
+                kind = "app-update";
+            }
+            String key = kind + ":" + appId + ":" + version;
+            if (delivered.has(key)) continue;
+            boolean allowed;
+            if ("security-update".equals(kind)) {
+                allowed = prefSecurity;
+            } else if ("important-update".equals(kind)) {
+                allowed = prefImportant;
+            } else {
+                allowed = prefUpdates;
+            }
+            if (!allowed) continue;
+
+            JSONObject a = findApp(apps, appId);
+            String name = a != null ? a.optString("name", appId) : appId;
+            String title;
+            String body;
+            if ("security-update".equals(kind)) {
+                if ("critical".equals(severity)) {
+                    title = "Critical security update: " + name;
+                } else {
+                    title = "Important security update";
+                }
+                body = "A security fix is available for " + name + ". Review the release details.";
+            } else if ("important-update".equals(kind)) {
+                title = "Important update: " + name;
+                body = "Version " + version + " includes an important change. Review the release details.";
+            } else {
+                title = "Update available: " + name;
+                body = "Version " + version + " is available. View the latest changes.";
+            }
+            String deepLink = OWNED_PREFIX + "app/" + appId + "/";
+            if (postNotification(ctx, nm, key, title, body, deepLink)) {
+                delivered.put(key, now);
+                posted++;
+            }
+        }
+
+        // Prune the delivered history so it cannot grow unbounded
+        // (keep ~90 days).
+        if (delivered.length() > 300) {
+            JSONObject pruned = new JSONObject();
+            long cutoff = now - 90L * 24L * 60L * 60L * 1000L;
+            java.util.Iterator<String> it = delivered.keys();
+            while (it.hasNext()) {
+                String k = it.next();
+                long ts = delivered.optLong(k, 0L);
+                if (ts >= cutoff) {
+                    pruned.put(k, ts);
+                }
+            }
+            delivered = pruned;
+        }
+
+        editor.putString("baseline", next.toString());
+        editor.putString("delivered", delivered.toString());
+        editor.putLong("lastCheck", now);
+        editor.putString("lastCheckState", "ok");
+        editor.putInt("lastPosted", posted);
+        editor.apply();
+    }
+
+    /* ---------------- helpers ---------------- */
+
+    private static void recordCheck(Context ctx, String state) {
+        try {
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            p.edit()
+                    .putLong("lastCheck", System.currentTimeMillis())
+                    .putString("lastCheckState", state)
+                    .apply();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static boolean isOnline(Context ctx) {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return false;
+            NetworkInfo ni = cm.getActiveNetworkInfo();
+            return ni != null && ni.isConnected();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static byte[] fetchCatalog(String url) {
+        HttpsURLConnection conn = null;
+        try {
+            URL u = new URL(url);
+            if (!u.getProtocol().equals("https")) return null;
+            conn = (HttpsURLConnection) u.openConnection();
+            conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            conn.setReadTimeout(READ_TIMEOUT_MS);
+            conn.setRequestMethod("GET");
+            conn.setInstanceFollowRedirects(true);
+            int code = conn.getResponseCode();
+            if (code < 200 || code >= 300) return null;
+            InputStream in = conn.getInputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                out.write(buf, 0, n);
+                if (out.size() > MAX_CATALOG_BYTES) {
+                    in.close();
+                    return null;
+                }
+            }
+            in.close();
+            return out.toByteArray();
+        } catch (Throwable t) {
+            return null;
+        } finally {
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Throwable ignored) { }
+            }
+        }
+    }
+
+    private static boolean isPublished(JSONObject a) {
+        if (a.optBoolean("isDemo", false)) return false;
+        String status = a.optString("status", "").toLowerCase().trim();
+        if ("draft".equals(status) || "archived".equals(status)) return false;
+        boolean flag = a.has("published") ? a.optBoolean("published", false) : true;
+        return flag && !releaseVersion(a).isEmpty()
+                && (a.optString("id", "").length() > 0 || a.optString("slug", "").length() > 0);
+    }
+
+    private static String releaseVersion(JSONObject a) {
+        JSONObject apk = a.optJSONObject("apk");
+        String apkVersion = apk != null ? apk.optString("versionName", "").trim() : "";
+        if (!apkVersion.isEmpty()) return apkVersion;
+        return a.optString("version", "").trim();
+    }
+
+    /** Severity is ONLY read from the explicit publisher-set field. */
+    private static String parseSeverity(JSONObject a) {
+        String raw = a.optString("releaseSeverity", "");
+        if (raw.isEmpty()) {
+            JSONObject apk = a.optJSONObject("apk");
+            if (apk != null) raw = apk.optString("releaseSeverity", "");
+        }
+        raw = raw.trim().toLowerCase();
+        if ("important".equals(raw) || "security".equals(raw) || "critical".equals(raw)) {
+            return raw;
+        }
+        return "normal";
+    }
+
+    private static int compareVersions(String a, String b) {
+        String[] pa = String.valueOf(a == null ? "" : a).split("\\\\.");
+        String[] pb = String.valueOf(b == null ? "" : b).split("\\\\.");
+        int len = Math.max(pa.length, pb.length);
+        int na = 0;
+        int nb = 0;
+        for (int i = 0; i < len; i++) {
+            try { na = Integer.parseInt(pa[i]); } catch (Throwable t) { na = 0; }
+            try { nb = Integer.parseInt(pb[i]); } catch (Throwable t) { nb = 0; }
+            if (na != nb) return na - nb;
+        }
+        return 0;
+    }
+
+    private static JSONObject findApp(JSONArray apps, String id) {
+        for (int i = 0; i < apps.length(); i++) {
+            JSONObject a = apps.optJSONObject(i);
+            if (a == null) continue;
+            String aid = a.optString("id", "");
+            if (aid.isEmpty()) aid = a.optString("slug", "");
+            if (id.equals(aid)) return a;
+        }
+        return null;
+    }
+
+    private static JSONObject buildBaseline(JSONArray apps) {
+        JSONObject out = new JSONObject();
+        for (int i = 0; i < apps.length(); i++) {
+            JSONObject a = apps.optJSONObject(i);
+            if (a == null || !isPublished(a)) continue;
+            String id = a.optString("id", "");
+            if (id.isEmpty()) id = a.optString("slug", "");
+            if (id.isEmpty()) continue;
+            out.put(id, new JSONObject()
+                    .put("version", releaseVersion(a))
+                    .put("android", "android apk".equalsIgnoreCase(a.optString("type", "").trim()))
+                    .put("severity", parseSeverity(a)));
+        }
+        return out;
+    }
+
+    private static boolean postNotification(Context ctx, NotificationManager nm,
+            String key, String title, String body, String deepLink) {
+        try {
+            if (Build.VERSION.SDK_INT >= 26) {
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID, "App updates and new releases",
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Update and release notifications from the AppMintly marketplace.");
+                nm.createNotificationChannel(channel);
+            }
+            Intent open = new Intent(ctx, MainActivity.class);
+            open.setAction(Intent.ACTION_MAIN);
+            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            // Deep link is validated against the ownership prefix before
+            // it is ever honored by MainActivity.
+            open.putExtra(EXTRA_DEEP_LINK, deepLink);
+            int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= 23) piFlags |= PendingIntent.FLAG_IMMUTABLE;
+            PendingIntent contentIntent = PendingIntent.getActivity(
+                    ctx, Math.abs(key.hashCode()) % 100000, open, piFlags);
+            Notification n;
+            if (Build.VERSION.SDK_INT >= 26) {
+                n = new Notification.Builder(ctx, CHANNEL_ID)
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setStyle(new Notification.BigTextStyle().bigText(body))
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentIntent(contentIntent)
+                        .setAutoCancel(true)
+                        .build();
+            } else {
+                n = new Notification.Builder(ctx)
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setStyle(new Notification.BigTextStyle().bigText(body))
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentIntent(contentIntent)
+                        .setAutoCancel(true)
+                        .build();
+            }
+            nm.notify(Math.abs(key.hashCode()) % 100000, n);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+}
+`;
+        await fs.promises.writeFile(path.join(srcDir, 'UpdateEngine.java'), updateEngineJava, 'utf8');
+
+        const alarmReceiverJava = `package ${packageId};
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+/**
+ * Fires the ~6h catalog check. goAsync keeps the process alive just long
+ * enough for the network check; the check is skipped entirely when the
+ * device is offline (never shows unverified data).
+ */
+public class AlarmReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(final Context context, Intent intent) {
+        if (intent == null || !UpdateEngine.ACTION_CHECK_UPDATES.equals(intent.getAction())) return;
+        if (!UpdateEngine.isEnabled(context)) return;
+        final PendingResult result = goAsync();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    UpdateEngine.doCheck(context);
+                } catch (Throwable ignored) {
+                } finally {
+                    if (result != null) result.finish();
+                }
+            }
+        }).start();
+    }
+}
+`;
+        await fs.promises.writeFile(path.join(srcDir, 'AlarmReceiver.java'), alarmReceiverJava, 'utf8');
+
+        const bootReceiverJava = `package ${packageId};
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+/**
+ * Alarms do not survive reboot: reschedule the periodic catalog check.
+ */
+public class BootReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent == null || !Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
+        UpdateEngine.schedule(context);
+    }
+}
+`;
+        await fs.promises.writeFile(path.join(srcDir, 'BootReceiver.java'), bootReceiverJava, 'utf8');
+      }
+
+
       // ---------------------------------------------------------
       // STAGE 4: Building APK
       // ---------------------------------------------------------
@@ -831,9 +1568,18 @@ public class MainActivity extends Activity {
       const r8Jar = process.env.R8_JAR!;
       const keystore = process.env.ANDROID_KEYSTORE_PATH!;
 
-      // 4a. Compile Java classes
+      // 4a. Compile Java classes. The marketplace's own APK additionally
+      // compiles UpdateEngine/AlarmReceiver/BootReceiver (native update
+      // checker); every other app build still compiles exactly one source
+      // file and produces byte-identical output.
+      const javaSources = (await fs.promises.readdir(srcDir))
+        .filter((f) => f.endsWith('.java'))
+        .sort()
+        .map((f) => path.join(srcDir, f));
       await execPromise(
-        `javac -cp "${androidJar}" -source 8 -target 8 -d "${classesDir}" "${path.join(srcDir, 'MainActivity.java')}"`,
+        `javac -cp "${androidJar}" -source 8 -target 8 -d "${classesDir}" ${javaSources
+          .map((f) => `"${f}"`)
+          .join(' ')}`,
         { env: buildEnv }
       );
 

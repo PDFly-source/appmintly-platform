@@ -41,8 +41,10 @@ import { QrCodeDialog } from '@/components/QrCodeDialog';
 import { PrivacyTechCard } from '@/components/PrivacyTechCard';
 import { ApkHashVerifier } from '@/components/ApkHashVerifier';
 import { AppMediaPreview } from '@/components/AppMediaPreview';
-import { QrCode as QrCodeIcon } from 'lucide-react';
+import { QrCode as QrCodeIcon, Bell, BellOff } from 'lucide-react';
 import { AppCard } from '@/components/AppCard';
+import { useNotifications } from '@/components/NotificationsProvider';
+import { releaseVersionOf } from '@/lib/notifications/engine';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import {
   useLocalFavorite,
@@ -73,6 +75,9 @@ export default function AppDetailPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Monitor standalone install state & capture beforeinstallprompt
+  // Notification provider hook (unconditional, AppMintly update alerts)
+  const notifications = useNotifications();
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleBeforeInstall = (e: Event) => {
@@ -158,6 +163,30 @@ export default function AppDetailPage() {
   // hardcoded app slugs, no fabricated stub-apk matching: a Web App without
   // a released APK is distributed as a web experience only.
   const hasApk = hasAuthoritativeApkRelease(app);
+
+  // Update-alerts tracking (explicit user opt-in; version recorded as installed)
+  const currentVersion = releaseVersionOf(app as unknown as Record<string, unknown>);
+  const updateAlertsOn = notifications.isTracked(app.id);
+  const handleUpdateAlertsClick = () => {
+    if (updateAlertsOn) {
+      notifications.untrackApp(app.id);
+      toast(`Stopped update alerts for ${app.name}`, 'info');
+    } else {
+      if (!currentVersion) {
+        toast('No published version is available to track for this app.', 'error');
+        return;
+      }
+      notifications.trackApp({
+        appId: app.id,
+        version: currentVersion,
+        packageId: app.apk?.packageId,
+      });
+      toast(
+        `Update alerts on — ${app.name} v${currentVersion} recorded as your current version`,
+        'success'
+      );
+    }
+  };
 
   // Smart Get App CTA Logic: Prioritizes Android APK generation/download
   const handleGetApp = () => {
@@ -367,6 +396,20 @@ export default function AppDetailPage() {
                   aria-label="Share via QR code"
                 >
                   <QrCodeIcon className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={handleUpdateAlertsClick}
+                  className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
+                  title={updateAlertsOn ? `Turn off update alerts for ${app.name}` : 'Get update alerts for this app'}
+                  aria-label={updateAlertsOn ? `Turn off update alerts for ${app.name}` : 'Get update alerts for this app'}
+                  aria-pressed={updateAlertsOn}
+                >
+                  {updateAlertsOn ? (
+                    <Bell className="w-4 h-4 text-[#E52B32]" />
+                  ) : (
+                    <BellOff className="w-4 h-4" />
+                  )}
                 </button>
               </div>
 

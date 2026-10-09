@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { Footer } from '@/components/Footer';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { SystemStatus } from '@/components/SystemStatus';
+import { NotificationsProvider } from '@/components/NotificationsProvider';
 
 import { SITE_URL } from '@/lib/site-url';
 
@@ -111,6 +112,7 @@ export default function RootLayout({
         />
         <ThemeProvider>
         <ToastProvider>
+          <NotificationsProvider>
           <CatalogProvider>
             <div className="flex min-h-screen flex-col">
               <PWAInstallBanner />
@@ -123,6 +125,7 @@ export default function RootLayout({
               <SystemStatus />
             </div>
           </CatalogProvider>
+          </NotificationsProvider>
         </ToastProvider>
         </ThemeProvider>
       </body>
