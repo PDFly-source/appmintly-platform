@@ -82,7 +82,7 @@ ok('bumping a version makes it the latest-version display', afterBump.latestVers
 ok('version bump does not change counts', afterBump.totalApps === pkd.totalApps && afterBump.categoryCount === pkd.categoryCount);
 
 // ----------------------------------------------------- publish new app
-const withNew = [...catalog, { slug: 'new-eligible', name: 'New', developerSlug: 'pkd', category: 'Brand New Cat', type: 'Web App', version: '0.1.0', lastUpdated: '2026-10-09', published: true, status: 'published' } as any];
+const withNew = [...catalog, { slug: 'new-eligible', name: 'New', developerSlug: 'pkd', category: 'Brand New Cat', type: 'Web App', version: '0.1.0', lastUpdated: '2099-01-01', published: true, status: 'published' } as any];
 const afterPublish = computePublisherStats(withNew, 'pkd');
 ok('publishing a new eligible app: total +1', afterPublish.totalApps === pkd.totalApps + 1);
 ok('publishing a new category: category count +1', afterPublish.categoryCount === pkd.categoryCount + 1);

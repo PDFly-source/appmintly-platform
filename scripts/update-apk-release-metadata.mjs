@@ -124,6 +124,9 @@ apk.assetId = assetId;
 app.apkUrl = apkUrl;
 if (app.version !== versionName) app.version = versionName;
 app.lastUpdated = today;
+// Keep the precise-timestamp field consistent with the release bump so the
+// publisher "latest" ordering never disagrees with lastUpdated.
+app.updatedAt = `${today}T${new Date().toISOString().slice(11, 23)}Z`;
 
 const originalHadTrailingNewline = raw.endsWith('\n');
 const updated = JSON.stringify(apps, null, 2) + (originalHadTrailingNewline ? '\n' : '');
