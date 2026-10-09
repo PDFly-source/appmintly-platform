@@ -651,8 +651,8 @@
     "developerSlug": "pkd",
     "type": "Android APK",
     "category": "Utilities",
-    "description": "NexDrop is a private, direct and fast peer-to-peer file and text sharing app built for transferring content directly between your devices.\n\nSend photos, videos, files, apps and text without uploading your files to cloud storage. NexDrop uses direct device-to-device communication with a simple one-scan pairing flow, host-controlled connection approval and verified transfer integrity.\n\nThe production app combines native Android transfer capabilities with the NexDrop WebRTC web app as an additional browser-based transfer route. Transfers support SHA-256 integrity verification, authenticated pairing sessions, resumable transfer behavior and memory-conscious streaming designed for large files.\n\nNexDrop does not require a traditional account or cloud file-storage workflow. Pair your devices, approve the connection and transfer directly.\n\nPRIVATE. DIRECT. FAST.\n\nBuilt & developed by PKD.",
-    "shortDescription": "Private, direct P2P file and text sharing between your devices — fast transfers with one-scan pairing, verified integrity and no cloud file uploads.",
+    "description": "NexDrop — Private. Direct. Fast.\n\nNexDrop is a native Android file-sharing app designed to transfer files directly between compatible Android devices over a reachable local Wi-Fi or hotspot connection. Share photos, videos, documents, APKs and other supported files through a dedicated Android transfer experience built around transfer control, progress monitoring and file integrity verification.\n\nPRIVATE. DIRECT. FAST.\n\nNexDrop uses its native NDT1 TCP transfer engine for direct local device-to-device transfers. Files are transferred over the local connection rather than being uploaded to a cloud file-storage service.\n\nDesigned for Practical File Sharing\n\nWhether you are sending a large video, sharing study documents, transferring an APK or moving several files together, NexDrop provides a dedicated Android workflow for managing transfers and checking their completion status.\n\nLocal Connection Requirements\n\nFor native local transfers, connect both Android devices to a reachable shared Wi-Fi network or a hotspot arrangement that allows them to communicate. Actual transfer speed depends on the devices, Wi-Fi band, signal quality, file sizes and network conditions.\n\nNexDrop does not promise a fixed transfer speed for every device or network.\n\nPrivacy-Focused by Design\n\nNexDrop is designed for direct local transfers rather than cloud file-storage uploads. Review Android permissions and the receiving device's transfer request before sharing files.",
+    "shortDescription": "Fast, private Android file sharing with direct local transfer and file verification.",
     "icon": "/brand/nexdrop-icon-384.png",
     "screenshots": [
       "/assets/apps/nexdrop/screenshots/screenshot-1-3919cec5da.png",
@@ -686,16 +686,16 @@
       "statusSummary": "PWA Metadata Found"
     },
     "features": [
-      "Direct P2P File Transfer: transfer files directly between paired devices instead of uploading them to cloud file storage.",
-      "One-Scan QR Pairing: connect devices through a simple single-QR pairing flow.",
-      "Host Accept / Decline: the receiving host device controls whether an incoming connection is accepted.",
-      "Private File & Text Sharing: send photos, videos, files, apps and text between devices.",
-      "Authenticated Pairing Sessions: each session is protected by a single-use pairing token verified with HMAC-SHA256.",
-      "SHA-256 Transfer Verification: transfer integrity is verified with SHA-256 hashing on both ends of a transfer.",
-      "Large-File Streaming: bounded-memory, chunked streaming keeps large files from being loaded into RAM at once.",
-      "Pause / Resume / Cancel: transfer controls support pausing, resuming and cancelling in-flight transfers.",
-      "Web App Transfer Route: the NexDrop web app adds an encrypted WebRTC transfer path alongside the native engine.",
-      "Local Transfer History: recent transfer metadata stays locally on your device — transfer history is never uploaded."
+      "Direct Android-to-Android Transfer — Share files directly over a local Wi-Fi or hotspot connection.",
+      "Large File Sharing — Transfer large videos, documents, APKs and other files.",
+      "Multi-File Transfer Queue — Select, organize and send multiple files in sequence.",
+      "Smart File Previews — Preview supported images, videos, PDFs and APK details before sending.",
+      "Pause & Resume Transfers — Pause active transfers and resume supported interrupted transfers.",
+      "Automatic Retry & Recovery — Retry failed transfers and recover supported interrupted sessions.",
+      "SHA-256 File Verification — Verify file integrity after transfer.",
+      "Live Transfer Monitoring — View transfer progress, speed and completion status.",
+      "Transfer History Management — Review previous transfers and access available file actions.",
+      "Native NDT1 TCP Engine — Dedicated Android transfer technology designed for efficient local file sharing."
     ],
     "tags": [
       "p2p",
