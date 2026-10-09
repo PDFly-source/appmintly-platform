@@ -118,8 +118,13 @@ function monogramIcon(name: string): string {
 }
 
 function iconUrl(a: PkdAppSource, basePath: string): string {
-  if (a.icon && a.icon.trim()) return `${basePath}${a.icon}`;
-  return monogramIcon(a.name || 'A');
+  const ic = (a.icon || '').trim();
+  if (!ic) return monogramIcon(a.name || 'A');
+  // External absolute URLs pass through untouched; only site-relative
+  // paths (e.g. /brand/x.png) get the host's basePath prefix.
+  if (/^https?:\/\//i.test(ic) || ic.startsWith('data:')) return ic;
+  if (ic.startsWith('/')) return `${basePath}${ic}`;
+  return ic;
 }
 
 function platformLabel(a: PkdAppSource): string {
