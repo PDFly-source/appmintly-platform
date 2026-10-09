@@ -19,6 +19,8 @@ import {
   detailPathFor,
   parseSeverity,
   pruneDelivered,
+  recordShownKeys,
+  describeCheck,
   releaseVersionOf,
   isPublishedRecord,
   type NotificationPrefs,
@@ -207,6 +209,101 @@ console.log('\n[notification-engine] history pruning & guards');
   const pruned = pruneDelivered(delivered, 200);
   ok('prune keeps the newest 200 keys', Object.keys(pruned).length === 200 && pruned['k299'] !== undefined && pruned['k5'] === undefined);
   ok('prune is a no-op under the limit', Object.keys(pruneDelivered({ a: 1, b: 2 }, 200)).length === 2);
+}
+
+// ============================================================= Phase 12.2
+// Delivery accounting regression: a dedup key may be recorded ONLY after
+// its notification was actually shown. Undelivered events stay pending and
+// are re-detected by the next check. These tests use the same helpers the
+// web provider uses (recordShownKeys + detectEvents), with isolated
+// fixtures — no production catalog and no real notifications.
+{
+  // Fixture: one tracked app with an available upgrade (event A) and one
+  // brand-new android app (event B).
+  const fixtureCatalog = [
+    app({ id: 'app-a', slug: 'app-a', name: 'App A', version: '2.0.0', apk: { enabled: true, packageId: 'com.a.app', versionName: '2.0.0' } }),
+    app({ id: 'app-b', slug: 'app-b', name: 'App B', version: '1.0.0', publishedAt: '2026-10-09T12:00:00.000Z', apk: { enabled: true, packageId: 'com.b.app', versionName: '1.0.0' } }),
+  ];
+  // app-a sits in the baseline at v1.0.0 (tracked upgrade -> v2.0.0);
+  // app-b is deliberately ABSENT so it is a genuinely new publication.
+  const baselineA = { apps: { 'app-a': { version: '1.0.0', isAndroid: true } }, revision: 'r-fix' };
+  const trackedA = [{ appId: 'app-a', version: '1.0.0', packageId: 'com.a.app', trackedAt: 1 } as any];
+
+  const detect = (delivered: Record<string, number>, prefs: Partial<NotificationPrefs> = {}, tracked: any[] = trackedA) =>
+    detectEvents(fixtureCatalog as any, {
+      baseline: JSON.parse(JSON.stringify(baselineA)),
+      delivered,
+      tracked,
+      prefs: { ...DEFAULT_PREFS, master: true, ...prefs },
+    });
+
+  const eventKeys = (r: { events: NotificationEvent[] }) => r.events.map((e) => e.key).sort();
+
+  // --- permission denied / blocked: nothing shown, nothing recorded ---
+  let delivered: Record<string, number> = {};
+  let r1 = detect(delivered);
+  ok('12.2 eligible events detected for the fixture', eventKeys(r1).length === 2, JSON.stringify(eventKeys(r1)));
+  delivered = recordShownKeys(delivered, [], 1000); // provider records nothing
+  ok('permission denied: delivered history stays empty', Object.keys(delivered).length === 0);
+  const r2 = detect(delivered);
+  ok('permission denied: events remain pending (re-detected)', eventKeys(r2).length === 2, JSON.stringify(eventKeys(r2)));
+  ok('permission blocked: pending events keep their keys', JSON.stringify(eventKeys(r1)) === JSON.stringify(eventKeys(r2)));
+
+  // --- delivery throws/fails for one event: only the shown one is recorded ---
+  r1 = detect(delivered);
+  const keys = r1.events.map((e) => e.key);
+  const shownOnly = keys.slice(0, 1); // second showNotification threw in the fixture
+  delivered = recordShownKeys(delivered, shownOnly, 2000);
+  ok('failed delivery: only the shown key is recorded', Object.keys(delivered).length === 1 && delivered[shownOnly[0]] === 2000);
+  const r3 = detect(delivered);
+  ok('failed delivery: the failed event stays retryable', eventKeys(r3).length === 1 && eventKeys(r3)[0] === keys[1], JSON.stringify(eventKeys(r3)));
+
+  // --- permission later granted: the pending event can be delivered ---
+  const r4 = detect(delivered);
+  delivered = recordShownKeys(delivered, r4.events.map((e) => e.key), 3000);
+  const r5 = detect(delivered);
+  ok('permission granted: pending events deliver and clear', eventKeys(r5).length === 0, JSON.stringify(eventKeys(r5)));
+
+  // --- repeated checks after success: no duplicate notifications ---
+  const r6 = detect(delivered);
+  delivered = recordShownKeys(delivered, r6.events.map((e) => e.key), 4000);
+  const r7 = detect(delivered);
+  ok('successful delivery is not repeated on later checks', eventKeys(r7).length === 0);
+
+  // --- recordShownKeys purity ---
+  const before = { x: 1 };
+  recordShownKeys(before, ['y'], 2);
+  ok('recordShownKeys does not mutate its input', before.x === 1 && Object.keys(before).length === 1);
+
+  // --- honest status classification: never "up to date" while pending ---
+  ok('describeCheck: nothing eligible -> up-to-date', describeCheck(0, 0, false) === 'up-to-date');
+  ok('describeCheck: all shown -> delivered', describeCheck(2, 2, true) === 'delivered');
+  ok('describeCheck: pending with permission denied -> waiting (never up-to-date)', describeCheck(1, 0, false) === 'waiting');
+  ok('describeCheck: pending with permission granted -> partial (never up-to-date)', describeCheck(2, 1, true) === 'partial');
+  ok('describeCheck: zero shown, denied -> waiting even with many events', describeCheck(5, 0, false) === 'waiting');
+
+  // --- suppressed events (prefs) deliver nothing and record nothing ---
+  const rs = detect({}, { master: false });
+  ok('master off: no events are eligible', rs.events.length === 0);
+  const rc = detect({}, { updates: false });
+  ok('updates category off: only non-update events remain eligible', rc.events.length === 1 && rc.events[0].kind === 'new-android-app', rc.events.map((e) => e.kind).join(','));
+  ok('suppressed check status is up-to-date for the user', describeCheck(rs.events.length, 0, false) === 'up-to-date');
+
+  // --- first-run baseline and corruption recovery unchanged ---
+  const firstRun = detectEvents(fixtureCatalog as any, {
+    baseline: { revision: '', apps: {} } as any,
+    delivered: {},
+    tracked: trackedA,
+    prefs: { ...DEFAULT_PREFS },
+  });
+  ok('first run still initializes the baseline silently', firstRun.events.length === 0 && firstRun.initializedBaseline === true);
+  const corrupt = detectEvents(fixtureCatalog as any, {
+    baseline: null as any,
+    delivered: { garbage: 'not-a-number' } as any,
+    tracked: trackedA,
+    prefs: { ...DEFAULT_PREFS },
+  });
+  ok('corrupted state re-initializes without an event flood', corrupt.events.length === 0 && corrupt.initializedBaseline === true);
 }
 
 console.log(`\n[notification-engine] ${pass} passed, ${fail} failed\n`);

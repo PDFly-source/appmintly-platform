@@ -364,3 +364,42 @@ export function pruneDelivered(delivered: Record<string, number>, keep: number =
 export function sanitizeStatePiece<T>(raw: unknown, fallback: T, validate: (v: unknown) => boolean): T {
   return validate(raw) ? (raw as T) : fallback;
 }
+
+// ---------------------------------------------------------------------
+// Phase 12.2 delivery accounting (shared by the web provider and tests).
+// ---------------------------------------------------------------------
+
+/**
+ * Record dedup keys for notifications that were ACTUALLY SHOWN. This is the
+ * only way a key may enter the delivered history: an event whose
+ * notification was never displayed (permission denied/blocked, or the
+ * showNotification call failed/threw) stays pending — its key is absent, so
+ * the next detectEvents call re-detects it and delivery is retried.
+ */
+export function recordShownKeys(
+  delivered: Record<string, number>,
+  shownKeys: readonly string[],
+  now: number
+): Record<string, number> {
+  const next: Record<string, number> = { ...delivered };
+  for (const key of shownKeys) next[key] = now;
+  return next;
+}
+
+/**
+ * Honest check status for the settings page. Never 'up-to-date' while
+ * eligible, undelivered events remain pending.
+ *  - 'up-to-date' : nothing eligible was detected.
+ *  - 'delivered' : every eligible event was shown.
+ *  - 'waiting'   : eligible events stay pending because notification
+ *                  permission is not granted.
+ *  - 'partial'   : permission is granted but some deliveries failed; those
+ *                  events stay pending and retry on the next check.
+ */
+export type CheckStatus = 'up-to-date' | 'delivered' | 'waiting' | 'partial';
+
+export function describeCheck(eligible: number, shown: number, permissionGranted: boolean): CheckStatus {
+  if (eligible <= 0) return 'up-to-date';
+  if (shown >= eligible) return 'delivered';
+  return permissionGranted ? 'partial' : 'waiting';
+}

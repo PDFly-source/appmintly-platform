@@ -17,6 +17,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Bell, ShieldAlert, ShieldCheck, Smartphone, Globe2, RefreshCw, Trash2, CheckCircle2, XCircle, Circle, ListChecks } from 'lucide-react';
 import { useNotifications, type PermissionState } from '@/components/NotificationsProvider';
+import { describeCheck } from '@/lib/notifications/engine';
 
 const meta = {
   title: 'Notifications — AppMintly',
@@ -26,7 +27,7 @@ const meta = {
 export default function NotificationsPage() {
   const n = useNotifications();
   const [checkMessage, setCheckMessage] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<{ ok: boolean; count: number } | null>(null);
+  const [lastResult, setLastResult] = useState<{ ok: boolean; count: number; shown: number } | null>(null);
 
   const onEnable = async () => {
     const result = await n.enableNotifications();
@@ -39,13 +40,20 @@ export default function NotificationsPage() {
   const onCheckNow = async () => {
     setCheckMessage('Checking the published catalog…');
     const result = await n.checkNow();
-    setLastResult({ ok: result.ok, count: result.events.length });
+    setLastResult({ ok: result.ok, count: result.events.length, shown: result.shown });
     if (result.ok) {
-      setCheckMessage(
-        result.events.length > 0
-          ? `Catalog checked — ${result.events.length} new notification${result.events.length === 1 ? '' : 's'} delivered.`
-          : 'Catalog checked — you are up to date. No new releases or updates.'
-      );
+      const status = describeCheck(result.events.length, result.shown, n.permission === 'granted');
+      if (status === 'up-to-date') {
+        setCheckMessage('Catalog checked — you are up to date. No new releases or updates.');
+      } else if (status === 'delivered') {
+        setCheckMessage(`Catalog checked — ${result.shown} notification${result.shown === 1 ? '' : 's'} delivered.`);
+      } else if (status === 'waiting') {
+        // Eligible events exist but none could be shown: keep them pending,
+        // never claim "up to date", and never re-prompt for permission.
+        setCheckMessage(`Updates are waiting. Enable notification permission to receive alerts. (${result.events.length - result.shown} waiting)`);
+      } else {
+        setCheckMessage(`Catalog checked — ${result.shown} delivered, ${result.events.length - result.shown} delivery failed and will retry on the next check.`);
+      }
     } else {
       setCheckMessage(`Catalog check failed: ${result.error || 'unknown error'}. Your device may be offline.`);
     }
@@ -231,7 +239,9 @@ export default function NotificationsPage() {
         {lastResult?.ok && (
           <p className="mt-2 text-xs text-mut">
             <ListChecks aria-hidden className="mr-1 inline w-4 h-4" />
-            {lastResult.count} eligible event{lastResult.count === 1 ? '' : 's'} in this check (shown as device notifications when permission is granted).
+            {lastResult.count === lastResult.shown
+              ? `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check, delivered as device notifications.`
+              : `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check; ${lastResult.shown} delivered, ${lastResult.count - lastResult.shown} pending — pending alerts retry on later checks and appear once notification permission is granted.`}
           </p>
         )}
       </section>

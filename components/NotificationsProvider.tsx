@@ -45,6 +45,7 @@ import {
   TrackedApp,
   detectEvents,
   pruneDelivered,
+  recordShownKeys,
 } from '@/lib/notifications/engine';
 import {
   NotificationStateV1,
@@ -73,6 +74,8 @@ interface NativeBridge {
 export interface NotificationCheckResult {
   ok: boolean;
   events: NotificationEvent[];
+  /** How many of the eligible events were actually shown as notifications. */
+  shown: number;
   revision: string | null;
   error?: string;
 }
@@ -157,9 +160,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // Foreground catalog check (the real work)
   // ------------------------------------------------------------------
   const runCheck = useCallback(async (): Promise<NotificationCheckResult> => {
-    if (checkingRef.current) return { ok: false, events: [], revision: null, error: 'check-already-running' };
+    if (checkingRef.current) return { ok: false, events: [], shown: 0, revision: null, error: 'check-already-running' };
     const current = stateRef.current;
-    if (!current) return { ok: false, events: [], revision: null, error: 'state-not-ready' };
+    if (!current) return { ok: false, events: [], shown: 0, revision: null, error: 'state-not-ready' };
     checkingRef.current = true;
     setChecking(true);
     try {
@@ -177,14 +180,16 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         prefs: current.prefs,
       });
 
-      const delivered: Record<string, number> = { ...current.delivered };
+      // Persist the fresh baseline and check stamp WITHOUT consuming event
+      // keys: eligible events stay pending until their notification is
+      // actually shown. This is the Phase 12.2 fix — the old code recorded
+      // dedup keys before delivery, silently losing events whenever the
+      // permission was denied/blocked or a delivery failed.
       const now = Date.now();
-      for (const key of outcome.deliveredKeys) delivered[key] = now;
-
       const nextState: NotificationStateV1 = {
         ...current,
         baseline: outcome.baseline,
-        delivered: pruneDelivered(delivered),
+        delivered: pruneDelivered(current.delivered),
         lastCheck: now,
         lastCheckOk: true,
         lastRevision: outcome.baseline.revision,
@@ -194,21 +199,24 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // Deliver through the service worker registration (same-origin deep
       // link). Only when OS permission is granted; otherwise the settings
       // page shows the denied state and nothing is silently dropped on the
-      // OS side — the delivered keys are only recorded when shown.
+      // OS side — a dedup key is recorded ONLY after that event's
+      // notification was actually shown.
+      let shown = 0;
+      const shownKeys: string[] = [];
       if (outcome.events.length > 0 && readPermission() === 'granted') {
-        let shown = 0;
-        try {
-          const reg = await navigator.serviceWorker?.getRegistration();
-          for (const ev of outcome.events) {
-            const options: NotificationOptions = {
-              body: ev.body,
-              tag: ev.key,
-              icon: absoluteUrl('/icon-192.png'),
-              data: { url: absoluteUrl(ev.detailPath), key: ev.key },
-            };
+        const reg = await navigator.serviceWorker?.getRegistration();
+        for (const ev of outcome.events) {
+          const options: NotificationOptions = {
+            body: ev.body,
+            tag: ev.key,
+            icon: absoluteUrl('/icon-192.png'),
+            data: { url: absoluteUrl(ev.detailPath), key: ev.key },
+          };
+          try {
             if (reg && typeof (reg as any).showNotification === 'function') {
               await (reg as ServiceWorkerRegistration).showNotification(ev.title, options);
               shown++;
+              shownKeys.push(ev.key);
             } else if ('Notification' in window) {
               // Static-host fallback: SW not ready — direct Notification.
               const n = new Notification(ev.title, options);
@@ -218,25 +226,30 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                 n.close();
               };
               shown++;
+              shownKeys.push(ev.key);
             }
+          } catch (err) {
+            // Delivery failure is not a check failure. This event stays
+            // pending (its key is NOT recorded) and the next check retries.
+            console.warn('[notifications] delivery error', err);
           }
-          if (shown > 0) {
-            const bridge = getNativeBridge();
-            void bridge; // bridge sync happens via the effect below
-          }
-        } catch (err) {
-          // Delivery failure is not a check failure; next check re-tries
-          // because delivered keys were already persisted above.
-          console.warn('[notifications] delivery error', err);
         }
       }
-      return { ok: true, events: outcome.events, revision: outcome.baseline.revision };
+      // Record only the keys whose notifications were actually shown.
+      const afterDelivery = stateRef.current;
+      if (afterDelivery && shownKeys.length > 0) {
+        commit({
+          ...afterDelivery,
+          delivered: pruneDelivered(recordShownKeys(afterDelivery.delivered, shownKeys, Date.now())),
+        });
+      }
+      return { ok: true, events: outcome.events, shown, revision: outcome.baseline.revision };
     } catch (err) {
       const currentNow = stateRef.current;
       if (currentNow) {
         commit({ ...currentNow, lastCheck: Date.now(), lastCheckOk: false });
       }
-      return { ok: false, events: [], revision: null, error: String((err as Error)?.message || err) };
+      return { ok: false, events: [], shown: 0, revision: null, error: String((err as Error)?.message || err) };
     } finally {
       checkingRef.current = false;
       setChecking(false);
