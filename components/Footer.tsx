@@ -53,16 +53,34 @@ export const Footer: React.FC = () => {
 
             {/* Official social links — authentic Instagram brand glyph from
                 the existing icon library (no new dependency). 44px touch
-                target; subtle hover/focus matching the gold-accent footer. */}
+                target. The glyph carries the official Instagram brand
+                gradient (yellow → orange → magenta → purple) by default;
+                hover lifts the border/backdrop without replacing it. */}
             <div className="pt-2 flex items-center gap-2">
               <a
                 href="https://www.instagram.com/krprasanta_"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram — PKD Official Profile"
-                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-[#F7B928]/25 bg-[#FAF5ED]/[0.04] text-[#FAF5ED]/75 transition-colors hover:border-[#F7B928]/60 hover:bg-[#F7B928]/[0.08] hover:text-[#F7B928] focus-ring"
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-[#F7B928]/25 bg-[#FAF5ED]/[0.04] transition-all hover:border-[#F7B928]/60 hover:bg-[#F7B928]/[0.08] hover:brightness-110 focus-ring"
               >
-                <Instagram className="w-5 h-5" aria-hidden="true" />
+                {/* Zero-size SVG defs — official Instagram brand gradient,
+                    applied to the glyph stroke below. No layout impact. */}
+                <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="ig-brand-gradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#FDD835" />
+                      <stop offset="33%" stopColor="#F77737" />
+                      <stop offset="66%" stopColor="#E1306C" />
+                      <stop offset="100%" stopColor="#833AB4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <Instagram
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                  stroke="url(#ig-brand-gradient)"
+                />
               </a>
             </div>
           </div>
