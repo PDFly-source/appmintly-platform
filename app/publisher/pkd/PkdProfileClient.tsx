@@ -14,6 +14,7 @@ const PHOTO = () => `${BASE_PATH}/pkd/pkd-photo-ead72d453a.jpg`;
 interface PkdWindow extends Window {
   THREE?: unknown;
   __PKD_DATA__?: unknown;
+  __PKD_BOOT__?: () => void;
   __PKD_TEARDOWN__?: () => void;
   __PKD_ACTIVE__?: number;
 }
@@ -47,11 +48,19 @@ export default function PkdProfileClient() {
     document.body.classList.add('pkd-page');
 
     const injected: HTMLScriptElement[] = [];
+    // The engine script executes exactly once per page load (it registers
+    // window.__PKD_BOOT__ and auto-boots on first execution). Every later
+    // data change re-invokes boot() synchronously on the current DOM —
+    // no script re-execution, so section setup can never duplicate.
     const startEngine = () => {
-      const s2 = document.createElement('script');
-      s2.src = PROFILE_JS();
-      document.body.appendChild(s2);
-      injected.push(s2);
+      if (w.__PKD_BOOT__) {
+        w.__PKD_BOOT__();
+      } else {
+        const s2 = document.createElement('script');
+        s2.src = PROFILE_JS();
+        document.body.appendChild(s2);
+        injected.push(s2);
+      }
     };
 
     if (w.THREE) {

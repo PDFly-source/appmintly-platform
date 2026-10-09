@@ -1,16 +1,24 @@
 /* PKD 3D profile engine — adapted from the supplied PKD design source.
  * Data layer reads window.__PKD_DATA__ (injected by the React page from the
  * live AppMintly catalog); all visual effects, the Three.js scene and the
- * showcase behaviour are preserved verbatim. Added: mount guard, listener
- * registry + teardown, dynamic app count, reduced-motion handling. */
+ * showcase behaviour are preserved verbatim. Added: re-bootable lifecycle (__PKD_BOOT__/__PKD_TEARDOWN__ — the React
+ * host re-invokes boot on catalog data changes instead of re-executing this
+ * script), listener registry + teardown, dynamic app count, reduced-motion
+ * handling, CORS-safe textures with neutral fallback. */
 (function(){
-if(window.__PKD_ACTIVE__)return;window.__PKD_ACTIVE__=1;
+'use strict';
+function pad(x){return String(x).padStart(2,'0')}
+var $=function(i){return document.getElementById(i)};
+window.__PKD_BOOT__=function(){
+try{window.__PKD_TEARDOWN__&&window.__PKD_TEARDOWN__()}catch(e){}
+window.__PKD_ACTIVE__=1;
+// boot may run multiple times (auto + THREE ready + data refresh): reset
+// every container it rebuilds so re-boots converge instead of duplicating
+var _tb=$('tabs');if(_tb)_tb.innerHTML='';var _dt=$('dots');if(_dt)_dt.innerHTML='';
 var D=window.__PKD_DATA__||{apps:[],stats:{total:0,published:0,categories:0,latest:'\u2014'},updates:[]};
 var APPS=D.apps;
 var RM=false;try{RM=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
 var L=[];function on(t,e,f,o){t.addEventListener(e,f,o);L.push([t,e,f,o])}
-function pad(x){return String(x).padStart(2,'0')}
-var $=function(i){return document.getElementById(i)};
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('in')})},{threshold:.12});
 document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
 document.querySelectorAll('[data-n]').forEach(function(el){var n=+el.dataset.n,i=0,iv=setInterval(function(){el.textContent=++i;if(i>=n)clearInterval(iv)},200)});
@@ -29,7 +37,7 @@ show(0);
 if(!RM)document.querySelectorAll('.btn').forEach(function(b){on(b,'pointermove',function(e){var r=b.getBoundingClientRect();b.style.transform='translate('+((e.clientX-r.left)/r.width-.5)*10+'px,'+((e.clientY-r.top)/r.height-.5)*8+'px)'});on(b,'pointerleave',function(){b.style.transform=''})});
 var ids=['about','me','apps','updates','trust'],dt=$('dots');ids.forEach(function(k){var a=document.createElement('a');a.href='#'+k;dt.appendChild(a)});
 on(window,'scroll',function(){var y=scrollY+innerHeight*.4,c=-1;ids.forEach(function(k,i){if($(k).offsetTop<=y)c=i});[].forEach.call(dt.children,function(a,i){a.className=i==c?'on':''})},{passive:true})})();
-window.__PKD_TEARDOWN__=function(){try{io.disconnect()}catch(e){}L.forEach(function(x){try{x[0].removeEventListener(x[1],x[2],x[3])}catch(e){}});L.length=0;window.__PKD_ACTIVE__=0;delete window.__PKD_TEARDOWN__};
+window.__PKD_TEARDOWN__=function(){try{io.disconnect()}catch(e){}L.forEach(function(x){try{x[0].removeEventListener(x[1],x[2],x[3])}catch(e){}});L.length=0;window.__PKD_ACTIVE__=0};
 if(!window.THREE)return;
 var M=innerWidth<860;
 var R=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.1;
@@ -79,5 +87,7 @@ function loop(){raf=requestAnimationFrame(RM?function(){setTimeout(loop,150)}:lo
 if(RM){setTimeout(loop,150)}else{loop()}
 var prevTD=window.__PKD_TEARDOWN__;
 window.__PKD_TEARDOWN__=function(){try{prevTD&&prevTD()}catch(e){}try{cancelAnimationFrame(raf)}catch(e){}try{R.dispose()}catch(e){}try{pm.dispose()}catch(e){}try{S.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(function(mm){if(mm.map)mm.map.dispose();mm.dispose()})}})}catch(e){}};
+};
+if(!window.__PKD_AUTOBOOTED__){window.__PKD_AUTOBOOTED__=1;window.__PKD_BOOT__()}
 })();
 

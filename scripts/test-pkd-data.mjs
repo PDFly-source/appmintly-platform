@@ -169,15 +169,25 @@ test('APK package labelling and destinations', () => {
   assert.equal(d.apps[0].u, '/app/apk-app/');
 });
 
-test('real repo catalog snapshot: four published PKD apps, three categories', async () => {
-  // Reads the actual data/apps.json the marketplace ships (same source of truth).
+test('real repo catalog snapshot: adapter agrees with an independent recount', async () => {
+  // Reads the actual data/apps.json the marketplace ships (same source of truth)
+  // and recomputes every figure independently — the adapter must agree exactly.
   const { readFileSync } = await import('node:fs');
   const apps = JSON.parse(readFileSync(path.join(root, 'data/apps.json'), 'utf-8'));
   const published = apps.filter((a) => a.published);
   const d = buildPkdData(published, BP);
-  assert.equal(d.apps.length, 4);
+
+  const expectedPublished = apps.filter((a) => a.published).length; // live count, no hardcoding
+  assert.equal(d.apps.length, expectedPublished);
   assert.ok(d.apps.every((a) => !a.u.includes('undefined')));
-  assert.equal(d.stats.categories, 3);
-  assert.equal(d.stats.latest, 'v2.1.0'); // Niramay, the newest update
-  assert.equal(d.updates[0].name, 'Niramay');
+  assert.ok(d.apps.every((a) => a.u.startsWith('/app/')));
+
+  const expectedCategories = new Set(published.map((a) => a.category).filter(Boolean)).size;
+  assert.equal(d.stats.categories, expectedCategories);
+
+  // latest version + newest timeline entry = max lastUpdated in the catalog
+  const newest = published.reduce((m, a) => (String(a.lastUpdated) > String(m.lastUpdatedAt ?? m.lastUpdated) ? a : m), published[0]);
+  assert.equal(d.stats.latest, `v${newest.version}`);
+  assert.equal(d.updates[0].name, newest.name);
+  assert.equal(d.updates.length, expectedPublished);
 });
