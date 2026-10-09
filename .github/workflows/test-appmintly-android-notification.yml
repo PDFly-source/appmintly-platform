@@ -65,8 +65,11 @@ jobs:
       - name: WebView ownership gate
         run: npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts https://appmintly.pages.dev/
 
+      # Mirrors the production GitHub Pages build gate exactly (deploy.yml):
+      # API routes are server-side publisher tooling excluded from the static
+      # export; the catalog is shipped as static data.
       - name: Production static-export build check
-        run: NEXT_OUTPUT=export npm run build
+        run: rm -rf app/api && NEXT_OUTPUT=export NEXT_PUBLIC_BASE_PATH=/appmintly-platform npm run build
 
   notification-smoke:
     runs-on: ubuntu-24.04
