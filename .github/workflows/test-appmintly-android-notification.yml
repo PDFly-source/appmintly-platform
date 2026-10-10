@@ -82,6 +82,47 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android platform + build tools (in-test candidate build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --install 'platforms;android-36' 'build-tools;36.0.0' > /dev/null
+          test -f "$ANDROID_SDK_ROOT/platforms/android-36/android.jar"
+          test -x "$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner"
+          echo "toolchain ready (platform-36, build-tools 36.0.0)"
+
+      - name: Prepare candidate signing (authorized production identity; candidate is built only to be installed on this disposable emulator and is never uploaded or released)
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/android-build"
+          curl --fail --location --silent --show-error \
+            'https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.2.42/r8-8.2.42.jar' \
+            -o "$RUNNER_TEMP/android-build/r8.jar"
+          test -s "$RUNNER_TEMP/android-build/r8.jar"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-build/signing.keystore"
+          test -s "$RUNNER_TEMP/android-build/signing.keystore"
+          echo "ANDROID_JAR=/usr/local/lib/android/sdk/platforms/android-36/android.jar" >> "$GITHUB_ENV"
+          echo "R8_JAR=$RUNNER_TEMP/android-build/r8.jar" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
+          echo "/usr/local/lib/android/sdk/build-tools/36.0.0" >> "$GITHUB_PATH"
+
       - name: Download released AppMintly APKs (authoritative release assets, not rebuilt)
         run: |
           mkdir -p test-apk diag
@@ -500,6 +541,32 @@ jobs:
           check("Offline handling", co.strip() != "" and 'lastCheckState">offline<' in off and "app-update:pdfminifly" not in off and cofs == "0", "connectivity dump while cut; lastCheckState=offline; no delivery, no key recorded, no crash")
           rt = rd("prefs-retry.xml")
           check("Retry after reconnect (new eligible event)", "app-update:pdfminifly:2.1.1" in rt, "pdfminifly 2.1.0 -> 2.1.1 delivered once connectivity returned; previously delivered keys not re-posted")
+
+          # Phase 12.5 candidate verification (corrected deep-link fix)
+          csha, cv, cu, cpg, cperm = rd("candidate-sha256.txt"), rd("candidate-validation.json"), rd("install-candidate.txt"), rd("pkg-candidate.txt"), rd("candidate-perm.txt")
+          cct, cwt, cfgd = rd("cand-cold-after.xml"), rd("cand-warm-after.xml"), rd("cand-forged.xml")
+          ctap, wtap = rd("cand-cold-tap.txt"), rd("cand-warm-tap.txt")
+          cand_valid = ('"valid": true' in cv or '"valid":true' in cv) and "AppMintly-1.0.6.apk" in cv
+          check("Candidate APK built in-test with the production identity", "AppMintly-1.0.6.apk" in csha and cand_valid, "candidate built by the standard build script with the authorized production keystore; validator gates passed (sha256 + validation.json retained as diag evidence)")
+          check("In-place upgrade v1.0.5 -> candidate 1.0.6 (same package id, same signing identity)", "Success" in cu and "versionCode=10006" in cpg, "adb install -r Success; versionCode 10005 -> 10006 without uninstall")
+          check("Notification permission preserved across the candidate upgrade", "granted=true" in cperm, "POST_NOTIFICATIONS granted=true persisted through the in-place upgrade")
+          cold_ok = ("TAPPED" in ctap) and ("App Information" in cct) and ("1.0.5" in cct)
+          home_leak_cold = ("Featured App" in cct) or ("Official Release Links" in cct)
+          cold_ev = "notification card tapped in the real tray; uiautomator shows the appmintly DETAIL page (App Information + 1.0.5): the deep link survived the notification-tap launch path"
+          if not cold_ok and home_leak_cold:
+              cold_ev = "cold tap started MainActivity but the WebView showed the marketplace HOME page (home-only markers present, detail markers absent): the corrected fix did NOT deliver the deep link (see cand-cold-after.png)"
+          check("Cold notification tap -> app detail page (corrected fix)", cold_ok, cold_ev)
+          warm_ok = ("TAPPED" in wtap) and ("App Information" in cwt) and ("2.0.2" in cwt)
+          home_leak_warm = ("Featured App" in cwt) or ("Official Release Links" in cwt)
+          warm_ev = "notification card tapped with the app already running on the appmintly detail page; the studyria DETAIL page opened (App Information + 2.0.2): onNewIntent received the deep link"
+          if not warm_ok and home_leak_warm:
+              warm_ev = "warm tap opened the marketplace HOME page instead of the studyria detail page (see cand-warm-after.png)"
+          elif not warm_ok:
+              warm_ev = "warm tap did not land on the studyria detail page (page unchanged or unrecognized; see cand-warm-after.xml / cand-warm-after.png)"
+          check("Warm notification tap -> detail page via onNewIntent", warm_ok, warm_ev)
+          forged_ok = ("example.com" not in cfgd) and (("Featured App" in cfgd) or ("Official Release Links" in cfgd))
+          check("Forged deep link rejected on candidate (extra + data URI)", forged_ok, "am start with ACTION_OPEN_NOTIFICATION + appmintly_deeplink=https://example.com/ AND data https://example.com/ loaded the marketplace home (ownership gate held); the external site never loaded")
+          report("Candidate handling", "candidate APK built and installed only on the disposable emulator; APK, validation copy and signing keystore deleted from the runner afterwards; never uploaded to any artifact, release, catalog or user")
           log = rd("logcat-full.txt")
           crash = False
           lines = log.splitlines()
@@ -688,6 +755,75 @@ jobs:
             adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-retry.txt || true
             adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml > diag/prefs-retry.xml || true
             if grep -q "app-update:pdfminifly:2.1.1" diag/prefs-retry.xml; then echo "RETRY-AFTER-RECONNECT: PASS (pending event delivered once connectivity returned)"; else echo "RETRY-AFTER-RECONNECT: FAIL (see prefs-retry.xml)"; cat diag/prefs-retry.xml || true; fi
+
+            # ---------- CANDIDATE VERIFICATION (corrected deep-link fix) ----------
+            # Build the candidate IN-TEST with the authorized production identity,
+            # install it as an in-place upgrade and verify genuine notification
+            # taps (cold and warm). The candidate is NEVER uploaded or released;
+            # it and the signing keystore are deleted from the runner afterwards.
+            SIGNING_MODE=release APP_NAME=AppMintly VERSION_NAME=1.0.6 PACKAGE_ID=com.appmintly.appmintly SOURCE_URL="https://appmintly.pages.dev/" APK_ARTIFACT_ONLY=1 npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts > diag/candidate-build.txt 2>&1 && sha256sum dist/apk/AppMintly-1.0.6.apk | tee diag/candidate-sha256.txt && cp dist/apk/validation.json diag/candidate-validation.json && { grep -q '"valid": true\|"valid":true' diag/candidate-validation.json && echo "CANDIDATE-BUILD: PASS (production-signed candidate built in-test; validator gates passed; never uploaded)" || { echo "CANDIDATE-BUILD: FAIL (validator did not pass)"; cat diag/candidate-validation.json || true; exit 1; }; } || { echo "CANDIDATE-BUILD: FAIL (build script failed)"; tail -40 diag/candidate-build.txt; exit 1; }
+            adb install -r dist/apk/AppMintly-1.0.6.apk | tee diag/install-candidate.txt
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode|versionName" | head -2 | tee diag/pkg-candidate.txt
+            adb shell dumpsys package com.appmintly.appmintly | grep -A1 POST_NOTIFICATIONS | head -4 > diag/candidate-perm.txt || true
+            grep -q "Success" diag/install-candidate.txt && grep -q "versionCode=10006" diag/pkg-candidate.txt && echo "CANDIDATE-UPGRADE: PASS (in-place upgrade v1.0.5 -> candidate 1.0.6, same package id and signing identity)" || { echo "CANDIDATE-UPGRADE: FAIL (see install-candidate.txt / pkg-candidate.txt)"; exit 1; }
+            grep -q "granted=true" diag/candidate-perm.txt && echo "CANDIDATE-PERMISSION: PASS (notification permission preserved across the in-place upgrade)" || { echo "CANDIDATE-PERMISSION: FAIL (see candidate-perm.txt)"; cat diag/candidate-perm.txt; exit 1; }
+
+            # Cold notification tap: no activity exists; onCreate must read the
+            # deep link (extra or data URI) and open the app DETAIL page.
+            adb shell am kill com.appmintly.appmintly || true
+            python3 "$RUNNER_TEMP/dismiss_notification.py" "Update available: Pdfminifly" "Update available: Studyria" "Update available: AppMintly" > diag/dismiss-cand.txt 2>&1 || true
+            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"}]' "{}" keep 2>&1 | tee diag/fixture-cand-cold.txt
+            grep -q "FIXTURE-APPLIED" diag/fixture-cand-cold.txt || { echo "FIXTURE-CANDIDATE-COLD: FAILED"; cat diag/fixture-cand-cold.txt; exit 1; }
+            adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-cand-cold.txt
+            sleep 15
+            adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-cand-cold.txt || true
+            adb shell cmd statusbar expand-notifications || true
+            sleep 3
+            for i in $(seq 1 6); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: AppMintly" text "diag/cand-cold-tray.xml" > diag/cand-cold-tap.txt 2>&1 && break; echo "CAND-COLD-TAP: attempt $i failed"; sleep 6; done
+            grep -q "TAPPED" diag/cand-cold-tap.txt && echo "CANDIDATE-COLD-TAP: notification card tapped in the real tray (see cand-cold-tap.txt)" || echo "CANDIDATE-COLD-TAP: BLOCKED (could not tap the notification; see cand-cold-tap.txt)"
+            adb shell cmd statusbar collapse || true
+            sleep 25
+            adb exec-out screencap -p > diag/cand-cold-top.png || true
+            adb shell input swipe 540 1800 540 400 500 || true
+            sleep 3
+            for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/candcold.xml >/dev/null 2>&1; adb pull /sdcard/candcold.xml diag/cand-cold-after.xml >/dev/null 2>&1; grep -q "App Information\|About this app\|Featured App\|Official Release Links" diag/cand-cold-after.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
+            adb exec-out screencap -p > diag/cand-cold-after.png || true
+            adb shell dumpsys activity activities | grep -m2 "ResumedActivity" | tee diag/activity-cand-cold.txt || true
+            if grep -q "App Information" diag/cand-cold-after.xml && grep -q "1.0.5" diag/cand-cold-after.xml; then echo "CANDIDATE-COLD-TAP-DEEPLINK: PASS (cold notification tap opened the appmintly app DETAIL page - the deep link survived the tap launch path)"; elif grep -q "Featured App\|Official Release Links" diag/cand-cold-after.xml; then echo "CANDIDATE-COLD-TAP-DEEPLINK: FAIL (cold tap opened the marketplace HOME page - deep link still lost; see cand-cold-after.png)"; else echo "CANDIDATE-COLD-TAP-DEEPLINK: INCONCLUSIVE (see cand-cold-after.xml / cand-cold-after.png)"; fi
+
+            # Warm notification tap: the app is running (on the appmintly detail
+            # page from the cold tap); a studyria notification must be delivered
+            # via onNewIntent to the STUDYRIA detail page.
+            python3 "$RUNNER_TEMP/dismiss_notification.py" "Update available: Pdfminifly" "Update available: Studyria" "Update available: AppMintly" > diag/dismiss-cand2.txt 2>&1 || true
+            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"}]' '{"app-update:appmintly:1.0.5":1}' keep 2>&1 | tee diag/fixture-cand-warm.txt
+            grep -q "FIXTURE-APPLIED" diag/fixture-cand-warm.txt || { echo "FIXTURE-CANDIDATE-WARM: FAILED"; cat diag/fixture-cand-warm.txt; exit 1; }
+            adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-cand-warm.txt
+            sleep 15
+            adb shell cmd statusbar expand-notifications || true
+            sleep 3
+            for i in $(seq 1 6); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: Studyria" text "diag/cand-warm-tray.xml" > diag/cand-warm-tap.txt 2>&1 && break; echo "CAND-WARM-TAP: attempt $i failed"; sleep 6; done
+            grep -q "TAPPED" diag/cand-warm-tap.txt && echo "CANDIDATE-WARM-TAP: notification card tapped with the app already running (see cand-warm-tap.txt)" || echo "CANDIDATE-WARM-TAP: BLOCKED (could not tap the notification; see cand-warm-tap.txt)"
+            adb shell cmd statusbar collapse || true
+            sleep 25
+            adb exec-out screencap -p > diag/cand-warm-top.png || true
+            adb shell input swipe 540 1800 540 400 500 || true
+            sleep 3
+            for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/candwarm.xml >/dev/null 2>&1; adb pull /sdcard/candwarm.xml diag/cand-warm-after.xml >/dev/null 2>&1; grep -q "App Information\|About this app\|Featured App\|Official Release Links" diag/cand-warm-after.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
+            adb exec-out screencap -p > diag/cand-warm-after.png || true
+            if grep -q "App Information" diag/cand-warm-after.xml && grep -q "2.0.2" diag/cand-warm-after.xml; then echo "CANDIDATE-WARM-TAP-DEEPLINK: PASS (warm notification tap delivered via onNewIntent to the studyria app DETAIL page)"; elif grep -q "Featured App\|Official Release Links" diag/cand-warm-after.xml; then echo "CANDIDATE-WARM-TAP-DEEPLINK: FAIL (warm tap opened the marketplace HOME page - onNewIntent lost the deep link)"; else echo "CANDIDATE-WARM-TAP-DEEPLINK: INCONCLUSIVE (page unchanged or unrecognized; see cand-warm-after.xml / cand-warm-after.png)"; fi
+
+            # Forged deep link on the candidate: both the legacy extra and the
+            # data URI point at an external site; the ownership gate must reject.
+            adb shell am kill com.appmintly.appmintly || true
+            sleep 2
+            adb shell am start -W -n com.appmintly.appmintly/.MainActivity -a com.appmintly.appmintly.ACTION_OPEN_NOTIFICATION --es appmintly_deeplink "https://example.com/" -d "https://example.com/" | tee diag/candidate-forged.txt
+            sleep 15
+            for i in $(seq 1 4); do adb shell uiautomator dump /sdcard/candforged.xml >/dev/null 2>&1; adb pull /sdcard/candforged.xml diag/cand-forged.xml >/dev/null 2>&1; grep -q "Featured App\|Official Release Links\|App Information" diag/cand-forged.xml 2>/dev/null && break; sleep 3; done
+            adb exec-out screencap -p > diag/cand-forged.png || true
+            if grep -q "example.com" diag/cand-forged.xml; then echo "CANDIDATE-FORGED-DEEPLINK: FAIL (the external site loaded - the ownership gate was bypassed)"; elif grep -q "Featured App\|Official Release Links" diag/cand-forged.xml; then echo "CANDIDATE-FORGED-DEEPLINK: PASS (forged external deep link rejected via both the extra and the data URI; marketplace home rendered)"; else echo "CANDIDATE-FORGED-DEEPLINK: INCONCLUSIVE (see cand-forged.xml)"; fi
+
+            rm -f dist/apk/AppMintly-1.0.6.apk public/downloads/apks/AppMintly-1.0.6.apk dist/apk/validation.json "$RUNNER_TEMP/android-build/signing.keystore"
+            echo "CANDIDATE-CLEANUP: candidate APK, validation copy and signing keystore removed from the runner (the candidate was never uploaded to any artifact, release or catalog)"
 
             adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly" > diag/alarm-final.txt || true
             adb shell dumpsys notification --noredact > diag/notification-full.txt || true
