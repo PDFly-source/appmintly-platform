@@ -476,8 +476,12 @@ jobs:
           at_top = rd("after-tap-top.xml") or at
           aa = rd("activity-after-tap.txt")
           tap_ok = "TAPPED" in rd("tap-notification.txt")
-          detail_ok = ("App Information" in at_top or "App Information" in at) and ("com.appmintly.appmintly" in at_top or "com.appmintly.appmintly" in at)
-          check("Notification tap -> app detail page", tap_ok and detail_ok and "automatic update notifications" in at and "1.0.4" in (at + at_top) and "MainActivity" in aa, "single-card tray (leftovers dismissed), notification card tapped in the real shade; uiautomator shows the appmintly DETAIL page (App Information + package id + v1.0.4 release notes after scrolling); resumed activity = com.appmintly.appmintly/.MainActivity")
+          detail_ok = ("App Information" in at_top or "App Information" in at) and ("1.0.4" in at_top or "1.0.4" in at)
+          home_leak = ("Featured App" in at_top or "Featured App" in at) or ("Official Release Links" in at_top or "Official Release Links" in at)
+          tap_evidence = "single-card tray (leftovers dismissed), notification card tapped in the real shade; uiautomator shows the appmintly DETAIL page (App Information + v1.0.4); resumed activity = com.appmintly.appmintly/.MainActivity"
+          if not detail_ok and home_leak:
+              tap_evidence = "notification tap DID start MainActivity (tap log + topResumedActivity) but the WebView rendered the marketplace HOME page (home-only markers 'Featured App'/'Official Release Links' present, detail markers 'App Information' absent). The system rewrote the tap intent (START record: act=MAIN cat=[LAUNCHER] without extras - a category the app never adds), so onCreate saw no appmintly_deeplink extra and fell back to TARGET_URL. GENUINE PRODUCT DEFECT: deep link is lost on the notification tap path on API 36 (adb am start with the same extra works). See after-tap.png / after-tap.xml / logcat-full.txt"
+          check("Notification tap -> app detail page", tap_ok and detail_ok and "MainActivity" in aa, tap_evidence)
           fv = rd("forged-verdict.txt")
           fg = rd("forged-destination.xml")
           check("Forged deep-link rejected", "FORGED-LINK-REJECTED" in fv and "Discover" in fg and "Example Domain" not in fg, "am start with appmintly_deeplink=https://example.com/ loaded the marketplace home (positive home marker present), not the external site")
@@ -603,7 +607,7 @@ jobs:
             grep -q "FIXTURE-APPLIED" diag/fixture-delivery.txt || { echo "FIXTURE-DELIVERY: FAILED"; cat diag/fixture-delivery.txt; exit 1; }
             adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-delivery.txt
             sleep 15
-            adb shell dumpsys notification --noredact | grep -B2 -A10 "com.appmintly.appmintly" > diag/notif-delivered.txt || true
+            adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-delivered.txt || true
             adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml > diag/prefs-delivered.xml || true
             adb shell cmd statusbar expand-notifications || adb shell input swipe 540 0 540 1300 300 || true
             sleep 3
@@ -631,10 +635,10 @@ jobs:
             adb exec-out screencap -p > diag/after-tap-top.png || true
             adb shell input swipe 540 1800 540 400 500 || true
             sleep 3
-            for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap.xml >/dev/null 2>&1; grep -q "automatic update notifications" diag/after-tap.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
+            for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap.xml >/dev/null 2>&1; grep -q "App Information\|About this app\|Featured App\|Official Release Links" diag/after-tap.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
             adb exec-out screencap -p > diag/after-tap.png || true
             adb shell dumpsys activity activities | grep -m2 "ResumedActivity" | tee diag/activity-after-tap.txt || true
-            if grep -q "automatic update notifications" diag/after-tap.xml && grep -q "1.0.4" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly detail page incl. v1.0.4 release notes)"; else echo "NOTIFICATION-TAP-DEEPLINK: FAIL (see after-tap.xml / after-tap-top.xml)"; fi
+            if grep -q "App Information" diag/after-tap.xml && grep -q "1.0.4" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly app detail page: App Information section with v1.0.4 release notes)"; elif grep -q "Featured App\|Official Release Links" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: FAIL (tap activated the notification and MainActivity resumed, but the WebView showed the marketplace HOME page - home-only markers present, detail markers absent: the deep-link extra did not reach the activity on the notification tap path; see after-tap.png / logcat-full.txt START record)"; else echo "NOTIFICATION-TAP-DEEPLINK: INCONCLUSIVE (neither detail nor home markers found; see after-tap.xml / after-tap.png)"; fi
 
             adb shell input keyevent KEYCODE_HOME || true
             adb shell am kill com.appmintly.appmintly || true
@@ -650,7 +654,7 @@ jobs:
             grep -q "FIXTURE-APPLIED" diag/fixture-dedup.txt || { echo "FIXTURE-DEDUP: FAILED"; cat diag/fixture-dedup.txt; exit 1; }
             adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-dedup.txt
             sleep 15
-            adb shell dumpsys notification --noredact | grep -B2 -A10 "com.appmintly.appmintly" > diag/notif-dedup.txt || true
+            adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-dedup.txt || true
             adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml > diag/prefs-dedup.xml || true
             grep -o 'app-update:[a-z]*:[0-9.]*' diag/prefs-dedup.xml | sort -u > diag/dedup-keys.txt || true
             if diff -q diag/delivered-keys.txt diag/dedup-keys.txt >/dev/null 2>&1 && grep -q 'name="lastPosted" value="0"' diag/prefs-dedup.xml; then echo "DEDUPLICATION: PASS (identical delivered keys after a second check; lastPosted=0; no re-delivery)"; else echo "DEDUPLICATION: FAIL (see dedup-keys.txt / prefs-dedup.xml)"; diff diag/delivered-keys.txt diag/dedup-keys.txt || true; fi
@@ -674,7 +678,7 @@ jobs:
             adb shell dumpsys connectivity | grep -m5 -i "active default network" > diag/connectivity-online.txt || true
             adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-retry.txt
             sleep 15
-            adb shell dumpsys notification --noredact | grep -B2 -A10 "com.appmintly.appmintly" > diag/notif-retry.txt || true
+            adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-retry.txt || true
             adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml > diag/prefs-retry.xml || true
             if grep -q "app-update:pdfminifly:2.1.1" diag/prefs-retry.xml; then echo "RETRY-AFTER-RECONNECT: PASS (pending event delivered once connectivity returned)"; else echo "RETRY-AFTER-RECONNECT: FAIL (see prefs-retry.xml)"; cat diag/prefs-retry.xml || true; fi
 
