@@ -178,7 +178,7 @@ jobs:
           t2 = re.sub(pat, '', t, count=1)
           assert t2 != t, 'seed call block not found in test-build AlarmReceiver.java'
           assert t2 == g, 'UNEXPECTED DIFFERENCE in AlarmReceiver beyond the seed block!'
-          assert g == t.replace(t2, '', 1), 'sanity mismatch'
+          assert len(t) - len(t2) < 400, 'stripped block suspiciously large'
           print('ALARM-RECEIVER ISOLATION PASS: after removing the seed block, byte-identical.')
           PY2
           echo 'ISOLATION PASS: MainActivity/BootReceiver are byte-identical across both passes.'
