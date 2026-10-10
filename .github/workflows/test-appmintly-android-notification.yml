@@ -93,10 +93,19 @@ jobs:
       - name: Verify APK integrity (sha256, package, versionCode, signing certificate) BEFORE installation
         run: |
           pip install --quiet androguard
+          set -o pipefail
           python3 - <<'PY' 2>&1 | tee diag/apk-integrity.txt
           import hashlib
           from androguard.core.apk import APK
-          import logging; logging.disable(logging.CRITICAL)
+          import logging
+          logging.disable(logging.CRITICAL)
+          # androguard 4.x logs through loguru, not logging — silence its
+          # default sink so the evidence file stays readable.
+          try:
+              from loguru import logger as _loguru_logger
+              _loguru_logger.remove()
+          except Exception:
+              pass
           EXPECTED = {
               "test-apk/AppMintly-1.0.3.apk": ("23ef68b76f109d9a7af68a49f094d5dc3a52bf02a2157ceb4de30ca2b7dfac1e", "10003", "1.0.3"),
               "test-apk/AppMintly-1.0.4.apk": ("eeca15eef78553e997d2b645fc409058e6c56ec05c9436c54ca3647659fd051b", "10004", "1.0.4"),
@@ -117,8 +126,9 @@ jobs:
           # v1.0.4 must carry the notification runtime declarations.
           a4 = APK("test-apk/AppMintly-1.0.4.apk")
           recv = [".AlarmReceiver", ".BootReceiver"]
+          recvs = a4.get_receivers()
           for r in recv:
-              assert r in a4.get_receivers(), f"v1.0.4 missing receiver {r}: {a4.get_receivers()}"
+              assert any(r in rcvr for rcvr in recvs), f"v1.0.4 missing receiver {r}: {recvs}"
           perms = a4.get_permissions()
           assert "android.permission.POST_NOTIFICATIONS" in perms, f"v1.0.4 missing POST_NOTIFICATIONS: {perms}"
           assert "android.permission.RECEIVE_BOOT_COMPLETED" in perms, f"v1.0.4 missing RECEIVE_BOOT_COMPLETED: {perms}"
@@ -329,9 +339,9 @@ jobs:
               report("In-app settings permission UI", "dump inconclusive (see settings-page-dump.xml / settings-page.png)")
           pa = rd("perm-state-after.txt")
           fb = rd("perm-via-fallback.txt").strip()
-          os_tap = rd("tap-ossettings.txt")
+          os_tap = rd("tap-ossettings.txt") + rd("tap-ossettings2.txt")
           grant_ok = "granted=true" in pa and fb == "" and "TAPPED" in os_tap
-          check("Notification permission granted via the REAL Android Settings UI", grant_ok, "master notifications toggle tapped in the real OS settings screen; dumpsys confirms granted=true" if grant_ok else "OS Settings toggle automation failed; pm grant fallback used (reported honestly)")
+          check("Notification permission granted via the REAL Android Settings UI", grant_ok, "notifications toggle tapped in the real OS settings UI (App Info / notification settings screen); dumpsys confirms granted=true" if grant_ok else "OS Settings toggle automation failed; pm grant fallback used (reported honestly)")
           bi = rd("prefs-baseline-init.xml")
           check("First-run baseline (silent init, zero events)", "baseline" in bi and 'lastCheckState">initialized<' in bi and "app-update:" not in bi, "after permission grant: lastCheckState=initialized, real catalog baseline written, no delivered keys")
           dl = rd("prefs-delivered.xml")
@@ -340,9 +350,11 @@ jobs:
           tray_ok = os.path.exists(os.path.join(D, "tray.png")) and os.path.getsize(os.path.join(D, "tray.png")) > 4000
           check("Genuine system-tray notification", ("Update available: AppMintly" in nd or "Update available: AppMintly" in tx) and ("Update available: Studyria" in nd or "Update available: Studyria" in tx) and "app-update:appmintly:1.0.4" in dl and "app-update:studyria:2.0.2" in dl and 'lastCheckState">ok<' in dl and tray_ok, "dumpsys notification records for both updates; delivered keys recorded only after posting; lastCheckState=ok (catalog fetched); tray screenshot captured")
           at = rd("after-tap.xml")
+          at_top = rd("after-tap-top.xml") or at
           aa = rd("activity-after-tap.txt")
           tap_ok = "TAPPED" in rd("tap-notification.txt")
-          check("Notification tap -> app detail page", tap_ok and "automatic update notifications" in at and "1.0.4" in at and "MainActivity" in aa, "real notification tapped in the tray; uiautomator shows the appmintly DETAIL page (v1.0.4 release notes present); resumed activity = com.appmintly.appmintly/.MainActivity")
+          detail_ok = ("APK Package" in at_top and "com.appmintly.appmintly" in at_top) or ("APK Package" in at and "com.appmintly.appmintly" in at)
+          check("Notification tap -> app detail page", tap_ok and detail_ok and "automatic update notifications" in at and "1.0.4" in (at + at_top) and "MainActivity" in aa, "real notification tapped in the tray; uiautomator shows the appmintly DETAIL page (APK Package metadata + v1.0.4 release notes after scrolling); resumed activity = com.appmintly.appmintly/.MainActivity")
           fv = rd("forged-verdict.txt")
           fg = rd("forged-destination.xml")
           check("Forged deep-link rejected", "FORGED-LINK-REJECTED" in fv and "Discover" in fg and "Example Domain" not in fg, "am start with appmintly_deeplink=https://example.com/ loaded the marketplace home (positive home marker present), not the external site")
@@ -445,16 +457,16 @@ jobs:
 
             adb shell input keyevent KEYCODE_WAKEUP || true
             adb shell wm dismiss-keyguard || true
-            adb shell am start -a android.settings.APPLICATION_NOTIFICATION_SETTINGS --es android.settings.extra.APP_PACKAGE com.appmintly.appmintly | tee diag/launch-ossettings.txt
-            sleep 6
+            adb shell am start -W -a android.settings.APPLICATION_DETAILS_SETTINGS -d package:com.appmintly.appmintly 2>&1 | tee diag/launch-ossettings.txt
+            sleep 5
             for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/ossettings.xml >/dev/null 2>&1; adb pull /sdcard/ossettings.xml diag/ossettings-dump.xml >/dev/null 2>&1; grep -q 'text="[^"]' diag/ossettings-dump.xml 2>/dev/null && break; sleep 5; done
-            adb exec-out screencap -p > diag/ossettings-before.png || true
+            adb exec-out screencap -p > diag/ossettings-appinfo.png || true
             for i in $(seq 1 4); do python3 "$RUNNER_TEMP/tap_node.py" "Notifications" switch > diag/tap-ossettings.txt 2>&1 && break; echo "OSSETTINGS-TAP: attempt $i failed"; sleep 5; done
             sleep 3
             adb shell dumpsys package com.appmintly.appmintly | grep -A1 POST_NOTIFICATIONS | tee diag/perm-state-after.txt || true
-            adb exec-out screencap -p > diag/ossettings-after.png || true
+            if grep -q "granted=true" diag/perm-state-after.txt; then echo "OSSETTINGS-PATH-A: PASS (notifications toggle flipped on the real Android App Info screen)"; else echo "OSSETTINGS-PATH-A: no switch flipped on App Info; navigating to the notification settings screen"; for i in $(seq 1 4); do python3 "$RUNNER_TEMP/tap_node.py" "Notifications" text > diag/tap-ossettings-row.txt 2>&1 && break; echo "OSSETTINGS-ROW-TAP: attempt $i failed"; sleep 5; done; sleep 5; for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/ossettings2.xml >/dev/null 2>&1; adb pull /sdcard/ossettings2.xml diag/ossettings-dump2.xml >/dev/null 2>&1; grep -q 'text="[^"]' diag/ossettings-dump2.xml 2>/dev/null && break; sleep 5; done; adb exec-out screencap -p > diag/ossettings-notifscreen.png || true; for i in $(seq 1 4); do python3 "$RUNNER_TEMP/tap_node.py" "Notifications" switch > diag/tap-ossettings2.txt 2>&1 && break; echo "OSSETTINGS-TAP2: attempt $i failed"; sleep 5; done; sleep 3; adb shell dumpsys package com.appmintly.appmintly | grep -A1 POST_NOTIFICATIONS | tee -a diag/perm-state-after.txt || true; fi
+            if grep -q "granted=true" diag/perm-state-after.txt; then echo "PERMISSION-VIA-OS-SETTINGS-UI: PASS (real OS settings UI toggled the app's notification permission)"; else echo "fallback" > diag/perm-via-fallback.txt; echo "PERMISSION-VIA-OS-SETTINGS-UI: FAILED (see ossettings dumps and taps); pm grant fallback used so downstream scenarios can still gather evidence"; adb shell pm grant com.appmintly.appmintly android.permission.POST_NOTIFICATIONS || true; sleep 2; adb shell dumpsys package com.appmintly.appmintly | grep -A1 POST_NOTIFICATIONS | tee -a diag/perm-state-after.txt || true; fi
             adb shell input keyevent KEYCODE_HOME || true
-            if grep -q "granted=true" diag/perm-state-after.txt; then echo "PERMISSION-VIA-OS-SETTINGS-UI: PASS (toggled in the real Android Settings notifications screen)"; else echo "fallback" > diag/perm-via-fallback.txt; echo "PERMISSION-VIA-OS-SETTINGS-UI: FAILED (see ossettings dumps); pm grant fallback used so downstream scenarios can still gather evidence"; adb shell pm grant com.appmintly.appmintly android.permission.POST_NOTIFICATIONS || true; sleep 2; adb shell dumpsys package com.appmintly.appmintly | grep -A1 POST_NOTIFICATIONS | tee -a diag/perm-state-after.txt || true; fi
             grep -q "granted=true" diag/perm-state-after.txt && echo "PERMISSION-GRANTED: PASS" || { echo "PERMISSION-GRANTED: FAIL"; exit 1; }
 
             python3 "$RUNNER_TEMP/patch_prefs.py" true "[]" "{}" init 2>&1 | tee diag/fixture-init.txt
@@ -484,10 +496,14 @@ jobs:
             if grep -q "TAPPED" diag/tap-notification.txt; then echo "NOTIFICATION-TAP: tapped in the real tray (see tap-notification.txt)"; else echo "NOTIFICATION-TAP: BLOCKED (could not tap the notification; see tray.png / tray-dump.xml)"; fi
             adb shell cmd statusbar collapse || true
             sleep 25
-            for i in $(seq 1 8); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap.xml >/dev/null 2>&1; grep -q "automatic update notifications" diag/after-tap.xml 2>/dev/null && break; sleep 6; done
+            for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap-top.xml >/dev/null 2>&1; grep -qE "APK Package|com.appmintly.appmintly" diag/after-tap-top.xml 2>/dev/null && break; sleep 6; done
+            adb exec-out screencap -p > diag/after-tap-top.png || true
+            adb shell input swipe 540 1800 540 400 500 || true
+            sleep 3
+            for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap.xml >/dev/null 2>&1; grep -q "automatic update notifications" diag/after-tap.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
             adb exec-out screencap -p > diag/after-tap.png || true
             adb shell dumpsys activity activities | grep -m2 "ResumedActivity" | tee diag/activity-after-tap.txt || true
-            if grep -q "automatic update notifications" diag/after-tap.xml && grep -q "1.0.4" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly detail page incl. v1.0.4 release notes)"; else echo "NOTIFICATION-TAP-DEEPLINK: FAIL (see after-tap.xml / after-tap.png)"; fi
+            if grep -q "automatic update notifications" diag/after-tap.xml && grep -q "1.0.4" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly detail page incl. v1.0.4 release notes)"; else echo "NOTIFICATION-TAP-DEEPLINK: FAIL (see after-tap.xml / after-tap-top.xml)"; fi
 
             adb shell input keyevent KEYCODE_HOME || true
             adb shell am kill com.appmintly.appmintly || true
