@@ -64,7 +64,7 @@ jobs:
           echo "KEY_ALIAS=throwaway-test-key" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=throwaway-test-password" >> "$GITHUB_ENV"
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
-      - name: CONTROL build from the pre-fix tree (b8dcc8f)
+      - name: CONTROL: generate the pre-fix tree's Java (b8dcc8f, throwaway-signed; validation failure tolerated - only the generated Java is compared)
         shell: bash
         run: |
           set -euo pipefail
@@ -72,13 +72,20 @@ jobs:
           export APP_NAME='AppMintly' VERSION_NAME='1.0.6'
           export PACKAGE_ID='com.appmintly.appmintly' SOURCE_URL='https://appmintly.pages.dev/'
           export ICON_URL='https://appmintly.pages.dev/icon-512.png'
-          export APK_ALLOW_TEST_SIGNING='1' APK_KEEP_SOURCE='1'
-          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
-          test -s "dist/apk/AppMintly-1.0.6.apk"
-          mkdir -p "$RUNNER_TEMP/control" && cp evidence/generated-*.java "$RUNNER_TEMP/control/"
-          rm -f dist/apk/AppMintly-1.0.6.apk dist/apk/validation.json
+          # The pre-fix tree has no test-signing allowance, so its APK
+          # validation fails closed at the cert pin. That is expected here:
+          # this build only supplies the PRE-FIX generated Java for the
+          # engine byte-identity proof. The generated sources persist in the
+          # build dir (/tmp/appforge-builds/<buildId>) after the failure.
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts > control-build.log 2>&1 || true
+          grep -q "Signing certificate mismatch" control-build.log && echo 'CONTROL build reached its expected pre-fix fail-closed cert gate (Java already generated)'
+          mkdir -p "$RUNNER_TEMP/control"
+          SRC="$(dirname "$(find /tmp/appforge-builds -name UpdateEngine.java | head -n 1)")"
+          test -n "$SRC" && test -d "$SRC"
+          for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do cp "$SRC/$f.java" "$RUNNER_TEMP/control/"; done
+          ls "$RUNNER_TEMP/control"
           git checkout HEAD -- lib scripts
-          echo 'CONTROL build done (pre-fix tree, same inputs + icon).'
+          echo 'CONTROL done (pre-fix generated Java collected).'
       - name: CANDIDATE build from the fixed tree
         shell: bash
         run: |
@@ -96,8 +103,8 @@ jobs:
         run: |
           set -euo pipefail
           for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do
-            cmp "$RUNNER_TEMP/control/generated-$f.java" "$RUNNER_TEMP/candidate/generated-$f.java"
-            echo "IDENTICAL: generated-$f.java (six-hour checker code untouched by the icon fix)"
+            cmp "$RUNNER_TEMP/control/$f.java" "$RUNNER_TEMP/candidate/generated-$f.java"
+            echo "IDENTICAL: $f.java (six-hour checker code untouched by the icon fix)"
           done
       - name: Verify icon resources inside the built APK (badging + pixel checks)
         shell: bash
