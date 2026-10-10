@@ -159,6 +159,14 @@ jobs:
           set -euo pipefail
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
 
+      - name: Default the marketplace launcher icon URL (Phase 12.17 fail-closed fix)
+        shell: bash
+        run: |
+          if [[ -z "$ICON_URL" && "$PACKAGE_ID" == "com.appmintly.appmintly" ]]; then
+            echo "ICON_URL=https://appmintly.pages.dev/icon-512.png" >> "$GITHUB_ENV"
+            echo 'ICON_URL input was empty (the v1.0.5 generic-letter root cause); defaulted to the official AppMintly launcher icon.'
+          fi
+
       - name: Compile production-signed APK
         shell: bash
         env:

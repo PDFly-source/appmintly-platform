@@ -477,6 +477,17 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         }
       }
 
+      if (!iconBuffer && packageId === 'com.appmintly.appmintly') {
+        // Phase 12.17 fail-closed guard: the marketplace's own APK must
+        // ship the official launcher icon. Root cause of the v1.0.5
+        // "generic A" launcher icon: the release was dispatched without
+        // an icon URL, so the letter-tile fallback shipped. The fallback
+        // stays available for other apps, but is refused here.
+        throw new Error(
+          'AppMintly APK build refused: the marketplace app (com.appmintly.appmintly) requires the official launcher icon (iconUrl); the letter-tile fallback is not allowed for this package.'
+        );
+      }
+
       const rawIconPath = path.join(buildDir, `source_icon.${ext}`);
       if (iconBuffer) {
         await fs.promises.writeFile(rawIconPath, iconBuffer);
@@ -509,8 +520,50 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // Adaptive icon (Android 8+): real artwork foreground sized into the
       // adaptive safe zone over a background layer. Without this, modern
       // launchers render the flat legacy square (excessive white border).
+      //
+      // Phase 12.17 content-aware fit: launcher masks show only the
+      // central ~66/108 of the canvas, so a blanket 75% scale crops
+      // artwork whose content extends past ~81% of its own bounds (the
+      // official AppMintly logo spans 92% width - its outer strokes were
+      // clipped). When the artwork has a near-uniform border (>= 10% of
+      // area trimmed by -trim), trim it and fit the CONTENT into the
+      // visible window with a small margin - centered, never cropped.
+      // The adaptive background samples the artwork's own border color so
+      // padded logos show no tonal square edge.
       const anydpiDir = path.join(resDir, 'mipmap-anydpi-v26');
       await fs.promises.mkdir(anydpiDir, { recursive: true });
+      let adaptiveInputSpec = inputSpec;
+      let adaptiveContentFit = false; // true -> resize content into ~60% of canvas
+      let adaptiveBackground = iconBuffer ? '#FEFEFE' : themeColor;
+      if (iconBuffer) {
+        try {
+          const bgHexOut = await execPromise(
+            `convert ${inputSpec} -format "%[hex:p{2,2}]" info:`
+          );
+          const bgHex = (bgHexOut || '').toString().trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(bgHex)) adaptiveBackground = bgHex;
+          const trimmedOut = await execPromise(
+            `convert ${inputSpec} -fuzz 12% -trim -format "%wx%h" info:`
+          );
+          const m = /([0-9]+)x([0-9]+)/.exec((trimmedOut || '').toString().trim() || '');
+          const origOut = await execPromise(`identify -format "%wx%h" ${inputSpec}`);
+          const om = /([0-9]+)x([0-9]+)/.exec((origOut || '').toString().trim() || '');
+          if (m && om) {
+            const tw = parseInt(m[1], 10), th = parseInt(m[2], 10);
+            const ow = parseInt(om[1], 10), oh = parseInt(om[2], 10);
+            if (ow > 0 && oh > 0 && (tw * th) / (ow * oh) < 0.9) {
+              const trimmedPath = path.join(buildDir, 'icon_trimmed.png');
+              await execPromise(`convert ${inputSpec} -fuzz 12% -trim +repage "${trimmedPath}"`);
+              adaptiveInputSpec = `"${trimmedPath}"`;
+              adaptiveContentFit = true;
+              job.stepsCompleted.push('Adaptive icon content fit (trimmed border)');
+            }
+          }
+        } catch (e) {
+          // Fall back to the blanket 75% scale - never fail a build on fit analysis.
+          console.warn('[ApkBuilder] Adaptive content-fit analysis failed; using 75% artwork scale:', e);
+        }
+      }
       const adaptiveForegroundDensities: { dir: string; canvas: number }[] = [
         { dir: mipmapMdpi, canvas: 108 },
         { dir: mipmapHdpi, canvas: 162 },
@@ -519,10 +572,19 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         { dir: mipmapXxxhdpi, canvas: 432 },
       ];
       for (const d of adaptiveForegroundDensities) {
-        const fgSize = Math.round(d.canvas * 0.75); // keeps artwork content inside the 66/108 safe zone
-        await execPromise(
-          `convert ${inputSpec} -resize ${fgSize}x${fgSize} -gravity center -background none -extent ${d.canvas}x${d.canvas} "${path.join(d.dir, 'ic_launcher_foreground.png')}"`
-        );
+        if (adaptiveContentFit) {
+          // Fit the trimmed CONTENT inside the visible window (~60% of
+          // canvas; the mask shows ~61%), preserving aspect ratio.
+          const fitSize = Math.round(d.canvas * 0.60);
+          await execPromise(
+            `convert ${adaptiveInputSpec} -resize ${fitSize}x${fitSize} -gravity center -background none -extent ${d.canvas}x${d.canvas} "${path.join(d.dir, 'ic_launcher_foreground.png')}"`
+          );
+        } else {
+          const fgSize = Math.round(d.canvas * 0.75); // keeps artwork content inside the 66/108 safe zone
+          await execPromise(
+            `convert ${inputSpec} -resize ${fgSize}x${fgSize} -gravity center -background none -extent ${d.canvas}x${d.canvas} "${path.join(d.dir, 'ic_launcher_foreground.png')}"`
+          );
+        }
       }
       const adaptiveIconXml = (foreground: string) => `<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -575,7 +637,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 <resources>
     <color name="theme_color">${themeColor}</color>
     <color name="bg_color">${backgroundColor}</color>
-    <color name="ic_launcher_background">${iconBuffer ? '#FEFEFE' : themeColor}</color>
+    <color name="ic_launcher_background">${adaptiveBackground}</color>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
 
