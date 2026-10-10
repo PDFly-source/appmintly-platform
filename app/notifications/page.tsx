@@ -16,7 +16,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Bell, ShieldAlert, ShieldCheck, Smartphone, Globe2, RefreshCw, Trash2, CheckCircle2, XCircle, Circle, ListChecks } from 'lucide-react';
-import { useNotifications, type PermissionState } from '@/components/NotificationsProvider';
+import { useNotifications, type PermissionState, type NativeEngineStatus } from '@/components/NotificationsProvider';
 import { describeCheck } from '@/lib/notifications/engine';
 
 const meta = {
@@ -59,13 +59,30 @@ export default function NotificationsPage() {
     }
   };
 
-  const permissionView: Record<PermissionState, { label: string; icon: React.ReactNode; tone: string; hint: string }> = {
-    granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-[#16A765]', hint: 'This browser can show AppMintly notifications.' },
-    denied: { label: 'Blocked', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-[#E52B32]', hint: 'Notifications are blocked by your browser/site settings. AppMintly will not prompt again — re-enable them in the browser site permissions.' },
-    default: { label: 'Not requested', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'Enable notifications to receive update and release alerts while AppMintly is open.' },
-    unsupported: { label: 'Unsupported', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'This browser does not support the Notification API.' },
-  };
+  // Phase 12.15: inside the official APK the ANDROID notification
+  // permission is the source of truth; on the website the browser
+  // Notification API stays the source of truth. Same layout either way.
+  const isNative = n.nativeAvailable;
+  const permissionView: Record<PermissionState, { label: string; icon: React.ReactNode; tone: string; hint: string }> = isNative
+    ? {
+        granted: { label: 'Allowed', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-[#16A765]', hint: 'Android notification permission is granted for the AppMintly app.' },
+        denied: { label: 'Blocked in Android settings', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-[#E52B32]', hint: 'Notifications for the AppMintly app are turned off in Android Settings → Apps → AppMintly → Notifications.' },
+        default: { label: 'Permission required', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The AppMintly app needs the Android notification permission. Enable notifications below to show the system permission dialog.' },
+        unsupported: { label: 'Unavailable', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The Android notification permission state could not be read from the app.' },
+      }
+    : {
+        granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-[#16A765]', hint: 'This browser can show AppMintly notifications.' },
+        denied: { label: 'Blocked', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-[#E52B32]', hint: 'Notifications are blocked by your browser/site settings. AppMintly will not prompt again — re-enable them in the browser site permissions.' },
+        default: { label: 'Not requested', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'Enable notifications to receive update and release alerts while AppMintly is open.' },
+        unsupported: { label: 'Unsupported', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'This browser does not support the Notification API.' },
+      };
   const perm = permissionView[n.permission];
+
+  const engineLine = (st: NativeEngineStatus): string => {
+    const when = st.lastCheck ? new Date(st.lastCheck).toLocaleString() : 'never';
+    const posted = st.lastPosted !== undefined ? `, ${st.lastPosted} notification${st.lastPosted === 1 ? '' : 's'} posted` : '';
+    return `Background checker (native): last run ${when} — state “${st.lastCheckState || 'not run yet'}”${posted}.`;
+  };
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
@@ -93,6 +110,12 @@ export default function NotificationsPage() {
             ? 'You are inside the official AppMintly Android app: enabling notifications grants the Android notification permission and activates the six-hour background update checker.'
             : 'Why we need it: notifications let you learn about app updates and new releases without repeatedly opening AppMintly. Nothing is sent anywhere while you are offline.'}
         </p>
+        {n.nativeAvailable && n.nativeStatus && (
+          <p className="mt-2 text-xs text-mut leading-relaxed" role="status">
+            {engineLine(n.nativeStatus)}
+            {n.nativeStatus.checkIntervalHours ? ` Cadence: about every ${n.nativeStatus.checkIntervalHours} hours (Android may batch).` : ''}
+          </p>
+        )}
         {n.permission !== 'granted' && n.permission !== 'unsupported' && (
           <button
             onClick={onEnable}
