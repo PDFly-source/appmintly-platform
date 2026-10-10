@@ -20,6 +20,8 @@ async function main() {
     themeColor: process.env.THEME_COLOR || undefined,
     backgroundColor: process.env.BACKGROUND_COLOR || undefined,
     buildMode: 'webview', authorized: true,
+    allowTestSigningIdentity: process.env.APK_ALLOW_TEST_SIGNING === '1',
+    keepGeneratedSource: process.env.APK_KEEP_SOURCE === '1',
   });
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {

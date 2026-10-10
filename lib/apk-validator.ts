@@ -172,6 +172,14 @@ export async function validateApkBinary(
     minTargetSdk?: number;
     /** Optional override of the pinned production certificate fingerprint. */
     certificateSha256Fingerprint?: string;
+  /**
+   * TEST-ONLY (ported from the Phase 12.14 smoke branch, unchanged): allow a
+   * throwaway (non-production) signing identity for temporary test builds.
+   * Never set by production builds; the signature itself is still
+   * cryptographically verified. This branch is test-only and is never
+   * merged to main, so the production fail-closed pin stays intact.
+   */
+  allowTestSigningIdentity?: boolean;
   }
 ): Promise<ApkValidationResult> {
   const minSize = expected?.minSize || 45000; // minimum realistic APK size in bytes
@@ -394,7 +402,7 @@ export async function validateApkBinary(
     const certOk =
       certificateSha256Fingerprint ===
       (expected?.certificateSha256Fingerprint || PRODUCTION_CERT_SHA256_FINGERPRINT);
-    if (!certOk) {
+    if (!certOk && !expected?.allowTestSigningIdentity) {
       throw new Error(
         `Signing certificate mismatch: APK is signed by "${certificateSubject}" with fingerprint ` +
           `${certificateSha256Fingerprint || 'unknown'}, which is NOT the AppMintly production ` +

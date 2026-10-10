@@ -27,6 +27,20 @@ export interface ApkBuildOptions {
   packageId?: string;
   fileName?: string;
   authorized: boolean;
+  /**
+   * TEST-ONLY (ported from the Phase 12.14 smoke branch): preserves the
+   * generated MainActivity.java / UpdateEngine.java / AlarmReceiver.java /
+   * BootReceiver.java under evidence/ so this test branch can prove the
+   * icon fix leaves the native engine byte-identical. Production builds
+   * never set it.
+   */
+  keepGeneratedSource?: boolean;
+  /**
+   * TEST-ONLY (ported from the Phase 12.14 smoke branch): allow a throwaway
+   * signing identity for temporary test builds. Production builds leave this
+   * unset and the production signing-identity pin stays fail-closed.
+   */
+  allowTestSigningIdentity?: boolean;
 }
 
 export type BuildState = 'queued' | 'building' | 'signing' | 'validating' | 'uploading' | 'completed' | 'failed';
@@ -1039,6 +1053,11 @@ ${
 }
 `;
       await fs.promises.writeFile(path.join(srcDir, 'MainActivity.java'), javaCode, 'utf8');
+      if (options.keepGeneratedSource === true) {
+        // TEST-ONLY (Phase 12.14 pattern): production builds never set this flag.
+        await fs.promises.mkdir('evidence', { recursive: true });
+        await fs.promises.writeFile(path.join('evidence', 'generated-MainActivity.java'), javaCode, 'utf8');
+      }
       job.stepsCompleted.push('Preparing Android project');
 
       // ----------------------------------------------------------------
@@ -1634,6 +1653,12 @@ public class BootReceiver extends BroadcastReceiver {
 }
 `;
         await fs.promises.writeFile(path.join(srcDir, 'BootReceiver.java'), bootReceiverJava, 'utf8');
+        if (options.keepGeneratedSource === true) {
+          // TEST-ONLY (Phase 12.14 pattern): production builds never set this flag.
+          await fs.promises.writeFile(path.join('evidence', 'generated-UpdateEngine.java'), updateEngineJava, 'utf8');
+          await fs.promises.writeFile(path.join('evidence', 'generated-AlarmReceiver.java'), alarmReceiverJava, 'utf8');
+          await fs.promises.writeFile(path.join('evidence', 'generated-BootReceiver.java'), bootReceiverJava, 'utf8');
+        }
       }
 
 
@@ -1718,6 +1743,7 @@ public class BootReceiver extends BroadcastReceiver {
       const validationResult = await validateApkBinary(signedApk, {
         packageId,
         versionName,
+        allowTestSigningIdentity: options.allowTestSigningIdentity === true,
       });
 
       job.validationResult = validationResult;
