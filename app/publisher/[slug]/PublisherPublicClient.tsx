@@ -8,6 +8,8 @@ import { AppCard } from '@/components/AppCard';
 import { Reveal } from '@/components/Reveal';
 import type { AppItem } from '@/data/apps';
 import { PublisherIdentityCard } from '@/components/PublisherIdentityCard';
+import PkdProfile from '@/components/PkdProfile';
+import { hasFullProfile } from '@/lib/publisher-profiles';
 import { computePublisherStats } from '@/lib/publisher-stats';
 import {
   ArrowLeft,
@@ -40,6 +42,13 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
   const apps = stats?.apps ?? [];
   // `apps` is already sorted newest-update-first from real metadata.
   const updatedApps = apps;
+
+  // Publishers with a bespoke full-page profile (currently PKD: portrait + 3D
+  // design supplied by the owner) render it. Everyone else keeps the generic
+  // profile below, so no publisher ever borrows another's portrait or copy.
+  if (identity && hasFullProfile(identity)) {
+    return <PkdProfile slug={identity.slug} />;
+  }
 
   if (!identity) {
     return (
