@@ -24,6 +24,9 @@ async function main() {
   if (rawAlarmInterval !== undefined && !/^\d+$/.test(rawAlarmInterval)) {
     throw new Error('APK_ALARM_INTERVAL_MS must be a positive integer of milliseconds');
   }
+  if (process.env.APK_ALARM_WAKEUP !== undefined && !['0','1'].includes(process.env.APK_ALARM_WAKEUP)) {
+    throw new Error('APK_ALARM_WAKEUP must be 0 or 1');
+  }
   const job = await runApkBuild({
     appId: slug, slug, name: appName, version,
     launchUrl: required('SOURCE_URL'), packageId: required('PACKAGE_ID'),
@@ -33,6 +36,7 @@ async function main() {
     buildMode: 'webview', authorized: true,
     versionCode: rawVersionCode !== undefined ? Number(rawVersionCode) : undefined,
     alarmIntervalMs: rawAlarmInterval !== undefined ? Number(rawAlarmInterval) : undefined,
+    alarmWakeup: process.env.APK_ALARM_WAKEUP === '1',
     testFixtureSeed: process.env.APK_TEST_FIXTURE_SEED === '1' || process.env.APK_TEST_FIXTURE_SEED === 'true',
     allowTestSigningIdentity: process.env.APK_ALLOW_TEST_SIGNING === '1',
     keepGeneratedSource: process.env.APK_KEEP_SOURCE === '1',

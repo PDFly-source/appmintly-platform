@@ -41,6 +41,13 @@ export interface ApkBuildOptions {
    */
   testFixtureSeed?: boolean;
   /**
+   * TEST-ONLY (Phase 12.15): schedules the native update alarm as a WAKEUP
+   * alarm in a temporary test build so the 2-minute smoke fire can wake a
+   * screen-locked device. Production builds leave this unset and keep the
+   * battery-friendly non-wakeup ELAPSED_REALTIME alarm.
+   */
+  alarmWakeup?: boolean;
+  /**
    * TEST-ONLY (Phase 12.14): allows a throwaway signing identity during
    * validation for temporary test builds. Production builds leave this
    * unset and the production signing-identity pin stays fail-closed.
@@ -402,6 +409,10 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   if (options.alarmIntervalMs !== undefined
       && (!Number.isInteger(options.alarmIntervalMs) || options.alarmIntervalMs < 60000)) {
     throw new Error('Test-only alarm interval must be an integer >= 60000 ms.');
+  }
+  if (options.alarmWakeup === true
+      && (packageId !== 'com.appmintly.appmintly' || options.alarmIntervalMs === undefined)) {
+    throw new Error('Test-only wakeup alarm requires the native updates package and a test alarm interval.');
   }
   const appName = options.name.trim();
   const themeColor = options.themeColor || '#17191C';
@@ -1105,7 +1116,7 @@ public final class UpdateEngine {
             PendingIntent pi = PendingIntent.getBroadcast(ctx, 1001, i, flags);
             // Inexact repeating: Android may batch/delay for battery. This
             // is a target cadence, never a guaranteed execution time.
-            am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME,
+            am.setInexactRepeating(AlarmManager.${options.alarmWakeup === true ? 'ELAPSED_REALTIME_WAKEUP' : 'ELAPSED_REALTIME'},
                     SystemClock.elapsedRealtime() + CHECK_INTERVAL_MS, CHECK_INTERVAL_MS, pi);
         } catch (Throwable ignored) {
         }
@@ -1188,6 +1199,8 @@ public final class UpdateEngine {
                     .put("notificationsEnabled", nm == null || Build.VERSION.SDK_INT < 24 || nm.areNotificationsEnabled())
                     .put("lastCheck", p.getLong("lastCheck", 0L))
                     .put("lastCheckState", p.getString("lastCheckState", ""))
+                    .put("lastPosted", p.getInt("lastPosted", 0))
+                    .put("testFixtureSeeded", p.getBoolean("test_fixture_seeded", false))
                     .put("checkIntervalHours", 6)
                     .toString();
         } catch (Throwable t) {
@@ -1198,10 +1211,14 @@ public final class UpdateEngine {
     /* ---------------- core check ---------------- */
 
 ${options.testFixtureSeed === true ? `    /* TEMPORARY TEST BUILD ONLY (Phase 12.14): seeds the update-check
-     * fixture before the master gate, because the WebView preference sync
-     * (web -> native) would otherwise overwrite it. Seeded exactly once;
-     * the real engine, gating, dedup and delivery paths stay untouched. */
-    private static void seedTestFixture(Context ctx) {
+     * fixture. Phase 12.15 root cause: the call must run in
+     * AlarmReceiver.onReceive BEFORE the master gate - the live web page
+     * syncs the web DEFAULT_PREFS (master=false, tracked=[]) into native
+     * prefs on every load, and AlarmReceiver's own isEnabled check aborted
+     * the check before the old doCheck-time seed could ever run. Seeded
+     * exactly once; the real engine, gating, dedup and delivery paths stay
+     * untouched. */
+    static void seedTestFixture(Context ctx) {
         try {
             SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             if (p.getBoolean("test_fixture_seeded", false)) return;
@@ -1216,7 +1233,6 @@ ${options.testFixtureSeed === true ? `    /* TEMPORARY TEST BUILD ONLY (Phase 12
     }
 
     static void doCheck(Context ctx) throws Exception {
-        seedTestFixture(ctx);
         if (!isEnabled(ctx)) {
             return;
         }` : `    static void doCheck(Context ctx) throws Exception {
@@ -1609,7 +1625,11 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
         if (intent == null || !UpdateEngine.ACTION_CHECK_UPDATES.equals(intent.getAction())) return;
-        if (!UpdateEngine.isEnabled(context)) return;
+${options.testFixtureSeed === true ? `        // TEMPORARY TEST BUILD ONLY (Phase 12.15): seed the fixture BEFORE the
+        // master gate - the web page's preference sync keeps master=false
+        // until the user opts in, so a doCheck-time seed was unreachable.
+        UpdateEngine.seedTestFixture(context);
+` : ''}        if (!UpdateEngine.isEnabled(context)) return;
         final PendingResult result = goAsync();
         new Thread(new Runnable() {
             @Override

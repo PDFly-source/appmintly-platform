@@ -68,7 +68,43 @@ interface NativeBridge {
   setPreferences(json: string): void;
   setTrackedApps(json: string): void;
   checkNow(): void;
+  /** UpdateEngine.getStatusJson(): real Android permission + engine state. */
   getStatus(): string;
+}
+
+/**
+ * Parsed native engine status (fields are optional: older APKs do not
+ * report lastPosted/testFixtureSeeded — the web side must tolerate both).
+ */
+export interface NativeEngineStatus {
+  installed: boolean;
+  permissionGranted?: boolean;
+  notificationsEnabled?: boolean;
+  lastCheck?: number;
+  lastCheckState?: string;
+  lastPosted?: number;
+  testFixtureSeeded?: boolean;
+  checkIntervalHours?: number;
+}
+
+function parseNativeStatus(raw: string | undefined): NativeEngineStatus | null {
+  if (!raw) return null;
+  try {
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== 'object' || o.installed !== true) return null;
+    return {
+      installed: true,
+      permissionGranted: typeof o.permissionGranted === 'boolean' ? o.permissionGranted : undefined,
+      notificationsEnabled: typeof o.notificationsEnabled === 'boolean' ? o.notificationsEnabled : undefined,
+      lastCheck: typeof o.lastCheck === 'number' ? o.lastCheck : undefined,
+      lastCheckState: typeof o.lastCheckState === 'string' ? o.lastCheckState : undefined,
+      lastPosted: typeof o.lastPosted === 'number' ? o.lastPosted : undefined,
+      testFixtureSeeded: typeof o.testFixtureSeeded === 'boolean' ? o.testFixtureSeeded : undefined,
+      checkIntervalHours: typeof o.checkIntervalHours === 'number' ? o.checkIntervalHours : undefined,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export interface NotificationCheckResult {
@@ -89,6 +125,8 @@ interface NotificationsContextValue {
   lastCheckOk: boolean | null;
   lastRevision: string | null;
   nativeAvailable: boolean;
+  /** Live native engine status inside the APK (null on the website). */
+  nativeStatus: NativeEngineStatus | null;
   checking: boolean;
   setPrefs: (partial: Partial<NotificationPrefs>) => void;
   enableNotifications: () => Promise<PermissionState>;
@@ -108,7 +146,21 @@ export function useNotifications(): NotificationsContextValue {
   return ctx;
 }
 
-function readPermission(): PermissionState {
+/**
+ * Real device permission state. Inside the official APK the ANDROID
+ * permission is the source of truth (the WebView implements no Web
+ * Notification API, so the browser check would always say 'unsupported').
+ * Browser/PWA keeps the standard Notification API semantics.
+ */
+function readPermission(bridge?: NativeBridge | null): PermissionState {
+  if (bridge) {
+    const st = parseNativeStatus(bridge.getStatus());
+    if (!st) return 'unsupported';
+    if (st.permissionGranted === false) return 'default'; // requestable via the native dialog
+    if (st.notificationsEnabled === false) return 'denied'; // app-level toggle off in Android settings
+    if (st.permissionGranted === true) return 'granted';
+    return 'unsupported'; // state genuinely not retrievable
+  }
   if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
   return Notification.permission as PermissionState;
 }
@@ -136,6 +188,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [permission, setPermission] = useState<PermissionState>('unsupported');
   const [state, setState] = useState<NotificationStateV1 | null>(null);
   const [nativeAvailable, setNativeAvailable] = useState(false);
+  const [nativeStatus, setNativeStatus] = useState<NativeEngineStatus | null>(null);
   const [checking, setChecking] = useState(false);
   const stateRef = useRef<NotificationStateV1 | null>(null);
   const checkingRef = useRef(false);
@@ -147,11 +200,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const readPermissionAndMount = useCallback(() => {
-    setPermission(readPermission());
+    const bridge = getNativeBridge();
+    setPermission(readPermission(bridge));
+    setNativeStatus(bridge ? parseNativeStatus(bridge.getStatus()) : null);
     const loaded = loadNotificationState();
     stateRef.current = loaded;
     setState(loaded);
-    const bridge = getNativeBridge();
     setNativeAvailable(!!bridge);
     setReady(true);
   }, []);
@@ -262,11 +316,19 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     // Defer the mount read off the effect body (avoids sync setState cascades).
     const mountTimer = window.setTimeout(() => readPermissionAndMount(), 0);
-    const onPermissionChange = () => setPermission(readPermission());
+    const onPermissionChange = () => {
+      const bridge = getNativeBridge();
+      setPermission(readPermission(bridge));
+      if (bridge) setNativeStatus(parseNativeStatus(bridge.getStatus()));
+    };
     document.addEventListener('visibilitychange', onPermissionChange);
+    // Returning from the native permission dialog does not always fire
+    // visibilitychange in a WebView; window focus is the reliable second cue.
+    window.addEventListener('focus', onPermissionChange);
     return () => {
       window.clearTimeout(mountTimer);
       document.removeEventListener('visibilitychange', onPermissionChange);
+      window.removeEventListener('focus', onPermissionChange);
     };
   }, [readPermissionAndMount]);
 
@@ -326,9 +388,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       } catch {
         /* ignore */
       }
-      // The native dialog is async; the page reads the final state on the
-      // next visibilitychange/interaction. Report current best-known state.
-      return readPermission();
+      // The native dialog is async: poll the REAL native state so the page
+      // reflects the result without requiring a page reload.
+      const refresh = () => {
+        const st = readPermission(bridge);
+        setPermission(st);
+        setNativeStatus(parseNativeStatus(bridge.getStatus()));
+        return st;
+      };
+      window.setTimeout(refresh, 900);
+      window.setTimeout(refresh, 3000);
+      // Report current best-known state; the polls/focus handler update it.
+      return readPermission(bridge);
     }
     if (!('Notification' in window)) return 'unsupported';
     try {
@@ -394,6 +465,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       lastCheckOk: state?.lastCheckOk ?? null,
       lastRevision: state?.lastRevision ?? null,
       nativeAvailable,
+      nativeStatus,
       checking,
       setPrefs,
       enableNotifications,
@@ -409,6 +481,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       permission,
       state,
       nativeAvailable,
+      nativeStatus,
       checking,
       setPrefs,
       enableNotifications,
