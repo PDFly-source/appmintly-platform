@@ -223,127 +223,105 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            # NOTE: the action runs this script with /bin/sh (dash) — no
-            # bash-only syntax (run 38052064417 died on `set -o pipefail`).
+            # The action executes EACH LINE of this script as its own /bin/sh
+            # invocation (run 38052434595: shell vars from earlier lines were
+            # empty on later lines). Rules: literal values only, one logical
+            # command per line, no multi-line heredocs here, /bin/sh syntax.
             mkdir -p diag
             adb root || true
-            adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' 2>/dev/null || timeout 420 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
-            adb shell getprop ro.build.version.release | tee diag/android-version.txt || adb shell getprop ro.build.version.release | tee diag/android-version.txt
-            adb shell settings put global window_animation_scale 0.0 || true
-            adb shell settings put global transition_animation_scale 0.0 || true
-            adb shell settings put global animator_duration_scale 0.0 || true
-
-            PREFS="/data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml"
-            HELP="$RUNNER_TEMP/diag-helpers"
-            APP="com.appmintly.appmintly"
-            ACTION="${APP}.ACTION_CHECK_UPDATES"
-
+            adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell wm dismiss-keyguard || true
+            adb shell getprop ro.build.version.release | tee diag/android-version.txt
             echo "== [0] install the REAL released 1.0.5"
             adb install test-apk/AppMintly-1.0.5.apk | tee diag/install.txt
-            adb shell dumpsys package $APP | grep -E "versionCode|versionName" | head -2 | tee diag/pkg.txt
-            adb shell pm grant $APP android.permission.POST_NOTIFICATIONS
-            adb shell dumpsys package $APP | grep -E "POST_NOTIFICATIONS" | tee diag/perm.txt
-            adb shell cmd notification get_dnd || true
-
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode|versionName" | head -2 | tee diag/pkg.txt
+            adb shell pm grant com.appmintly.appmintly android.permission.POST_NOTIFICATIONS | tee diag/perm-grant.txt
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "POST_NOTIFICATIONS" | tee diag/perm.txt
             echo "== [1] launch once (MainActivity.onCreate -> UpdateEngine.schedule)"
-            adb shell input keyevent KEYCODE_WAKEUP
-            adb shell input keyevent 82
-            adb shell am start -n $APP/.MainActivity | tee diag/launch.txt
-            sleep 8
-            adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1
-            # Registration evidence: the repeating ~6h PendingIntent must be
-            # present, targeting AlarmReceiver with ACTION_CHECK_UPDATES.
-            grep -q "ACTION_CHECK_UPDATES" diag/alarm-after-launch.txt && echo "ALARM-TARGET: PASS (ACTION_CHECK_UPDATES pending intent registered)" | tee -a diag/summary.txt
-            grep -q "21600000" diag/alarm-after-launch.txt && echo "ALARM-INTERVAL: PASS (6h = 21600000ms interval in dumpsys)" | tee -a diag/summary.txt
-            grep -B4 -A8 "AlarmReceiver" diag/alarm-after-launch.txt > diag/alarm-record.txt || true
-            cat diag/alarm-record.txt
-
+            adb shell am start -W -n com.appmintly.appmintly/.MainActivity | tee diag/launch.txt
+            sleep 15
+            adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1 || true
+            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly" > diag/alarm-record.txt || true
+            cat diag/alarm-record.txt || true
+            grep -q "ACTION_CHECK_UPDATES" diag/alarm-record.txt && echo "ALARM-TARGET: PASS (ACTION_CHECK_UPDATES pending intent registered)" | tee -a diag/summary.txt || true
+            grep -q "21600000" diag/alarm-record.txt && echo "ALARM-INTERVAL: PASS (6h = 21600000ms repeatInterval in dumpsys)" | tee -a diag/summary.txt || true
             echo "== [2] default-state trigger: fresh install, master off => receiver must exit without recording"
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-0.txt
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-0.txt
             sleep 6
-            adb shell "cat $PREFS 2>/dev/null || echo ABSENT" | tee diag/prefs-0.txt
-            # The WebView page itself may have synced default prefs (master=false) on
-            # launch, so the file may exist; the receiver-gate proof is that the
-            # engine recorded NOTHING (no lastCheck/lastCheckState), and no baseline.
-            ! grep -q 'name="lastCheckState"' diag/prefs-0.txt && echo "MASTER-GATE(default): PASS (fresh master=false: receiver exited before doCheck, nothing recorded)" | tee -a diag/summary.txt
-
+            adb shell "cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml 2>/dev/null || echo ABSENT" | tee diag/prefs-0.txt
+            ! grep -q 'name="lastCheckState"' diag/prefs-0.txt && echo "MASTER-GATE(default): PASS (fresh master=false: receiver exited before doCheck, nothing recorded)" | tee -a diag/summary.txt || true
             echo "== [3] seed controlled fixture: master=true, updates=true, tracked=[studyria@2.0.0]"
-            python3 "$HELP/prefs.py" patch true true '[{"appId":"studyria","version":"2.0.0"}]' '{}' true | tee diag/prefs-seed1.txt
-
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" patch true true '[{"appId":"studyria","version":"2.0.0"}]' '{}' true | tee diag/prefs-seed1.txt
             echo "== [4] trigger #1: first run must silently initialize the baseline (NO notification, state=initialized)"
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-1.txt
-            sleep 12
-            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ -n "$st" ] && break; sleep 5; done
-            adb shell cat $PREFS | tee diag/prefs-1.txt
-            adb shell dumpsys notification --noredact > diag/notif-after-1.txt 2>&1
-            grep -q 'lastCheckState">initialized' diag/prefs-1.txt && echo "FIRST-RUN: PASS (baseline initialized silently, state=initialized)" | tee -a diag/summary.txt
-            ! grep -q "Update available" diag/notif-after-1.txt && echo "FIRST-RUN-NO-SPAM: PASS (no notification posted on baseline init)" | tee -a diag/summary.txt
-            grep -q 'name="baseline"' diag/prefs-1.txt && echo "BASELINE-RECORDED: PASS (engine recorded the catalog baseline)" | tee -a diag/summary.txt
-
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-1.txt
+            for i in $(seq 1 12); do st=$(python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheckState || true); [ -n "$st" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-1.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-1.txt 2>&1 || true
+            grep -q 'lastCheckState">initialized' diag/prefs-1.txt && echo "FIRST-RUN: PASS (baseline initialized silently, state=initialized)" | tee -a diag/summary.txt || true
+            ! grep -q "Update available" diag/notif-after-1.txt && echo "FIRST-RUN-NO-SPAM: PASS (no notification posted on baseline init)" | tee -a diag/summary.txt || true
+            grep -q 'name="baseline"' diag/prefs-1.txt && echo "BASELINE-RECORDED: PASS (engine recorded the catalog baseline)" | tee -a diag/summary.txt || true
             echo "== [5] trigger #2: tracked studyria 2.0.2 > 2.0.0 => must post the real update notification"
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-2.txt
-            sleep 12
-            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
-            adb shell cat $PREFS | tee diag/prefs-2.txt
-            adb shell dumpsys notification --noredact > diag/notif-after-2.txt 2>&1
-            grep -A3 "Update available: Studyria" diag/notif-after-2.txt | tee diag/notif-studyria.txt
-            grep -q 'lastCheckState">ok' diag/prefs-2.txt && echo "CHECK-EXECUTES: PASS (state=ok recorded with fresh lastCheck)" | tee -a diag/summary.txt
-            grep -q 'name="lastPosted" value="1"' diag/prefs-2.txt && echo "VERSION-DETECT: PASS (catalog 2.0.2 > tracked 2.0.0 detected; lastPosted=1)" | tee -a diag/summary.txt
-            grep -q "app-update:studyria:2.0.2" diag/prefs-2.txt && echo "DEDUP-KEY: PASS (delivered key app-update:studyria:2.0.2 recorded)" | tee -a diag/summary.txt
-            grep -q "Update available: Studyria" diag/notif-after-2.txt && grep -q "Version 2.0.2 is available" diag/notif-after-2.txt && echo "NOTIFICATION-POSTED: PASS (tray notification with exact production title/body)" | tee -a diag/summary.txt
-
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-2.txt
+            for i in $(seq 1 12); do st=$(python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-2.txt
+            adb shell dumpsys notification --noredact | grep -B2 -A45 "com.appmintly.appmintly" > diag/notif-after-2.txt || true
+            cat diag/notif-after-2.txt || true
+            grep -q 'lastCheckState">ok' diag/prefs-2.txt && echo "CHECK-EXECUTES: PASS (state=ok recorded with fresh lastCheck)" | tee -a diag/summary.txt || true
+            grep -q 'name="lastPosted" value="1"' diag/prefs-2.txt && echo "VERSION-DETECT: PASS (catalog 2.0.2 > tracked 2.0.0 detected; lastPosted=1)" | tee -a diag/summary.txt || true
+            grep -q "app-update:studyria:2.0.2" diag/prefs-2.txt && echo "DEDUP-KEY: PASS (delivered key app-update:studyria:2.0.2 recorded)" | tee -a diag/summary.txt || true
+            grep -q "Update available: Studyria" diag/notif-after-2.txt && grep -q "Version 2.0.2 is available" diag/notif-after-2.txt && echo "NOTIFICATION-POSTED: PASS (tray notification with exact production title/body)" | tee -a diag/summary.txt || true
             echo "== [6] trigger #3 (repeat): must NOT duplicate"
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-3.txt
-            sleep 12
-            for i in $(seq 1 8); do lp=$(python3 "$HELP/prefs.py" get lastPosted || true); [ -n "$lp" ] && break; sleep 5; done
-            adb shell cat $PREFS | tee diag/prefs-3.txt
-            adb shell dumpsys notification --noredact > diag/notif-after-3.txt 2>&1
-            N=$(grep -c "Update available: Studyria" diag/notif-after-3.txt || true)
-            grep -q 'name="lastPosted" value="0"' diag/prefs-3.txt && echo "DEDUPE: PASS (repeat check posted 0 notifications)" | tee -a diag/summary.txt
-            [ "$N" = "1" ] && echo "NO-DUPLICATES: PASS (exactly 1 Studyria notification in the tray)" | tee -a diag/summary.txt
-
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-3.txt
+            for i in $(seq 1 12); do lp=$(python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastPosted || true); [ -n "$lp" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-3.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-3.txt 2>&1 || true
+            grep -c "Update available: Studyria" diag/notif-after-3.txt > diag/notif-count.txt || echo 0 > diag/notif-count.txt
+            cat diag/notif-count.txt || true
+            grep -q 'name="lastPosted" value="0"' diag/prefs-3.txt && echo "DEDUPE: PASS (repeat check posted 0 notifications)" | tee -a diag/summary.txt || true
+            test "$(cat diag/notif-count.txt)" = "1" && echo "NO-DUPLICATES: PASS (exactly 1 Studyria notification in the tray)" | tee -a diag/summary.txt || true
             echo "== [7] category gate: updates=false + tracked pdfminifly@2.0.9 (catalog 2.1.1) => must be blocked"
-            python3 "$HELP/prefs.py" patch true false '[{"appId":"studyria","version":"2.0.0"},{"appId":"pdfminifly","version":"2.0.9"}]' '{"app-update:studyria:2.0.2":1760000000000}' false > diag/prefs-seed2.txt
-            cat diag/prefs-seed2.txt
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-4.txt
-            sleep 12
-            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
-            adb shell cat $PREFS | tee diag/prefs-4.txt
-            adb shell dumpsys notification --noredact > diag/notif-after-4.txt 2>&1
-            grep -q 'name="lastPosted" value="0"' diag/prefs-4.txt && echo "CATEGORY-GATE: PASS (updates=false blocked the pdfminifly event; lastPosted=0)" | tee -a diag/summary.txt
-            ! grep -q "Update available: PDFMinifly" diag/notif-after-4.txt && echo "CATEGORY-GATE-TRAY: PASS (no pdfminifly notification posted)" | tee -a diag/summary.txt
-
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" patch true false '[{"appId":"studyria","version":"2.0.0"},{"appId":"pdfminifly","version":"2.0.9"}]' '{"app-update:studyria:2.0.2":1760000000000}' false | tee diag/prefs-seed2.txt
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-4.txt
+            for i in $(seq 1 12); do st=$(python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-4.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-4.txt 2>&1 || true
+            grep -q 'name="lastPosted" value="0"' diag/prefs-4.txt && echo "CATEGORY-GATE: PASS (updates=false blocked the pdfminifly event; lastPosted=0)" | tee -a diag/summary.txt || true
+            ! grep -q "Update available: PDFMinifly" diag/notif-after-4.txt && echo "CATEGORY-GATE-TRAY: PASS (no pdfminifly notification posted)" | tee -a diag/summary.txt || true
             echo "== [8] master gate: master=false => receiver exits before doCheck, lastCheck unchanged"
-            BEFORE=$(python3 "$HELP/prefs.py" get lastCheck)
-            python3 "$HELP/prefs.py" patch false true '[{"appId":"studyria","version":"2.0.0"}]' '{"app-update:studyria:2.0.2":1760000000000}' false > diag/prefs-seed3.txt
-            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-5.txt
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheck | tee diag/lastcheck-before.txt
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" patch false true '[{"appId":"studyria","version":"2.0.0"}]' '{"app-update:studyria:2.0.2":1760000000000}' false | tee diag/prefs-seed3.txt
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-5.txt
             sleep 8
-            AFTER=$(python3 "$HELP/prefs.py" get lastCheck)
-            adb shell dumpsys notification --noredact > diag/notif-after-5.txt 2>&1
-            [ "$BEFORE" = "$AFTER" ] && echo "MASTER-GATE: PASS (master=false: no check ran, lastCheck unchanged)" | tee -a diag/summary.txt
-
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheck | tee diag/lastcheck-after.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-5.txt 2>&1 || true
+            test "$(cat diag/lastcheck-before.txt)" = "$(cat diag/lastcheck-after.txt)" && echo "MASTER-GATE: PASS (master=false: no check ran, lastCheck unchanged)" | tee -a diag/summary.txt || true
             echo "== [9] evidence summary"
-            echo "---- SUMMARY ----"
-            cat diag/summary.txt
-            python3 - <<'PY'
-            import re, sys
-            required = [
-                "MASTER-GATE(default)", "ALARM-TARGET", "ALARM-INTERVAL",
-                "FIRST-RUN", "FIRST-RUN-NO-SPAM", "BASELINE-RECORDED",
-                "CHECK-EXECUTES", "VERSION-DETECT", "DEDUP-KEY", "NOTIFICATION-POSTED",
-                "DEDUPE", "NO-DUPLICATES", "CATEGORY-GATE", "CATEGORY-GATE-TRAY",
-                "MASTER-GATE",
-            ]
-            summary = open("diag/summary.txt").read()
-            missing = [r for r in required if f"{r}: PASS" not in summary]
-            print()
-            if missing:
-                print("SIX-HOUR-CHECKER DIAGNOSTIC: FAIL — missing evidence for:")
-                for m in missing:
-                    print(f"  - {m}")
-                sys.exit(1)
-            print(f"SIX-HOUR-CHECKER DIAGNOSTIC: ALL {len(required)} SCENARIOS PASS")
-            PY
+            cat diag/summary.txt || true
+            touch diag/summary.txt
+
+      - name: Evaluate required runtime evidence and gate the run
+        run: |
+          python3 - <<'PY'
+          import sys
+          required = [
+              "MASTER-GATE(default)", "ALARM-TARGET", "ALARM-INTERVAL",
+              "FIRST-RUN", "FIRST-RUN-NO-SPAM", "BASELINE-RECORDED",
+              "CHECK-EXECUTES", "VERSION-DETECT", "DEDUP-KEY", "NOTIFICATION-POSTED",
+              "DEDUPE", "NO-DUPLICATES", "CATEGORY-GATE", "CATEGORY-GATE-TRAY",
+              "MASTER-GATE",
+          ]
+          summary = open("diag/summary.txt").read()
+          print("---- EVIDENCE SUMMARY ----")
+          print(summary)
+          missing = [r for r in required if f"{r}: PASS" not in summary]
+          if missing:
+              print("SIX-HOUR-CHECKER DIAGNOSTIC: FAIL — missing evidence for:")
+              for m in missing:
+                  print(f"  - {m}")
+              sys.exit(1)
+          print(f"SIX-HOUR-CHECKER DIAGNOSTIC: ALL {len(required)} SCENARIOS PASS")
+          PY
 
       - name: Upload diagnostic evidence
         if: always()
