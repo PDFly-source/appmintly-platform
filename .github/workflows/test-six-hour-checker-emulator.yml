@@ -223,7 +223,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            set -o pipefail
+            # NOTE: the action runs this script with /bin/sh (dash) — no
+            # bash-only syntax (run 38052064417 died on `set -o pipefail`).
             mkdir -p diag
             adb root || true
             adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' 2>/dev/null || timeout 420 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
