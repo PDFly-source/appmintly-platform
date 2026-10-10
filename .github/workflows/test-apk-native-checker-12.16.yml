@@ -119,19 +119,51 @@ jobs:
           echo "$BADGING" | grep -E "^package: name='com.appmintly.appmintly' versionCode='10005'"
           echo 'GUARD PASS: production-default config is byte-identical on this branch (6h interval, no fixture).'
 
-      - name: 'TEST PASS: 2-minute interval + seeded fixture'
+      - name: 'GUARD PASS: diagnostic twin (com.appmintly.appmintlydiag), production defaults'
         shell: bash
         run: |
           set -euo pipefail
           set -x
           export KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
-          export APP_NAME='AppMintly Test' VERSION_NAME='1.0.5' VERSION_CODE='90099'
-          export PACKAGE_ID='com.appmintly.appmintly' SOURCE_URL='https://appmintly.pages.dev/'
+          export APP_NAME='AppMintly Diagnostic' VERSION_NAME='1.0.5'
+          export PACKAGE_ID='com.appmintly.appmintlydiag' SOURCE_URL='https://appmintly.pages.dev/'
+          export ICON_URL='https://appmintly.pages.dev/icon-512.png'
+          export THEME_COLOR='#17191C' BACKGROUND_COLOR='#F8F2E7'
+          # Throwaway-signing allowance ONLY: no interval override, no seed.
+          export APK_ALLOW_TEST_SIGNING='1' APK_KEEP_SOURCE='1'
+          # Negative guard FIRST: the diagnostic twin must refuse to build
+          # without the throwaway-signing allowance (fail-closed, Phase 12.16).
+          if env -u APK_ALLOW_TEST_SIGNING npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts > "$RUNNER_TEMP/negative.log" 2>&1; then
+            echo 'FATAL: diagnostic twin built WITHOUT the test signing allowance!' >&2
+            exit 1
+          fi
+          grep -q 'requires the throwaway-signing test allowance' "$RUNNER_TEMP/negative.log"
+          echo 'NEGATIVE GUARD PASS: twin refuses to build without the test signing allowance.'
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
+          APP_FILE="AppMintlyDiagnostic-1.0.5.apk"
+          test -s "dist/apk/$APP_FILE"
+          for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do
+            test -s "evidence/generated-$f.java"
+            cp "evidence/generated-$f.java" "$RUNNER_TEMP/diag-default-$f.java"
+          done
+          grep -q 'CHECK_INTERVAL_MS = 6L \* 60L \* 60L \* 1000L' "$RUNNER_TEMP/diag-default-UpdateEngine.java"
+          ! grep -q 'seedTestFixture' "$RUNNER_TEMP/diag-default-UpdateEngine.java"
+          rm -f "dist/apk/$APP_FILE" dist/apk/validation.json
+          echo 'GUARD PASS: diagnostic twin default build carries the production 6h interval and no fixture.'
+
+      - name: 'TEST PASS: diagnostic twin, 2-minute interval + seeded fixture'
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -x
+          export KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+          export APP_NAME='AppMintly Diagnostic' VERSION_NAME='1.0.5' VERSION_CODE='90099'
+          export PACKAGE_ID='com.appmintly.appmintlydiag' SOURCE_URL='https://appmintly.pages.dev/'
           export ICON_URL='https://appmintly.pages.dev/icon-512.png'
           export THEME_COLOR='#17191C' BACKGROUND_COLOR='#F8F2E7'
           export APK_ALARM_INTERVAL_MS='120000' APK_ALARM_WAKEUP='1' APK_TEST_FIXTURE_SEED='1' APK_ALLOW_TEST_SIGNING='1' APK_KEEP_SOURCE='1'
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
-          APP_FILE="AppMintlyTest-1.0.5.apk"
+          APP_FILE="AppMintlyDiagnostic-1.0.5.apk"
           test -s "dist/apk/$APP_FILE"
           for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do
             test -s "evidence/generated-$f.java"
@@ -150,36 +182,48 @@ jobs:
           ! grep -q 'seedTestFixture(ctx);' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           awk '/seedTestFixture\(context\);/{found=1} /isEnabled/{gate=1} END{exit !(found && gate)}' "$RUNNER_TEMP/test-build-AlarmReceiver.java"
           grep -A1 'seedTestFixture(context);' "$RUNNER_TEMP/test-build-AlarmReceiver.java" | grep -q 'isEnabled'
-          ! grep -q 'seedTestFixture' "$RUNNER_TEMP/guard-default-AlarmReceiver.java"
+          ! grep -q 'seedTestFixture' "$RUNNER_TEMP/diag-default-AlarmReceiver.java"
           echo "APP_FILE=$APP_FILE" >> "$GITHUB_ENV"
 
-      - name: 'ISOLATION PROOF: test build differs from production default ONLY in interval + seed'
+      - name: 'ISOLATION PROOF: twin = exact production engine; test build differs only by seed + interval'
         shell: bash
         run: |
           set -euo pipefail
           python3 - "$RUNNER_TEMP" <<'PY'
+          import sys, os
+          rt = sys.argv[1]
+          # (a) Diagnostic twin default vs OFFICIAL production default:
+          # byte-identical Java after normalizing the package id strings -
+          # the twin runs the EXACT production checker engine.
+          for f in ('MainActivity', 'UpdateEngine', 'AlarmReceiver', 'BootReceiver'):
+              g = open(os.path.join(rt, f'guard-default-{f}.java')).read()
+              d = open(os.path.join(rt, f'diag-default-{f}.java')).read()
+              d = d.replace('com.appmintly.appmintlydiag', 'com.appmintly.appmintly')
+              assert d == g, f'TWIN ISOLATION FAILED for {f}: engine differs beyond package id strings!'
+          print('TWIN ISOLATION PASS: after normalizing the package id strings,')
+          print('the diagnostic twin runs the byte-identical production engine.')
+          PY
+          python3 - "$RUNNER_TEMP" <<'PY2'
           import re, sys, os
           rt = sys.argv[1]
-          g = open(os.path.join(rt, 'guard-default-UpdateEngine.java')).read()
+          g = open(os.path.join(rt, 'diag-default-UpdateEngine.java')).read()
           t = open(os.path.join(rt, 'test-build-UpdateEngine.java')).read()
           # Remove the seed helper method block.
           t2 = re.sub(r'    /\* TEMPORARY TEST BUILD ONLY[\s\S]*?\n    \}\n\n', '', t, count=1)
           assert t2 != t, 'seed helper block not found in test build UpdateEngine.java'
-          # Remove the seed call inside doCheck.
           t2 = t2.replace('        seedTestFixture(ctx);\n', '', 1)
-          # Normalize the interval constant back to the production expression.
           t2 = t2.replace('CHECK_INTERVAL_MS = 120000L;', 'CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L;', 1)
           t2 = t2.replace('AlarmManager.ELAPSED_REALTIME_WAKEUP,', 'AlarmManager.ELAPSED_REALTIME,', 1)
           assert t2 == g, 'UNEXPECTED DIFFERENCE beyond interval + wakeup alarm + fixture seed!'
-          print('ISOLATION PASS: after removing the seed + restoring the interval,')
-          print('the generated UpdateEngine.java is byte-identical to the production default.')
-          PY
-          cmp "$RUNNER_TEMP/guard-default-MainActivity.java" "$RUNNER_TEMP/test-build-MainActivity.java"
-          cmp "$RUNNER_TEMP/guard-default-BootReceiver.java" "$RUNNER_TEMP/test-build-BootReceiver.java"
-          python3 - "$RUNNER_TEMP" <<'PY2'
+          print('UPDATE-ENGINE ISOLATION PASS: after removing the seed + restoring')
+          print('the interval, the generated UpdateEngine.java is byte-identical to the twin default.')
+          PY2
+          cmp "$RUNNER_TEMP/diag-default-MainActivity.java" "$RUNNER_TEMP/test-build-MainActivity.java"
+          cmp "$RUNNER_TEMP/diag-default-BootReceiver.java" "$RUNNER_TEMP/test-build-BootReceiver.java"
+          python3 - "$RUNNER_TEMP" <<'PY3'
           import sys, os, re
           rt = sys.argv[1]
-          g = open(os.path.join(rt, 'guard-default-AlarmReceiver.java')).read()
+          g = open(os.path.join(rt, 'diag-default-AlarmReceiver.java')).read()
           t = open(os.path.join(rt, 'test-build-AlarmReceiver.java')).read()
           # Phase 12.16: the ONLY test-build delta is the seed block before
           # the master gate. Strip it with a regex and require byte-equality.
@@ -187,10 +231,10 @@ jobs:
           t2 = re.sub(pat, '', t, count=1)
           assert t2 != t, 'seed call block not found in test-build AlarmReceiver.java'
           assert t2 == g, 'UNEXPECTED DIFFERENCE in AlarmReceiver beyond the seed block!'
-          assert len(t) - len(t2) < 800, 'stripped block suspiciously large'  # Phase 12.16: 5-line seed rationale comment
+          assert len(t) - len(t2) < 800, 'stripped block suspiciously large'
           print('ALARM-RECEIVER ISOLATION PASS: after removing the seed block, byte-identical.')
-          PY2
-          echo 'ISOLATION PASS: MainActivity/BootReceiver are byte-identical across both passes.'
+          PY3
+          echo 'ISOLATION PASS: MainActivity/BootReceiver are byte-identical across both diagnostic passes.'
 
       - name: Validate the test APK
         shell: bash
@@ -202,7 +246,8 @@ jobs:
           unzip -t "$APK" >/dev/null
           zipalign -c -v 4 "$APK" >/dev/null
           BADGING="$(aapt dump badging "$APK")"
-          echo "$BADGING" | grep -E "^package: name='com.appmintly.appmintly' versionCode='90099'"
+          echo "$BADGING" | grep -E "^package: name='com.appmintly.appmintlydiag' versionCode='90099'"
+          echo "$BADGING" | grep -q "launchable-activity: name='com.appmintly.appmintlydiag.MainActivity'"
           BADGE_TARGET_SDK="$(echo "$BADGING" | sed -n "s/^targetSdkVersion:'\([0-9]*\)'.*/\1/p")"
           test "$BADGE_TARGET_SDK" -ge 36
           apksigner verify "$APK"
@@ -218,7 +263,7 @@ jobs:
             echo ''
             echo '- APK: '"$APP_FILE"''
             echo '- SHA-256: '"$SHA256"''
-            echo '- Package: com.appmintly.appmintly (production package required for the real engine)'
+            echo '- Package: com.appmintly.appmintlydiag (ISOLATED diagnostic twin - installs ALONGSIDE the official app; no uninstall needed)'
             echo '- versionCode: 90099 / versionName: 1.0.5 (test labeling)'
             echo '- Alarm interval: 120000 ms (test only; production default stays 6h - proven by the guard pass)'
             echo '- Fixture seed: self-healing - master on + tracked appmintly@1.0.3 + studyria@2.0.1 re-asserted every fire; delivered dedup map emptied once then preserved'
@@ -226,8 +271,12 @@ jobs:
             echo '- This build was never a release and must never be installed by anyone but the owner.'
           } > dist/apk/README-test-build.md
           cp "$RUNNER_TEMP"/guard-default-*.java dist/apk/
+          cp "$RUNNER_TEMP"/diag-default-*.java dist/apk/
           cp "$RUNNER_TEMP"/test-build-*.java dist/apk/
           for f in "$RUNNER_TEMP"/guard-default-*.java; do
+            mv "dist/apk/$(basename "$f")" "dist/apk/evidence-$(basename "$f")"
+          done
+          for f in "$RUNNER_TEMP"/diag-default-*.java; do
             mv "dist/apk/$(basename "$f")" "dist/apk/evidence-$(basename "$f")"
           done
           for f in "$RUNNER_TEMP"/test-build-*.java; do
@@ -241,7 +290,7 @@ jobs:
             echo '|---|---|'
             echo '| APK | '"$APP_FILE"' |'
             echo '| SHA-256 | '"$SHA256"' |'
-            echo '| Package | com.appmintly.appmintly (required for the real engine) |'
+            echo '| Package | com.appmintly.appmintlydiag (isolated twin; official app untouched) |'
             echo '| versionCode / versionName | 90099 / 1.0.5 |'
             echo '| Alarm interval | 2 minutes (test only; production default 6h verified intact) |'
             echo '| Fixture | self-healing seed; delivered dedup map preserved after first fire |'
@@ -255,7 +304,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
           path: |
-            dist/apk/AppMintlyTest-1.0.5.apk
+            dist/apk/AppMintlyDiagnostic-1.0.5.apk
             dist/apk/validation.json
             dist/apk/README-test-build.md
             dist/apk/evidence-guard-default-*.java

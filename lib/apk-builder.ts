@@ -385,6 +385,15 @@ const TEST_FIXTURE_TRACKED = [
   { appId: 'studyria', version: '2.0.1' },
 ];
 
+// TEST-ONLY (Phase 12.16): isolated diagnostic twin package id. It receives
+// the SAME generated native update engine byte-for-byte as the official
+// package, modulo the package id strings - proven by the test workflow via
+// package-name normalization. It lets the real checker run on a device
+// WITHOUT uninstalling the official AppMintly app. Refused unless the
+// throwaway-signing test allowance is set, so it can never be a production
+// release; the production catalog never references this id either.
+const NATIVE_UPDATE_DIAGNOSTIC_PACKAGE = 'com.appmintly.appmintlydiag';
+
 export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   if (process.env.APK_ARTIFACT_ONLY !== '1' || !process.env.GITHUB_ACTIONS) {
     throw new Error('APK compilation must run in the configured GitHub Actions Android runner.');
@@ -400,19 +409,29 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   const buildMode = options.buildMode || 'webview';
   const versionName = options.version || '1.0.0';
   const versionCode = options.versionCode || semanticVersionToCode(versionName);
-  // Phase 12.14 fail-closed guard: test-only options are accepted only for
-  // the native updates package and never leak into production builds.
+  // Phase 12.16 fail-closed guards:
+  //  - alarm test options (interval override, fixture seed, wakeup alarm)
+  //    are accepted ONLY for the official native-updates package and the
+  //    isolated diagnostic twin; they can never leak into other builds.
+  //  - the diagnostic twin itself is refused unless the throwaway-signing
+  //    test allowance is set, so a production diagnostic release is
+  //    impossible by construction.
+  const isNativeUpdatesPackage = packageId === 'com.appmintly.appmintly';
+  const isDiagnosticTwinPackage = packageId === NATIVE_UPDATE_DIAGNOSTIC_PACKAGE;
   if ((options.alarmIntervalMs !== undefined || options.testFixtureSeed === true)
-      && packageId !== 'com.appmintly.appmintly') {
-    throw new Error('Test-only alarm options are only valid for the native updates package (com.appmintly.appmintly).');
+      && !isNativeUpdatesPackage && !isDiagnosticTwinPackage) {
+    throw new Error('Test-only alarm options are only valid for the native updates package (com.appmintly.appmintly) or its isolated diagnostic twin.');
   }
   if (options.alarmIntervalMs !== undefined
       && (!Number.isInteger(options.alarmIntervalMs) || options.alarmIntervalMs < 60000)) {
     throw new Error('Test-only alarm interval must be an integer >= 60000 ms.');
   }
   if (options.alarmWakeup === true
-      && (packageId !== 'com.appmintly.appmintly' || options.alarmIntervalMs === undefined)) {
+      && ((!isNativeUpdatesPackage && !isDiagnosticTwinPackage) || options.alarmIntervalMs === undefined)) {
     throw new Error('Test-only wakeup alarm requires the native updates package and a test alarm interval.');
+  }
+  if (isDiagnosticTwinPackage && options.allowTestSigningIdentity !== true) {
+    throw new Error('The diagnostic twin package requires the throwaway-signing test allowance; it can never be a production release.');
   }
   const appName = options.name.trim();
   const themeColor = options.themeColor || '#17191C';
@@ -643,7 +662,10 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // byte-identical to before this feature existed.
       // ----------------------------------------------------------------
       const NATIVE_UPDATE_PACKAGE = 'com.appmintly.appmintly';
-      const isNativeUpdatesBuild = packageId === NATIVE_UPDATE_PACKAGE;
+      // Phase 12.16: the diagnostic twin gets the exact same generated
+      // engine (guards above already refused it without the test signing
+      // allowance). Both packages share the canonical catalog origin.
+      const isNativeUpdatesBuild = packageId === NATIVE_UPDATE_PACKAGE || packageId === NATIVE_UPDATE_DIAGNOSTIC_PACKAGE;
       let nativeCatalogUrl = '';
       let nativeDeepLinkPrefix = '';
       if (isNativeUpdatesBuild) {
