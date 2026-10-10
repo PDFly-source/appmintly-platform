@@ -212,6 +212,50 @@ jobs:
           print("sha256(1.0.6) =", hashlib.sha256(open("released/AppMintly-1.0.6.apk","rb").read()).hexdigest())
           PY
           MODE="$MODE" python3 released-check.py
+      - name: Write drawer icon checker helper
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/drawer-check.py" << 'PY'
+          import re
+          from PIL import Image
+          xml = open('diag/drawerdump.xml', encoding='utf-8', errors='replace').read()
+          # Locate the drawer node for the app (icon has content-desc, label has text)
+          crop_kind = 'icon-node'
+          pos = xml.find('content-desc="AppMintly"')
+          if pos == -1:
+              crop_kind = 'above-label'
+              pos = xml.find('text="AppMintly"')
+          assert pos != -1, 'AppMintly icon/label node not found in the drawer dump - see diag/drawer.png'
+          # Grab the enclosing <node ...> tag and read its bounds attribute
+          tag_start = xml.rfind('<node', 0, pos)
+          tag_end = xml.find('>', pos)
+          assert tag_start != -1 and tag_end != -1, 'malformed dump around the AppMintly node'
+          tag = xml[tag_start:tag_end]
+          bidx = tag.find('bounds="')
+          assert bidx != -1, 'AppMintly node has no bounds'
+          bval = tag[bidx + 8: tag.find('"', bidx + 8)]
+          nums = [int(v) for v in re.findall(r'\d+', bval)]
+          assert len(nums) == 4, f'unexpected bounds value: {bval}'
+          x1, y1, x2, y2 = nums
+          if crop_kind == 'above-label':
+              assert y2 < 1200, 'label match outside the expected drawer grid area'
+          side = max(1, x2 - x1)
+          im = Image.open('diag/drawer.png').convert('RGB')
+          if crop_kind == 'icon-node':
+              box = (x1, y1, x2, y2)
+          else:
+              box = (x1, max(0, y1 - int(side * 1.9)), x2, max(1, y1 - int(side * 0.15)))
+          crop = im.crop(box)
+          crop.save('diag/launcher-icon-region.png')
+          px = list(crop.getdata()); n = len(px)
+          dark = sum(1 for p in px if p[0] < 60 and p[1] < 60 and p[2] < 60)
+          cream = sum(1 for p in px if abs(p[0]-252)+abs(p[1]-243)+abs(p[2]-229) < 45)
+          light = sum(1 for p in px if p[0] > 200 and p[1] > 200 and p[2] > 190)
+          print(f'launcher icon region ({crop_kind}): dark {dark/n:.1%}, cream {cream/n:.1%}, light {light/n:.1%}')
+          assert dark/n < 0.15, f'generic dark letter tile still rendered ({dark/n:.1%} dark)'
+          assert (cream + light)/n > 0.35, 'official cream logo not visible in the launcher icon'
+          print('LAUNCHER ICON ON DEVICE: PASS (cream official logo rendered, not the dark letter tile)')
+          PY
       - name: Device validation (Android 16 emulator)
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -258,43 +302,7 @@ jobs:
                         adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1 || true
                         adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1 || true
                         adb exec-out screencap -p > diag/drawer.png || true
-                        python3 - << 'PY' || { echo "LAUNCHER ICON ON DEVICE: FAIL"; exit 1; }
-                        import re
-                        from PIL import Image
-                        xml = open('diag/drawerdump.xml', encoding='utf-8', errors='replace').read()
-                        icon_bounds = None
-                        for match in re.finditer(r'content-desc="AppMintly"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
-                            x1, y1, x2, y2 = map(int, match.groups())
-                            icon_bounds = (x1, y1, x2, y2)  # the icon node itself
-                            break
-                        crop_kind = 'icon-node'
-                        if icon_bounds is None:
-                            for match in re.finditer(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
-                                x1, y1, x2, y2 = map(int, match.groups())
-                                node = xml[max(0, match.start()-1200):match.start()]
-                                if 'text="AppMintly"' in node and y2 < 1200:
-                                    icon_bounds = (x1, y1, x2, y2)
-                                    crop_kind = 'above-label'
-                                    break
-                        assert icon_bounds, 'AppMintly icon node not found in the drawer dump - see diag/drawer.png'
-                        x1, y1, x2, y2 = icon_bounds
-                        side = max(1, x2 - x1)
-                        im = Image.open('diag/drawer.png').convert('RGB')
-                        if crop_kind == 'icon-node':
-                            box = (x1, y1, x2, y2)
-                        else:
-                            box = (x1, max(0, y1 - int(side * 1.9)), x2, max(1, y1 - int(side * 0.15)))
-                        crop = im.crop(box)
-                        crop.save('diag/launcher-icon-region.png')
-                        px = list(crop.getdata()); n = len(px)
-                        dark = sum(1 for p in px if p[0] < 60 and p[1] < 60 and p[2] < 60)
-                        cream = sum(1 for p in px if abs(p[0]-252)+abs(p[1]-243)+abs(p[2]-229) < 45)
-                        light = sum(1 for p in px if p[0] > 200 and p[1] > 200 and p[2] > 190)
-                        print(f'launcher icon region ({crop_kind}): dark {dark/n:.1%}, cream {cream/n:.1%}, light {light/n:.1%}')
-                        assert dark/n < 0.15, f'generic dark letter tile still rendered ({dark/n:.1%} dark)'
-                        assert (cream + light)/n > 0.35, 'official cream logo not visible in the launcher icon'
-                        print('LAUNCHER ICON ON DEVICE: PASS (cream official logo rendered, not the dark letter tile)')
-                        PY
+                        python3 "$RUNNER_TEMP/drawer-check.py" || { echo "LAUNCHER ICON ON DEVICE: FAIL"; exit 1; }
                         echo "DEVICE VALIDATION COMPLETE"
       - uses: actions/upload-artifact@v4
         if: always()
