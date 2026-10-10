@@ -540,14 +540,14 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
           const bgHexOut = await execPromise(
             `convert ${inputSpec} -format "%[hex:p{2,2}]" info:`
           );
-          const bgHex = (bgHexOut || '').toString().trim();
+          const bgHex = ((bgHexOut as { stdout?: string })?.stdout || '').trim();
           if (/^#[0-9a-fA-F]{6}$/.test(bgHex)) adaptiveBackground = bgHex;
           const trimmedOut = await execPromise(
             `convert ${inputSpec} -fuzz 12% -trim -format "%wx%h" info:`
           );
-          const m = /([0-9]+)x([0-9]+)/.exec((trimmedOut || '').toString().trim() || '');
+          const m = /([0-9]+)x([0-9]+)/.exec(((trimmedOut as { stdout?: string })?.stdout || '').trim() || '');
           const origOut = await execPromise(`identify -format "%wx%h" ${inputSpec}`);
-          const om = /([0-9]+)x([0-9]+)/.exec((origOut || '').toString().trim() || '');
+          const om = /([0-9]+)x([0-9]+)/.exec(((origOut as { stdout?: string })?.stdout || '').trim() || '');
           if (m && om) {
             const tw = parseInt(m[1], 10), th = parseInt(m[2], 10);
             const ow = parseInt(om[1], 10), oh = parseInt(om[2], 10);
