@@ -34,6 +34,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # control build checks out the pre-fix commit b8dcc8f
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
