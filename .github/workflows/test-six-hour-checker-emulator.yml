@@ -34,6 +34,9 @@ name: Test six-hour checker runtime (immediate diagnostic)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - test/six-hour-checker-diagnostic
 
 permissions:
   contents: read
