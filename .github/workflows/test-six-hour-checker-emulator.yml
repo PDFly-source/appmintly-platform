@@ -305,13 +305,14 @@ jobs:
             grep -q 'name="lastPosted" value="0"' diag/prefs-4.txt && echo "CATEGORY-GATE: PASS (updates=false blocked the pdfminifly event; lastPosted=0)" | tee -a diag/summary.txt || true
             ! grep -q "Update available: PDFMinifly" diag/notif-after-4.txt && echo "CATEGORY-GATE-TRAY: PASS (no pdfminifly notification posted)" | tee -a diag/summary.txt || true
             echo "== [8] master gate: master=false => receiver exits before doCheck, lastCheck unchanged"
-            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheck | tee diag/lastcheck-before.txt
             python3 "$RUNNER_TEMP/diag-helpers/prefs.py" patch false true '[{"appId":"studyria","version":"2.0.0"}]' '{"app-update:studyria:2.0.2":1760000000000}' false | tee diag/prefs-seed3.txt
+            adb shell md5sum /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | awk '{print $1}' | tee diag/prefs-md5-before.txt
             adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-5.txt
             sleep 8
-            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" get lastCheck | tee diag/lastcheck-after.txt
+            adb shell md5sum /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | awk '{print $1}' | tee diag/prefs-md5-after.txt
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml > diag/prefs-5.txt || true
             adb shell dumpsys notification --noredact > diag/notif-after-5.txt 2>&1 || true
-            test "$(cat diag/lastcheck-before.txt)" = "$(cat diag/lastcheck-after.txt)" && echo "MASTER-GATE: PASS (master=false: no check ran, lastCheck unchanged)" | tee -a diag/summary.txt || true
+            test "$(cat diag/prefs-md5-before.txt)" = "$(cat diag/prefs-md5-after.txt)" && echo "MASTER-GATE: PASS (master=false: receiver exited before doCheck, prefs file byte-identical)" | tee -a diag/summary.txt || true
             echo "== [9] evidence summary"
             cat diag/summary.txt || true
             touch diag/summary.txt
