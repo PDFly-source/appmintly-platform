@@ -64,7 +64,7 @@ jobs:
           echo "KEY_ALIAS=throwaway-test-key" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=throwaway-test-password" >> "$GITHUB_ENV"
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
-      - name: CONTROL: generate the pre-fix tree's Java (b8dcc8f, throwaway-signed; validation failure tolerated - only the generated Java is compared)
+      - name: 'CONTROL - generate the pre-fix tree Java (b8dcc8f, expected cert-pin failure tolerated, only the generated Java is compared)'
         shell: bash
         run: |
           set -euo pipefail
