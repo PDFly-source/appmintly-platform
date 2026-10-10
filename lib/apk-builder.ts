@@ -1023,6 +1023,13 @@ public final class UpdateEngine {
     }
 
     public static final String EXTRA_DEEP_LINK = "appmintly_deeplink";
+    // Dedicated non-MAIN action for notification content intents: on API 36
+    // the notification-tap launch path special-cases ACTION_MAIN intents that
+    // target the launcher activity, rebuilding a bare launcher intent
+    // (act=MAIN cat=[LAUNCHER]) and discarding the app-supplied extras AND
+    // data URI. A dedicated action is delivered verbatim (Phase 12.5
+    // emulator evidence: run 38029699330 START records).
+    public static final String ACTION_OPEN_NOTIFICATION = "${packageId}.ACTION_OPEN_NOTIFICATION";
     public static final int PERMISSION_REQUEST_CODE = 2001;
     public static final String ACTION_CHECK_UPDATES = "${packageId}.ACTION_CHECK_UPDATES";
     private static final String PREFS = "appmintly_updates";
@@ -1471,13 +1478,13 @@ public final class UpdateEngine {
                 nm.createNotificationChannel(channel);
             }
             Intent open = new Intent(ctx, MainActivity.class);
-            open.setAction(Intent.ACTION_MAIN);
+            open.setAction(ACTION_OPEN_NOTIFICATION);
             open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             // Deep link is validated against the ownership prefix before
             // it is ever honored by MainActivity. It is carried BOTH as an
-            // extra and as the intent data: on API 36 the notification-tap
-            // launch path rewrites the intent (act=MAIN cat=[LAUNCHER]) and
-            // drops extras, while the data URI survives.
+            // extra and as the intent data; the dedicated action keeps the
+            // tap launch out of the launcher-relaunch path that would strip
+            // both on API 36.
             open.putExtra(EXTRA_DEEP_LINK, deepLink);
             open.setData(Uri.parse(deepLink));
             int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;

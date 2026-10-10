@@ -307,13 +307,25 @@ console.log('\n[notification-engine] history pruning & guards');
 }
 
 // --- Phase 12.5 regression: notification-tap deep link survives the API 36
-// intent rewrite (source-presence check on the generated-Java template). ---
+// launcher-relaunch rewrite (source-presence checks on the generated-Java
+// template). Run 38029699330 proved the tap path strips BOTH extras and the
+// data URI whenever the open intent uses ACTION_MAIN targeting the launcher
+// activity; the dedicated non-MAIN action is what makes delivery verbatim. ---
 {
   const src = require('fs').readFileSync('lib/apk-builder.ts', 'utf8');
+  ok('notification open intent uses the dedicated ACTION_OPEN_NOTIFICATION', src.includes('open.setAction(ACTION_OPEN_NOTIFICATION);'));
+  ok('notification open intent no longer uses ACTION_MAIN (launcher-relaunch trigger removed)', !src.includes('open.setAction(Intent.ACTION_MAIN);'));
+  ok('dedicated action constant is declared in the generated engine', src.includes('public static final String ACTION_OPEN_NOTIFICATION = "${packageId}.ACTION_OPEN_NOTIFICATION";'));
   ok('generated UpdateEngine carries the deep link as intent DATA (setData)', src.includes('open.setData(Uri.parse(deepLink));'));
+  ok('generated UpdateEngine carries the deep link as the legacy extra', src.includes('open.putExtra(EXTRA_DEEP_LINK, deepLink);'));
   ok('generated UpdateEngine template imports android.net.Uri', /import android\.net\.Uri;/.test(src));
   ok('generated MainActivity falls back to intent data in onCreate', /if \(deepLink == null && getIntent\(\)\.getDataString\(\) != null\)/.test(src));
   ok('generated MainActivity falls back to intent data in onNewIntent', /if \(deepLink == null && intent\.getDataString\(\) != null\)/.test(src));
+  // The deep link value flows through the SAME ownership gate as the WebView:
+  // forged/out-of-scope links cannot navigate outside the marketplace scope.
+  ok('deep-link validation reuses the ownership prefix gate (ALLOWED_ORIGIN)', src.includes('deepLink.startsWith(ALLOWED_ORIGIN)'));
+  // Engine behavior that must stay stable (verified by the runtime suite):
+  ok('dedup/permission/offline behavior untouched: postNotification keys and notification ids unchanged', src.includes('Math.abs(key.hashCode()) % 100000'));
 }
 
 console.log(`\n[notification-engine] ${pass} passed, ${fail} failed\n`);
