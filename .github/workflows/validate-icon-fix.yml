@@ -264,46 +264,32 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-                        mkdir -p diag
-                        adb root || true
-                        timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
-                        adb shell settings put global window_animation_scale 0.0 || true
-                        adb shell settings put global transition_animation_scale 0.0 || true
-                        adb shell settings put global animator_duration_scale 0.0 || true
-                        if [ "$MODE" = "released" ]; then
-                          adb install released/AppMintly-1.0.5.apk > diag/install-1.0.5.txt 2>&1
-                          grep -q Success diag/install-1.0.5.txt || { echo "INSTALL-1.0.5: FAIL"; cat diag/install-1.0.5.txt; exit 1; }
-                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-before-upgrade.txt || true
-                          adb install -r released/AppMintly-1.0.6.apk > diag/install-1.0.6.txt 2>&1
-                          grep -q Success diag/install-1.0.6.txt || { echo "UPGRADE-INSTALL: FAIL"; cat diag/install-1.0.6.txt; exit 1; }
-                          echo "UPGRADE-OVER-INSTALL: PASS (1.0.6 installed over 1.0.5, NO uninstall)"
-                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-after-upgrade.txt || true
-                          grep -q "versionCode=10006" diag/pkg-after-upgrade.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-after-upgrade.txt; exit 1; }
-                          echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
-                        else
-                          adb install candidate/AppMintly-1.0.6-candidate.apk > diag/install-candidate.txt 2>&1
-                          grep -q Success diag/install-candidate.txt || { echo "CANDIDATE INSTALL: FAIL"; cat diag/install-candidate.txt; exit 1; }
-                          echo "CANDIDATE INSTALL: PASS"
-                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-candidate.txt || true
-                          grep -q "versionCode=10006" diag/pkg-candidate.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-candidate.txt; exit 1; }
-                          echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
-                        fi
-                        adb shell input keyevent KEYCODE_WAKEUP || true
-                        adb shell am start -n com.appmintly.appmintly/.MainActivity > diag/launch.txt 2>&1 || true
-                        sleep 25
-                        adb exec-out screencap -p > diag/app-launched.png || true
-                        adb shell uiautomator dump /sdcard/appdump.xml >/dev/null 2>&1 || true
-                        adb pull /sdcard/appdump.xml diag/appdump.xml >/dev/null 2>&1 || true
-                        if grep -q "AppMintly" diag/appdump.xml 2>/dev/null; then echo "APP LAUNCH: PASS (marketplace content rendered)"; else echo "APP LAUNCH: content check inconclusive (screencap saved as evidence)"; fi
-                        adb shell input keyevent KEYCODE_HOME || true
-                        sleep 2
-                        adb shell input swipe 540 2200 540 400 250 || true
-                        sleep 3
-                        adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1 || true
-                        adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1 || true
-                        adb exec-out screencap -p > diag/drawer.png || true
-                        python3 "$RUNNER_TEMP/drawer-check.py" || { echo "LAUNCHER ICON ON DEVICE: FAIL"; exit 1; }
-                        echo "DEVICE VALIDATION COMPLETE"
+            mkdir -p diag
+            adb root || true
+            timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            adb shell settings put global window_animation_scale 0.0 || true
+            adb shell settings put global transition_animation_scale 0.0 || true
+            adb shell settings put global animator_duration_scale 0.0 || true
+            if [ "$MODE" = "released" ]; then adb install released/AppMintly-1.0.5.apk > diag/install-1.0.5.txt 2>&1; adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-before-upgrade.txt || true; adb install -r released/AppMintly-1.0.6.apk > diag/install-1.0.6.txt 2>&1; fi
+            if [ "$MODE" != "released" ]; then adb install candidate/AppMintly-1.0.6-candidate.apk > diag/install-candidate.txt 2>&1; fi
+            if [ "$MODE" = "released" ]; then grep -q Success diag/install-1.0.5.txt || { echo "INSTALL-1.0.5: FAIL"; cat diag/install-1.0.5.txt; exit 1; }; grep -q Success diag/install-1.0.6.txt || { echo "UPGRADE-INSTALL: FAIL"; cat diag/install-1.0.6.txt; exit 1; }; echo "UPGRADE-OVER-INSTALL: PASS (1.0.6 installed over 1.0.5, NO uninstall)"; fi
+            if [ "$MODE" != "released" ]; then grep -q Success diag/install-candidate.txt || { echo "CANDIDATE INSTALL: FAIL"; cat diag/install-candidate.txt; exit 1; }; echo "CANDIDATE INSTALL: PASS"; fi
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-version.txt || true
+            grep -q "versionCode=10006" diag/pkg-version.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-version.txt; exit 1; }
+            echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
+            adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell am start -n com.appmintly.appmintly/.MainActivity > diag/launch.txt 2>&1 || true
+            sleep 25
+            adb exec-out screencap -p > diag/app-launched.png || true
+            adb shell uiautomator dump /sdcard/appdump.xml >/dev/null 2>&1 || true
+            adb pull /sdcard/appdump.xml diag/appdump.xml >/dev/null 2>&1 || true
+            if grep -q "AppMintly" diag/appdump.xml 2>/dev/null; then echo "APP LAUNCH: PASS (marketplace content rendered)"; else echo "APP LAUNCH: content check inconclusive (screencap saved as evidence)"; fi
+            adb shell input keyevent KEYCODE_HOME || true
+            sleep 2
+            for i in 1 2 3; do adb shell input swipe 540 2100 540 600 300 || true; sleep 3; adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1; adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1; grep -q "AppMintly" diag/drawerdump.xml 2>/dev/null && break; done
+            adb exec-out screencap -p > diag/drawer.png || true
+            python3 "$RUNNER_TEMP/drawer-check.py" || { echo "LAUNCHER ICON ON DEVICE: FAIL"; exit 1; }
+            echo "DEVICE VALIDATION COMPLETE"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
