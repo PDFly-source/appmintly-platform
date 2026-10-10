@@ -158,8 +158,196 @@ jobs:
           if-no-files-found: error
           path: icon-evidence/
 
+presigned-build:
+  needs:
+  - candidate-build
+  runs-on: ubuntu-24.04
+  timeout-minutes: 45
+  env:
+    APP_NAME: AppMintly
+    PACKAGE_ID: com.appmintly.appmintly
+    VERSION_NAME: 1.0.6
+    SOURCE_URL: https://appmintly.pages.dev/
+    ICON_URL: https://appmintly.pages.dev/icon-512.png
+    THEME_COLOR: '#17191C'
+    BACKGROUND_COLOR: '#F8F2E7'
+    SIGNING_MODE: release
+    APK_ARTIFACT_ONLY: '1'
+    ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  steps:
+  - uses: actions/checkout@v4
+  - name: Check validation mode
+    id: mode_check
+    shell: bash
+    run: 'MODE=$(tr -d ''[:space:]'' < validation-mode.txt)
+
+      echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+      if [ "$MODE" = "presigned" ]; then echo "run=1" >> "$GITHUB_OUTPUT"; echo "PRESIGNED BUILD MODE (production keystore, artifact-only, NO publish)"; else echo "run=0" >> "$GITHUB_OUTPUT"; echo "presigned-build
+      skipped (mode=$MODE)"; fi
+
+      '
+  - uses: actions/checkout@v4
+    if: steps.mode_check.outputs.run == '1'
+    with:
+      ref: main
+  - uses: actions/setup-node@v4
+    if: steps.mode_check.outputs.run == '1'
+    with:
+      node-version: '20'
+  - uses: actions/setup-java@v4
+    if: steps.mode_check.outputs.run == '1'
+    with:
+      distribution: temurin
+      java-version: '17'
+  - name: Install Android 36 and Build Tools 36.0.0
+    shell: bash
+    run: 'set -euo pipefail
+
+      test -d "$ANDROID_SDK_ROOT"
+
+      SDKMANAGER="$(find "$ANDROID_SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+
+      test -x "$SDKMANAGER"
+
+      "$SDKMANAGER" --sdk_root="$ANDROID_SDK_ROOT" --install ''platforms;android-36'' ''build-tools;36.0.0''
+
+      sudo apt-get update -qq
+
+      sudo apt-get install -y -qq imagemagick zip unzip
+
+      '
+    if: steps.mode_check.outputs.run == '1'
+  - name: Verify compiler and Android toolchain
+    shell: bash
+    run: "set -euo pipefail\njava -version\ntest -x \"$JAVA_HOME/bin/javac\"\ntest -f \"$ANDROID_SDK_ROOT/platforms/android-36/android.jar\"\nfor tool in aapt zipalign apksigner; do\n  test -x \"$ANDROID_SDK_ROOT/build-tools/36.0.0/$tool\"\
+      \ndone\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: Verify required production secrets exist
+    shell: bash
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
+    run: "set -euo pipefail\nmissing=0\ncheck() {\n  local name=\"$1\" hint=\"$2\" value=\"$3\"\n  if [[ -z \"$value\" ]]; then\n    echo \"MISSING SECRET: $name \u2014 $hint\" >&2\n    missing=1\n  fi\n\
+      }\ncheck ANDROID_KEYSTORE_BASE64 'base64 of the production keystore file' \"$ANDROID_KEYSTORE_BASE64\"\ncheck KEYSTORE_PASSWORD 'password of the production keystore' \"$KEYSTORE_PASSWORD\"\ncheck\
+      \ KEY_ALIAS 'release key alias inside the production keystore' \"$KEY_ALIAS\"\ncheck KEY_PASSWORD 'password of the release key' \"$KEY_PASSWORD\"\ncheck DISTRIBUTION_REPO_TOKEN 'fine-grained PAT with\
+      \ Contents:write on the public distribution repository' \"$DISTRIBUTION_TOKEN\"\nif [[ \"$missing\" -ne 0 ]]; then\n  echo '' >&2\n  echo 'Production release aborted: required GitHub Actions secrets\
+      \ are missing.' >&2\n  echo 'Add them under: Repository -> Settings -> Secrets and variables -> Actions -> Secrets -> New repository secret' >&2\n  exit 1\nfi\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: Prepare compiler and production signing
+    shell: bash
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    run: "set -euo pipefail\nmkdir -p \"$RUNNER_TEMP/android-build\"\ncurl --fail --location --silent --show-error \\\n  'https://dl.google.com/dl/android/maven2/com/android/tools/r8/8.2.42/r8-8.2.42.jar'\
+      \ \\\n  -o \"$RUNNER_TEMP/android-build/r8.jar\"\ntest -s \"$RUNNER_TEMP/android-build/r8.jar\"\nprintf '%s' \"$ANDROID_KEYSTORE_BASE64\" | base64 --decode > \"$RUNNER_TEMP/android-build/signing.keystore\"\
+      \ntest -s \"$RUNNER_TEMP/android-build/signing.keystore\"\n# Fail now if the keystore/alias/password combination is invalid.\nkeytool -list -keystore \"$RUNNER_TEMP/android-build/signing.keystore\"\
+      \ \\\n  -storepass \"$KEYSTORE_PASSWORD\" -alias \"$KEY_ALIAS\" >/dev/null\necho \"ANDROID_JAR=$ANDROID_SDK_ROOT/platforms/android-36/android.jar\" >> \"$GITHUB_ENV\"\necho \"R8_JAR=$RUNNER_TEMP/android-build/r8.jar\"\
+      \ >> \"$GITHUB_ENV\"\necho \"ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore\" >> \"$GITHUB_ENV\"\necho \"$ANDROID_SDK_ROOT/build-tools/36.0.0\" >> \"$GITHUB_PATH\"\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: WebView ownership anti-regression gate (fail-closed)
+    shell: bash
+    run: 'set -euo pipefail
+
+      npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
+
+      '
+    if: steps.mode_check.outputs.run == '1'
+  - name: Default the marketplace launcher icon URL (Phase 12.17 fail-closed fix)
+    shell: bash
+    run: "if [[ -z \"$ICON_URL\" && \"$PACKAGE_ID\" == \"com.appmintly.appmintly\" ]]; then\n  echo \"ICON_URL=https://appmintly.pages.dev/icon-512.png\" >> \"$GITHUB_ENV\"\n  echo 'ICON_URL input was empty\
+      \ (the v1.0.5 generic-letter root cause); defaulted to the official AppMintly launcher icon.'\nfi\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: Compile production-signed APK
+    shell: bash
+    env:
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    run: 'set -euo pipefail
+
+      export KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+
+      npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
+
+      APP_FILE="${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+
+      test -s "dist/apk/$APP_FILE"
+
+      test -s dist/apk/validation.json
+
+      file "dist/apk/$APP_FILE"
+
+      echo "APP_FILE=$APP_FILE" >> "$GITHUB_ENV"
+
+      '
+    if: steps.mode_check.outputs.run == '1'
+  - name: Independent release validation of the signed binary
+    shell: bash
+    run: "set -euo pipefail\nAPK=\"dist/apk/$APP_FILE\"\n\n# 1. Exists and is a real binary archive\ntest -s \"$APK\"\nfile \"$APK\" | grep -Ei 'zip archive|android'\n\n# 2. ZIP/APK integrity\nunzip -t\
+      \ \"$APK\" >/dev/null\n\n# 3. Zip alignment\nzipalign -c -v 4 \"$APK\" >/dev/null\n\n# 4. Manifest, package id, version name and version code\nBADGING=\"$(aapt dump badging \"$APK\")\"\necho \"$BADGING\"\
+      \ | grep -E \"^package: name='$PACKAGE_ID'\"\nBADGE_VERSION_NAME=\"$(echo \"$BADGING\" | sed -n \"s/^package: name='[^']*' versionCode='\\([0-9]*\\)' versionName='\\([^']*\\)'.*/\\2/p\")\"\nBADGE_VERSION_CODE=\"\
+      $(echo \"$BADGING\" | sed -n \"s/^package: name='[^']*' versionCode='\\([0-9]*\\)'.*/\\1/p\")\"\nif [[ \"$BADGE_VERSION_NAME\" != \"$VERSION_NAME\" ]]; then\n  echo \"Version mismatch: APK reports\
+      \ '$BADGE_VERSION_NAME', expected '$VERSION_NAME'\" >&2\n  exit 1\nfi\ntest -n \"$BADGE_VERSION_CODE\"\n# Modern target gate: legacy targets trigger the \"built for an older\n# version of Android\"\
+      \ install warning on device.\nBADGE_TARGET_SDK=\"$(echo \"$BADGING\" | sed -n \"s/^targetSdkVersion:'\\([0-9]*\\)'.*/\\1/p\")\"\nif [[ -z \"$BADGE_TARGET_SDK\" || \"$BADGE_TARGET_SDK\" -lt 36 ]];\
+      \ then\n  echo \"FATAL: APK targetSdkVersion '$BADGE_TARGET_SDK' is below the modern requirement 36.\" >&2\n  exit 1\nfi\nBADGE_DEBUGGABLE=\"$(echo \"$BADGING\" | grep -c 'application-debuggable'\
+      \ || true)\"\nif [[ \"$BADGE_DEBUGGABLE\" -ne 0 ]]; then\n  echo 'FATAL: APK is debuggable.' >&2\n  exit 1\nfi\n# The catalog must record the code from the actual binary, never a stale value\necho\
+      \ \"VERSION_CODE=$BADGE_VERSION_CODE\" >> \"$GITHUB_ENV\"\necho \"Package: $PACKAGE_ID | versionName: $BADGE_VERSION_NAME | versionCode: $BADGE_VERSION_CODE\"\n\n# 5. DEX must exist and contain the\
+      \ FULL MainActivity class set (D8 multi-class fix)\nunzip -p \"$APK\" classes.dex > /tmp/classes.dex\ntest -s /tmp/classes.dex\nDEX_PATH=\"$(echo \"$PACKAGE_ID\" | tr '.' '/')\"\nfor cls in 'MainActivity'\
+      \ 'MainActivity$1' 'MainActivity$2' 'MainActivity$3'; do\n  if ! grep -a -q \"L${DEX_PATH}/${cls};\" /tmp/classes.dex; then\n    echo \"FATAL: classes.dex is missing ${DEX_PATH}/${cls}. The D8 multi-class\
+      \ fix has regressed.\" >&2\n    exit 1\n  fi\ndone\necho \"DEX check passed: MainActivity + all listener inner classes are packaged\"\n\n# 6. Signature must verify and must be a production key, never\
+      \ a debug key\nCERTS=\"$(apksigner verify --print-certs \"$APK\")\" || { echo 'apksigner verification FAILED' >&2; exit 1; }\nif echo \"$CERTS\" | grep -Eiq 'CN=Android Debug|CN=AppForge Debug|CN=Debug';\
+      \ then\n  echo 'FATAL: APK is signed with a DEBUG certificate. Production releases must use the production keystore.' >&2\n  exit 1\nfi\napksigner verify -v \"$APK\" | grep -E 'Verified using v[0-9]+\
+      \ scheme' || true\n\n# 6. Cross-check against the build validator output\nnode -e '\n  const v = require(\"./dist/apk/validation.json\");\n  if (v.signingMode !== \"release\") { console.error(\"validation.json\
+      \ is not a release build\"); process.exit(1); }\n  if (v.fileName !== process.env.APP_FILE) { console.error(\"validation.json file name mismatch\"); process.exit(1); }\n  if (!v.validation || v.validation.valid\
+      \ !== true) { console.error(\"Build validator did not pass\"); process.exit(1); }\n  if (v.validation.packageId !== process.env.PACKAGE_ID) { console.error(\"Validator package id mismatch\"); process.exit(1);\
+      \ }\n  if (v.validation.versionName !== process.env.VERSION_NAME) { console.error(\"Validator version mismatch\"); process.exit(1); }\n  console.log(\"Cross-checked validation.json: OK\");\n'\n\n\
+      # 7. Final checksum and size from the actual signed binary\nSHA256=\"$(sha256sum \"$APK\" | cut -d' ' -f1)\"\nSIZE=\"$(stat -c%s \"$APK\")\"\ntest \"${#SHA256}\" -eq 64\ntest \"$SIZE\" -gt 45000\n\
+      echo \"SHA256=$SHA256\" >> \"$GITHUB_ENV\"\necho \"SIZE=$SIZE\" >> \"$GITHUB_ENV\"\necho \"Validated $APP_FILE: $SIZE bytes, SHA-256 $SHA256\"\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: APK security gate (fail-closed pre-publish scan)
+    shell: bash
+    run: "set -euo pipefail\nAPK=\"dist/apk/$APP_FILE\"\nnode -e '\n  const fs = require(\"fs\");\n  const v = JSON.parse(fs.readFileSync(\"dist/apk/validation.json\", \"utf8\"));\n  const g = v.securityCheck\
+      \ || {};\n  const rows = [\n    [\"Target SDK\", g.targetSdk, v.targetSdk],\n    [\"Min SDK\", g.minSdk, v.minSdk],\n    [\"Debuggable\", g.debuggable, \"\"],\n    [\"TestOnly\", g.testOnly, \"\"\
+      ],\n    [\"Signing\", g.signing, \"v1=\" + v.signatureSchemes?.v1 + \" v2=\" + v.signatureSchemes?.v2 + \" v3=\" + v.signatureSchemes?.v3],\n    [\"Certificate\", g.certificate, \"CN=\" + v.certificateSubject],\n\
+      \    [\"Signature\", g.signature, \"\"],\n    [\"Permissions\", g.permissions, (v.permissions || []).join(\", \")],\n    [\"Embedded secrets\", g.embeddedSecrets, \"\"],\n    [\"Development URLs\"\
+      , g.developmentUrls, \"\"],\n    [\"APK structure\", g.apkStructure, \"\"],\n    [\"Package\", g.packageName, v.packageName],\n    [\"Version\", g.version, v.validation.versionName + \" / \" + v.validation.versionCode],\n\
+      \    [\"SHA-256\", g.sha256, v.sha256],\n  ];\n  console.log(\"APK SECURITY STATUS\");\n  console.log(\"==================\");\n  for (const [name, status, detail] of rows) {\n    console.log(name.padEnd(18)\
+      \ + \": \" + String(status).padEnd(4) + \" \" + detail);\n  }\n  console.log(\"\");\n  const eligible = g.eligible === true && v.validation.valid === true;\n  console.log(\"Final release eligibility:\
+      \ \" + (eligible ? \"PASS\" : \"FAIL\") + \" (validator \" + (g.validatorVersion || \"?\") + \")\");\n  if (!eligible) { console.error(\"BLOCKED: mandatory security gate failed. Publishing is stopped.\"\
+      ); process.exit(1); }\n'\n# Independent certificate pin: the workflow itself re-verifies the\n# production signing identity, not only the build validator.\nCERT_FP=\"$(apksigner verify --print-certs\
+      \ \"$APK\" | sed -n \"s/.*SHA-256 digest: \\([0-9a-f]\\{64\\}\\).*/\\1/p\" | head -n1)\"\nif [[ \"$CERT_FP\" != \"dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368\" ]]; then\n  echo\
+      \ \"FATAL: signing certificate fingerprint '$CERT_FP' is not the AppMintly production identity.\" >&2\n  exit 1\nfi\necho \"Production certificate fingerprint verified: ${CERT_FP:0:16}...\"\n# Expose\
+      \ evidence for the catalog update step\nnode -e '\n  const v = JSON.parse(require(\"fs\").readFileSync(\"dist/apk/validation.json\", \"utf8\"));\n  const g = v.securityCheck;\n  const out = [\n  \
+      \  \"TARGET_SDK=\" + v.targetSdk,\n    \"MIN_SDK=\" + v.minSdk,\n    \"CERT_SUBJECT=\" + v.certificateSubject,\n    \"CERT_FINGERPRINT=\" + v.certificateSha256Fingerprint,\n    \"SIG_V1=\" + v.signatureSchemes.v1,\
+      \ \"SIG_V2=\" + v.signatureSchemes.v2, \"SIG_V3=\" + v.signatureSchemes.v3,\n    \"SECURITY_STATUS=\" + (g.eligible ? \"passed\" : \"failed\"),\n    \"SECURITY_TIMESTAMP=\" + g.checkedAt,\n    \"\
+      VALIDATOR_VERSION=\" + g.validatorVersion,\n  ].join(\"\\n\");\n  require(\"fs\").appendFileSync(process.env.GITHUB_ENV, \"\\n\" + out + \"\\n\");\n'\n"
+    if: steps.mode_check.outputs.run == '1'
+  - name: Signing continuity vs released 1.0.5 (androguard, pinned production identity)
+    if: steps.mode_check.outputs.run == '1'
+    shell: bash
+    run: "set -euo pipefail\npip install --quiet androguard\ncurl -fsSL -o /tmp/AppMintly-1.0.5.apk \"https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk\"\
+      \npython3 - << 'PY'\nimport hashlib, logging, os\nlogging.disable(logging.CRITICAL)\ntry:\n    from loguru import logger as _l; _l.remove()\nexcept Exception:\n    pass\nfrom androguard.core.apk import\
+      \ APK\nEXPECTED = \"dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368\"\ndef info(f):\n    a = APK(f)\n    cert = hashlib.sha256((a.get_certificates_der_v2() or a.get_certificates_der())[0]).hexdigest()\n\
+      \    return a, cert\na5, c5 = info(\"/tmp/AppMintly-1.0.5.apk\")\na6, c6 = info(\"dist/apk/\" + os.environ[\"APP_FILE\"])\nassert a5.get_package() == \"com.appmintly.appmintly\", a5.get_package()\n\
+      assert a6.get_package() == \"com.appmintly.appmintly\", a6.get_package()\nassert a5.get_androidversion_code() == \"10005\", a5.get_androidversion_code()\nassert a6.get_androidversion_code() == \"\
+      10006\", a6.get_androidversion_code()\nassert a6.get_androidversion_name() == \"1.0.6\", a6.get_androidversion_name()\nassert c5 == EXPECTED, f\"1.0.5 signer cert mismatch {c5}\"\nassert c6 == EXPECTED,\
+      \ f\"1.0.6 presigned signer cert mismatch {c6}\"\nprint(\"SIGNING CONTINUITY: PASS \u2014 released 1.0.5 and production-signed 1.0.6 share the pinned production identity sha256=%s\" % c6)\nprint(\"\
+      sha256(presigned AppMintly-1.0.6.apk) =\", hashlib.sha256(open(\"dist/apk/\" + os.environ[\"APP_FILE\"], \"rb\").read()).hexdigest())\nPY"
+  - name: Upload presigned APK artifact
+    if: steps.mode_check.outputs.run == '1'
+    uses: actions/upload-artifact@v4
+    with:
+      name: icon-fix-presigned
+      path: dist/apk/
+      retention-days: 7
   emulator-device-check:
-    needs: candidate-build
+    needs: [candidate-build, presigned-build]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -174,6 +362,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: icon-fix-candidate
+      - name: Read validation mode
+        id: readmode
+        shell: bash
+        run: echo "mode=$(tr -d '[:space:]' < validation-mode.txt)" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: steps.readmode.outputs.mode == 'presigned'
+        with:
+          name: icon-fix-presigned
+          path: presigned
           path: candidate/
       - name: Select APK by mode
         shell: bash
@@ -184,6 +381,12 @@ jobs:
           if [ "$MODE" = "released" ]; then
             mkdir -p released
             curl -fsSL -o released/AppMintly-1.0.5.apk "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk"
+          fi
+          if [ "$MODE" = "presigned" ]; then
+            mkdir -p released
+            curl -fsSL -o released/AppMintly-1.0.5.apk "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk"
+          fi
+          if [ "$MODE" = "released" ]; then
             curl -fsSL -o released/AppMintly-1.0.6.apk "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.6/AppMintly-1.0.6.apk"
             pip install --quiet androguard
           fi
@@ -271,9 +474,10 @@ jobs:
             adb shell settings put global transition_animation_scale 0.0 || true
             adb shell settings put global animator_duration_scale 0.0 || true
             if [ "$MODE" = "released" ]; then adb install released/AppMintly-1.0.5.apk > diag/install-1.0.5.txt 2>&1; adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-before-upgrade.txt || true; adb install -r released/AppMintly-1.0.6.apk > diag/install-1.0.6.txt 2>&1; fi
-            if [ "$MODE" != "released" ]; then adb install candidate/AppMintly-1.0.6-candidate.apk > diag/install-candidate.txt 2>&1; fi
+            if [ "$MODE" = "candidate" ]; then adb install candidate/AppMintly-1.0.6-candidate.apk > diag/install-candidate.txt 2>&1; fi
             if [ "$MODE" = "released" ]; then grep -q Success diag/install-1.0.5.txt || { echo "INSTALL-1.0.5: FAIL"; cat diag/install-1.0.5.txt; exit 1; }; grep -q Success diag/install-1.0.6.txt || { echo "UPGRADE-INSTALL: FAIL"; cat diag/install-1.0.6.txt; exit 1; }; echo "UPGRADE-OVER-INSTALL: PASS (1.0.6 installed over 1.0.5, NO uninstall)"; fi
-            if [ "$MODE" != "released" ]; then grep -q Success diag/install-candidate.txt || { echo "CANDIDATE INSTALL: FAIL"; cat diag/install-candidate.txt; exit 1; }; echo "CANDIDATE INSTALL: PASS"; fi
+            if [ "$MODE" = "presigned" ]; then adb install released/AppMintly-1.0.5.apk > diag/install-1.0.5.txt 2>&1; grep -q Success diag/install-1.0.5.txt || { echo "INSTALL-1.0.5: FAIL"; cat diag/install-1.0.5.txt; exit 1; }; adb install -r presigned/AppMintly-1.0.6.apk > diag/install-presigned.txt 2>&1; grep -q Success diag/install-presigned.txt || { echo "PRESIGNED UPGRADE: FAIL (signature discontinuity or install error)"; cat diag/install-presigned.txt; exit 1; }; echo "UPGRADE-OVER-INSTALL: PASS (production-signed 1.0.6 installed over 1.0.5, NO uninstall; OS accepted in-place upgrade = same-signer continuity)"; fi
+            if [ "$MODE" = "candidate" ]; then grep -q Success diag/install-candidate.txt || { echo "CANDIDATE INSTALL: FAIL"; cat diag/install-candidate.txt; exit 1; }; echo "CANDIDATE INSTALL: PASS"; fi
             adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-version.txt || true
             grep -q "versionCode=10006" diag/pkg-version.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-version.txt; exit 1; }
             echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
@@ -284,6 +488,8 @@ jobs:
             adb shell uiautomator dump /sdcard/appdump.xml >/dev/null 2>&1 || true
             adb pull /sdcard/appdump.xml diag/appdump.xml >/dev/null 2>&1 || true
             if grep -q "AppMintly" diag/appdump.xml 2>/dev/null; then echo "APP LAUNCH: PASS (marketplace content rendered)"; else echo "APP LAUNCH: content check inconclusive (screencap saved as evidence)"; fi
+            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly" > diag/alarm-after-launch.txt || true
+            if grep -q "21600000" diag/alarm-after-launch.txt; then echo "SIX-HOUR CHECKER: PASS (repeatInterval=21600000 alarm registered on device; cadence unchanged)"; else echo "SIX-HOUR CHECKER: NOT VERIFIED in this run (see alarm-after-launch.txt)"; fi
             adb shell input keyevent KEYCODE_HOME || true
             sleep 2
             for i in 1 2 3; do adb shell input swipe 540 2100 540 600 300 || true; sleep 3; adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1; adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1; grep -q "AppMintly" diag/drawerdump.xml 2>/dev/null && break; done
