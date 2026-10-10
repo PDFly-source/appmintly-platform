@@ -593,6 +593,16 @@ jobs:
 
       - name: Install, upgrade, alarm, boot, permission and notification runtime test (Android 16 emulator)
         uses: reactivecircus/android-emulator-runner@v2
+        # Production signing values for the IN-TEST candidate build only
+        # (Phase 12.6). They are step-scoped exactly like the release
+        # workflow's compile step, value-masked by the runner, consumed only
+        # by scripts/build-android-apk.ts via ensureAndroidToolchain, and
+        # never printed. The candidate APK is deleted from the runner at the
+        # end of the script and is never uploaded or released.
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         with:
           api-level: 36
           target: google_apis
