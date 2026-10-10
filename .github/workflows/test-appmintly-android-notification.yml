@@ -236,7 +236,7 @@ jobs:
 
           def sh(*args):
               try:
-                  return subprocess.run(["adb"] + list(args), capture_output=True, text=True, timeout=60)
+                  return subprocess.run(list(args), capture_output=True, text=True, timeout=90)
               except Exception:
                   return None
 
@@ -360,7 +360,7 @@ jobs:
 
           def sh(*args):
               try:
-                  return subprocess.run(["adb"] + list(args), capture_output=True, text=True, timeout=60)
+                  return subprocess.run(list(args), capture_output=True, text=True, timeout=90)
               except Exception:
                   return None
 
