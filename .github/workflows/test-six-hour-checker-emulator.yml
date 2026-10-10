@@ -141,6 +141,13 @@ jobs:
                   raise SystemExit(f"adb shell {cmd!r} failed: {r.stderr}")
               return r.stdout
 
+          def pid_alive():
+              # pidof exits 1 (with empty stdout) when NO process is running:
+              # that is the success case for us, so never treat it as an adb
+              # failure (run 38053358635: patcher crashed on pidof exit 1).
+              r = subprocess.run(["adb", "shell", f"pidof {APK}"], capture_output=True, text=True)
+              return r.stdout.strip()
+
           def patch(master, updates, tracked_json, delivered_json, drop_baseline):
               sh("input keyevent KEYCODE_WAKEUP")
               sh("input keyevent KEYCODE_HOME")
@@ -154,7 +161,7 @@ jobs:
               for attempt in range(8):
                   sh(f"am kill {APK}")
                   time.sleep(3)
-                  alive = sh(f"pidof {APK}").strip()
+                  alive = pid_alive()
                   if not alive:
                       break
               if alive:
