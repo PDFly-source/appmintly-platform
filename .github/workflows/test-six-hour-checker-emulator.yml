@@ -1,0 +1,340 @@
+# Phase 12.16 — Six-hour native update-checker: IMMEDIATE diagnostic evidence.
+#
+# TEST-ONLY workflow. Never runs on main (hard branch guard below) and must
+# never be merged to main: it intentionally seeds controlled TEST INPUT
+# (SharedPreferences fixtures) into the app on a disposable emulator so the
+# REAL production checker can be exercised immediately, without waiting for
+# the six-hour alarm. The checker logic itself is NEVER modified, patched or
+# duplicated — every scenario below enters through the production entry point
+# (AlarmReceiver.onReceive -> UpdateEngine.doCheck) of the REAL, released
+# AppMintly-1.0.5.apk binary downloaded from the official release (sha256
+# verified against the release/catalog value before installation).
+#
+# What this run proves:
+#   1. The checker executes end-to-end (catalog fetch -> version compare ->
+#      notification post -> last-run recording) on the production binary.
+#   2. The ~6h repeating alarm is REGISTERED after app launch (dumpsys
+#      evidence) — registration only; it does NOT claim the alarm ever fired
+#      on a device.
+#   3. Master-switch gate, notification-category gate, first-run silent
+#      baseline initialization and duplicate suppression (delivered-key
+#      dedupe) all behave as specified.
+#
+# What this run does NOT prove (kept PENDING):
+#   - The real scheduled six-hour execution on a physical device,
+#     reboot recovery and OEM battery restrictions. Those still need the
+#     natural alarm tick on the user's phone.
+#
+# Controlled test data (fixtures only; the catalog fetched is the REAL
+# production catalog, whose versions are known and deterministic):
+#   tracked fixture A: studyria@2.0.0  -> catalog 2.0.2 => update event
+#   tracked fixture B: pdfminifly@2.0.9 -> catalog 2.1.1 => update event
+
+name: Test six-hour checker runtime (immediate diagnostic)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Refuse to run outside the test branch
+        run: |
+          echo "ref=$GITHUB_REF"
+          case "$GITHUB_REF" in
+            refs/heads/test/six-hour-checker-diagnostic)
+              echo "GUARD: PASS (test-only branch, isolated from production)";;
+            *)
+              echo "::error::This diagnostic must never run outside test/six-hour-checker-diagnostic (seeded fixtures + adb-root triggers are test-only by design)."
+              exit 1;;
+          esac
+
+  emulator-diagnostic:
+    needs: guard
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download the released AppMintly 1.0.5 APK (authoritative release asset, not rebuilt)
+        run: |
+          mkdir -p test-apk diag
+          curl -fsSL -w 'v1.0.5 HTTP %{http_code} %{size_download} bytes\n' -o test-apk/AppMintly-1.0.5.apk \
+            "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk"
+
+      - name: Verify APK integrity (sha256, package, versionCode, signing certificate, receivers) BEFORE installation
+        run: |
+          pip install --quiet androguard
+          python3 - <<'PY' 2>&1 | tee diag/apk-integrity.txt
+          import hashlib
+          from androguard.core.apk import APK
+          import logging
+          logging.disable(logging.CRITICAL)
+          try:
+              from loguru import logger as _loguru_logger
+              _loguru_logger.remove()
+          except Exception:
+              pass
+          EXPECTED_HASH = "c08ae4662b51c57fe06f465a857fb34e4e1ec13a53b0568db8a561e4e5555312"
+          EXPECTED_CERT = "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368"
+          f = "test-apk/AppMintly-1.0.5.apk"
+          h = hashlib.sha256(open(f, "rb").read()).hexdigest()
+          assert h == EXPECTED_HASH, f"sha256 mismatch {h}"
+          a = APK(f)
+          assert a.get_package() == "com.appmintly.appmintly", a.get_package()
+          assert a.get_androidversion_code() == "10005", a.get_androidversion_code()
+          assert a.get_androidversion_name() == "1.0.5", a.get_androidversion_name()
+          cert = hashlib.sha256((a.get_certificates_der_v2() or a.get_certificates_der())[0]).hexdigest()
+          assert cert == EXPECTED_CERT, f"signer cert mismatch {cert}"
+          recvs = a.get_receivers()
+          assert any(".AlarmReceiver" in r for r in recvs), f"missing AlarmReceiver: {recvs}"
+          assert any(".BootReceiver" in r for r in recvs), f"missing BootReceiver: {recvs}"
+          perms = a.get_permissions()
+          assert "android.permission.POST_NOTIFICATIONS" in perms, perms
+          assert "android.permission.RECEIVE_BOOT_COMPLETED" in perms, perms
+          print(f"VERIFIED {f}")
+          print(f"  sha256={h}")
+          print(f"  package={a.get_package()} versionCode=10005 versionName=1.0.5")
+          print(f"  signerCert sha256={cert}")
+          print(f"  receivers={recvs}")
+          print("APK-INTEGRITY: PASS (the binary under test is the released production 1.0.5)")
+          PY
+
+      - name: Write fixture patcher and evidence evaluator
+        run: |
+          mkdir -p "$RUNNER_TEMP/diag-helpers"
+          cat > "$RUNNER_TEMP/diag-helpers/prefs.py" <<'PY'
+          """SharedPreferences fixture patcher (controlled TEST INPUT only).
+
+          Runs as adb root on the disposable emulator. The app is backgrounded
+          and killed with `am kill` (never force-stop, which would cancel
+          alarms / mark the package stopped). The prefs file is replaced with
+          the fixture, ownership restored to the app uid, mode 660 and SELinux
+          context restored with restorecon, then read back and printed for the
+          evidence log. The checker logic is untouched: only its INPUT state.
+          """
+          import subprocess, sys, time
+
+          APK = "com.appmintly.appmintly"
+          PREFS = f"/data/data/{APK}/shared_prefs/appmintly_updates.xml"
+
+          def sh(cmd):
+              r = subprocess.run(["adb", "shell", cmd], capture_output=True, text=True)
+              if r.returncode != 0:
+                  raise SystemExit(f"adb shell {cmd!r} failed: {r.stderr}")
+              return r.stdout
+
+          def patch(master, updates, tracked_json, delivered_json, drop_baseline):
+              sh("input keyevent KEYCODE_WAKEUP")
+              sh("input keyevent KEYCODE_HOME")
+              time.sleep(2)
+              sh(f"am kill {APK}")
+              time.sleep(2)
+              alive = sh(f"pidof {APK}").strip()
+              if alive:
+                  raise SystemExit(f"app process still alive after am kill (pid {alive}); refusing to patch")
+              uid = sh(f"stat -c %u /data/data/{APK}").strip()
+              xml = (
+                  '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>\n'
+                  '<map>\n'
+                  f'    <boolean name="master" value="{str(master).lower()}" />\n'
+                  f'    <boolean name="updates" value="{str(updates).lower()}" />\n'
+                  '    <boolean name="newAndroid" value="true" />\n'
+                  '    <boolean name="newWeb" value="true" />\n'
+                  '    <boolean name="important" value="true" />\n'
+                  '    <boolean name="security" value="true" />\n'
+                  f'    <string name="tracked">{tracked_json}</string>\n'
+                  f'    <string name="delivered">{delivered_json}</string>\n'
+                  + ('' if drop_baseline else '    PLACEHOLDER_BASELINE\n')
+                  + '</map>\n'
+              )
+              if not drop_baseline:
+                  # preserve the existing baseline (engine-written) verbatim
+                  cur = sh(f"cat {PREFS}")
+                  import re
+                  m = re.search(r'<string name="baseline">(.*?)</string>', cur, re.S)
+                  if m:
+                      # group(1) is the file's already-escaped XML text — re-escape would corrupt it.
+                      xml = xml.replace("PLACEHOLDER_BASELINE", f'<string name="baseline">{m.group(1)}</string>')
+                  else:
+                      xml = xml.replace("PLACEHOLDER_BASELINE", "")
+              tmp = "/data/local/tmp/appmintly_updates_fixture.xml"
+              open("/tmp/fixture.xml", "w").write(xml)
+              subprocess.run(["adb", "push", "/tmp/fixture.xml", tmp], check=True, capture_output=True)
+              sh(f"mkdir -p /data/data/{APK}/shared_prefs")
+              sh(f"cp {tmp} {PREFS}")
+              sh(f"chown {uid}:{uid} {PREFS}")
+              sh(f"chmod 660 {PREFS}")
+              sh(f"restorecon {PREFS}")
+              back = sh(f"cat {PREFS}")
+              print("---- prefs after patch (read back) ----")
+              print(back)
+              return back
+
+          def read():
+              return sh(f"cat {PREFS}")
+
+          def field(name):
+              # SharedPreferences XML: long/int values live in value= attributes,
+              # string values are element text, booleans in value= attributes.
+              import re
+              cur = read()
+              m = re.search(rf'<(?:long|int) name="{name}" value="([^"]+)"', cur)
+              if m:
+                  return m.group(1)
+              m = re.search(rf'<string name="{name}"[^>]*>([^<]*)<', cur)
+              if m:
+                  return m.group(1)
+              m = re.search(rf'<boolean name="{name}" value="([^"]+)"', cur)
+              if m:
+                  return m.group(1)
+              return None
+
+          if __name__ == "__main__":
+              cmd = sys.argv[1]
+              if cmd == "patch":
+                  patch(sys.argv[2] == "true", sys.argv[3] == "true", sys.argv[4], sys.argv[5], sys.argv[6] == "true")
+              elif cmd == "get":
+                  print(field(sys.argv[2]))
+          PY
+
+      - name: Immediate checker diagnostic (Android 16 emulator, real released 1.0.5, real catalog)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            set -o pipefail
+            mkdir -p diag
+            adb root || true
+            timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            adb shell getprop ro.build.version.release | tee diag/android-version.txt
+            adb shell settings put global window_animation_scale 0.0 || true
+            adb shell settings put global transition_animation_scale 0.0 || true
+            adb shell settings put global animator_duration_scale 0.0 || true
+
+            PREFS="/data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml"
+            HELP="$RUNNER_TEMP/diag-helpers"
+            APP="com.appmintly.appmintly"
+            ACTION="${APP}.ACTION_CHECK_UPDATES"
+
+            echo "== [0] install the REAL released 1.0.5"
+            adb install test-apk/AppMintly-1.0.5.apk | tee diag/install.txt
+            adb shell dumpsys package $APP | grep -E "versionCode|versionName" | head -2 | tee diag/pkg.txt
+            adb shell pm grant $APP android.permission.POST_NOTIFICATIONS
+            adb shell dumpsys package $APP | grep -E "POST_NOTIFICATIONS" | tee diag/perm.txt
+            adb shell cmd notification get_dnd || true
+
+            echo "== [1] launch once (MainActivity.onCreate -> UpdateEngine.schedule)"
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell input keyevent 82
+            adb shell am start -n $APP/.MainActivity | tee diag/launch.txt
+            sleep 8
+            adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1
+            # Registration evidence: the repeating ~6h PendingIntent must be
+            # present, targeting AlarmReceiver with ACTION_CHECK_UPDATES.
+            grep -q "ACTION_CHECK_UPDATES" diag/alarm-after-launch.txt && echo "ALARM-TARGET: PASS (ACTION_CHECK_UPDATES pending intent registered)" | tee -a diag/summary.txt
+            grep -q "21600000" diag/alarm-after-launch.txt && echo "ALARM-INTERVAL: PASS (6h = 21600000ms interval in dumpsys)" | tee -a diag/summary.txt
+            grep -B4 -A8 "AlarmReceiver" diag/alarm-after-launch.txt > diag/alarm-record.txt || true
+            cat diag/alarm-record.txt
+
+            echo "== [2] default-state trigger: fresh install, master off => receiver must exit without recording"
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-0.txt
+            sleep 6
+            adb shell "cat $PREFS 2>/dev/null || echo ABSENT" | tee diag/prefs-0.txt
+            # The WebView page itself may have synced default prefs (master=false) on
+            # launch, so the file may exist; the receiver-gate proof is that the
+            # engine recorded NOTHING (no lastCheck/lastCheckState), and no baseline.
+            ! grep -q 'name="lastCheckState"' diag/prefs-0.txt && echo "MASTER-GATE(default): PASS (fresh master=false: receiver exited before doCheck, nothing recorded)" | tee -a diag/summary.txt
+
+            echo "== [3] seed controlled fixture: master=true, updates=true, tracked=[studyria@2.0.0]"
+            python3 "$HELP/prefs.py" patch true true '[{"appId":"studyria","version":"2.0.0"}]' '{}' true | tee diag/prefs-seed1.txt
+
+            echo "== [4] trigger #1: first run must silently initialize the baseline (NO notification, state=initialized)"
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-1.txt
+            sleep 12
+            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ -n "$st" ] && break; sleep 5; done
+            adb shell cat $PREFS | tee diag/prefs-1.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-1.txt 2>&1
+            grep -q 'lastCheckState">initialized' diag/prefs-1.txt && echo "FIRST-RUN: PASS (baseline initialized silently, state=initialized)" | tee -a diag/summary.txt
+            ! grep -q "Update available" diag/notif-after-1.txt && echo "FIRST-RUN-NO-SPAM: PASS (no notification posted on baseline init)" | tee -a diag/summary.txt
+            grep -q 'name="baseline"' diag/prefs-1.txt && echo "BASELINE-RECORDED: PASS (engine recorded the catalog baseline)" | tee -a diag/summary.txt
+
+            echo "== [5] trigger #2: tracked studyria 2.0.2 > 2.0.0 => must post the real update notification"
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-2.txt
+            sleep 12
+            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
+            adb shell cat $PREFS | tee diag/prefs-2.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-2.txt 2>&1
+            grep -A3 "Update available: Studyria" diag/notif-after-2.txt | tee diag/notif-studyria.txt
+            grep -q 'lastCheckState">ok' diag/prefs-2.txt && echo "CHECK-EXECUTES: PASS (state=ok recorded with fresh lastCheck)" | tee -a diag/summary.txt
+            grep -q 'name="lastPosted" value="1"' diag/prefs-2.txt && echo "VERSION-DETECT: PASS (catalog 2.0.2 > tracked 2.0.0 detected; lastPosted=1)" | tee -a diag/summary.txt
+            grep -q "app-update:studyria:2.0.2" diag/prefs-2.txt && echo "DEDUP-KEY: PASS (delivered key app-update:studyria:2.0.2 recorded)" | tee -a diag/summary.txt
+            grep -q "Update available: Studyria" diag/notif-after-2.txt && grep -q "Version 2.0.2 is available" diag/notif-after-2.txt && echo "NOTIFICATION-POSTED: PASS (tray notification with exact production title/body)" | tee -a diag/summary.txt
+
+            echo "== [6] trigger #3 (repeat): must NOT duplicate"
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-3.txt
+            sleep 12
+            for i in $(seq 1 8); do lp=$(python3 "$HELP/prefs.py" get lastPosted || true); [ -n "$lp" ] && break; sleep 5; done
+            adb shell cat $PREFS | tee diag/prefs-3.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-3.txt 2>&1
+            N=$(grep -c "Update available: Studyria" diag/notif-after-3.txt || true)
+            grep -q 'name="lastPosted" value="0"' diag/prefs-3.txt && echo "DEDUPE: PASS (repeat check posted 0 notifications)" | tee -a diag/summary.txt
+            [ "$N" = "1" ] && echo "NO-DUPLICATES: PASS (exactly 1 Studyria notification in the tray)" | tee -a diag/summary.txt
+
+            echo "== [7] category gate: updates=false + tracked pdfminifly@2.0.9 (catalog 2.1.1) => must be blocked"
+            python3 "$HELP/prefs.py" patch true false '[{"appId":"studyria","version":"2.0.0"},{"appId":"pdfminifly","version":"2.0.9"}]' '{"app-update:studyria:2.0.2":1760000000000}' false > diag/prefs-seed2.txt
+            cat diag/prefs-seed2.txt
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-4.txt
+            sleep 12
+            for i in $(seq 1 8); do st=$(python3 "$HELP/prefs.py" get lastCheckState || true); [ "$st" = "ok" ] && break; sleep 5; done
+            adb shell cat $PREFS | tee diag/prefs-4.txt
+            adb shell dumpsys notification --noredact > diag/notif-after-4.txt 2>&1
+            grep -q 'name="lastPosted" value="0"' diag/prefs-4.txt && echo "CATEGORY-GATE: PASS (updates=false blocked the pdfminifly event; lastPosted=0)" | tee -a diag/summary.txt
+            ! grep -q "Update available: PDFMinifly" diag/notif-after-4.txt && echo "CATEGORY-GATE-TRAY: PASS (no pdfminifly notification posted)" | tee -a diag/summary.txt
+
+            echo "== [8] master gate: master=false => receiver exits before doCheck, lastCheck unchanged"
+            BEFORE=$(python3 "$HELP/prefs.py" get lastCheck)
+            python3 "$HELP/prefs.py" patch false true '[{"appId":"studyria","version":"2.0.0"}]' '{"app-update:studyria:2.0.2":1760000000000}' false > diag/prefs-seed3.txt
+            adb shell am broadcast -a "$ACTION" -n $APP/.AlarmReceiver | tee diag/bcast-5.txt
+            sleep 8
+            AFTER=$(python3 "$HELP/prefs.py" get lastCheck)
+            adb shell dumpsys notification --noredact > diag/notif-after-5.txt 2>&1
+            [ "$BEFORE" = "$AFTER" ] && echo "MASTER-GATE: PASS (master=false: no check ran, lastCheck unchanged)" | tee -a diag/summary.txt
+
+            echo "== [9] evidence summary"
+            echo "---- SUMMARY ----"
+            cat diag/summary.txt
+            python3 - <<'PY'
+            import re, sys
+            required = [
+                "MASTER-GATE(default)", "ALARM-TARGET", "ALARM-INTERVAL",
+                "FIRST-RUN", "FIRST-RUN-NO-SPAM", "BASELINE-RECORDED",
+                "CHECK-EXECUTES", "VERSION-DETECT", "DEDUP-KEY", "NOTIFICATION-POSTED",
+                "DEDUPE", "NO-DUPLICATES", "CATEGORY-GATE", "CATEGORY-GATE-TRAY",
+                "MASTER-GATE",
+            ]
+            summary = open("diag/summary.txt").read()
+            missing = [r for r in required if f"{r}: PASS" not in summary]
+            print()
+            if missing:
+                print("SIX-HOUR-CHECKER DIAGNOSTIC: FAIL — missing evidence for:")
+                for m in missing:
+                    print(f"  - {m}")
+                sys.exit(1)
+            print(f"SIX-HOUR-CHECKER DIAGNOSTIC: ALL {len(required)} SCENARIOS PASS")
+            PY
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: six-hour-checker-diagnostic-evidence
+          path: diag/
+          retention-days: 7
