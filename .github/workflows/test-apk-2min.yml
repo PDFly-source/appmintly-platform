@@ -168,16 +168,18 @@ jobs:
           cmp "$RUNNER_TEMP/guard-default-MainActivity.java" "$RUNNER_TEMP/test-build-MainActivity.java"
           cmp "$RUNNER_TEMP/guard-default-BootReceiver.java" "$RUNNER_TEMP/test-build-BootReceiver.java"
           python3 - "$RUNNER_TEMP" <<'PY2'
-          import sys, os
+          import sys, os, re
           rt = sys.argv[1]
           g = open(os.path.join(rt, 'guard-default-AlarmReceiver.java')).read()
           t = open(os.path.join(rt, 'test-build-AlarmReceiver.java')).read()
-          # Phase 12.15: the ONLY test-build delta is the seed call before the master gate.
-          seed = '        // TEMPORARY TEST BUILD ONLY (Phase 12.15): seed the fixture BEFORE the\n        // master gate - the web page's preference sync keeps master=false\n        // until the user opts in, so a doCheck-time seed was unreachable.\n        UpdateEngine.seedTestFixture(context);\n'
-          assert seed in t, 'seed call block not found in test-build AlarmReceiver.java'
-          t = t.replace(seed, '', 1)
-          assert t == g, 'UNEXPECTED DIFFERENCE in AlarmReceiver beyond the seed call!'
-          print('ALARM-RECEIVER ISOLATION PASS: after removing the seed call, byte-identical.')
+          # Phase 12.15: the ONLY test-build delta is the seed block before
+          # the master gate. Strip it with a regex and require byte-equality.
+          pat = r' +// TEMPORARY TEST BUILD ONLY \(Phase 12\.15\)[\s\S]*?UpdateEngine\.seedTestFixture\(context\);\n'
+          t2 = re.sub(pat, '', t, count=1)
+          assert t2 != t, 'seed call block not found in test-build AlarmReceiver.java'
+          assert t2 == g, 'UNEXPECTED DIFFERENCE in AlarmReceiver beyond the seed block!'
+          assert g == t.replace(t2, '', 1), 'sanity mismatch'
+          print('ALARM-RECEIVER ISOLATION PASS: after removing the seed block, byte-identical.')
           PY2
           echo 'ISOLATION PASS: MainActivity/BootReceiver are byte-identical across both passes.'
 
