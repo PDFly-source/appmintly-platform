@@ -1,7 +1,7 @@
 # AppMintly Phase 12.4 — isolated Android notification runtime test.
 #
 # MANUALLY TRIGGERED ONLY (workflow_dispatch). Touches nothing in production:
-# it installs the already-released AppMintly APKs (v1.0.3 -> v1.0.4 in-place
+# it installs the already-released AppMintly APKs (v1.0.3 -> v1.0.4 -> v1.0.5 in-place
 # upgrade), reads the production catalog read-only, and confines ALL test
 # state to a disposable emulator's local SharedPreferences (the isolated
 # fixture). No APK build, no signing, no catalog writes, no push provider,
@@ -89,6 +89,8 @@ jobs:
             "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.3/AppMintly-1.0.3.apk"
           curl -fsSL -w 'v1.0.4 HTTP %{http_code} %{size_download} bytes\n' -o test-apk/AppMintly-1.0.4.apk \
             "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.4/AppMintly-1.0.4.apk"
+          curl -fsSL -w 'v1.0.5 HTTP %{http_code} %{size_download} bytes\n' -o test-apk/AppMintly-1.0.5.apk \
+            "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk"
 
       - name: Verify APK integrity (sha256, package, versionCode, signing certificate) BEFORE installation
         run: |
@@ -109,6 +111,7 @@ jobs:
           EXPECTED = {
               "test-apk/AppMintly-1.0.3.apk": ("23ef68b76f109d9a7af68a49f094d5dc3a52bf02a2157ceb4de30ca2b7dfac1e", "10003", "1.0.3"),
               "test-apk/AppMintly-1.0.4.apk": ("eeca15eef78553e997d2b645fc409058e6c56ec05c9436c54ca3647659fd051b", "10004", "1.0.4"),
+              "test-apk/AppMintly-1.0.5.apk": ("c08ae4662b51c57fe06f465a857fb34e4e1ec13a53b0568db8a561e4e5555312", "10005", "1.0.5"),
           }
           EXPECTED_CERT = "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368"
           for f, (exp_hash, exp_vc, exp_vn) in EXPECTED.items():
@@ -123,16 +126,17 @@ jobs:
               print(f"VERIFIED {f}: sha256={h}")
               print(f"  package={a.get_package()} versionCode={exp_vc} versionName={exp_vn} targetSdk={a.get_target_sdk_version()}")
               print(f"  signerCert sha256={cert}")
-          # v1.0.4 must carry the notification runtime declarations.
-          a4 = APK("test-apk/AppMintly-1.0.4.apk")
-          recv = [".AlarmReceiver", ".BootReceiver"]
-          recvs = a4.get_receivers()
-          for r in recv:
-              assert any(r in rcvr for rcvr in recvs), f"v1.0.4 missing receiver {r}: {recvs}"
-          perms = a4.get_permissions()
-          assert "android.permission.POST_NOTIFICATIONS" in perms, f"v1.0.4 missing POST_NOTIFICATIONS: {perms}"
-          assert "android.permission.RECEIVE_BOOT_COMPLETED" in perms, f"v1.0.4 missing RECEIVE_BOOT_COMPLETED: {perms}"
-          print(f"  v1.0.4 receivers={a4.get_receivers()}")
+          # v1.0.4 and v1.0.5 must carry the notification runtime declarations.
+          for ver, apkfile in (("1.0.4", "test-apk/AppMintly-1.0.4.apk"), ("1.0.5", "test-apk/AppMintly-1.0.5.apk")):
+              av = APK(apkfile)
+              recv = [".AlarmReceiver", ".BootReceiver"]
+              recvs = av.get_receivers()
+              for r in recv:
+                  assert any(r in rcvr for rcvr in recvs), f"v{ver} missing receiver {r}: {recvs}"
+              perms = av.get_permissions()
+              assert "android.permission.POST_NOTIFICATIONS" in perms, f"v{ver} missing POST_NOTIFICATIONS: {perms}"
+              assert "android.permission.RECEIVE_BOOT_COMPLETED" in perms, f"v{ver} missing RECEIVE_BOOT_COMPLETED: {perms}"
+              print(f"  v{ver} receivers={recvs}")
           print("APK-INTEGRITY: ALL PASS (hash, package, versionCode, signing certificate, receivers, permissions)")
           PY
 
@@ -442,10 +446,11 @@ jobs:
               results.append((name, "NOT TESTED", evidence))
           ai = rd("apk-integrity.txt")
           check("APK integrity (sha256, package, versionCode, signer, manifest)", "APK-INTEGRITY: ALL PASS" in ai, "both release APKs hashed + certificate-verified before install (apk-integrity.txt)")
-          i3, i4 = rd("install-1.0.3.txt"), rd("install-1.0.4.txt")
-          p3, p4 = rd("pkg-1.0.3.txt"), rd("pkg-1.0.4.txt")
+          i3, i4, i5 = rd("install-1.0.3.txt"), rd("install-1.0.4.txt"), rd("install-1.0.5.txt")
+          p3, p4, p5 = rd("pkg-1.0.3.txt"), rd("pkg-1.0.4.txt"), rd("pkg-1.0.5.txt")
           check("v1.0.3 fresh install", "Success" in i3 and "versionCode=10003" in p3, "adb install Success; on-device versionCode=10003")
           check("In-place upgrade to v1.0.4 (no uninstall, no data reset)", "Success" in i4 and "versionCode=10004" in p4, "adb install -r Success; versionCode 10003 -> 10004; prefs file survived the upgrade")
+          check("In-place upgrade to v1.0.5 (no uninstall, no data reset)", "Success" in i5 and "versionCode=10005" in p5, "adb install -r Success; versionCode 10004 -> 10005; prefs file survived both upgrades")
           ab = rd("alarm-before-reboot.txt")
           check("Alarm scheduling (~6h repeating)", "com.appmintly.appmintly" in ab and "21600000" in ab, "dumpsys alarm: tag *alarm*:com.appmintly.appmintly.ACTION_CHECK_UPDATES repeatInterval=21600000")
           ar = rd("alarm-after-reboot.txt")
@@ -471,14 +476,14 @@ jobs:
           nd = rd("notif-delivered.txt")
           tx = rd("tray-dump.xml")
           tray_ok = os.path.exists(os.path.join(D, "tray.png")) and os.path.getsize(os.path.join(D, "tray.png")) > 4000
-          check("Genuine system-tray notification", ("Update available: AppMintly" in nd or "Update available: AppMintly" in tx) and ("Update available: Studyria" in nd or "Update available: Studyria" in tx) and "app-update:appmintly:1.0.4" in dl and "app-update:studyria:2.0.2" in dl and 'lastCheckState">ok<' in dl and tray_ok, "dumpsys notification records for both updates; delivered keys recorded only after posting; lastCheckState=ok (catalog fetched); tray screenshot captured")
+          check("Genuine system-tray notification", ("Update available: AppMintly" in nd or "Update available: AppMintly" in tx) and ("Update available: Studyria" in nd or "Update available: Studyria" in tx) and "app-update:appmintly:1.0.5" in dl and "app-update:studyria:2.0.2" in dl and 'lastCheckState">ok<' in dl and tray_ok, "dumpsys notification records for both updates; delivered keys recorded only after posting; lastCheckState=ok (catalog fetched); tray screenshot captured")
           at = rd("after-tap.xml")
           at_top = rd("after-tap-top.xml") or at
           aa = rd("activity-after-tap.txt")
           tap_ok = "TAPPED" in rd("tap-notification.txt")
-          detail_ok = ("App Information" in at_top or "App Information" in at) and ("1.0.4" in at_top or "1.0.4" in at)
+          detail_ok = ("App Information" in at_top or "App Information" in at) and ("1.0.5" in at_top or "1.0.5" in at)
           home_leak = ("Featured App" in at_top or "Featured App" in at) or ("Official Release Links" in at_top or "Official Release Links" in at)
-          tap_evidence = "single-card tray (leftovers dismissed), notification card tapped in the real shade; uiautomator shows the appmintly DETAIL page (App Information + v1.0.4); resumed activity = com.appmintly.appmintly/.MainActivity"
+          tap_evidence = "single-card tray (leftovers dismissed), notification card tapped in the real shade; uiautomator shows the appmintly DETAIL page (App Information + v1.0.5); resumed activity = com.appmintly.appmintly/.MainActivity"
           if not detail_ok and home_leak:
               tap_evidence = "notification tap DID start MainActivity (tap log + topResumedActivity) but the WebView rendered the marketplace HOME page (home-only markers 'Featured App'/'Official Release Links' present, detail markers 'App Information' absent). The system rewrote the tap intent (START record: act=MAIN cat=[LAUNCHER] without extras - a category the app never adds), so onCreate saw no appmintly_deeplink extra and fell back to TARGET_URL. GENUINE PRODUCT DEFECT: deep link is lost on the notification tap path on API 36 (adb am start with the same extra works). See after-tap.png / after-tap.xml / logcat-full.txt"
           check("Notification tap -> app detail page", tap_ok and detail_ok and "MainActivity" in aa, tap_evidence)
@@ -539,8 +544,10 @@ jobs:
             adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode|versionName" | head -2 | tee diag/pkg-1.0.3.txt
             adb install -r test-apk/AppMintly-1.0.4.apk | tee diag/install-1.0.4.txt
             adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode|versionName" | head -2 | tee diag/pkg-1.0.4.txt
-            grep -q "Success" diag/install-1.0.3.txt && grep -q "Success" diag/install-1.0.4.txt && echo "INSTALL-AND-UPGRADE: PASS (v1.0.3 installed, upgraded in place to v1.0.4)" || { echo "INSTALL-AND-UPGRADE: FAIL"; exit 1; }
-            grep -q "versionCode=10004" diag/pkg-1.0.4.txt && echo "ON-DEVICE-VERSION: PASS (versionCode=10004 after upgrade)" || { echo "ON-DEVICE-VERSION: FAIL"; exit 1; }
+            adb install -r test-apk/AppMintly-1.0.5.apk | tee diag/install-1.0.5.txt
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode|versionName" | head -2 | tee diag/pkg-1.0.5.txt
+            grep -q "Success" diag/install-1.0.3.txt && grep -q "Success" diag/install-1.0.4.txt && grep -q "Success" diag/install-1.0.5.txt && echo "INSTALL-AND-UPGRADE: PASS (v1.0.3 installed, upgraded in place to v1.0.4 then v1.0.5, no uninstall at any step)" || { echo "INSTALL-AND-UPGRADE: FAIL"; exit 1; }
+            grep -q "versionCode=10005" diag/pkg-1.0.5.txt && echo "ON-DEVICE-VERSION: PASS (versionCode=10005 after upgrades)" || { echo "ON-DEVICE-VERSION: FAIL"; exit 1; }
 
             adb shell input keyevent KEYCODE_WAKEUP || true
             adb shell wm dismiss-keyguard || true
@@ -614,7 +621,7 @@ jobs:
             adb exec-out screencap -p > diag/tray.png || true
             for i in $(seq 1 4); do adb shell uiautomator dump /sdcard/tray.xml >/dev/null 2>&1; adb pull /sdcard/tray.xml diag/tray-dump.xml >/dev/null 2>&1; grep -q "Update available" diag/tray-dump.xml 2>/dev/null && break; sleep 5; done
             adb shell cmd statusbar collapse || true
-            if grep -q "Update available" diag/notif-delivered.txt && grep -q "app-update:appmintly:1.0.4" diag/prefs-delivered.xml && grep -q "app-update:studyria:2.0.2" diag/prefs-delivered.xml; then echo "NOTIFICATION-TRAY: PASS (genuine OS notifications posted by the real engine)"; else echo "NOTIFICATION-TRAY: FAIL (see notif-delivered.txt / prefs-delivered.xml)"; cat diag/notif-delivered.txt || true; fi
+            if grep -q "Update available" diag/notif-delivered.txt && grep -q "app-update:appmintly:1.0.5" diag/prefs-delivered.xml && grep -q "app-update:studyria:2.0.2" diag/prefs-delivered.xml; then echo "NOTIFICATION-TRAY: PASS (genuine OS notifications posted by the real engine)"; else echo "NOTIFICATION-TRAY: FAIL (see notif-delivered.txt / prefs-delivered.xml)"; cat diag/notif-delivered.txt || true; fi
             grep -o 'app-update:[a-z]*:[0-9.]*' diag/prefs-delivered.xml | sort -u > diag/delivered-keys.txt || true
             python3 "$RUNNER_TEMP/dismiss_notification.py" "Update available: Studyria" "Update available: AppMintly" > diag/dismiss-leftovers.txt 2>&1 || echo "DISMISS-LEFTOVERS: some leftover notifications remain (see dismiss-leftovers.txt)"
             adb shell dumpsys notification --noredact | grep -cE "NotificationRecord\(0x[a-f0-9]+: pkg=com.appmintly.appmintly" > diag/notif-tap-count0.txt || echo 0 > diag/notif-tap-count0.txt
@@ -638,7 +645,7 @@ jobs:
             for i in $(seq 1 5); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap.xml >/dev/null 2>&1; grep -q "App Information\|About this app\|Featured App\|Official Release Links" diag/after-tap.xml 2>/dev/null && break; adb shell input swipe 540 1800 540 400 500 || true; sleep 3; done
             adb exec-out screencap -p > diag/after-tap.png || true
             adb shell dumpsys activity activities | grep -m2 "ResumedActivity" | tee diag/activity-after-tap.txt || true
-            if grep -q "App Information" diag/after-tap.xml && grep -q "1.0.4" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly app detail page: App Information section with v1.0.4 release notes)"; elif grep -q "Featured App\|Official Release Links" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: FAIL (tap activated the notification and MainActivity resumed, but the WebView showed the marketplace HOME page - home-only markers present, detail markers absent: the deep-link extra did not reach the activity on the notification tap path; see after-tap.png / logcat-full.txt START record)"; else echo "NOTIFICATION-TAP-DEEPLINK: INCONCLUSIVE (neither detail nor home markers found; see after-tap.xml / after-tap.png)"; fi
+            if grep -q "App Information" diag/after-tap.xml && grep -q "1.0.5" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: PASS (notification tap opened the appmintly app detail page: App Information section with v1.0.5 release notes - deep link delivered via intent data URI)"; elif grep -q "Featured App\|Official Release Links" diag/after-tap.xml; then echo "NOTIFICATION-TAP-DEEPLINK: FAIL (tap activated the notification and MainActivity resumed, but the WebView showed the marketplace HOME page - home-only markers present, detail markers absent: the deep-link extra did not reach the activity on the notification tap path; see after-tap.png / logcat-full.txt START record)"; else echo "NOTIFICATION-TAP-DEEPLINK: INCONCLUSIVE (neither detail nor home markers found; see after-tap.xml / after-tap.png)"; fi
 
             adb shell input keyevent KEYCODE_HOME || true
             adb shell am kill com.appmintly.appmintly || true
@@ -650,7 +657,7 @@ jobs:
             adb shell dumpsys window windows | grep -E "mCurrentFocus|mFocusedApp" | tee diag/window-forged.txt || true
             if grep -q "Discover" diag/forged-destination.xml && ! grep -q "Example Domain" diag/forged-destination.xml; then echo "FORGED-LINK-REJECTED: PASS (external deep link refused; marketplace home rendered instead)"; echo "FORGED-LINK-REJECTED" > diag/forged-verdict.txt; else echo "FORGED-LINK-REJECTED: FAIL or INCONCLUSIVE (no positive home-page marker in the dump; see forged-destination.xml/png)"; echo "FORGED-INCONCLUSIVE" > diag/forged-verdict.txt; fi
 
-            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"}]' '{"app-update:appmintly:1.0.4":1,"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-dedup.txt
+            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"}]' '{"app-update:appmintly:1.0.5":1,"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-dedup.txt
             grep -q "FIXTURE-APPLIED" diag/fixture-dedup.txt || { echo "FIXTURE-DEDUP: FAILED"; cat diag/fixture-dedup.txt; exit 1; }
             adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-dedup.txt
             sleep 15
@@ -659,7 +666,7 @@ jobs:
             grep -o 'app-update:[a-z]*:[0-9.]*' diag/prefs-dedup.xml | sort -u > diag/dedup-keys.txt || true
             if diff -q diag/delivered-keys.txt diag/dedup-keys.txt >/dev/null 2>&1 && grep -q 'name="lastPosted" value="0"' diag/prefs-dedup.xml; then echo "DEDUPLICATION: PASS (identical delivered keys after a second check; lastPosted=0; no re-delivery)"; else echo "DEDUPLICATION: FAIL (see dedup-keys.txt / prefs-dedup.xml)"; diff diag/delivered-keys.txt diag/dedup-keys.txt || true; fi
 
-            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"},{"appId":"pdfminifly","version":"2.1.0"}]' '{"app-update:appmintly:1.0.4":1,"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-offline.txt
+            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"},{"appId":"pdfminifly","version":"2.1.0"}]' '{"app-update:appmintly:1.0.5":1,"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-offline.txt
             grep -q "FIXTURE-APPLIED" diag/fixture-offline.txt || { echo "FIXTURE-OFFLINE: FAILED"; cat diag/fixture-offline.txt; exit 1; }
             adb shell svc wifi disable || true
             adb shell svc data disable || true
