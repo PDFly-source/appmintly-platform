@@ -216,95 +216,212 @@ jobs:
           print(f"FIXTURE-APPLIED mode={mode} master={master} tracked={tracked_json} delivered={delivered_json}")
           PY
           cat > "$RUNNER_TEMP/tap_node.py" <<'PY'
-          # Find a UI node in a uiautomator dump and tap (or swipe-dismiss) it.
-          #   text mode:   match text/content-desc exactly first, then substring
-          #   switch mode: match an android.widget.Switch whose text or
-          #                content-desc contains the needle (fallback: any
-          #                Switch on screen)
-          #   swipe mode:  find the node like text mode, then swipe it
-          #                horizontally to dismiss (notification rows)
-          # Dumps retry until they contain usable content — WebView
-          # accessibility trees are known to need retries, and a "successful"
-          # dump can still be an empty hierarchy.
-          import subprocess, sys, tempfile, time, re
+          # Locate a node in a uiautomator dump and interact with it.
+          #   text mode:   exact text/content-desc match first, then substring.
+          #                The tap targets the nearest CLICKABLE ancestor's
+          #                center (the notification card / button container),
+          #                not the text node itself - title-node taps in the
+          #                shade kept hitting the section header instead.
+          #   switch mode: android.widget.Switch containing the needle
+          #                (fallback: any Switch); taps the switch itself.
+          #   swipe / swipe-r: horizontal dismiss gesture across the row.
+          #   probe:       exit 0 if the needle is visible, 4 if not.
+          # Optional 3rd argv: path to save the raw dump used.
+          import subprocess, sys, tempfile, time
+          import xml.etree.ElementTree as ET
+
           needle = sys.argv[1]
           mode = sys.argv[2] if len(sys.argv) > 2 else "text"
+          save = sys.argv[3] if len(sys.argv) > 3 else None
+
+          def sh(*args):
+              try:
+                  return subprocess.run(["adb"] + list(args), capture_output=True, text=True, timeout=60)
+              except Exception:
+                  return None
+
           def get_dump():
+              sh("adb", "shell", "rm", "-f", "/sdcard/tapdump.xml")
               for _ in range(8):
-                  subprocess.run(["adb", "shell", "rm", "-f", "/sdcard/tapdump.xml"], capture_output=True)
-                  subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/tapdump.xml"], capture_output=True)
-                  tmp = tempfile.mktemp(suffix=".xml")
-                  subprocess.run(["adb", "pull", "/sdcard/tapdump.xml", tmp], capture_output=True)
-                  try:
-                      xml = open(tmp, encoding="utf-8", errors="replace").read()
-                  except FileNotFoundError:
-                      xml = ""
-                  if xml and "<hierarchy" in xml:
-                      has_content = re.search(r'text="[^"]+"', xml) or re.search(r'content-desc="[^"]+"', xml)
-                      if mode == "switch":
-                          if 'class="android.widget.Switch"' in xml:
-                              return xml
-                      elif has_content:
-                          return xml
-                  time.sleep(4)
-              return xml or ""
+                  r = sh("adb", "shell", "uiautomator", "dump", "/sdcard/tapdump.xml")
+                  if r and "dumped" in (r.stdout + r.stderr).lower():
+                      break
+                  time.sleep(2)
+              tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xml")
+              sh("adb", "pull", "/sdcard/tapdump.xml", tmp.name)
+              try:
+                  return open(tmp.name, encoding="utf-8", errors="replace").read()
+              except OSError:
+                  return ""
+
           xml = get_dump()
-          # Candidate scoring: lower (y, strategy) wins in switch mode —
-          #   the OS master notifications toggle is always the TOPMOST switch
-          #   on the app notification settings screen, above any channel
-          #   toggles. In text mode lower (strategy, y) wins:
-          #   strategy 0 = exact label match; 1 = substring match;
-          #   switch fallbacks: 2 = any labeled switch; 3 = any unlabeled
-          #   switch (OS master toggles are often unlabeled).
+          if save:
+              try:
+                  open(save, "w", encoding="utf-8").write(xml)
+              except OSError:
+                  pass
+
+          try:
+              root = ET.fromstring(xml)
+          except ET.ParseError:
+              print("TAP-NODE: empty/unparsable dump")
+              sys.exit(3)
+
+          parent = {c: p for p in root.iter() for c in p}
+          first = root.find(".//node")
+          screen_area = 1080 * 2400
+          if first is not None:
+              try:
+                  fx1, fy1, fx2, fy2 = map(int, first.get("bounds", "[0,0][1080,2400]").replace("][", ",").strip("[]").split(","))
+                  screen_area = max(1, (fx2 - fx1) * (fy2 - fy1))
+              except ValueError:
+                  pass
+
+          def bounds_of(node):
+              try:
+                  return map(int, node.get("bounds", "[0,0][0,0]").replace("][", ",").strip("[]").split(","))
+              except ValueError:
+                  return (0, 0, 0, 0)
+
           scored = []
-          for node in re.finditer(r'<node[^>]*?/?>', xml):
-              tag = node.group(0)
-              tm = re.search(r'text="([^"]*)"', tag)
-              cm = re.search(r'content-desc="([^"]*)"', tag)
-              dm = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', tag)
-              clm = re.search(r'class="([^"]*)"', tag)
-              if not dm:
-                  continue
-              text = tm.group(1) if tm else ""
-              desc = cm.group(1) if cm else ""
-              cls = clm.group(1) if clm else ""
-              x1, y1, x2, y2 = (int(dm.group(i)) for i in range(1, 5))
-              if x2 <= x1 or y2 <= y1:
-                  continue
-              label_field = (text + " " + desc).strip()
+          for n in root.iter("node"):
+              text = n.get("text", "")
+              desc = n.get("content-desc", "")
+              label = None
+              exact = False
               if mode == "switch":
-                  if "Switch" not in cls:
-                      continue
-                  low = label_field.lower()
-                  if label_field == needle:
-                      strat = 0
-                  elif needle.lower() in low:
-                      strat = 1
-                  elif label_field:
-                      strat = 2
-                  else:
-                      strat = 3
-                  scored.append(((((y1 + y2) // 2), strat), x1, y1, x2, y2, label_field or "switch"))
+                  if n.get("class", "") == "android.widget.Switch":
+                      for t in (text, desc):
+                          if t and needle in t:
+                              label, exact = t, True
+                              break
+                      if label is None:
+                          label = desc or text or "Switch"
               else:
                   for t in (text, desc):
                       if t == needle:
-                          scored.append(((0, (y1 + y2) // 2), x1, y1, x2, y2, t))
+                          label, exact = t, True
                           break
                       if t and needle in t:
-                          scored.append(((1, (y1 + y2) // 2), x1, y1, x2, y2, t))
+                          label = t
                           break
+              if label is None:
+                  continue
+              x1, y1, x2, y2 = bounds_of(n)
+              scored.append(((0 if exact else 1, (y1 + y2) // 2), n, label, (x1, y1, x2, y2)))
+
           if not scored:
-              print(f"NODE-NOT-FOUND: {needle}")
-              sys.exit(1)
+              print(f"TAP-NODE: needle not found: '{needle}'")
+              sys.exit(4)
+
           scored.sort(key=lambda c: c[0])
-          _, x1, y1, x2, y2, label = scored[0]
+          _, node, label, (x1, y1, x2, y2) = scored[0]
+
+          if mode == "probe":
+              print(f"FOUND: '{label}'")
+              sys.exit(0)
+
+          target = node
+          if mode == "text":
+              anc = node
+              hops = 0
+              while anc in parent and hops < 4:
+                  anc = parent[anc]
+                  hops += 1
+                  if anc.get("clickable") == "true":
+                      ax1, ay1, ax2, ay2 = bounds_of(anc)
+                      if (ax2 - ax1) * (ay2 - ay1) < 0.25 * screen_area:
+                          target = anc
+                          x1, y1, x2, y2 = ax1, ay1, ax2, ay2
+                      break
+
           x, y = (x1 + x2) // 2, (y1 + y2) // 2
-          if mode == "swipe":
-              subprocess.run(["adb", "shell", "input", "swipe", str(max(x2 - 60, x1 + 60)), str(y), str(x1 + 60), str(y), "350"], capture_output=True)
-              print(f"SWIPED: '{label}' at y={y} (dismiss gesture)")
+          if mode in ("swipe", "swipe-r"):
+              right = max(x2 - 60, x1 + 60)
+              if mode == "swipe":
+                  sh("adb", "shell", "input", "swipe", str(right), str(y), str(x1 + 60), str(y), "400")
+              else:
+                  sh("adb", "shell", "input", "swipe", str(x1 + 60), str(y), str(right), str(y), "400")
+              print(f"SWIPED {mode}: '{label}' at y={y}")
           else:
-              subprocess.run(["adb", "shell", "input", "tap", str(x), str(y)], capture_output=True)
-              print(f"TAPPED: '{label}' at {x},{y}")
+              sh("adb", "shell", "input", "tap", str(x), str(y))
+              src = "card" if target is not node else "node"
+              print(f"TAPPED: '{label}' at {x},{y} ({src} center)")
+          PY
+          cat > "$RUNNER_TEMP/dismiss_notification.py" <<'PY'
+          # Swipe-dismiss the given notification(s) from the shade with
+          # verification: left swipes first, then right, re-dumping between
+          # attempts; absent needles count as dismissed. Prints per-attempt
+          # status; exits 0 only if every needle ended absent.
+          import subprocess, sys, tempfile, time
+          import xml.etree.ElementTree as ET
+
+          needles = sys.argv[1:]
+
+          def sh(*args):
+              try:
+                  return subprocess.run(["adb"] + list(args), capture_output=True, text=True, timeout=60)
+              except Exception:
+                  return None
+
+          def dump():
+              sh("adb", "shell", "rm", "-f", "/sdcard/dismissdump.xml")
+              for _ in range(6):
+                  r = sh("adb", "shell", "uiautomator", "dump", "/sdcard/dismissdump.xml")
+                  if r and "dumped" in (r.stdout + r.stderr).lower():
+                      break
+                  time.sleep(2)
+              tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xml")
+              sh("adb", "pull", "/sdcard/dismissdump.xml", tmp.name)
+              try:
+                  return open(tmp.name, encoding="utf-8", errors="replace").read()
+              except OSError:
+                  return ""
+
+          def find(xml, needle):
+              try:
+                  root = ET.fromstring(xml)
+              except ET.ParseError:
+                  return None
+              for n in root.iter("node"):
+                  for t in (n.get("text", ""), n.get("content-desc", "")):
+                      if t and needle in t:
+                          try:
+                              x1, y1, x2, y2 = map(int, n.get("bounds", "[0,0][0,0]").replace("][", ",").strip("[]").split(","))
+                          except ValueError:
+                              continue
+                          return (x1, y1, x2, y2)
+              return None
+
+          print(f"DISMISS: targets={needles}")
+          sh("adb", "shell", "cmd", "statusbar", "expand-notifications")
+          time.sleep(3)
+          ok = True
+          for needle in needles:
+              gone = False
+              for attempt, direction in enumerate(["swipe-left", "swipe-left", "swipe-right", "swipe-right"]):
+                  b = find(dump(), needle)
+                  if b is None:
+                      print(f"DISMISSED/ABSENT: '{needle}' (before attempt {attempt})")
+                      gone = True
+                      break
+                  x1, y1, x2, y2 = b
+                  y = (y1 + y2) // 2
+                  if direction == "swipe-left":
+                      sh("adb", "shell", "input", "swipe", str(max(x2 - 60, x1 + 60)), str(y), str(x1 + 60), str(y), "400")
+                  else:
+                      sh("adb", "shell", "input", "swipe", str(x1 + 60), str(y), str(max(x2 - 60, x1 + 60)), str(y), "400")
+                  print(f"SWIPED {direction}: '{needle}' at y={y} (attempt {attempt})")
+                  time.sleep(3)
+                  if find(dump(), needle) is None:
+                      print(f"DISMISSED: '{needle}' ({direction})")
+                      gone = True
+                      break
+              if not gone:
+                  print(f"STILL-PRESENT: '{needle}' after all attempts")
+                  ok = False
+          sh("adb", "shell", "cmd", "statusbar", "collapse")
+          sys.exit(0 if ok else 1)
           PY
           cat > "$RUNNER_TEMP/evaluate_diag.py" <<'PY'
           # Authoritative gate: reads the diag evidence produced inside the
@@ -360,7 +477,7 @@ jobs:
           aa = rd("activity-after-tap.txt")
           tap_ok = "TAPPED" in rd("tap-notification.txt")
           detail_ok = ("App Information" in at_top or "App Information" in at) and ("com.appmintly.appmintly" in at_top or "com.appmintly.appmintly" in at)
-          check("Notification tap -> app detail page", tap_ok and detail_ok and "automatic update notifications" in at and "1.0.4" in (at + at_top) and "MainActivity" in aa, "real notification tapped in the tray; uiautomator shows the appmintly DETAIL page (APK Package metadata + v1.0.4 release notes after scrolling); resumed activity = com.appmintly.appmintly/.MainActivity")
+          check("Notification tap -> app detail page", tap_ok and detail_ok and "automatic update notifications" in at and "1.0.4" in (at + at_top) and "MainActivity" in aa, "single-card tray (leftovers dismissed), notification card tapped in the real shade; uiautomator shows the appmintly DETAIL page (App Information + package id + v1.0.4 release notes after scrolling); resumed activity = com.appmintly.appmintly/.MainActivity")
           fv = rd("forged-verdict.txt")
           fg = rd("forged-destination.xml")
           check("Forged deep-link rejected", "FORGED-LINK-REJECTED" in fv and "Discover" in fg and "Example Domain" not in fg, "am start with appmintly_deeplink=https://example.com/ loaded the marketplace home (positive home marker present), not the external site")
@@ -495,26 +612,22 @@ jobs:
             adb shell cmd statusbar collapse || true
             if grep -q "Update available" diag/notif-delivered.txt && grep -q "app-update:appmintly:1.0.4" diag/prefs-delivered.xml && grep -q "app-update:studyria:2.0.2" diag/prefs-delivered.xml; then echo "NOTIFICATION-TRAY: PASS (genuine OS notifications posted by the real engine)"; else echo "NOTIFICATION-TRAY: FAIL (see notif-delivered.txt / prefs-delivered.xml)"; cat diag/notif-delivered.txt || true; fi
             grep -o 'app-update:[a-z]*:[0-9.]*' diag/prefs-delivered.xml | sort -u > diag/delivered-keys.txt || true
+            python3 "$RUNNER_TEMP/dismiss_notification.py" "Update available: Studyria" "Update available: AppMintly" > diag/dismiss-leftovers.txt 2>&1 || echo "DISMISS-LEFTOVERS: some leftover notifications remain (see dismiss-leftovers.txt)"
+            adb shell dumpsys notification --noredact | grep -cE "NotificationRecord\(0x[a-f0-9]+: pkg=com.appmintly.appmintly" > diag/notif-tap-count0.txt || echo 0 > diag/notif-tap-count0.txt
 
             python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"}]' '{"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-tap.txt
             grep -q "FIXTURE-APPLIED" diag/fixture-tap.txt || { echo "FIXTURE-TAP: FAILED"; cat diag/fixture-tap.txt; exit 1; }
             adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-tap.txt
             sleep 15
-            adb shell cmd statusbar expand-notifications || true
-            sleep 3
-            for i in $(seq 1 4); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: Studyria" swipe > diag/dismiss-studyria.txt 2>&1 && break; echo "DISMISS-STUDYRIA: attempt $i failed"; sleep 5; done
-            sleep 3
-            adb shell cmd statusbar collapse || true
             adb shell dumpsys notification --noredact | grep -cE "NotificationRecord\(0x[a-f0-9]+: pkg=com.appmintly.appmintly" > diag/notif-tap-count.txt || echo 0 > diag/notif-tap-count.txt
             adb exec-out screencap -p > diag/tray-single.png || true
-            if grep -qx "1" diag/notif-tap-count.txt; then echo "TAP-SETUP: PASS (exactly one AppMintly notification in the tray; the earlier Studyria notification dismissed by swipe)"; else echo "TAP-SETUP: tray does not hold exactly one notification (see notif-tap-count.txt / dismiss-studyria.txt)"; cat diag/notif-tap-count.txt || true; fi
+            if grep -qx "1" diag/notif-tap-count.txt; then echo "TAP-SETUP: PASS (exactly one AppMintly notification in the tray; delivery leftovers dismissed first, see dismiss-leftovers.txt)"; else echo "TAP-SETUP: tray does not hold exactly one notification (see notif-tap-count.txt / dismiss-leftovers.txt)"; cat diag/notif-tap-count.txt || true; fi
             adb shell cmd statusbar expand-notifications || true
             sleep 3
-            for i in $(seq 1 6); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: A" > diag/tap-notification.txt 2>&1 && break; echo "NOTIFICATION-TAP: attempt $i failed"; sleep 6; done
+            for i in $(seq 1 6); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: AppMintly" text "diag/tap-dump.xml" > diag/tap-notification.txt 2>&1 && break; echo "NOTIFICATION-TAP: attempt $i failed"; sleep 6; done
             if grep -q "TAPPED" diag/tap-notification.txt; then echo "NOTIFICATION-TAP: tapped the single notification in the real tray (see tap-notification.txt)"; else echo "NOTIFICATION-TAP: BLOCKED (could not tap the notification; see tray-single.png / notif-tap-count.txt)"; fi
             adb shell cmd statusbar collapse || true
             sleep 25
-            for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap-top.xml >/dev/null 2>&1; grep -qE "App Information|com.appmintly.appmintly" diag/after-tap-top.xml 2>/dev/null && break; adb shell input swipe 540 1200 540 1210 200 || true; sleep 6; done
             adb exec-out screencap -p > diag/after-tap-top.png || true
             adb shell input swipe 540 1800 540 400 500 || true
             sleep 3
