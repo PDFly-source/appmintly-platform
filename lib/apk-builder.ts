@@ -27,6 +27,19 @@ export interface ApkBuildOptions {
   packageId?: string;
   fileName?: string;
   authorized: boolean;
+  /**
+   * TEST-ONLY (Phase 12.14): overrides the native update alarm interval in
+   * milliseconds for a temporary test build. Production builds leave this
+   * unset, which keeps the production six-hour interval byte-identical.
+   */
+  alarmIntervalMs?: number;
+  /**
+   * TEST-ONLY (Phase 12.14): seeds the update-check fixture (master on,
+   * stale tracked versions, empty delivered) into native prefs on the
+   * first alarm fire so a genuine eligible event exists against the
+   * unchanged production catalog. Production builds leave this unset.
+   */
+  testFixtureSeed?: boolean;
 }
 
 export type BuildState = 'queued' | 'building' | 'signing' | 'validating' | 'uploading' | 'completed' | 'failed';
@@ -342,6 +355,16 @@ export function getBuildJob(buildId: string): BuildJob | undefined {
  * 9. Publishing release
  * 10. Ready to download
  */
+// Phase 12.14 TEST-ONLY fixture: stale tracked versions against the live
+// production catalog (appmintly 1.0.5, studyria 2.0.2 published) so a check
+// finds a genuine eligible update event without touching production data.
+// Used ONLY when options.testFixtureSeed is explicitly set by the test
+// workflow; production builds never reference it.
+const TEST_FIXTURE_TRACKED = [
+  { appId: 'appmintly', version: '1.0.3' },
+  { appId: 'studyria', version: '2.0.1' },
+];
+
 export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   if (process.env.APK_ARTIFACT_ONLY !== '1' || !process.env.GITHUB_ACTIONS) {
     throw new Error('APK compilation must run in the configured GitHub Actions Android runner.');
@@ -357,6 +380,16 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   const buildMode = options.buildMode || 'webview';
   const versionName = options.version || '1.0.0';
   const versionCode = options.versionCode || semanticVersionToCode(versionName);
+  // Phase 12.14 fail-closed guard: test-only options are accepted only for
+  // the native updates package and never leak into production builds.
+  if ((options.alarmIntervalMs !== undefined || options.testFixtureSeed === true)
+      && packageId !== 'com.appmintly.appmintly') {
+    throw new Error('Test-only alarm options are only valid for the native updates package (com.appmintly.appmintly).');
+  }
+  if (options.alarmIntervalMs !== undefined
+      && (!Number.isInteger(options.alarmIntervalMs) || options.alarmIntervalMs < 60000)) {
+    throw new Error('Test-only alarm interval must be an integer >= 60000 ms.');
+  }
   const appName = options.name.trim();
   const themeColor = options.themeColor || '#17191C';
   const backgroundColor = options.backgroundColor || '#FFFDF8';
@@ -1034,7 +1067,7 @@ public final class UpdateEngine {
     public static final String ACTION_CHECK_UPDATES = "${packageId}.ACTION_CHECK_UPDATES";
     private static final String PREFS = "appmintly_updates";
     private static final String CHANNEL_ID = "appmintly_updates";
-    private static final long CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L;
+    private static final long CHECK_INTERVAL_MS = ${options.alarmIntervalMs !== undefined ? `${options.alarmIntervalMs}L` : '6L * 60L * 60L * 1000L'};
     private static final String CATALOG_URL = "${escapeJava(nativeCatalogUrl)}";
     private static final String OWNED_PREFIX = "${escapeJava(nativeDeepLinkPrefix)}";
     private static final int CONNECT_TIMEOUT_MS = 15000;
@@ -1146,10 +1179,32 @@ public final class UpdateEngine {
 
     /* ---------------- core check ---------------- */
 
+${options.testFixtureSeed === true ? `    /* TEMPORARY TEST BUILD ONLY (Phase 12.14): seeds the update-check
+     * fixture before the master gate, because the WebView preference sync
+     * (web -> native) would otherwise overwrite it. Seeded exactly once;
+     * the real engine, gating, dedup and delivery paths stay untouched. */
+    private static void seedTestFixture(Context ctx) {
+        try {
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            if (p.getBoolean("test_fixture_seeded", false)) return;
+            SharedPreferences.Editor e = p.edit();
+            e.putBoolean("master", true);
+            e.putString("tracked", "${escapeJava(JSON.stringify(TEST_FIXTURE_TRACKED))}");
+            e.putString("delivered", "{}");
+            e.putBoolean("test_fixture_seeded", true);
+            e.apply();
+        } catch (Throwable ignored) {
+        }
+    }
+
     static void doCheck(Context ctx) throws Exception {
+        seedTestFixture(ctx);
         if (!isEnabled(ctx)) {
             return;
-        }
+        }` : `    static void doCheck(Context ctx) throws Exception {
+        if (!isEnabled(ctx)) {
+            return;
+        }`}
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) {
             return;

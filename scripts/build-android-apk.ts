@@ -13,6 +13,17 @@ async function main() {
   const slug = appName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
   const version = required('VERSION_NAME');
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION_NAME must be numeric x.y.z');
+  // Phase 12.14 TEST-ONLY inputs: all three are optional and default to
+  // production behavior (semantic versionCode, 6h alarm, no fixture seed).
+  // Only the temporary test workflow on the test branch sets them.
+  const rawVersionCode = process.env.VERSION_CODE;
+  if (rawVersionCode !== undefined && !/^\d+$/.test(rawVersionCode)) {
+    throw new Error('VERSION_CODE must be a positive integer');
+  }
+  const rawAlarmInterval = process.env.APK_ALARM_INTERVAL_MS;
+  if (rawAlarmInterval !== undefined && !/^\d+$/.test(rawAlarmInterval)) {
+    throw new Error('APK_ALARM_INTERVAL_MS must be a positive integer of milliseconds');
+  }
   const job = await runApkBuild({
     appId: slug, slug, name: appName, version,
     launchUrl: required('SOURCE_URL'), packageId: required('PACKAGE_ID'),
@@ -20,6 +31,9 @@ async function main() {
     themeColor: process.env.THEME_COLOR || undefined,
     backgroundColor: process.env.BACKGROUND_COLOR || undefined,
     buildMode: 'webview', authorized: true,
+    versionCode: rawVersionCode !== undefined ? Number(rawVersionCode) : undefined,
+    alarmIntervalMs: rawAlarmInterval !== undefined ? Number(rawAlarmInterval) : undefined,
+    testFixtureSeed: process.env.APK_TEST_FIXTURE_SEED === '1' || process.env.APK_TEST_FIXTURE_SEED === 'true',
   });
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {
