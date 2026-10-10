@@ -184,28 +184,32 @@ jobs:
             curl -fsSL -o released/AppMintly-1.0.5.apk "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.5/AppMintly-1.0.5.apk"
             curl -fsSL -o released/AppMintly-1.0.6.apk "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.6/AppMintly-1.0.6.apk"
             pip install --quiet androguard
-            python3 - << 'PY'
-            import hashlib, logging
-            logging.disable(logging.CRITICAL)
-            try:
-                from loguru import logger as _l; _l.remove()
-            except Exception:
-                pass
-            from androguard.core.apk import APK
-            EXPECTED = "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368"
-            for f in ("released/AppMintly-1.0.5.apk", "released/AppMintly-1.0.6.apk"):
-                a = APK(f)
-                cert = hashlib.sha256((a.get_certificates_der_v2() or a.get_certificates_der())[0]).hexdigest()
-                assert cert == EXPECTED, f"{f}: signer cert mismatch {cert}"
-                assert a.get_package() == "com.appmintly.appmintly"
-                print(f"RELEASED {f}: package OK, signerCert sha256={cert}")
-            a6 = APK("released/AppMintly-1.0.6.apk")
-            assert a6.get_androidversion_code() == "10006", a6.get_androidversion_code()
-            assert a6.get_androidversion_name() == "1.0.6", a6.get_androidversion_name()
-            print("CERT CONTINUITY: PASS (1.0.5 and 1.0.6 signed by the same production identity)")
-            print("sha256(1.0.6) =", hashlib.sha256(open("released/AppMintly-1.0.6.apk","rb").read()).hexdigest())
-            PY
           fi
+          cat > released-check.py << 'PY'
+          import hashlib, logging, os
+          logging.disable(logging.CRITICAL)
+          try:
+              from loguru import logger as _l; _l.remove()
+          except Exception:
+              pass
+          if os.environ.get('MODE') != 'released':
+              print('candidate mode: released-asset cert checks skipped')
+              raise SystemExit(0)
+          from androguard.core.apk import APK
+          EXPECTED = "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368"
+          for f in ("released/AppMintly-1.0.5.apk", "released/AppMintly-1.0.6.apk"):
+              a = APK(f)
+              cert = hashlib.sha256((a.get_certificates_der_v2() or a.get_certificates_der())[0]).hexdigest()
+              assert cert == EXPECTED, f"{f}: signer cert mismatch {cert}"
+              assert a.get_package() == "com.appmintly.appmintly"
+              print(f"RELEASED {f}: package OK, signerCert sha256={cert}")
+          a6 = APK("released/AppMintly-1.0.6.apk")
+          assert a6.get_androidversion_code() == "10006", a6.get_androidversion_code()
+          assert a6.get_androidversion_name() == "1.0.6", a6.get_androidversion_name()
+          print("CERT CONTINUITY: PASS (1.0.5 and 1.0.6 signed by the same production identity)")
+          print("sha256(1.0.6) =", hashlib.sha256(open("released/AppMintly-1.0.6.apk","rb").read()).hexdigest())
+          PY
+          MODE="$MODE" python3 released-check.py
       - name: Device validation (Android 16 emulator)
         uses: reactivecircus/android-emulator-runner@v2
         with:
