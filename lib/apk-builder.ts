@@ -1645,6 +1645,12 @@ public class BootReceiver extends BroadcastReceiver {
 }
 `;
         await fs.promises.writeFile(path.join(srcDir, 'BootReceiver.java'), bootReceiverJava, 'utf8');
+        if (options.keepGeneratedSource === true) {
+          // TEST-ONLY (Phase 12.14): production builds never set this flag.
+          await fs.promises.writeFile(path.join('evidence', 'generated-UpdateEngine.java'), updateEngineJava, 'utf8');
+          await fs.promises.writeFile(path.join('evidence', 'generated-AlarmReceiver.java'), alarmReceiverJava, 'utf8');
+          await fs.promises.writeFile(path.join('evidence', 'generated-BootReceiver.java'), bootReceiverJava, 'utf8');
+        }
       }
 
 

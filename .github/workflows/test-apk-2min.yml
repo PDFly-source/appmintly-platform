@@ -104,11 +104,13 @@ jobs:
           test -s "dist/apk/$APP_FILE"
           cp "dist/apk/$APP_FILE" "$RUNNER_TEMP/guard-default.apk"
           rm -f "dist/apk/$APP_FILE" dist/apk/validation.json
-          test -s evidence/generated-MainActivity.java
-          cp evidence/generated-MainActivity.java "$RUNNER_TEMP/guard-default-MainActivity.java"
+          for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do
+            test -s "evidence/generated-$f.java"
+            cp "evidence/generated-$f.java" "$RUNNER_TEMP/guard-default-$f.java"
+          done
           # Production defaults MUST be intact on this branch.
-          grep -q 'CHECK_INTERVAL_MS = 6L \* 60L \* 60L \* 1000L' "$RUNNER_TEMP/guard-default-MainActivity.java"
-          ! grep -q 'seedTestFixture' "$RUNNER_TEMP/guard-default-MainActivity.java"
+          grep -q 'CHECK_INTERVAL_MS = 6L \* 60L \* 60L \* 1000L' "$RUNNER_TEMP/guard-default-UpdateEngine.java"
+          ! grep -q 'seedTestFixture' "$RUNNER_TEMP/guard-default-UpdateEngine.java"
           BADGING="$(aapt dump badging "$RUNNER_TEMP/guard-default.apk")"
           echo "$BADGING" | grep -E "^package: name='com.appmintly.appmintly' versionCode='10005'"
           echo 'GUARD PASS: production-default config is byte-identical on this branch (6h interval, no fixture).'
@@ -127,11 +129,13 @@ jobs:
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
           APP_FILE="AppMintlyTest-1.0.5.apk"
           test -s "dist/apk/$APP_FILE"
-          test -s evidence/generated-MainActivity.java
-          cp evidence/generated-MainActivity.java "$RUNNER_TEMP/test-build-MainActivity.java"
-          grep -q 'CHECK_INTERVAL_MS = 120000L' "$RUNNER_TEMP/test-build-MainActivity.java"
-          grep -q 'seedTestFixture' "$RUNNER_TEMP/test-build-MainActivity.java"
-          grep -q 'test_fixture_seeded' "$RUNNER_TEMP/test-build-MainActivity.java"
+          for f in MainActivity UpdateEngine AlarmReceiver BootReceiver; do
+            test -s "evidence/generated-$f.java"
+            cp "evidence/generated-$f.java" "$RUNNER_TEMP/test-build-$f.java"
+          done
+          grep -q 'CHECK_INTERVAL_MS = 120000L' "$RUNNER_TEMP/test-build-UpdateEngine.java"
+          grep -q 'seedTestFixture' "$RUNNER_TEMP/test-build-UpdateEngine.java"
+          grep -q 'test_fixture_seeded' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           echo "APP_FILE=$APP_FILE" >> "$GITHUB_ENV"
 
       - name: 'ISOLATION PROOF: test build differs from production default ONLY in interval + seed'
@@ -141,19 +145,23 @@ jobs:
           python3 - "$RUNNER_TEMP" <<'PY'
           import re, sys, os
           rt = sys.argv[1]
-          g = open(os.path.join(rt, 'guard-default-MainActivity.java')).read()
-          t = open(os.path.join(rt, 'test-build-MainActivity.java')).read()
+          g = open(os.path.join(rt, 'guard-default-UpdateEngine.java')).read()
+          t = open(os.path.join(rt, 'test-build-UpdateEngine.java')).read()
           # Remove the seed helper method block.
           t2 = re.sub(r'    /\* TEMPORARY TEST BUILD ONLY[\s\S]*?\n    \}\n\n', '', t, count=1)
-          assert t2 != t, 'seed helper block not found in test build Java'
+          assert t2 != t, 'seed helper block not found in test build UpdateEngine.java'
           # Remove the seed call inside doCheck.
           t2 = t2.replace('        seedTestFixture(ctx);\n', '', 1)
           # Normalize the interval constant back to the production expression.
           t2 = t2.replace('CHECK_INTERVAL_MS = 120000L;', 'CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L;', 1)
           assert t2 == g, 'UNEXPECTED DIFFERENCE beyond interval + fixture seed!'
           print('ISOLATION PASS: after removing the seed + restoring the interval,')
-          print('the generated MainActivity.java is byte-identical to the production default.')
+          print('the generated UpdateEngine.java is byte-identical to the production default.')
           PY
+          for f in MainActivity AlarmReceiver BootReceiver; do
+            cmp "$RUNNER_TEMP/guard-default-$f.java" "$RUNNER_TEMP/test-build-$f.java"
+          done
+          echo 'ISOLATION PASS: MainActivity/AlarmReceiver/BootReceiver are byte-identical across both passes.'
 
       - name: Validate the test APK
         shell: bash
@@ -188,8 +196,14 @@ jobs:
             echo '- Signing: THROWAWAY key generated in this runner: SHA-256 digest '"$CERT"''
             echo '- This build was never a release and must never be installed by anyone but the owner.'
           } > dist/apk/README-test-build.md
-          cp "$RUNNER_TEMP/guard-default-MainActivity.java" dist/apk/evidence-guard-default-MainActivity.java
-          cp "$RUNNER_TEMP/test-build-MainActivity.java" dist/apk/evidence-test-build-MainActivity.java
+          cp "$RUNNER_TEMP"/guard-default-*.java dist/apk/
+          cp "$RUNNER_TEMP"/test-build-*.java dist/apk/
+          for f in "$RUNNER_TEMP"/guard-default-*.java; do
+            mv "dist/apk/$(basename "$f")" "dist/apk/evidence-$(basename "$f")"
+          done
+          for f in "$RUNNER_TEMP"/test-build-*.java; do
+            mv "dist/apk/$(basename "$f")" "dist/apk/evidence-$(basename "$f")"
+          done
           echo "TEST_APK_SHA256=$SHA256" >> "$GITHUB_ENV"
           {
             echo '### TEMPORARY TEST BUILD - NOT FOR PRODUCTION'
@@ -214,8 +228,8 @@ jobs:
             dist/apk/AppMintlyTest-1.0.5.apk
             dist/apk/validation.json
             dist/apk/README-test-build.md
-            dist/apk/evidence-guard-default-MainActivity.java
-            dist/apk/evidence-test-build-MainActivity.java
+            dist/apk/evidence-guard-default-*.java
+            dist/apk/evidence-test-build-*.java
 
       - name: Cleanup guard build outputs
         shell: bash
