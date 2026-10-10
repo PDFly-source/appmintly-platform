@@ -306,5 +306,15 @@ console.log('\n[notification-engine] history pruning & guards');
   ok('corrupted state re-initializes without an event flood', corrupt.events.length === 0 && corrupt.initializedBaseline === true);
 }
 
+// --- Phase 12.5 regression: notification-tap deep link survives the API 36
+// intent rewrite (source-presence check on the generated-Java template). ---
+{
+  const src = require('fs').readFileSync('lib/apk-builder.ts', 'utf8');
+  ok('generated UpdateEngine carries the deep link as intent DATA (setData)', src.includes('open.setData(Uri.parse(deepLink));'));
+  ok('generated UpdateEngine template imports android.net.Uri', /import android\.net\.Uri;/.test(src));
+  ok('generated MainActivity falls back to intent data in onCreate', /if \(deepLink == null && getIntent\(\)\.getDataString\(\) != null\)/.test(src));
+  ok('generated MainActivity falls back to intent data in onNewIntent', /if \(deepLink == null && intent\.getDataString\(\) != null\)/.test(src));
+}
+
 console.log(`\n[notification-engine] ${pass} passed, ${fail} failed\n`);
 if (fail > 0) process.exit(1);

@@ -848,6 +848,9 @@ ${
         // Notification deep link (cold start): only the app's own ownership
         // prefix is ever honored.
         String deepLink = getIntent().getStringExtra(UpdateEngine.EXTRA_DEEP_LINK);
+        if (deepLink == null && getIntent().getDataString() != null) {
+            deepLink = getIntent().getDataString();
+        }
         if (deepLink != null && deepLink.startsWith(ALLOWED_ORIGIN)) {
             webView.loadUrl(deepLink);
         } else {
@@ -867,6 +870,9 @@ ${
         setIntent(intent);
         if (intent == null || webView == null) return;
         String deepLink = intent.getStringExtra(UpdateEngine.EXTRA_DEEP_LINK);
+        if (deepLink == null && intent.getDataString() != null) {
+            deepLink = intent.getDataString();
+        }
         if (deepLink != null && deepLink.startsWith(ALLOWED_ORIGIN)) {
             webView.loadUrl(deepLink);
         }
@@ -997,6 +1003,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.SystemClock;
 import org.json.JSONArray;
@@ -1467,8 +1474,12 @@ public final class UpdateEngine {
             open.setAction(Intent.ACTION_MAIN);
             open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             // Deep link is validated against the ownership prefix before
-            // it is ever honored by MainActivity.
+            // it is ever honored by MainActivity. It is carried BOTH as an
+            // extra and as the intent data: on API 36 the notification-tap
+            // launch path rewrites the intent (act=MAIN cat=[LAUNCHER]) and
+            // drops extras, while the data URI survives.
             open.putExtra(EXTRA_DEEP_LINK, deepLink);
+            open.setData(Uri.parse(deepLink));
             int piFlags = PendingIntent.FLAG_UPDATE_CURRENT;
             if (Build.VERSION.SDK_INT >= 23) piFlags |= PendingIntent.FLAG_IMMUTABLE;
             PendingIntent contentIntent = PendingIntent.getActivity(
