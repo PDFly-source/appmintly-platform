@@ -362,6 +362,7 @@ presigned-build:
       - uses: actions/download-artifact@v4
         with:
           name: icon-fix-candidate
+          path: candidate/
       - name: Read validation mode
         id: readmode
         shell: bash
@@ -371,7 +372,6 @@ presigned-build:
         with:
           name: icon-fix-presigned
           path: presigned
-          path: candidate/
       - name: Select APK by mode
         shell: bash
         run: |
