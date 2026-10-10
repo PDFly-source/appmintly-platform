@@ -1,25 +1,29 @@
-name: Temporary 2-minute alarm smoke test APK
-run-name: "TEMPORARY TEST BUILD - 2-minute alarm smoke (NOT FOR PRODUCTION)"
+name: Immediate native checker diagnostic APK (Phase 12.16)
+run-name: "TEMPORARY TEST BUILD - immediate native checker diagnostic (NOT FOR PRODUCTION)"
 
-# Phase 12.14: builds a THROWAWAY-signed, ARTIFACT-ONLY test APK that
-# exercises the real native update alarm/notification engine with a
-# 2-minute interval and a seeded first-fire fixture. Never creates a
-# release, never publishes, never touches the production catalog, and
-# never accesses production signing secrets. Runs only from this test
-# branch via manual dispatch.
+# Phase 12.16: builds a THROWAWAY-signed, ARTIFACT-ONLY diagnostic APK
+# that triggers the REAL native update checker immediately (2-minute
+# WAKEUP alarm, test build only) with a self-healing fixture seed:
+# fixture inputs (master on, stale tracked versions) re-asserted before
+# the gate on every fire, the delivered dedup map seeded once and then
+# preserved - so every tick after the first runs the real gates, catalog
+# fetch, version detection, DEDUP and delivery. Never creates a release,
+# never publishes, never touches the production catalog, never accesses
+# production signing secrets, and never merges toward main. Runs only
+# from this test branch (the file exists nowhere else).
 on:
   # Triggers only on pushes to THIS test branch (manual dispatch requires
   # the workflow to also exist on main, which is forbidden here).
   push:
     branches:
-      - test/alarm-smoke-2min
+      - test/native-checker-12.16
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: alarm-smoke-test-apk
+  group: native-checker-12-16-test-apk
   cancel-in-progress: false
 
 env:
@@ -136,6 +140,11 @@ jobs:
           grep -q 'CHECK_INTERVAL_MS = 120000L' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           grep -q 'seedTestFixture' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           grep -q 'test_fixture_seeded' "$RUNNER_TEMP/test-build-UpdateEngine.java"
+          # Phase 12.16: self-healing seed - fixture re-asserted every fire,
+          # delivered dedup map preserved after the first seed.
+          grep -q 'Phase 12.16' "$RUNNER_TEMP/test-build-UpdateEngine.java"
+          grep -q 'if (first) e.putString("delivered", "{}");' "$RUNNER_TEMP/test-build-UpdateEngine.java"
+          grep -q 'boolean first = !p.getBoolean("test_fixture_seeded", false);' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           # Phase 12.15: the seed call moved from doCheck into AlarmReceiver.
           grep -q 'ELAPSED_REALTIME_WAKEUP' "$RUNNER_TEMP/test-build-UpdateEngine.java"
           ! grep -q 'seedTestFixture(ctx);' "$RUNNER_TEMP/test-build-UpdateEngine.java"
@@ -172,9 +181,9 @@ jobs:
           rt = sys.argv[1]
           g = open(os.path.join(rt, 'guard-default-AlarmReceiver.java')).read()
           t = open(os.path.join(rt, 'test-build-AlarmReceiver.java')).read()
-          # Phase 12.15: the ONLY test-build delta is the seed block before
+          # Phase 12.16: the ONLY test-build delta is the seed block before
           # the master gate. Strip it with a regex and require byte-equality.
-          pat = r' +// TEMPORARY TEST BUILD ONLY \(Phase 12\.15\)[\s\S]*?UpdateEngine\.seedTestFixture\(context\);\n'
+          pat = r' +// TEMPORARY TEST BUILD ONLY \(Phase 12\.16\)[\s\S]*?UpdateEngine\.seedTestFixture\(context\);\n'
           t2 = re.sub(pat, '', t, count=1)
           assert t2 != t, 'seed call block not found in test-build AlarmReceiver.java'
           assert t2 == g, 'UNEXPECTED DIFFERENCE in AlarmReceiver beyond the seed block!'
@@ -212,7 +221,7 @@ jobs:
             echo '- Package: com.appmintly.appmintly (production package required for the real engine)'
             echo '- versionCode: 90099 / versionName: 1.0.5 (test labeling)'
             echo '- Alarm interval: 120000 ms (test only; production default stays 6h - proven by the guard pass)'
-            echo '- Fixture seed: master on, tracked appmintly@1.0.3 + studyria@2.0.1, delivered empty (first fire only)'
+            echo '- Fixture seed: self-healing - master on + tracked appmintly@1.0.3 + studyria@2.0.1 re-asserted every fire; delivered dedup map emptied once then preserved'
             echo '- Signing: THROWAWAY key generated in this runner: SHA-256 digest '"$CERT"''
             echo '- This build was never a release and must never be installed by anyone but the owner.'
           } > dist/apk/README-test-build.md
@@ -235,13 +244,14 @@ jobs:
             echo '| Package | com.appmintly.appmintly (required for the real engine) |'
             echo '| versionCode / versionName | 90099 / 1.0.5 |'
             echo '| Alarm interval | 2 minutes (test only; production default 6h verified intact) |'
+            echo '| Fixture | self-healing seed; delivered dedup map preserved after first fire |'
             echo '| Signing | THROWAWAY runner-generated key |'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload short-lived test artifact
         uses: actions/upload-artifact@v4
         with:
-          name: appmintly-alarm-test-apk
+          name: appmintly-native-checker-12-16-apk
           retention-days: 7
           if-no-files-found: error
           path: |

@@ -1210,22 +1210,24 @@ public final class UpdateEngine {
 
     /* ---------------- core check ---------------- */
 
-${options.testFixtureSeed === true ? `    /* TEMPORARY TEST BUILD ONLY (Phase 12.14): seeds the update-check
-     * fixture. Phase 12.15 root cause: the call must run in
-     * AlarmReceiver.onReceive BEFORE the master gate - the live web page
-     * syncs the web DEFAULT_PREFS (master=false, tracked=[]) into native
-     * prefs on every load, and AlarmReceiver's own isEnabled check aborted
-     * the check before the old doCheck-time seed could ever run. Seeded
-     * exactly once; the real engine, gating, dedup and delivery paths stay
-     * untouched. */
+${options.testFixtureSeed === true ? `    /* TEMPORARY TEST BUILD ONLY (Phase 12.16): seeds the update-check
+     * fixture from AlarmReceiver.onReceive BEFORE the master gate on EVERY
+     * fire. The live web page resyncs web prefs (master=false, tracked=[])
+     * into native prefs on every load, which would otherwise gate the check
+     * off after any page reload. The seed re-asserts ONLY the fixture
+     * inputs (master on, stale tracked versions); the delivered dedup map
+     * is emptied exactly ONCE and then preserved, so every tick after the
+     * first runs the REAL engine end to end - gates, catalog fetch,
+     * version detection, dedup, notification delivery. The engine code
+     * itself stays untouched. */
     static void seedTestFixture(Context ctx) {
         try {
             SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-            if (p.getBoolean("test_fixture_seeded", false)) return;
+            boolean first = !p.getBoolean("test_fixture_seeded", false);
             SharedPreferences.Editor e = p.edit();
             e.putBoolean("master", true);
             e.putString("tracked", "${escapeJava(JSON.stringify(TEST_FIXTURE_TRACKED))}");
-            e.putString("delivered", "{}");
+            if (first) e.putString("delivered", "{}");
             e.putBoolean("test_fixture_seeded", true);
             e.apply();
         } catch (Throwable ignored) {
@@ -1625,9 +1627,11 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
         if (intent == null || !UpdateEngine.ACTION_CHECK_UPDATES.equals(intent.getAction())) return;
-${options.testFixtureSeed === true ? `        // TEMPORARY TEST BUILD ONLY (Phase 12.15): seed the fixture BEFORE the
-        // master gate - the web page's preference sync keeps master=false
-        // until the user opts in, so a doCheck-time seed was unreachable.
+${options.testFixtureSeed === true ? `        // TEMPORARY TEST BUILD ONLY (Phase 12.16): seed the fixture BEFORE
+        // the master gate on every fire - the web page's preference sync
+        // keeps re-writing master=false/tracked=[] on every page load.
+        // Only the fixture inputs are re-asserted; the delivered dedup map
+        // is preserved, so repeat fires exercise the real dedup path.
         UpdateEngine.seedTestFixture(context);
 ` : ''}        if (!UpdateEngine.isEnabled(context)) return;
         final PendingResult result = goAsync();
