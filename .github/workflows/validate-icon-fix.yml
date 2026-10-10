@@ -163,6 +163,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
+      - name: Install python3-pil
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-pil
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -218,70 +220,82 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            set -euo pipefail
-            mkdir -p diag
-            adb root || true
-            timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
-            adb shell settings put global window_animation_scale 0.0 || true
-            adb shell settings put global transition_animation_scale 0.0 || true
-            adb shell settings put global animator_duration_scale 0.0 || true
-            if [ "$MODE" = "released" ]; then
-              adb install released/AppMintly-1.0.5.apk | tee diag/install-1.0.5.txt
-              grep -q Success diag/install-1.0.5.txt
-              adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-before-upgrade.txt || true
-              adb install -r released/AppMintly-1.0.6.apk | tee diag/install-1.0.6.txt
-              grep -q Success diag/install-1.0.6.txt && echo "UPGRADE-OVER-INSTALL: PASS (1.0.6 installed over 1.0.5, NO uninstall)"
-              adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 | tee diag/pkg-after-upgrade.txt
-              grep -q "versionCode=10006" diag/pkg-after-upgrade.txt && echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
-            else
-              adb install candidate/AppMintly-1.0.6-candidate.apk | tee diag/install-candidate.txt
-              grep -q Success diag/install-candidate.txt && echo "CANDIDATE INSTALL: PASS"
-              adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 | tee diag/pkg-candidate.txt
-              grep -q "versionCode=10006" diag/pkg-candidate.txt && echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
-            fi
-            adb shell input keyevent KEYCODE_WAKEUP || true
-            adb shell am start -n com.appmintly.appmintly/.MainActivity | tee diag/launch.txt
-            sleep 25
-            adb exec-out screencap -p > diag/app-launched.png
-            adb shell uiautomator dump /sdcard/appdump.xml >/dev/null 2>&1 || true
-            adb pull /sdcard/appdump.xml diag/appdump.xml >/dev/null 2>&1 || true
-            grep -q "AppMintly" diag/appdump.xml && echo "APP LAUNCH: PASS (marketplace content rendered)" || echo "APP LAUNCH: content check inconclusive (screencap saved as evidence)"
-            adb shell input keyevent KEYCODE_HOME || true
-            sleep 2
-            adb shell input swipe 540 2200 540 400 250 || true
-            sleep 3
-            adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1 || true
-            adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1 || true
-            adb exec-out screencap -p > diag/drawer.png
-            python3 - << 'PY'
-            import re
-            from PIL import Image
-            xml = open('diag/drawerdump.xml', encoding='utf-8', errors='replace').read()
-            m = None
-            for match in re.finditer(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
-                x1, y1, x2, y2 = map(int, match.groups())
-                node = xml[max(0, match.start()-1200):match.start()]
-                if ('text="AppMintly"' in node or 'content-desc="AppMintly"' in node) and y2 < 800:
-                    m = (x1, y1, x2, y2)
-                    break
-            assert m, 'AppMintly icon node not found in the drawer dump - see diag/drawer.png'
-            x1, y1, x2, y2 = m
-            side = max(1, x2 - x1)
-            im = Image.open('diag/drawer.png').convert('RGB')
-            ix1, iy1 = x1, max(0, y1 - int(side * 1.9))
-            ix2, iy2 = x2, max(1, y1 - int(side * 0.15))
-            crop = im.crop((ix1, iy1, ix2, iy2))
-            crop.save('diag/launcher-icon-region.png')
-            px = list(crop.getdata()); n = len(px)
-            dark = sum(1 for p in px if p[0] < 60 and p[1] < 60 and p[2] < 60)
-            cream = sum(1 for p in px if abs(p[0]-252)+abs(p[1]-243)+abs(p[2]-229) < 45)
-            light = sum(1 for p in px if p[0] > 200 and p[1] > 200 and p[2] > 190)
-            print(f'launcher icon region: dark {dark/n:.1%}, cream {cream/n:.1%}, light {light/n:.1%}')
-            assert dark/n < 0.15, f'generic dark letter tile still rendered ({dark/n:.1%} dark)'
-            assert (cream + light)/n > 0.35, 'official cream logo not visible in the launcher icon'
-            print('LAUNCHER ICON ON DEVICE: PASS (cream official logo rendered, not the dark letter tile)')
-            PY
-            echo "DEVICE VALIDATION COMPLETE"
+                        mkdir -p diag
+                        adb root || true
+                        timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+                        adb shell settings put global window_animation_scale 0.0 || true
+                        adb shell settings put global transition_animation_scale 0.0 || true
+                        adb shell settings put global animator_duration_scale 0.0 || true
+                        if [ "$MODE" = "released" ]; then
+                          adb install released/AppMintly-1.0.5.apk > diag/install-1.0.5.txt 2>&1
+                          grep -q Success diag/install-1.0.5.txt || { echo "INSTALL-1.0.5: FAIL"; cat diag/install-1.0.5.txt; exit 1; }
+                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-before-upgrade.txt || true
+                          adb install -r released/AppMintly-1.0.6.apk > diag/install-1.0.6.txt 2>&1
+                          grep -q Success diag/install-1.0.6.txt || { echo "UPGRADE-INSTALL: FAIL"; cat diag/install-1.0.6.txt; exit 1; }
+                          echo "UPGRADE-OVER-INSTALL: PASS (1.0.6 installed over 1.0.5, NO uninstall)"
+                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-after-upgrade.txt || true
+                          grep -q "versionCode=10006" diag/pkg-after-upgrade.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-after-upgrade.txt; exit 1; }
+                          echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
+                        else
+                          adb install candidate/AppMintly-1.0.6-candidate.apk > diag/install-candidate.txt 2>&1
+                          grep -q Success diag/install-candidate.txt || { echo "CANDIDATE INSTALL: FAIL"; cat diag/install-candidate.txt; exit 1; }
+                          echo "CANDIDATE INSTALL: PASS"
+                          adb shell dumpsys package com.appmintly.appmintly | grep -E "versionCode=|versionName=" | head -2 > diag/pkg-candidate.txt || true
+                          grep -q "versionCode=10006" diag/pkg-candidate.txt || { echo "ON-DEVICE VERSION: FAIL"; cat diag/pkg-candidate.txt; exit 1; }
+                          echo "ON-DEVICE VERSION: PASS (versionCode=10006, versionName=1.0.6)"
+                        fi
+                        adb shell input keyevent KEYCODE_WAKEUP || true
+                        adb shell am start -n com.appmintly.appmintly/.MainActivity > diag/launch.txt 2>&1 || true
+                        sleep 25
+                        adb exec-out screencap -p > diag/app-launched.png || true
+                        adb shell uiautomator dump /sdcard/appdump.xml >/dev/null 2>&1 || true
+                        adb pull /sdcard/appdump.xml diag/appdump.xml >/dev/null 2>&1 || true
+                        if grep -q "AppMintly" diag/appdump.xml 2>/dev/null; then echo "APP LAUNCH: PASS (marketplace content rendered)"; else echo "APP LAUNCH: content check inconclusive (screencap saved as evidence)"; fi
+                        adb shell input keyevent KEYCODE_HOME || true
+                        sleep 2
+                        adb shell input swipe 540 2200 540 400 250 || true
+                        sleep 3
+                        adb shell uiautomator dump /sdcard/drawerdump.xml >/dev/null 2>&1 || true
+                        adb pull /sdcard/drawerdump.xml diag/drawerdump.xml >/dev/null 2>&1 || true
+                        adb exec-out screencap -p > diag/drawer.png || true
+                        python3 - << 'PY' || { echo "LAUNCHER ICON ON DEVICE: FAIL"; exit 1; }
+                        import re
+                        from PIL import Image
+                        xml = open('diag/drawerdump.xml', encoding='utf-8', errors='replace').read()
+                        icon_bounds = None
+                        for match in re.finditer(r'content-desc="AppMintly"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
+                            x1, y1, x2, y2 = map(int, match.groups())
+                            icon_bounds = (x1, y1, x2, y2)  # the icon node itself
+                            break
+                        crop_kind = 'icon-node'
+                        if icon_bounds is None:
+                            for match in re.finditer(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
+                                x1, y1, x2, y2 = map(int, match.groups())
+                                node = xml[max(0, match.start()-1200):match.start()]
+                                if 'text="AppMintly"' in node and y2 < 1200:
+                                    icon_bounds = (x1, y1, x2, y2)
+                                    crop_kind = 'above-label'
+                                    break
+                        assert icon_bounds, 'AppMintly icon node not found in the drawer dump - see diag/drawer.png'
+                        x1, y1, x2, y2 = icon_bounds
+                        side = max(1, x2 - x1)
+                        im = Image.open('diag/drawer.png').convert('RGB')
+                        if crop_kind == 'icon-node':
+                            box = (x1, y1, x2, y2)
+                        else:
+                            box = (x1, max(0, y1 - int(side * 1.9)), x2, max(1, y1 - int(side * 0.15)))
+                        crop = im.crop(box)
+                        crop.save('diag/launcher-icon-region.png')
+                        px = list(crop.getdata()); n = len(px)
+                        dark = sum(1 for p in px if p[0] < 60 and p[1] < 60 and p[2] < 60)
+                        cream = sum(1 for p in px if abs(p[0]-252)+abs(p[1]-243)+abs(p[2]-229) < 45)
+                        light = sum(1 for p in px if p[0] > 200 and p[1] > 200 and p[2] > 190)
+                        print(f'launcher icon region ({crop_kind}): dark {dark/n:.1%}, cream {cream/n:.1%}, light {light/n:.1%}')
+                        assert dark/n < 0.15, f'generic dark letter tile still rendered ({dark/n:.1%} dark)'
+                        assert (cream + light)/n > 0.35, 'official cream logo not visible in the launcher icon'
+                        print('LAUNCHER ICON ON DEVICE: PASS (cream official logo rendered, not the dark letter tile)')
+                        PY
+                        echo "DEVICE VALIDATION COMPLETE"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
