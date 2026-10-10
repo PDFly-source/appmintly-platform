@@ -46,6 +46,13 @@ export interface ApkBuildOptions {
    * unset and the production signing-identity pin stays fail-closed.
    */
   allowTestSigningIdentity?: boolean;
+  /**
+   * TEST-ONLY (Phase 12.14): preserves the generated MainActivity.java to
+   * evidence/generated-MainActivity.java so the test workflow can prove
+   * the test build's config differs from the production default ONLY in
+   * the alarm interval and the fixture seed. Production builds never set it.
+   */
+  keepGeneratedSource?: boolean;
 }
 
 export type BuildState = 'queued' | 'building' | 'signing' | 'validating' | 'uploading' | 'completed' | 'failed';
@@ -1016,6 +1023,11 @@ ${
 }
 `;
       await fs.promises.writeFile(path.join(srcDir, 'MainActivity.java'), javaCode, 'utf8');
+      if (options.keepGeneratedSource === true) {
+        // TEST-ONLY (Phase 12.14): production builds never set this flag.
+        await fs.promises.mkdir('evidence', { recursive: true });
+        await fs.promises.writeFile(path.join('evidence', 'generated-MainActivity.java'), javaCode, 'utf8');
+      }
       job.stepsCompleted.push('Preparing Android project');
 
       // ----------------------------------------------------------------

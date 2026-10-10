@@ -35,6 +35,7 @@ async function main() {
     alarmIntervalMs: rawAlarmInterval !== undefined ? Number(rawAlarmInterval) : undefined,
     testFixtureSeed: process.env.APK_TEST_FIXTURE_SEED === '1' || process.env.APK_TEST_FIXTURE_SEED === 'true',
     allowTestSigningIdentity: process.env.APK_ALLOW_TEST_SIGNING === '1',
+    keepGeneratedSource: process.env.APK_KEEP_SOURCE === '1',
   });
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {
