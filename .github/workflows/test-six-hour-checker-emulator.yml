@@ -144,12 +144,21 @@ jobs:
           def patch(master, updates, tracked_json, delivered_json, drop_baseline):
               sh("input keyevent KEYCODE_WAKEUP")
               sh("input keyevent KEYCODE_HOME")
-              time.sleep(2)
-              sh(f"am kill {APK}")
-              time.sleep(2)
-              alive = sh(f"pidof {APK}").strip()
+              time.sleep(5)
+              # am kill only reaches a backgrounded/cached process; a process
+              # that was foreground seconds ago needs a patient retry loop
+              # (run 38052782841: single am kill left the process alive and
+              # the fixture was correctly refused). Never force-stop: that
+              # would cancel the app's alarms and mark the package stopped.
+              alive = ""
+              for attempt in range(8):
+                  sh(f"am kill {APK}")
+                  time.sleep(3)
+                  alive = sh(f"pidof {APK}").strip()
+                  if not alive:
+                      break
               if alive:
-                  raise SystemExit(f"app process still alive after am kill (pid {alive}); refusing to patch")
+                  raise SystemExit(f"app process still alive after {attempt+1} am kill attempts (pid {alive}); refusing to patch")
               uid = sh(f"stat -c %u /data/data/{APK}").strip()
               xml = (
                   '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>\n'
