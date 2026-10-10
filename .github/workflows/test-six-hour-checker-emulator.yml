@@ -59,7 +59,17 @@ jobs:
   emulator-diagnostic:
     needs: guard
     runs-on: ubuntu-24.04
+    timeout-minutes: 75
     steps:
+      # Without KVM the API-36 x86_64 image falls back to TCG software
+      # emulation and never reaches sys.boot_completed within the runner's
+      # wait (proven by run 38051077090: "device offline" until timeout).
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -216,8 +226,8 @@ jobs:
             set -o pipefail
             mkdir -p diag
             adb root || true
-            timeout 300 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
-            adb shell getprop ro.build.version.release | tee diag/android-version.txt
+            adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' 2>/dev/null || timeout 420 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            adb shell getprop ro.build.version.release | tee diag/android-version.txt || adb shell getprop ro.build.version.release | tee diag/android-version.txt
             adb shell settings put global window_animation_scale 0.0 || true
             adb shell settings put global transition_animation_scale 0.0 || true
             adb shell settings put global animator_duration_scale 0.0 || true
