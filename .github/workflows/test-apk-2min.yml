@@ -8,6 +8,11 @@ run-name: "TEMPORARY TEST BUILD - 2-minute alarm smoke (NOT FOR PRODUCTION)"
 # never accesses production signing secrets. Runs only from this test
 # branch via manual dispatch.
 on:
+  # Triggers only on pushes to THIS test branch (manual dispatch requires
+  # the workflow to also exist on main, which is forbidden here).
+  push:
+    branches:
+      - test/alarm-smoke-2min
   workflow_dispatch:
 
 permissions:
