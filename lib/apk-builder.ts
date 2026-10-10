@@ -40,6 +40,12 @@ export interface ApkBuildOptions {
    * unchanged production catalog. Production builds leave this unset.
    */
   testFixtureSeed?: boolean;
+  /**
+   * TEST-ONLY (Phase 12.14): allows a throwaway signing identity during
+   * validation for temporary test builds. Production builds leave this
+   * unset and the production signing-identity pin stays fail-closed.
+   */
+  allowTestSigningIdentity?: boolean;
 }
 
 export type BuildState = 'queued' | 'building' | 'signing' | 'validating' | 'uploading' | 'completed' | 'failed';
@@ -1711,6 +1717,7 @@ public class BootReceiver extends BroadcastReceiver {
       const validationResult = await validateApkBinary(signedApk, {
         packageId,
         versionName,
+        allowTestSigningIdentity: options.allowTestSigningIdentity === true,
       });
 
       job.validationResult = validationResult;

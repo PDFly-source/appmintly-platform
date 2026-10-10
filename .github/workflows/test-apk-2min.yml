@@ -93,7 +93,9 @@ jobs:
           export PACKAGE_ID='com.appmintly.appmintly' SOURCE_URL='https://appmintly.pages.dev/'
           export ICON_URL='https://appmintly.pages.dev/icon-512.png'
           export THEME_COLOR='#17191C' BACKGROUND_COLOR='#F8F2E7'
-          # NOTE: no APK_ALARM_INTERVAL_MS, no APK_TEST_FIXTURE_SEED, no VERSION_CODE.
+          # Throwaway-signing allowance only (validation pin bypass). NOTE:
+          # no APK_ALARM_INTERVAL_MS, no APK_TEST_FIXTURE_SEED, no VERSION_CODE.
+          export APK_ALLOW_TEST_SIGNING='1'
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
           APP_FILE="AppMintlyTest-1.0.5.apk"
           test -s "dist/apk/$APP_FILE"
@@ -118,7 +120,7 @@ jobs:
           export PACKAGE_ID='com.appmintly.appmintly' SOURCE_URL='https://appmintly.pages.dev/'
           export ICON_URL='https://appmintly.pages.dev/icon-512.png'
           export THEME_COLOR='#17191C' BACKGROUND_COLOR='#F8F2E7'
-          export APK_ALARM_INTERVAL_MS='120000' APK_TEST_FIXTURE_SEED='1'
+          export APK_ALARM_INTERVAL_MS='120000' APK_TEST_FIXTURE_SEED='1' APK_ALLOW_TEST_SIGNING='1'
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/build-android-apk.ts
           APP_FILE="AppMintlyTest-1.0.5.apk"
           test -s "dist/apk/$APP_FILE"

@@ -34,6 +34,7 @@ async function main() {
     versionCode: rawVersionCode !== undefined ? Number(rawVersionCode) : undefined,
     alarmIntervalMs: rawAlarmInterval !== undefined ? Number(rawAlarmInterval) : undefined,
     testFixtureSeed: process.env.APK_TEST_FIXTURE_SEED === '1' || process.env.APK_TEST_FIXTURE_SEED === 'true',
+    allowTestSigningIdentity: process.env.APK_ALLOW_TEST_SIGNING === '1',
   });
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {
