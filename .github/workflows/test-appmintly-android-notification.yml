@@ -216,11 +216,13 @@ jobs:
           print(f"FIXTURE-APPLIED mode={mode} master={master} tracked={tracked_json} delivered={delivered_json}")
           PY
           cat > "$RUNNER_TEMP/tap_node.py" <<'PY'
-          # Find a UI node in a uiautomator dump and tap its bounds center.
+          # Find a UI node in a uiautomator dump and tap (or swipe-dismiss) it.
           #   text mode:   match text/content-desc exactly first, then substring
           #   switch mode: match an android.widget.Switch whose text or
           #                content-desc contains the needle (fallback: any
           #                Switch on screen)
+          #   swipe mode:  find the node like text mode, then swipe it
+          #                horizontally to dismiss (notification rows)
           # Dumps retry until they contain usable content — WebView
           # accessibility trees are known to need retries, and a "successful"
           # dump can still be an empty hierarchy.
@@ -297,8 +299,12 @@ jobs:
           scored.sort(key=lambda c: c[0])
           _, x1, y1, x2, y2, label = scored[0]
           x, y = (x1 + x2) // 2, (y1 + y2) // 2
-          subprocess.run(["adb", "shell", "input", "tap", str(x), str(y)], capture_output=True)
-          print(f"TAPPED: '{label}' at {x},{y}")
+          if mode == "swipe":
+              subprocess.run(["adb", "shell", "input", "swipe", str(max(x2 - 60, x1 + 60)), str(y), str(x1 + 60), str(y), "350"], capture_output=True)
+              print(f"SWIPED: '{label}' at y={y} (dismiss gesture)")
+          else:
+              subprocess.run(["adb", "shell", "input", "tap", str(x), str(y)], capture_output=True)
+              print(f"TAPPED: '{label}' at {x},{y}")
           PY
           cat > "$RUNNER_TEMP/evaluate_diag.py" <<'PY'
           # Authoritative gate: reads the diag evidence produced inside the
@@ -353,7 +359,7 @@ jobs:
           at_top = rd("after-tap-top.xml") or at
           aa = rd("activity-after-tap.txt")
           tap_ok = "TAPPED" in rd("tap-notification.txt")
-          detail_ok = ("APK Package" in at_top and "com.appmintly.appmintly" in at_top) or ("APK Package" in at and "com.appmintly.appmintly" in at)
+          detail_ok = ("App Information" in at_top or "App Information" in at) and ("com.appmintly.appmintly" in at_top or "com.appmintly.appmintly" in at)
           check("Notification tap -> app detail page", tap_ok and detail_ok and "automatic update notifications" in at and "1.0.4" in (at + at_top) and "MainActivity" in aa, "real notification tapped in the tray; uiautomator shows the appmintly DETAIL page (APK Package metadata + v1.0.4 release notes after scrolling); resumed activity = com.appmintly.appmintly/.MainActivity")
           fv = rd("forged-verdict.txt")
           fg = rd("forged-destination.xml")
@@ -490,13 +496,25 @@ jobs:
             if grep -q "Update available" diag/notif-delivered.txt && grep -q "app-update:appmintly:1.0.4" diag/prefs-delivered.xml && grep -q "app-update:studyria:2.0.2" diag/prefs-delivered.xml; then echo "NOTIFICATION-TRAY: PASS (genuine OS notifications posted by the real engine)"; else echo "NOTIFICATION-TRAY: FAIL (see notif-delivered.txt / prefs-delivered.xml)"; cat diag/notif-delivered.txt || true; fi
             grep -o 'app-update:[a-z]*:[0-9.]*' diag/prefs-delivered.xml | sort -u > diag/delivered-keys.txt || true
 
+            python3 "$RUNNER_TEMP/patch_prefs.py" true '[{"appId":"appmintly","version":"1.0.3"},{"appId":"studyria","version":"2.0.1"}]' '{"app-update:studyria:2.0.2":1}' keep 2>&1 | tee diag/fixture-tap.txt
+            grep -q "FIXTURE-APPLIED" diag/fixture-tap.txt || { echo "FIXTURE-TAP: FAILED"; cat diag/fixture-tap.txt; exit 1; }
+            adb shell am broadcast --include-stopped-packages -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/check-tap.txt
+            sleep 15
+            adb shell cmd statusbar expand-notifications || true
+            sleep 3
+            for i in $(seq 1 4); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: Studyria" swipe > diag/dismiss-studyria.txt 2>&1 && break; echo "DISMISS-STUDYRIA: attempt $i failed"; sleep 5; done
+            sleep 3
+            adb shell cmd statusbar collapse || true
+            adb shell dumpsys notification --noredact | grep -cE "NotificationRecord\(0x[a-f0-9]+: pkg=com.appmintly.appmintly" > diag/notif-tap-count.txt || echo 0 > diag/notif-tap-count.txt
+            adb exec-out screencap -p > diag/tray-single.png || true
+            if grep -qx "1" diag/notif-tap-count.txt; then echo "TAP-SETUP: PASS (exactly one AppMintly notification in the tray; the earlier Studyria notification dismissed by swipe)"; else echo "TAP-SETUP: tray does not hold exactly one notification (see notif-tap-count.txt / dismiss-studyria.txt)"; cat diag/notif-tap-count.txt || true; fi
             adb shell cmd statusbar expand-notifications || true
             sleep 3
             for i in $(seq 1 6); do python3 "$RUNNER_TEMP/tap_node.py" "Update available: A" > diag/tap-notification.txt 2>&1 && break; echo "NOTIFICATION-TAP: attempt $i failed"; sleep 6; done
-            if grep -q "TAPPED" diag/tap-notification.txt; then echo "NOTIFICATION-TAP: tapped in the real tray (see tap-notification.txt)"; else echo "NOTIFICATION-TAP: BLOCKED (could not tap the notification; see tray.png / tray-dump.xml)"; fi
+            if grep -q "TAPPED" diag/tap-notification.txt; then echo "NOTIFICATION-TAP: tapped the single notification in the real tray (see tap-notification.txt)"; else echo "NOTIFICATION-TAP: BLOCKED (could not tap the notification; see tray-single.png / notif-tap-count.txt)"; fi
             adb shell cmd statusbar collapse || true
             sleep 25
-            for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap-top.xml >/dev/null 2>&1; grep -qE "APK Package|com.appmintly.appmintly" diag/after-tap-top.xml 2>/dev/null && break; sleep 6; done
+            for i in $(seq 1 6); do adb shell uiautomator dump /sdcard/aftertap.xml >/dev/null 2>&1; adb pull /sdcard/aftertap.xml diag/after-tap-top.xml >/dev/null 2>&1; grep -qE "App Information|com.appmintly.appmintly" diag/after-tap-top.xml 2>/dev/null && break; adb shell input swipe 540 1200 540 1210 200 || true; sleep 6; done
             adb exec-out screencap -p > diag/after-tap-top.png || true
             adb shell input swipe 540 1800 540 400 500 || true
             sleep 3
