@@ -1199,6 +1199,11 @@ public final class UpdateEngine {
                     .put("notificationsEnabled", nm == null || Build.VERSION.SDK_INT < 24 || nm.areNotificationsEnabled())
                     .put("lastCheck", p.getLong("lastCheck", 0L))
                     .put("lastCheckState", p.getString("lastCheckState", ""))
+                    // Native posting evidence for the Notifications page:
+                    // how many notifications the native engine actually
+                    // posted in its last completed check. The page already
+                    // tolerates absence (older APKs report nothing).
+                    .put("lastPosted", p.getInt("lastPosted", 0))
                     .put("checkIntervalHours", 6)
                     .toString();
         } catch (Throwable t) {

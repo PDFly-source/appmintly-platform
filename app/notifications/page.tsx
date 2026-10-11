@@ -17,7 +17,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Bell, ShieldAlert, ShieldCheck, Smartphone, Globe2, RefreshCw, Trash2, CheckCircle2, XCircle, Circle, ListChecks } from 'lucide-react';
 import { useNotifications, type PermissionState, type NativeEngineStatus } from '@/components/NotificationsProvider';
-import { describeCheck } from '@/lib/notifications/engine';
+import { describeCheck, describeNativeCheck } from '@/lib/notifications/engine';
 
 const meta = {
   title: 'Notifications — AppMintly',
@@ -42,17 +42,34 @@ export default function NotificationsPage() {
     const result = await n.checkNow();
     setLastResult({ ok: result.ok, count: result.events.length, shown: result.shown });
     if (result.ok) {
-      const status = describeCheck(result.events.length, result.shown, n.permission === 'granted');
-      if (status === 'up-to-date') {
-        setCheckMessage('Catalog checked — you are up to date. No new releases or updates.');
-      } else if (status === 'delivered') {
-        setCheckMessage(`Catalog checked — ${result.shown} notification${result.shown === 1 ? '' : 's'} delivered.`);
-      } else if (status === 'waiting') {
-        // Eligible events exist but none could be shown: keep them pending,
-        // never claim "up to date", and never re-prompt for permission.
-        setCheckMessage(`Updates are waiting. Enable notification permission to receive alerts. (${result.events.length - result.shown} waiting)`);
+      if (result.nativeHandled) {
+        // Inside the APK the native background checker owns delivery
+        // (device notifications, about-six-hour cadence, its own dedup
+        // history). Report against the native engine honestly — never a
+        // web-delivery result, and never a delivery that was not observed.
+        const nstatus = describeNativeCheck(result.events.length, n.permission === 'granted');
+        if (nstatus === 'up-to-date') {
+          setCheckMessage('Catalog checked — you are up to date. No new releases or updates.');
+        } else if (nstatus === 'native-pending') {
+          setCheckMessage(
+            `Catalog checked — ${result.events.length} eligible event${result.events.length === 1 ? '' : 's'} pending with the native background checker, which delivers them as device notifications on its about-six-hour cycle.`
+          );
+        } else {
+          setCheckMessage(`Updates are waiting. Enable notification permission to receive alerts. (${result.events.length} waiting)`);
+        }
       } else {
-        setCheckMessage(`Catalog checked — ${result.shown} delivered, ${result.events.length - result.shown} delivery failed and will retry on the next check.`);
+        const status = describeCheck(result.events.length, result.shown, n.permission === 'granted');
+        if (status === 'up-to-date') {
+          setCheckMessage('Catalog checked — you are up to date. No new releases or updates.');
+        } else if (status === 'delivered') {
+          setCheckMessage(`Catalog checked — ${result.shown} notification${result.shown === 1 ? '' : 's'} delivered.`);
+        } else if (status === 'waiting') {
+          // Eligible events exist but none could be shown: keep them pending,
+          // never claim "up to date", and never re-prompt for permission.
+          setCheckMessage(`Updates are waiting. Enable notification permission to receive alerts. (${result.events.length - result.shown} waiting)`);
+        } else {
+          setCheckMessage(`Catalog checked — ${result.shown} delivered, ${result.events.length - result.shown} delivery failed and will retry on the next check.`);
+        }
       }
     } else {
       setCheckMessage(`Catalog check failed: ${result.error || 'unknown error'}. Your device may be offline.`);
@@ -262,9 +279,11 @@ export default function NotificationsPage() {
         {lastResult?.ok && (
           <p className="mt-2 text-xs text-mut">
             <ListChecks aria-hidden className="mr-1 inline w-4 h-4" />
-            {lastResult.count === lastResult.shown
-              ? `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check, delivered as device notifications.`
-              : `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check; ${lastResult.shown} delivered, ${lastResult.count - lastResult.shown} pending — pending alerts retry on later checks and appear once notification permission is granted.`}
+            {n.nativeAvailable
+              ? `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check; delivery is owned by the native background checker (device notifications, about-six-hour cadence).`
+              : lastResult.count === lastResult.shown
+                ? `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check, delivered as device notifications.`
+                : `${lastResult.count} eligible event${lastResult.count === 1 ? '' : 's'} in this check; ${lastResult.shown} delivered, ${lastResult.count - lastResult.shown} pending — pending alerts retry on later checks and appear once notification permission is granted.`}
           </p>
         )}
       </section>

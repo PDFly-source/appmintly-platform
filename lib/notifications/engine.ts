@@ -403,3 +403,30 @@ export function describeCheck(eligible: number, shown: number, permissionGranted
   if (shown >= eligible) return 'delivered';
   return permissionGranted ? 'partial' : 'waiting';
 }
+
+// ---------------------------------------------------------------------
+// Native-context check status (inside the official APK).
+// ---------------------------------------------------------------------
+
+/**
+ * Status of a foreground catalog check run INSIDE the AppMintly APK.
+ * Android WebViews expose no web-notification surface
+ * (ServiceWorkerRegistration.showNotification / window.Notification), so
+ * delivery is owned solely by the native background checker; the web layer
+ * never attempts web delivery there and never claims a delivery it did not
+ * observe. Evidence of an ACTUAL native posting comes only from the native
+ * engine status (getStatusJson lastPosted / lastCheckState), never from
+ * this status value.
+ *  - 'up-to-date'     : nothing eligible was detected.
+ *  - 'native-pending' : permission granted — eligible events are pending
+ *                       with the native checker, which posts, deduplicates
+ *                       (its own delivered history) and retries on its
+ *                       about-six-hour cycle.
+ *  - 'waiting'        : notification permission is not granted.
+ */
+export type NativeCheckStatus = 'up-to-date' | 'native-pending' | 'waiting';
+
+export function describeNativeCheck(eligible: number, permissionGranted: boolean): NativeCheckStatus {
+  if (eligible <= 0) return 'up-to-date';
+  return permissionGranted ? 'native-pending' : 'waiting';
+}

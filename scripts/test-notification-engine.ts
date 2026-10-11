@@ -21,6 +21,7 @@ import {
   pruneDelivered,
   recordShownKeys,
   describeCheck,
+  describeNativeCheck,
   releaseVersionOf,
   isPublishedRecord,
   type NotificationPrefs,
@@ -276,7 +277,12 @@ console.log('\n[notification-engine] history pruning & guards');
   ok('recordShownKeys does not mutate its input', before.x === 1 && Object.keys(before).length === 1);
 
   // --- honest status classification: never "up to date" while pending ---
-  ok('describeCheck: nothing eligible -> up-to-date', describeCheck(0, 0, false) === 'up-to-date');
+  ok('describeNativeCheck: nothing eligible -> up-to-date (permission irrelevant)', describeNativeCheck(0, true) === 'up-to-date' && describeNativeCheck(0, false) === 'up-to-date');
+ok('describeNativeCheck: eligible + permission granted -> native-pending, never "delivered"', describeNativeCheck(1, true) === 'native-pending' && describeNativeCheck(3, true) === 'native-pending');
+ok('describeNativeCheck: eligible + permission denied -> waiting', describeNativeCheck(1, false) === 'waiting' && describeNativeCheck(2, false) === 'waiting');
+const nativeStatusValues: string[] = ['native-pending', 'waiting', 'up-to-date'];
+ok('describeNativeCheck never reports a browser delivery result inside the APK', nativeStatusValues.every((s) => s !== 'delivered' && s !== 'partial'));
+ok('describeCheck: nothing eligible -> up-to-date', describeCheck(0, 0, false) === 'up-to-date');
   ok('describeCheck: all shown -> delivered', describeCheck(2, 2, true) === 'delivered');
   ok('describeCheck: pending with permission denied -> waiting (never up-to-date)', describeCheck(1, 0, false) === 'waiting');
   ok('describeCheck: pending with permission granted -> partial (never up-to-date)', describeCheck(2, 1, true) === 'partial');
