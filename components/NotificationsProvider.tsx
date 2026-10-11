@@ -111,6 +111,10 @@ export interface NotificationCheckResult {
   /** How many of the eligible events were actually shown as notifications. */
   shown: number;
   revision: string | null;
+  /** True when this check ran with the native APK bridge present:
+   *  delivery is owned by the native background checker and no web
+   *  delivery was attempted here. */
+  nativeHandled?: boolean;
   error?: string;
 }
 
@@ -255,7 +259,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       // notification was actually shown.
       let shown = 0;
       const shownKeys: string[] = [];
-      if (outcome.events.length > 0 && readPermission() === 'granted') {
+      // Inside the official APK the WebView exposes no web-notification
+      // surface, so delivery is owned solely by the native background
+      // checker: never attempt browser delivery there (it cannot succeed
+      // and would be reported as a false delivery failure). The native
+      // engine posts, deduplicates and retries against its own state;
+      // no delivered keys are recorded by the web layer in that context.
+      const nativeHandled = !!getNativeBridge();
+      if (outcome.events.length > 0 && !nativeHandled && readPermission() === 'granted') {
         const reg = await navigator.serviceWorker?.getRegistration();
         for (const ev of outcome.events) {
           const options: NotificationOptions = {
@@ -295,7 +306,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
           delivered: pruneDelivered(recordShownKeys(afterDelivery.delivered, shownKeys, Date.now())),
         });
       }
-      return { ok: true, events: outcome.events, shown, revision: outcome.baseline.revision };
+      return { ok: true, events: outcome.events, shown, revision: outcome.baseline.revision, nativeHandled };
     } catch (err) {
       const currentNow = stateRef.current;
       if (currentNow) {
