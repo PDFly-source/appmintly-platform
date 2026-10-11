@@ -1,0 +1,353 @@
+# Phase 2B — Side-by-side emulator evidence: official AppMintly 1.0.6 +
+# diagnostic twin on a fresh Android 16 (API 36) emulator.
+#
+# TEST-ONLY workflow on a TEST-ONLY branch. Never runs on main (hard branch
+# guard below) and must never be merged to main. It does NOT build, sign,
+# modify, publish or release anything: it only downloads the two EXISTING
+# binaries (authoritative release asset + the previously built diagnostic
+# artifact), verifies their hashes, installs them side-by-side on a
+# disposable emulator and collects READ-ONLY evidence.
+#
+# Evidence rules (Phase 2B mandate):
+#   - No fake catalog: every check fetches the REAL production catalog
+#     (https://appmintly.pages.dev/data/apps.json) exactly as the apps do.
+#   - No test APKs are built here. The diagnostic twin APK is the existing
+#     throwaway-signed diagnostic binary (artifact 11671468300) — installed
+#     only on this disposable emulator, never on any production device.
+#   - The OFFICIAL 1.0.6 APK is exercised through its production entry
+#     point. Its alarm delivery is simulated with an explicit broadcast
+#     (the 6h wall-clock is not waited); the ONE controlled test input is a
+#     prefs fixture that replicates the user's REAL on-device opt-in state
+#     (master=true, tracked=[appmintly@1.0.6]) so the checker executes.
+#   - The TWIN is exercised 100% NATURALLY: no patch, no broadcast, no
+#     fixture. Its real 2-min WAKEUP repeating alarm must fire on its own —
+#     this is the "second completed background run" evidence the device
+#     never produced. tick 1 must silently initialize (state=initialized),
+#     tick 2 must post the two real fixture-eligible notifications, tick 3
+#     must dedupe (lastPosted=0, tray unchanged).
+#   - Reboot recovery is checked best-effort at the end (honest PASS/NOT
+#     VERIFIED, never fails the job).
+
+name: Phase 2B emulator evidence (official 1.0.6 + diagnostic twin)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/phase2b-emulator-evidence
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Refuse to run outside the test branch
+        run: |
+          echo "ref=$GITHUB_REF"
+          case "$GITHUB_REF" in
+            refs/heads/test/phase2b-emulator-evidence)
+              echo "GUARD: PASS (test-only branch, isolated from production)";;
+            *)
+              echo "::error::This evidence workflow must never run outside test/phase2b-emulator-evidence (adb-root evidence collection is test-only by design)."
+              exit 1;;
+          esac
+
+  emulator-evidence:
+    needs: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      # Without KVM the API-36 x86_64 image falls back to TCG software
+      # emulation and never reaches sys.boot_completed within the runner's
+      # wait (proven by run 38051077090).
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download the two EXISTING binaries (release asset + diagnostic artifact, nothing rebuilt)
+        run: |
+          mkdir -p test-apk diag
+          curl -fsSL -w 'official 1.0.6 HTTP %{http_code} %{size_download} bytes\n' -o test-apk/AppMintly-1.0.6.apk \
+            "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.6/AppMintly-1.0.6.apk"
+          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/PDFly-source/appmintly-platform/actions/artifacts/11671468300/zip" -o twin.zip
+          python3 -c "import zipfile; zipfile.ZipFile('twin.zip').extractall('test-apk')"
+          ls -la test-apk/
+
+      - name: Verify BOTH APKs before installation (sha256, package, version, cert, receivers)
+        run: |
+          pip install --quiet androguard
+          python3 - <<'PY' 2>&1 | tee diag/apk-integrity.txt
+          import hashlib
+          from androguard.core.apk import APK
+          import logging
+          logging.disable(logging.CRITICAL)
+          try:
+              from loguru import logger as _loguru_logger
+              _loguru_logger.remove()
+          except Exception:
+              pass
+
+          def verify(path, expect_sha, expect_pkg, expect_code, expect_name, expect_cert=None, forbid_cert=None):
+              h = hashlib.sha256(open(path, "rb").read()).hexdigest()
+              assert h == expect_sha, f"{path}: sha256 mismatch {h}"
+              a = APK(path)
+              assert a.get_package() == expect_pkg, a.get_package()
+              assert a.get_androidversion_code() == expect_code, a.get_androidversion_code()
+              assert a.get_androidversion_name() == expect_name, a.get_androidversion_name()
+              cert = hashlib.sha256((a.get_certificates_der_v2() or a.get_certificates_der())[0]).hexdigest()
+              if expect_cert:
+                  assert cert == expect_cert, f"signer cert mismatch {cert}"
+              if forbid_cert:
+                  assert cert != forbid_cert, "diagnostic twin unexpectedly carries the PRODUCTION cert"
+              recvs = a.get_receivers()
+              assert any(".AlarmReceiver" in r for r in recvs), f"missing AlarmReceiver: {recvs}"
+              assert any(".BootReceiver" in r for r in recvs), f"missing BootReceiver: {recvs}"
+              perms = a.get_permissions()
+              assert "android.permission.POST_NOTIFICATIONS" in perms, perms
+              assert "android.permission.RECEIVE_BOOT_COMPLETED" in perms, perms
+              print(f"VERIFIED {path}")
+              print(f"  sha256={h}")
+              print(f"  package={a.get_package()} versionCode={expect_code} versionName={expect_name}")
+              print(f"  signerCert sha256={cert}")
+              print(f"  receivers={recvs}")
+              return cert
+
+          PROD_CERT = "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368"
+          verify("test-apk/AppMintly-1.0.6.apk",
+                 "ed1765c7d502443d0335c80364337ba4b6a621302611edbb37a84e6f191d0252",
+                 "com.appmintly.appmintly", "10006", "1.0.6", expect_cert=PROD_CERT)
+          print("OFFICIAL-INTEGRITY: the production binary under test is the released, production-signed 1.0.6")
+          verify("test-apk/AppMintlyDiagnostic-1.0.5.apk",
+                 "acd4b820633aef43222f24af348c3b96aa30f6ca4e5674e494e184fc7769e82a",
+                 "com.appmintly.appmintlydiag", "90099", "1.0.5",
+                 expect_cert=None, forbid_cert=PROD_CERT)
+          print("TWIN-INTEGRITY: the diagnostic binary is the existing throwaway-signed artifact (never a production build)")
+          PY
+
+      - name: Write evidence helpers (prefs patcher for the official, READ-ONLY reader for the twin)
+        run: |
+          mkdir -p "$RUNNER_TEMP/diag-helpers"
+          cat > "$RUNNER_TEMP/diag-helpers/prefs.py" <<'PY'
+          """SharedPreferences fixture patcher (controlled TEST INPUT only).
+
+          Runs as adb root on the disposable emulator. Used ONLY for the
+          OFFICIAL app, and only to replicate the user's real on-device
+          opt-in state (master=true, tracked=[appmintly@1.0.6]) so its
+          checker can be exercised without waiting 6h. The checker logic is
+          untouched: only its INPUT state. The twin is NEVER patched.
+          """
+          import subprocess, sys, time
+
+          APK = "com.appmintly.appmintly"
+          PREFS = f"/data/data/{APK}/shared_prefs/appmintly_updates.xml"
+
+          def sh(cmd):
+              r = subprocess.run(["adb", "shell", cmd], capture_output=True, text=True)
+              if r.returncode != 0:
+                  raise SystemExit(f"adb shell {cmd!r} failed: {r.stderr}")
+              return r.stdout
+
+          def pid_alive():
+              r = subprocess.run(["adb", "shell", f"pidof {APK}"], capture_output=True, text=True)
+              return r.stdout.strip()
+
+          def patch(master, updates, tracked_json, delivered_json, drop_baseline):
+              sh("input keyevent KEYCODE_WAKEUP")
+              sh("input keyevent KEYCODE_HOME")
+              time.sleep(5)
+              alive = ""
+              for attempt in range(8):
+                  sh(f"am kill {APK}")
+                  time.sleep(3)
+                  alive = pid_alive()
+                  if not alive:
+                      break
+              if alive:
+                  raise SystemExit(f"app process still alive after {attempt+1} am kill attempts (pid {alive}); refusing to patch")
+              uid = sh(f"stat -c %u /data/data/{APK}").strip()
+              xml = (
+                  '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>\n'
+                  '<map>\n'
+                  f'    <boolean name="master" value="{str(master).lower()}" />\n'
+                  f'    <boolean name="updates" value="{str(updates).lower()}" />\n'
+                  '    <boolean name="newAndroid" value="true" />\n'
+                  '    <boolean name="newWeb" value="true" />\n'
+                  '    <boolean name="important" value="true" />\n'
+                  '    <boolean name="security" value="true" />\n'
+                  f'    <string name="tracked">{tracked_json}</string>\n'
+                  f'    <string name="delivered">{delivered_json}</string>\n'
+                  + ('' if drop_baseline else '    PLACEHOLDER_BASELINE\n')
+                  + '</map>\n'
+              )
+              if not drop_baseline:
+                  cur = sh(f"cat {PREFS}")
+                  import re
+                  m = re.search(r'<string name="baseline">(.*?)</string>', cur, re.S)
+                  if m:
+                      xml = xml.replace("PLACEHOLDER_BASELINE", f'<string name="baseline">{m.group(1)}</string>')
+                  else:
+                      xml = xml.replace("PLACEHOLDER_BASELINE", "")
+              tmp = "/data/local/tmp/appmintly_updates_fixture.xml"
+              open("/tmp/fixture.xml", "w").write(xml)
+              subprocess.run(["adb", "push", "/tmp/fixture.xml", tmp], check=True, capture_output=True)
+              sh(f"cp {tmp} {PREFS}")
+              sh(f"chown {uid}:{uid} {PREFS}")
+              sh(f"chmod 660 {PREFS}")
+              sh(f"restorecon {PREFS}")
+              print("---- official prefs after patch (read back) ----")
+              print(sh(f"cat {PREFS}"))
+
+          if __name__ == "__main__":
+              if sys.argv[1] == "patch":
+                  patch(sys.argv[2] == "true", sys.argv[3] == "true", sys.argv[4], sys.argv[5], sys.argv[6] == "true")
+          PY
+          cat > "$RUNNER_TEMP/diag-helpers/read_diag.py" <<'PY'
+          """READ-ONLY reader for the diagnostic twin's SharedPreferences.
+
+          Never writes anything: the twin must run 100% naturally so its
+          real 2-minute repeating alarm is the ONLY driver of its checker.
+          """
+          import re, subprocess, sys
+
+          PREFS = "/data/data/com.appmintly.appmintlydiag/shared_prefs/appmintly_updates.xml"
+
+          def sh(cmd):
+              r = subprocess.run(["adb", "shell", cmd], capture_output=True, text=True)
+              return r.stdout
+
+          def field(name):
+              cur = sh(f"cat {PREFS} 2>/dev/null")
+              m = re.search(rf'<(?:long|int) name="{name}" value="([^"]+)"', cur)
+              if m:
+                  return m.group(1)
+              m = re.search(rf'<string name="{name}"[^>]*>([^<]*)<', cur)
+              if m:
+                  return m.group(1)
+              m = re.search(rf'<boolean name="{name}" value="([^"]+)"', cur)
+              if m:
+                  return m.group(1)
+              return ""
+
+          cmd = sys.argv[1]
+          if cmd == "state":
+              print(field("lastCheckState"))
+          elif cmd == "posted":
+              print(field("lastPosted"))
+          elif cmd == "dump":
+              print(sh(f"cat {PREFS} 2>/dev/null || echo ABSENT"))
+          PY
+
+      - name: Side-by-side evidence run (Android 16 emulator, real binaries, real catalog)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            mkdir -p diag
+            adb root || true
+            adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell wm dismiss-keyguard || true
+            adb shell getprop ro.build.version.release | tee diag/android-version.txt
+            echo "== [0] install BOTH binaries side-by-side (distinct package ids)"
+            adb install test-apk/AppMintly-1.0.6.apk | tee diag/install-official.txt
+            adb install test-apk/AppMintlyDiagnostic-1.0.5.apk | tee diag/install-twin.txt
+            adb shell pm grant com.appmintly.appmintly android.permission.POST_NOTIFICATIONS | tee diag/perm-grant-official.txt
+            adb shell pm grant com.appmintly.appmintlydiag android.permission.POST_NOTIFICATIONS | tee diag/perm-grant-twin.txt
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "POST_NOTIFICATIONS" | head -2 | tee diag/perm-official.txt
+            adb shell dumpsys package com.appmintly.appmintlydiag | grep -E "POST_NOTIFICATIONS" | head -2 | tee diag/perm-twin.txt
+            echo "== [1] launch each app once (MainActivity.onCreate -> UpdateEngine.schedule)"
+            adb shell am start -W -n com.appmintly.appmintly/.MainActivity | tee diag/launch-official.txt
+            adb shell am start -W -n com.appmintly.appmintlydiag/.MainActivity | tee diag/launch-twin.txt
+            sleep 15
+            echo "== [2] ALARM REGISTRATION evidence (both apps, dumpsys only)"
+            adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1 || true
+            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly/" > diag/alarm-record-official.txt || true
+            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintlydiag/" > diag/alarm-record-twin.txt || true
+            cat diag/alarm-record-official.txt || true
+            cat diag/alarm-record-twin.txt || true
+            grep -q "ACTION_CHECK_UPDATES" diag/alarm-record-official.txt && grep -q "21600000" diag/alarm-record-official.txt && echo "PASSMARK: OFFICIAL-ALARM-REGISTERED (ACTION_CHECK_UPDATES pending intent, repeatInterval 21600000 = 6h)" | tee -a diag/summary.txt || true
+            grep -q "ACTION_CHECK_UPDATES" diag/alarm-record-twin.txt && grep -q "120000" diag/alarm-record-twin.txt && echo "PASSMARK: TWIN-ALARM-REGISTERED (ACTION_CHECK_UPDATES pending intent, repeatInterval 120000 = 2min)" | tee -a diag/summary.txt || true
+            adb shell dumpsys package com.appmintly.appmintly | grep -B1 -A3 "BootReceiver" > diag/bootreceiver-official.txt || true
+            adb shell dumpsys package com.appmintly.appmintlydiag | grep -B1 -A3 "BootReceiver" > diag/bootreceiver-twin.txt || true
+            grep -q "enabled" diag/bootreceiver-official.txt && echo "PASSMARK: OFFICIAL-BOOT-RECEIVER-REGISTERED" | tee -a diag/summary.txt || true
+            grep -q "enabled" diag/bootreceiver-twin.txt && echo "PASSMARK: TWIN-BOOT-RECEIVER-REGISTERED" | tee -a diag/summary.txt || true
+            echo "== [3] OFFICIAL: default-state trigger (fresh install, master off) -> receiver must exit before doCheck"
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-o0.txt
+            sleep 6
+            adb shell "cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml 2>/dev/null || echo ABSENT" | tee diag/prefs-o0.txt
+            ! grep -q 'name="lastCheckState"' diag/prefs-o0.txt && echo "PASSMARK: OFFICIAL-MASTER-GATE-DEFAULT (fresh master=false: receiver executed and exited before doCheck)" | tee -a diag/summary.txt || true
+            echo "== [4] OFFICIAL: patch prefs to the user's REAL on-device opt-in state (master=true, tracked=[appmintly@1.0.6])"
+            python3 "$RUNNER_TEMP/diag-helpers/prefs.py" patch true true '[{"appId":"appmintly","version":"1.0.6"}]' '{}' true | tee diag/prefs-o-seed.txt
+            echo "== [5] OFFICIAL trigger #1: first run must silently initialize the baseline from the REAL catalog"
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-o1.txt
+            for i in $(seq 1 12); do st=$(adb shell "cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml 2>/dev/null" | grep -o 'lastCheckState">[a-z_]*' | head -1 | cut -d'>' -f2); [ -n "$st" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-o1.txt
+            grep -q 'lastCheckState">initialized' diag/prefs-o1.txt && grep -q 'name="baseline"' diag/prefs-o1.txt && echo "PASSMARK: OFFICIAL-FIRST-RUN-INIT (baseline initialized from the real catalog, state=initialized, nothing posted)" | tee -a diag/summary.txt || true
+            echo "== [6] OFFICIAL trigger #2: tracked 1.0.6 == catalog 1.0.6 -> 0 eligible, state ok, lastPosted=0"
+            adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-o2.txt
+            for i in $(seq 1 12); do st=$(adb shell "cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml 2>/dev/null" | grep -o 'lastCheckState">[a-z_]*' | head -1 | cut -d'>' -f2); [ "$st" = "ok" ] && break; sleep 5; done
+            adb shell cat /data/data/com.appmintly.appmintly/shared_prefs/appmintly_updates.xml | tee diag/prefs-o2.txt
+            grep -q 'lastCheckState">ok' diag/prefs-o2.txt && grep -q 'name="lastPosted" value="0"' diag/prefs-o2.txt && echo "PASSMARK: OFFICIAL-CHECKER-OK-ZERO-ELIGIBLE (executed, fetched real catalog, 1.0.6 = 1.0.6 -> 0 eligible, 0 posted)" | tee -a diag/summary.txt || true
+            echo "== [7] TWIN: NO patch, NO broadcast - poll for its REAL 2-minute alarm fires"
+            date -u | tee diag/twin-poll-start.txt
+            for i in $(seq 1 20); do st=$(python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" state || true); echo "poll $i: state=$st $(date -u +%H:%M:%S)" >> diag/twin-polls.txt; [ "$st" = "ok" ] && break; sleep 30; done
+            cat diag/twin-polls.txt || true
+            python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" dump | tee diag/prefs-twin-final.txt
+            grep -q 'lastCheckState">ok' diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-RECEIVER-FIRED-REAL-ALARM (prefs advanced to ok with NO adb trigger: real AlarmManager delivery)" | tee -a diag/summary.txt || true
+            grep -q 'lastCheckState">initialized' diag/twin-polls.txt || grep -q "state=initialized" diag/twin-polls.txt && echo "PASSMARK: TWIN-FIRST-TICK-INITIALIZED (first real fire silently initialized, as designed)" | tee -a diag/summary.txt || true
+            grep -q 'name="lastPosted" value="2"' diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-ELIGIBLE-FOUND-AND-POSTED (lastPosted=2: both fixture-eligible events detected vs the real catalog)" | tee -a diag/summary.txt || true
+            grep -q "app-update:appmintly:1.0.6" diag/prefs-twin-final.txt && grep -q "app-update:studyria:2.0.2" diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-DEDUP-KEYS-RECORDED (delivered keys for both events)" | tee -a diag/summary.txt || true
+            echo "== [8] TWIN tray evidence (dumpsys + screenshot)"
+            adb shell dumpsys notification --noredact > diag/notif-twin-1.txt 2>&1 || true
+            grep -c "Update available: AppMintly" diag/notif-twin-1.txt > diag/notif-appmintly-count.txt || echo 0 > diag/notif-appmintly-count.txt
+            grep -c "Update available: Studyria" diag/notif-twin-1.txt > diag/notif-studyria-count.txt || echo 0 > diag/notif-studyria-count.txt
+            cat diag/notif-appmintly-count.txt diag/notif-studyria-count.txt || true
+            test "$(cat diag/notif-appmintly-count.txt)" = "1" && test "$(cat diag/notif-studyria-count.txt)" = "1" && echo "PASSMARK: TWIN-NOTIFICATIONS-POSTED-AND-VISIBLE (both tray notifications present: AppMintly 1.0.6 + Studyria 2.0.2)" | tee -a diag/summary.txt || true
+            adb shell cmd statusbar expand-notifications || true
+            sleep 3
+            adb shell screencap -p /sdcard/phase2b-twin-shade.png || true
+            adb pull /sdcard/phase2b-twin-shade.png diag/ || true
+            echo "== [9] TWIN next real tick: dedupe (no duplicates, lastPosted back to 0)"
+            sleep 150
+            python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" dump | tee diag/prefs-twin-after-dedup.txt
+            adb shell dumpsys notification --noredact > diag/notif-twin-2.txt 2>&1 || true
+            grep -c "Update available" diag/notif-twin-2.txt > diag/notif-total-count.txt || echo 0 > diag/notif-total-count.txt
+            cat diag/notif-total-count.txt || true
+            grep -q 'name="lastPosted" value="0"' diag/prefs-twin-after-dedup.txt && test "$(cat diag/notif-total-count.txt)" = "2" && echo "PASSMARK: TWIN-DEDUPE-NEXT-TICK (next real fire posted 0; tray still exactly 2)" | tee -a diag/summary.txt || true
+            echo "== [10] REBOOT recovery (best-effort, honest PASS/NOT VERIFIED)"
+            adb reboot || true
+            timeout 240 adb wait-for-device || true
+            sleep 10
+            adb root || true
+            timeout 180 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
+            sleep 15
+            adb shell dumpsys alarm > diag/alarm-after-reboot.txt 2>&1 || true
+            grep -q "21600000" diag/alarm-after-reboot.txt && grep -q "com.appmintly.appmintly/" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-OFFICIAL: PASS (6h alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-OFFICIAL: NOT VERIFIED (alarm absent from dumpsys after reboot)" | tee -a diag/summary.txt
+            grep -q "120000" diag/alarm-after-reboot.txt && grep -q "com.appmintly.appmintlydiag/" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-TWIN: PASS (2min alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-TWIN: NOT VERIFIED" | tee -a diag/summary.txt
+            echo "== [11] final marker count"
+            cat diag/summary.txt || true
+            test "$(grep -c "PASSMARK:" diag/summary.txt)" = "13" && echo "ALL-REQUIRED-EVIDENCE: PASS (13/13)" | tee -a diag/summary.txt || echo "ALL-REQUIRED-EVIDENCE: INCOMPLETE ($(grep -c "PASSMARK:" diag/summary.txt)/13)" | tee -a diag/summary.txt
+
+      - name: Fail the job if any required evidence marker is missing
+        run: |
+          cat diag/summary.txt
+          test "$(grep -c "PASSMARK:" diag/summary.txt)" = "13"
+
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2b-emulator-evidence
+          path: diag/
