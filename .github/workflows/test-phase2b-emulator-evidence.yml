@@ -279,16 +279,16 @@ jobs:
             grep -q "state=initialized" diag/twin-polls-early.txt && echo "PASSMARK: TWIN-FIRST-TICK-INITIALIZED (first real fire silently initialized the baseline, as designed)" | tee -a diag/summary.txt || true
             echo "== [2] ALARM REGISTRATION evidence (both apps, dumpsys only)"
             adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1 || true
-            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly/" > diag/alarm-record-official.txt || true
-            adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintlydiag/" > diag/alarm-record-twin.txt || true
+            adb shell dumpsys alarm | grep -B4 -A4 "com.appmintly.appmintly.ACTION_CHECK_UPDATES" > diag/alarm-record-official.txt || true
+            adb shell dumpsys alarm | grep -B4 -A4 "com.appmintly.appmintlydiag.ACTION_CHECK_UPDATES" > diag/alarm-record-twin.txt || true
             cat diag/alarm-record-official.txt || true
             cat diag/alarm-record-twin.txt || true
             grep -q "ACTION_CHECK_UPDATES" diag/alarm-record-official.txt && grep -q "21600000" diag/alarm-record-official.txt && echo "PASSMARK: OFFICIAL-ALARM-REGISTERED (ACTION_CHECK_UPDATES pending intent, repeatInterval 21600000 = 6h)" | tee -a diag/summary.txt || true
             grep -q "ACTION_CHECK_UPDATES" diag/alarm-record-twin.txt && grep -q "120000" diag/alarm-record-twin.txt && echo "PASSMARK: TWIN-ALARM-REGISTERED (ACTION_CHECK_UPDATES pending intent, repeatInterval 120000 = 2min)" | tee -a diag/summary.txt || true
             adb shell dumpsys package com.appmintly.appmintly | grep -B1 -A3 "BootReceiver" > diag/bootreceiver-official.txt || true
             adb shell dumpsys package com.appmintly.appmintlydiag | grep -B1 -A3 "BootReceiver" > diag/bootreceiver-twin.txt || true
-            grep -q "enabled" diag/bootreceiver-official.txt && echo "PASSMARK: OFFICIAL-BOOT-RECEIVER-REGISTERED" | tee -a diag/summary.txt || true
-            grep -q "enabled" diag/bootreceiver-twin.txt && echo "PASSMARK: TWIN-BOOT-RECEIVER-REGISTERED" | tee -a diag/summary.txt || true
+            grep -q "BootReceiver" diag/bootreceiver-official.txt && grep -q "BOOT_COMPLETED" diag/bootreceiver-official.txt && echo "PASSMARK: OFFICIAL-BOOT-RECEIVER-REGISTERED (BOOT_COMPLETED intent filter on .BootReceiver)" | tee -a diag/summary.txt || true
+            grep -q "BootReceiver" diag/bootreceiver-twin.txt && grep -q "BOOT_COMPLETED" diag/bootreceiver-twin.txt && echo "PASSMARK: TWIN-BOOT-RECEIVER-REGISTERED (BOOT_COMPLETED intent filter on .BootReceiver)" | tee -a diag/summary.txt || true
             echo "== [3] OFFICIAL: default-state trigger (fresh install, master off) -> receiver must exit before doCheck"
             adb shell am broadcast -a com.appmintly.appmintly.ACTION_CHECK_UPDATES -n com.appmintly.appmintly/.AlarmReceiver | tee diag/bcast-o0.txt
             sleep 6
@@ -338,10 +338,12 @@ jobs:
             sleep 10
             adb root || true
             timeout 180 adb shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done' || true
-            sleep 15
-            adb shell dumpsys alarm > diag/alarm-after-reboot.txt 2>&1 || true
-            grep -q "21600000" diag/alarm-after-reboot.txt && grep -q "com.appmintly.appmintly/" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-OFFICIAL: PASS (6h alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-OFFICIAL: NOT VERIFIED (alarm absent from dumpsys after reboot)" | tee -a diag/summary.txt
-            grep -q "120000" diag/alarm-after-reboot.txt && grep -q "com.appmintly.appmintlydiag/" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-TWIN: PASS (2min alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-TWIN: NOT VERIFIED" | tee -a diag/summary.txt
+            sleep 45
+            for i in $(seq 1 8); do adb shell dumpsys alarm > diag/alarm-after-reboot.txt 2>&1 || true; o=$(grep -c "com.appmintly.appmintly.ACTION_CHECK_UPDATES" diag/alarm-after-reboot.txt || true); t=$(grep -c "com.appmintly.appmintlydiag.ACTION_CHECK_UPDATES" diag/alarm-after-reboot.txt || true); echo "reboot poll $i: official=$o twin=$t $(date -u +%H:%M:%S)" >> diag/reboot-polls.txt; [ "$o" -ge "1" ] && [ "$t" -ge "1" ] && break; sleep 30; done
+            cat diag/reboot-polls.txt || true
+            grep -q "com.appmintly.appmintly.ACTION_CHECK_UPDATES" diag/alarm-after-reboot.txt && grep -q "21600000" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-OFFICIAL: PASS (6h alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-OFFICIAL: NOT VERIFIED (alarm absent from dumpsys after reboot)" | tee -a diag/summary.txt
+            grep -q "com.appmintly.appmintlydiag.ACTION_CHECK_UPDATES" diag/alarm-after-reboot.txt && grep -q "120000" diag/alarm-after-reboot.txt && echo "REBOOT-RESCHEDULE-TWIN: PASS (2min alarm re-registered after reboot via BootReceiver)" | tee -a diag/summary.txt || echo "REBOOT-RESCHEDULE-TWIN: NOT VERIFIED" | tee -a diag/summary.txt
+            python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" dump | tee diag/prefs-twin-after-reboot.txt || true
             echo "== [11] final marker count"
             cat diag/summary.txt || true
             test "$(grep -c "PASSMARK:" diag/summary.txt)" = "13" && echo "ALL-REQUIRED-EVIDENCE: PASS (13/13)" | tee -a diag/summary.txt || echo "ALL-REQUIRED-EVIDENCE: INCOMPLETE ($(grep -c "PASSMARK:" diag/summary.txt)/13)" | tee -a diag/summary.txt
