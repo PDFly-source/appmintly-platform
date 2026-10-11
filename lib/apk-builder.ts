@@ -927,7 +927,6 @@ ${
           isNativeUpdatesBuild
             ? `
     @Override
-    @Override
     protected void onResume() {
         super.onResume();
         // Stage 1 (no FCM): next-open catch-up of release events. Rate-
@@ -936,6 +935,7 @@ ${
         UpdateEngine.catchUpEvents(this);
     }
 
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
@@ -1464,7 +1464,7 @@ public final class UpdateEngine {
      * fetch, post) never silently swallows an update: it is retried on the
      * next app open.
      */
-    static void doCatchUp(Context ctx) {
+    static void doCatchUp(Context ctx) throws Exception {
         SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (!isEnabled(ctx)) {
             recordCatchUp(ctx, "disabled");
