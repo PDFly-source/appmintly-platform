@@ -77,8 +77,10 @@ jobs:
           mkdir -p test-apk diag
           curl -fsSL -w 'official 1.0.6 HTTP %{http_code} %{size_download} bytes\n' -o test-apk/AppMintly-1.0.6.apk \
             "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.6/AppMintly-1.0.6.apk"
-          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-            "https://api.github.com/repos/PDFly-source/appmintly-platform/actions/artifacts/11671468300/zip" -o twin.zip
+          export GH_TOKEN="${{ github.token }}"
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/PDFly-source/appmintly-platform/actions/artifacts/11671468300/zip" -o twin.zip \
+            || gh api repos/PDFly-source/appmintly-platform/actions/artifacts/11671468300/zip > twin.zip
           python3 -c "import zipfile; zipfile.ZipFile('twin.zip').extractall('test-apk')"
           ls -la test-apk/
 
@@ -271,6 +273,10 @@ jobs:
             adb shell am start -W -n com.appmintly.appmintly/.MainActivity | tee diag/launch-official.txt
             adb shell am start -W -n com.appmintly.appmintlydiag/.MainActivity | tee diag/launch-twin.txt
             sleep 15
+            echo "== [1b] TWIN early poll: capture its FIRST real alarm fire (expect silent baseline init)"
+            for i in $(seq 1 16); do st=$(python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" state || true); echo "poll $i: state=$st $(date -u +%H:%M:%S)" >> diag/twin-polls-early.txt; [ -n "$st" ] && break; sleep 15; done
+            cat diag/twin-polls-early.txt || true
+            grep -q "state=initialized" diag/twin-polls-early.txt && echo "PASSMARK: TWIN-FIRST-TICK-INITIALIZED (first real fire silently initialized the baseline, as designed)" | tee -a diag/summary.txt || true
             echo "== [2] ALARM REGISTRATION evidence (both apps, dumpsys only)"
             adb shell dumpsys alarm > diag/alarm-after-launch.txt 2>&1 || true
             adb shell dumpsys alarm | grep -B4 -A8 "com.appmintly.appmintly/" > diag/alarm-record-official.txt || true
@@ -306,7 +312,6 @@ jobs:
             cat diag/twin-polls.txt || true
             python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" dump | tee diag/prefs-twin-final.txt
             grep -q 'lastCheckState">ok' diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-RECEIVER-FIRED-REAL-ALARM (prefs advanced to ok with NO adb trigger: real AlarmManager delivery)" | tee -a diag/summary.txt || true
-            grep -q 'lastCheckState">initialized' diag/twin-polls.txt || grep -q "state=initialized" diag/twin-polls.txt && echo "PASSMARK: TWIN-FIRST-TICK-INITIALIZED (first real fire silently initialized, as designed)" | tee -a diag/summary.txt || true
             grep -q 'name="lastPosted" value="2"' diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-ELIGIBLE-FOUND-AND-POSTED (lastPosted=2: both fixture-eligible events detected vs the real catalog)" | tee -a diag/summary.txt || true
             grep -q "app-update:appmintly:1.0.6" diag/prefs-twin-final.txt && grep -q "app-update:studyria:2.0.2" diag/prefs-twin-final.txt && echo "PASSMARK: TWIN-DEDUP-KEYS-RECORDED (delivered keys for both events)" | tee -a diag/summary.txt || true
             echo "== [8] TWIN tray evidence (dumpsys + screenshot)"
@@ -320,7 +325,8 @@ jobs:
             adb shell screencap -p /sdcard/phase2b-twin-shade.png || true
             adb pull /sdcard/phase2b-twin-shade.png diag/ || true
             echo "== [9] TWIN next real tick: dedupe (no duplicates, lastPosted back to 0)"
-            sleep 150
+            for i in $(seq 1 16); do lp=$(python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" posted || true); echo "dedup poll $i: posted=$lp $(date -u +%H:%M:%S)" >> diag/twin-dedup-polls.txt; [ "$lp" = "0" ] && break; sleep 15; done
+            cat diag/twin-dedup-polls.txt || true
             python3 "$RUNNER_TEMP/diag-helpers/read_diag.py" dump | tee diag/prefs-twin-after-dedup.txt
             adb shell dumpsys notification --noredact > diag/notif-twin-2.txt 2>&1 || true
             grep -c "Update available" diag/notif-twin-2.txt > diag/notif-total-count.txt || echo 0 > diag/notif-total-count.txt
