@@ -39,6 +39,11 @@ import React, {
 } from 'react';
 import { apiUrl } from '@/lib/api-path';
 import {
+  createEventsPollController,
+  eventDedupKey,
+  type ReleaseEvent,
+} from '@/lib/notifications/events-poller';
+import {
   DEFAULT_PREFS,
   NotificationEvent,
   NotificationPrefs,
@@ -46,6 +51,8 @@ import {
   detectEvents,
   pruneDelivered,
   recordShownKeys,
+  eventCopy,
+  detailPathFor,
 } from '@/lib/notifications/engine';
 import {
   NotificationStateV1,
@@ -58,6 +65,8 @@ import {
 const CHECK_INTERVAL_MS = 20 * 60 * 1000;
 /** The catalog is small; guard against absurd payloads anyway. */
 const MAX_CATALOG_BYTES = 8 * 1024 * 1024;
+/** Stage 1 (no FCM): release-events poll cadence while the site is open (60s). */
+const EVENTS_POLL_INTERVAL_MS = 60 * 1000;
 
 export type PermissionState = 'granted' | 'denied' | 'default' | 'unsupported';
 
@@ -213,6 +222,62 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   // ------------------------------------------------------------------
+  // Stage 1 (no FCM): release-event delivery from the Worker event log.
+  // Mirrors the catalog delivery below: same SW/Notification paths, same
+  // delivered-key discipline (a key is recorded only after the OS actually
+  // showed the notification). The native APK never enters this path — its
+  // own on-open catch-up + ~6h alarm own event delivery there.
+  // ------------------------------------------------------------------
+  const deliverReleaseEvents = useCallback(async (events: ReleaseEvent[]) => {
+    const current = stateRef.current;
+    if (!current) return;
+    if (getNativeBridge()) return;
+    if (!current.prefs.master || !current.prefs.updates) return;
+    if (readPermission() !== 'granted') return;
+    const eligible = events.filter((ev) => {
+      if (ev.platform !== 'android' && ev.platform !== 'web') return false;
+      if (!current.tracked.some((t) => t.appId === ev.appId)) return false;
+      return !current.delivered[eventDedupKey(ev)];
+    });
+    if (eligible.length === 0) return;
+    let shown = 0;
+    const shownKeys: string[] = [];
+    const reg = await navigator.serviceWorker?.getRegistration();
+    for (const ev of eligible) {
+      const copy = eventCopy('app-update', ev.name || ev.appId, ev.version, 'normal');
+      const key = eventDedupKey(ev);
+      const options: NotificationOptions = {
+        body: copy.body,
+        tag: key,
+        icon: absoluteUrl('/icon-192.png'),
+        data: { url: absoluteUrl(detailPathFor(ev.appId)), key },
+      };
+      try {
+        if (reg && typeof (reg as any).showNotification === 'function') {
+          await (reg as ServiceWorkerRegistration).showNotification(copy.title, options);
+          shown++;
+          shownKeys.push(key);
+        } else if ('Notification' in window) {
+          const n = new Notification(copy.title, options);
+          n.onclick = () => {
+            window.focus();
+            window.location.href = absoluteUrl(detailPathFor(ev.appId));
+            n.close();
+          };
+          shown++;
+          shownKeys.push(key);
+        }
+      } catch (err) {
+        console.warn('[notifications] events delivery error', err);
+      }
+    }
+    const after = stateRef.current;
+    if (after && shownKeys.length > 0) {
+      commit({ ...after, delivered: pruneDelivered(recordShownKeys(after.delivered, shownKeys, Date.now())) });
+    }
+  }, [commit]);
+
+  // ------------------------------------------------------------------
   // Foreground catalog check (the real work)
   // ------------------------------------------------------------------
   const runCheck = useCallback(async (): Promise<NotificationCheckResult> => {
@@ -359,6 +424,33 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       window.clearInterval(interval);
     };
   }, [ready, state?.prefs.master, runCheck, state?.lastRevision === null]);
+
+  // ------------------------------------------------------------------
+  // Stage 1 (no FCM): PWA release-events poller. Lifecycle-identical to
+  // the catalog cadence above: timers run ONLY while this page is open;
+  // the controller stops on unmount and resumes from the persisted
+  // checkpoint on the next open. A closed PWA delivers nothing (documented
+  // limitation) — the next open recovers everything missed, once.
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (!ready || !state) return;
+    if (!state.prefs.master) return;
+    if (getNativeBridge()) return;
+    let cancelled = false;
+    const controller = createEventsPollController({
+      storage: window.localStorage,
+      intervalMs: EVENTS_POLL_INTERVAL_MS,
+      gate: () => document.visibilityState === 'visible',
+      onEvents: (events) => {
+        if (!cancelled) void deliverReleaseEvents(events);
+      },
+    });
+    controller.start();
+    return () => {
+      cancelled = true;
+      controller.stop();
+    };
+  }, [ready, state?.prefs.master, deliverReleaseEvents]);
 
   // ------------------------------------------------------------------
   // Native bridge sync (official APK only; feature-detected).

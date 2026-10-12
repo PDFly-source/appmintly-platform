@@ -5,7 +5,10 @@
  * assertions.
  */
 import { readFileSync } from 'node:fs';
-import { pollReleaseEvents, eventDedupKey, DEFAULT_EVENTS_URL, type EventsPollState } from '../lib/notifications/events-poller';
+import {
+  pollReleaseEvents, eventDedupKey, DEFAULT_EVENTS_URL, type EventsPollState, type ReleaseEvent,
+  loadEventsPollState, saveEventsPollState, createEventsPollController,
+} from '../lib/notifications/events-poller';
 
 let pass = 0, fail = 0;
 const check = (name: string, cond: boolean, extra = '') => {
@@ -87,6 +90,99 @@ check('default URL is the production Worker event log', DEFAULT_EVENTS_URL === '
 const src = readFileSync(new URL('../lib/notifications/events-poller.ts', import.meta.url), 'utf8');
 const code = src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
 check('no FCM/push/WebSocket in poller code', !/firebase|FCM|pushManager|WebSocket|serviceWorker\.register/.test(code));
+
+
+// 11. persistence roundtrip + corrupted storage fallback
+const mem = new Map<string, string>();
+const fakeStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => { mem.set(k, v); } };
+saveEventsPollState(fakeStorage, { checkpoint: 1234, seen: new Set(['app-update:a:1.0.0']) });
+const loaded = loadEventsPollState(fakeStorage);
+check('persisted poll state roundtrips', loaded.checkpoint === 1234 && loaded.seen.has('app-update:a:1.0.0'));
+mem.set('appmintly_events_poll_v1', 'not-json');
+check('corrupted storage loads fresh state', loadEventsPollState(fakeStorage).checkpoint === null);
+
+// 12. controller lifecycle: immediate poll on start, stop halts, gate
+// blocks, failures retry without losing the checkpoint, and a restart
+// resumes from the persisted checkpoint with dedup across restarts.
+type AnyObj = { ok: boolean; status: number; json: () => Promise<unknown> };
+const mkRes2 = (events: unknown[]): AnyObj => ({ ok: true, status: 200, json: async () => ({ events }) });
+const makeTimers = () => {
+  const ticks: Array<() => void> = [];
+  const timers = {
+    setInterval: ((cb: () => void) => { ticks.push(cb); return ticks.length; }) as unknown as typeof setInterval,
+    clearInterval: (() => {}) as unknown as typeof clearInterval,
+  };
+  return { timers, ticks };
+};
+const mkStore = () => {
+  const m = new Map<string, string>();
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v); } };
+};
+// session 1: start -> immediate poll delivers event, checkpoint persisted
+const st2 = mkStore();
+const t1 = makeTimers();
+let got: ReleaseEvent[][] = [];
+const c1 = createEventsPollController({
+  storage: st2,
+  fetchImpl: (async () => mkRes2([ev('h', '1.0.0', 900)])) as unknown as typeof fetch,
+  onEvents: (e) => { got.push(e); },
+  timers: t1.timers,
+});
+c1.start();
+await new Promise((r) => setTimeout(r, 5));
+check('controller.start polls immediately', got.length === 1 && got[0][0].appId === 'h');
+check('checkpoint persisted after successful poll', loadEventsPollState(st2).checkpoint === 900);
+c1.stop();
+// session 2 (restart): re-delivered same version is suppressed via persisted seen
+const got2: ReleaseEvent[][] = [];
+const t2 = makeTimers();
+const c2 = createEventsPollController({
+  storage: st2,
+  fetchImpl: (async (u: any) => {
+    check('restart resumes from persisted checkpoint', new URL(u).searchParams.get('since') === '900', String(u));
+    return mkRes2([ev('h', '1.0.0', 950)]);
+  }) as unknown as typeof fetch,
+  onEvents: (e) => { got2.push(e); },
+  timers: t2.timers,
+});
+c2.start();
+await new Promise((r) => setTimeout(r, 5));
+check('re-delivered version after restart suppressed (no duplicate notification)', got2.length === 0, JSON.stringify(got2));
+c2.stop();
+// session 3: failed poll -> onError, nothing delivered; next tick retries and recovers
+const t3 = makeTimers();
+const st3 = mkStore();
+const fails = [true, false];
+const delivered3: ReleaseEvent[][] = [];
+let errSeen = 0;
+const c3 = createEventsPollController({
+  storage: st3,
+  fetchImpl: (async () => {
+    if (fails.shift()) throw new Error('network down');
+    return mkRes2([ev('i', '2.0.0', 800)]);
+  }) as unknown as typeof fetch,
+  onEvents: (e) => { delivered3.push(e); },
+  onError: () => { errSeen++; },
+  timers: t3.timers,
+});
+c3.start();
+await new Promise((r) => setTimeout(r, 5));
+check('failed poll: onError, no delivery, no crash', delivered3.length === 0 && errSeen === 1);
+t3.ticks[0]();
+await new Promise((r) => setTimeout(r, 5));
+check('next tick retries and recovers after failure', delivered3.length === 1 && delivered3[0][0].appId === 'i');
+// session 4: gate=false performs no fetch at all
+let gated = 0;
+const t4 = makeTimers();
+const c4 = createEventsPollController({
+  fetchImpl: (async () => { gated++; return mkRes2([]); }) as unknown as typeof fetch,
+  gate: () => false,
+  onEvents: () => {},
+  timers: t4.timers,
+});
+c4.start();
+t4.ticks[0]();
+check('gate=false performs no fetch (hidden page does not poll)', gated === 0, String(gated));
 
 console.log('SUMMARY test-events-poller: ' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

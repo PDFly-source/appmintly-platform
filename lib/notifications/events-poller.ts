@@ -65,3 +65,108 @@ export async function pollReleaseEvents(
   }
   return fresh;
 }
+
+
+/* ---------------------------------------------------------------------------
+ * Persistence + lifecycle (PWA integration layer)
+ * ------------------------------------------------------------------------- */
+export interface PersistedEventsPollState {
+  v: 1;
+  checkpoint: number | null;
+  seen: string[];
+}
+
+/** localStorage key — per-origin, same isolation rules as the catalog state. */
+export const EVENTS_POLL_STATE_KEY = 'appmintly_events_poll_v1';
+
+export function loadEventsPollState(storage: Pick<Storage, 'getItem'>): EventsPollState {
+  try {
+    const raw = storage.getItem(EVENTS_POLL_STATE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as PersistedEventsPollState;
+      if (p && p.v === 1 && (p.checkpoint === null ||
+          (typeof p.checkpoint === 'number' && p.checkpoint >= 0)) && Array.isArray(p.seen)) {
+        return { checkpoint: p.checkpoint, seen: new Set(p.seen.filter((k) => typeof k === 'string')) };
+      }
+    }
+  } catch {
+    /* corrupted or unavailable storage: fall back to a fresh state; the
+       dedup layer above still prevents duplicate notifications. */
+  }
+  return { checkpoint: null, seen: new Set<string>() };
+}
+
+export function saveEventsPollState(storage: Pick<Storage, 'setItem'>, state: EventsPollState): void {
+  try {
+    const persisted: PersistedEventsPollState = {
+      v: 1,
+      checkpoint: state.checkpoint,
+      seen: [...state.seen].slice(-500),
+    };
+    storage.setItem(EVENTS_POLL_STATE_KEY, JSON.stringify(persisted));
+  } catch {
+    /* storage full/blocked: polling continues in-memory; the checkpoint is
+       only an optimization — re-delivered events are still deduplicated. */
+  }
+}
+
+export interface EventsPollController {
+  start(): void;
+  stop(): void;
+  pollNow(): Promise<void>;
+}
+
+/**
+ * While-open lifecycle controller for the PWA. start() performs an
+ * immediate poll and then polls every intervalMs; stop() halts cleanly.
+ * Failures are swallowed to onError and retried on the next tick — the
+ * checkpoint is persisted ONLY after a successful poll, so a crash mid-poll
+ * loses nothing (the next poll re-fetches the same window and dedups).
+ * gate() lets the caller suppress ticks (e.g. document hidden).
+ */
+export function createEventsPollController(opts: {
+  storage?: Pick<Storage, 'getItem' | 'setItem'>;
+  url?: string;
+  fetchImpl?: typeof fetch;
+  intervalMs?: number;
+  gate?: () => boolean;
+  onEvents: (events: ReleaseEvent[]) => void;
+  onError?: (err: unknown) => void;
+  timers?: { setInterval: typeof setInterval; clearInterval: typeof clearInterval };
+}): EventsPollController {
+  const state: EventsPollState = opts.storage ? loadEventsPollState(opts.storage) : { checkpoint: null, seen: new Set<string>() };
+  const si = opts.timers?.setInterval ?? setInterval;
+  const ci = opts.timers?.clearInterval ?? clearInterval;
+  let handle: ReturnType<typeof setInterval> | null = null;
+  let running = false;
+  const tick = async () => {
+    if (running) return; // never overlap polls
+    if (opts.gate && !opts.gate()) return;
+    running = true;
+    try {
+      const events = await pollReleaseEvents(state, { url: opts.url, fetchImpl: opts.fetchImpl });
+      if (opts.storage) saveEventsPollState(opts.storage, state);
+      if (events.length > 0) opts.onEvents(events);
+    } catch (err) {
+      opts.onError?.(err);
+    } finally {
+      running = false;
+    }
+  };
+  return {
+    start() {
+      if (handle !== null) return;
+      void tick(); // immediate catch-up on open (missed events first)
+      handle = si(() => { void tick(); }, opts.intervalMs ?? 60_000);
+    },
+    stop() {
+      if (handle !== null) {
+        ci(handle);
+        handle = null;
+      }
+    },
+    async pollNow() {
+      await tick();
+    },
+  };
+}
