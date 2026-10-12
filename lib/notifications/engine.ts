@@ -236,7 +236,7 @@ function isTrackedUpdateAllowed(kind: EventKind, prefs: NotificationPrefs): bool
   return false;
 }
 
-function eventCopy(kind: EventKind, appName: string, version: string, severity: Severity): { title: string; body: string } {
+export function eventCopy(kind: EventKind, appName: string, version: string, severity: Severity): { title: string; body: string } {
   switch (kind) {
     case 'new-android-app':
       return { title: 'New on AppMintly', body: `Discover ${appName}, a new Android app now available.` };

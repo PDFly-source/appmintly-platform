@@ -121,7 +121,7 @@ def main():
     revision = os.environ.get("GITHUB_SHA", "")
     if not REVISION_RE.match(revision):
         die("GITHUB_SHA not a valid catalog revision: refusing to emit.")
-    ts = int(time.time())
+    ts = int(time.time() * 1000)
     emitted, skipped = 0, 0
 
     for a in catalog:

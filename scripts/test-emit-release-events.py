@@ -13,6 +13,8 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 SECRET = "unit-test-emission-secret-0123456789abcdef"
@@ -83,6 +85,13 @@ class Handler(BaseHTTPRequestHandler):
         ev = json.loads(raw)
         if ev.get("appId") == "draftapp" or ev.get("appId") == "demoapp" or ev.get("appId") == "archivedapp":
             self._send(400, {"error": "should never be emitted"})
+            return
+        # Worker parity: EVENTS_CLOCK_SKEW_MS is 600_000 MILLISECONDS
+        # (worker.js). A seconds-precision timestamp is always stale, so
+        # reject it exactly like production does.
+        ts = ev.get("ts")
+        if not isinstance(ts, int) or abs(int(time.time() * 1000) - ts) > 600_000:
+            self._send(400, {"error": "Invalid or stale event timestamp."})
             return
         state["emitted"].append(ev)
         app_id, platform, version = ev["appId"], ev["platform"], ev["version"]
@@ -174,6 +183,27 @@ check("missing secret fails the run", ok, r.stderr[-200:])
 # 7. Catalog unreachable -> fail closed
 ok, r = run_emitter({"EMIT_TEST_CATALOG_URL": "http://127.0.0.1:1/catalog"}, False)
 check("catalog unreachable fails the run", ok, r.stderr[-200:])
+
+# 8. Timestamp unit parity with the real Worker: milliseconds accepted,
+#    seconds rejected (catches the class of bug fixed in this branch).
+def post_signed_event(ts):
+    body = json.dumps({"appId": "tscheck", "platform": "web", "version": "1.0.0",
+                       "catalogRevision": "deadbeefdeadbeef", "ts": ts}).encode()
+    sig = "sha256=" + hmac.new(SECRET.encode(), body, hashlib.sha256).hexdigest()
+    req = urllib.request.Request("http://127.0.0.1:%d/events/publish" % PORT[0], data=body,
+                                 headers={"Content-Type": "application/json",
+                                          "X-AppMintly-Events-Signature": sig}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+
+code_ms, _ = post_signed_event(int(time.time() * 1000))
+check("millisecond timestamp accepted (worker parity)", code_ms in (200, 201), str(code_ms))
+code_s, body_s = post_signed_event(int(time.time()))
+check("seconds timestamp rejected (worker parity)",
+      code_s == 400 and "stale" in body_s.lower(), str(code_s) + " " + body_s[:120])
 
 srv.shutdown()
 print("\n%d passed, %d failed" % (passed, failed))
