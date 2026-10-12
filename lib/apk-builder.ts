@@ -927,6 +927,15 @@ ${
           isNativeUpdatesBuild
             ? `
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Stage 1 (no FCM): next-open catch-up of release events. Rate-
+        // limited, runs on a background thread, never blocks the UI. The
+        // six-hour background checker is completely unchanged.
+        UpdateEngine.catchUpEvents(this);
+    }
+
+    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
@@ -1204,6 +1213,11 @@ public final class UpdateEngine {
                     // posted in its last completed check. The page already
                     // tolerates absence (older APKs report nothing).
                     .put("lastPosted", p.getInt("lastPosted", 0))
+                    // Stage 1 catch-up evidence (additive; the page already
+                    // tolerates absence on older APKs).
+                    .put("lastCatchUp", p.getLong("lastCatchUp", 0L))
+                    .put("lastCatchUpState", p.getString("lastCatchUpState", ""))
+                    .put("lastCatchUpPosted", p.getInt("lastCatchUpPosted", 0))
                     .put("checkIntervalHours", 6)
                     .toString();
         } catch (Throwable t) {
@@ -1403,6 +1417,191 @@ public final class UpdateEngine {
         editor.putString("lastCheckState", "ok");
         editor.putInt("lastPosted", posted);
         editor.apply();
+    }
+
+    /* ------------- Stage 1: release-event catch-up on app open ------------- */
+
+    // Public release-event log served by the AppMintly Worker. Read-only
+    // release metadata (already public in the marketplace catalog); no
+    // device identifiers are ever sent. Stage 1 delivers on the NEXT APP
+    // OPEN, never in the closed-app background: that remains the six-hour
+    // checker's job. No push/WebSocket/foreground-service code exists here.
+    private static final String EVENTS_URL = "https://appmintly-publisher-api.sbn50088.workers.dev/events";
+    private static final long CATCHUP_MIN_INTERVAL_MS = 60L * 1000L;
+    private static final int MAX_EVENT_LOG_BYTES = 256 * 1024;
+
+    /** Called from MainActivity.onResume. Rate-limited; never blocks the UI. */
+    public static void catchUpEvents(final Context ctx) {
+        final Context appCtx = ctx.getApplicationContext();
+        long now;
+        try {
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            now = System.currentTimeMillis();
+            if (now - p.getLong("lastCatchUpRun", 0L) < CATCHUP_MIN_INTERVAL_MS) {
+                return;
+            }
+            p.edit().putLong("lastCatchUpRun", now).apply();
+        } catch (Throwable ignored) {
+            return;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    doCatchUp(appCtx);
+                } catch (Throwable ignored) {
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Stage 1 catch-up: fetch release events published AFTER the persisted
+     * cursor and deliver genuinely-missed updates through the exact same
+     * permission, category, dedup key and posting path as the six-hour
+     * checker. The cursor only advances past events that were delivered or
+     * judged not eligible, so a temporary failure (offline, permission,
+     * fetch, post) never silently swallows an update: it is retried on the
+     * next app open.
+     */
+    static void doCatchUp(Context ctx) throws Exception {
+        SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (!isEnabled(ctx)) {
+            recordCatchUp(ctx, "disabled");
+            return;
+        }
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) {
+            recordCatchUp(ctx, "error");
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) {
+            // OS-level notification permission denied: do not advance the
+            // cursor; retried next open. Never post or claim delivery.
+            recordCatchUp(ctx, "notifications_disabled");
+            return;
+        }
+        if (!isOnline(ctx)) {
+            recordCatchUp(ctx, "offline");
+            return;
+        }
+        long cursor = p.getLong("lastEventTs", 0L);
+        byte[] raw = fetchCatalog(EVENTS_URL + "?since=" + cursor);
+        if (raw == null || raw.length == 0 || raw.length > MAX_EVENT_LOG_BYTES) {
+            recordCatchUp(ctx, "fetch_failed");
+            return;
+        }
+        JSONArray events;
+        try {
+            events = new JSONObject(new String(raw, "UTF-8")).optJSONArray("events");
+        } catch (Throwable t) {
+            events = null;
+        }
+        if (events == null) {
+            recordCatchUp(ctx, "fetch_failed");
+            return;
+        }
+        JSONObject delivered;
+        try {
+            delivered = new JSONObject(p.getString("delivered", "{}"));
+        } catch (Throwable t) {
+            delivered = new JSONObject();
+        }
+        JSONArray tracked;
+        try {
+            tracked = new JSONArray(p.getString("tracked", "[]"));
+        } catch (Throwable t) {
+            tracked = new JSONArray();
+        }
+        boolean prefUpdates = p.getBoolean("updates", true);
+        long now = System.currentTimeMillis();
+        long processed = cursor;
+        int posted = 0;
+        for (int i = 0; i < events.length(); i++) {
+            JSONObject ev = events.optJSONObject(i);
+            if (ev == null) continue;
+            long ts = ev.optLong("ts", 0L);
+            if (ts <= cursor) continue; // never reprocess an old event
+            String appId = ev.optString("appId", "");
+            String version = ev.optString("version", "");
+            if (appId.isEmpty() || version.isEmpty()) {
+                // Inert garbage: skip past it, never post from it.
+                processed = Math.max(processed, ts);
+                continue;
+            }
+            String installedVersion = trackedVersion(tracked, appId);
+            if (installedVersion == null
+                    || compareVersions(version, installedVersion) <= 0) {
+                processed = Math.max(processed, ts);
+                continue;
+            }
+            // Same dedup key namespace as the six-hour checker, so an event
+            // delivered here can never be duplicated by the checker (and
+            // vice versa).
+            String key = "app-update:" + appId + ":" + version;
+            if (delivered.has(key)) {
+                processed = Math.max(processed, ts);
+                continue;
+            }
+            if (!prefUpdates) {
+                // Category gate preserved: silently skipped, same as doCheck.
+                processed = Math.max(processed, ts);
+                continue;
+            }
+            String name = ev.optString("name", "");
+            if (name.isEmpty()) name = appId;
+            String deepLink = OWNED_PREFIX + "app/" + appId + "/";
+            if (postNotification(ctx, nm, key, "Update available: " + name,
+                    "Version " + version + " is available. View the latest changes.", deepLink)) {
+                delivered.put(key, now);
+                posted++;
+                processed = Math.max(processed, ts);
+            } else {
+                // Posting failed (e.g. OS revoked permission mid-session):
+                // stop WITHOUT advancing past this event; retried next open.
+                p.edit()
+                        .putString("delivered", delivered.toString())
+                        .putLong("lastEventTs", processed)
+                        .putInt("lastCatchUpPosted", posted)
+                        .putLong("lastCatchUp", System.currentTimeMillis())
+                        .putString("lastCatchUpState", "permission")
+                        .apply();
+                return;
+            }
+        }
+        p.edit()
+                .putString("delivered", delivered.toString())
+                .putLong("lastEventTs", processed)
+                .putInt("lastCatchUpPosted", posted)
+                .putLong("lastCatchUp", now)
+                .putString("lastCatchUpState", "ok")
+                .apply();
+    }
+
+    /** Version the user's web notification preferences record for an app. */
+    private static String trackedVersion(JSONArray tracked, String appId) {
+        for (int t = 0; t < tracked.length(); t++) {
+            JSONObject tr = tracked.optJSONObject(t);
+            if (tr == null) continue;
+            if (appId.equals(tr.optString("appId", ""))) {
+                String v = tr.optString("version", "").trim();
+                if (!v.isEmpty()) return v;
+            }
+        }
+        return null;
+    }
+
+    /** Records catch-up state WITHOUT advancing the event cursor. */
+    private static void recordCatchUp(Context ctx, String state) {
+        try {
+            SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            p.edit()
+                    .putLong("lastCatchUp", System.currentTimeMillis())
+                    .putString("lastCatchUpState", state)
+                    .putLong("lastEventTs", p.getLong("lastEventTs", 0L))
+                    .apply();
+        } catch (Throwable ignored) {
+        }
     }
 
     /* ---------------- helpers ---------------- */

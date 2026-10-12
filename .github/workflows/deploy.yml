@@ -130,3 +130,24 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  emit-release-event:
+    # Stage 1 (no FCM) — release-event emission. Runs ONLY after BOTH public
+    # deployments (GitHub Pages + Cloudflare Pages) succeed. The script first
+    # verifies the LIVE catalog actually serves the published versions on
+    # https://appmintly.pages.dev, then emits an HMAC-SHA256-signed,
+    # idempotent release event per genuinely-new version to the AppMintly
+    # Worker event log. Fail-closed: any failure fails the run visibly.
+    # Idempotent: re-runs detect nothing new and emit nothing. Downgraded /
+    # rolled-back catalog versions are NEVER emitted. No secrets are
+    # printed; the emission secret never enters any artifact or client.
+    needs: [deploy, deploy-cloudflare]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verify live catalog and emit signed release events
+        env:
+          EVENT_EMISSION_SECRET: ${{ secrets.EVENT_EMISSION_SECRET }}
+        run: python3 scripts/emit-release-events.py
