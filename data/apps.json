@@ -657,10 +657,11 @@
     "shortDescription": "Fast, private Android file sharing with direct local transfer and file verification.",
     "icon": "/brand/nexdrop-icon-384.png",
     "screenshots": [
-      "/assets/apps/nexdrop/screenshots/screenshot-1-3919cec5da.png",
-      "/assets/apps/nexdrop/screenshots/screenshot-2-d71384e77e.png",
-      "/assets/apps/nexdrop/screenshots/screenshot-3-47317c18e1.png",
-      "/assets/apps/nexdrop/screenshots/screenshot-4-5ee089254d.png"
+      "/assets/apps/nexdrop/screenshots/screenshot-1-90022c48f4.png",
+      "/assets/apps/nexdrop/screenshots/screenshot-1-42cda26de0.png",
+      "/assets/apps/nexdrop/screenshots/screenshot-1-84fe8981cb.png",
+      "/assets/apps/nexdrop/screenshots/screenshot-1-d69d9b859a.png",
+      "/assets/apps/nexdrop/screenshots/screenshot-1-ec79ebe202.png"
     ],
     "banner": "",
     "url": "https://pdfly-source.github.io/nexdrop/",
@@ -673,7 +674,7 @@
     "version": "1.4.4",
     "previousVersion": "",
     "releaseDate": "2026-10-08",
-    "lastUpdated": "2026-10-08",
+    "lastUpdated": "2026-10-12",
     "publishedAt": "2026-10-08T11:29:22.000Z",
     "themeColor": "#070B0C",
     "backgroundColor": "#070B0C",
@@ -731,23 +732,24 @@
     ],
     "apk": {
       "enabled": true,
+      "buildMode": "webview",
       "packageId": "com.nexdrop.ndt1",
       "authorized": true,
+      "sha256": "22f427f27cdeaa837a16e52fa8c44ce24ad45ca5e4e3b7e616d8bf68decbc9e2",
       "versionName": "1.4.4",
       "versionCode": 17,
       "fileName": "NexDrop-release.apk",
       "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v0752ea2/NexDrop-release.apk",
       "fileSizeBytes": 3785982,
-      "sha256": "22f427f27cdeaa837a16e52fa8c44ce24ad45ca5e4e3b7e616d8bf68decbc9e2",
       "releaseTag": "nexdrop-android-v0752ea2",
       "generatedAt": "2026-10-08T11:29:22.000Z",
       "buildStatus": "released",
-      "platform": "android",
-      "downloadAvailable": true,
       "verified": true,
+      "downloadAvailable": true,
+      "platform": "android",
+      "releaseDate": "2026-10-08",
       "minSdk": 26,
       "targetSdk": 34,
-      "releaseDate": "2026-10-08",
       "certificateSubject": "NexDrop Release",
       "certificateSha256Fingerprint": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",
       "signatureSchemes": {
@@ -785,6 +787,6 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-10-08T17:10:00.000Z"
+    "updatedAt": "2026-10-12T07:38:58.422Z"
   }
 ]
