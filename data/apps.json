@@ -787,6 +787,6 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-10-12T07:38:58.422Z"
+    "updatedAt": "2026-10-12T07:41:12.168Z"
   }
 ]
