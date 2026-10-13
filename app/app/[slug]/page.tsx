@@ -47,10 +47,11 @@ export async function generateMetadata({
       images: [{ url: image, width: 384, height: 384, alt: `${app.name} icon` }],
     },
     twitter: {
-      card: 'summary',
+      // Real catalog icon asset only (no fabricated banner imagery).
+      card: 'summary_large_image',
       title: `${app.name} on AppMintly`,
       description,
-      images: [image],
+      images: [{ url: image, alt: `${app.name} app icon` }],
     },
   };
 }
