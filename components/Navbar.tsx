@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bookmark, Menu, X, Bell, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
@@ -9,6 +9,8 @@ import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
 import { AppIcon } from '@/components/AppIcon';
 import { getLocalFavorites } from '@/lib/localLibrary';
+import { useCatalog } from '@/lib/CatalogContext';
+import { suggestApps } from '@/lib/search-suggest';
 
 
 interface MenuRowProps {
@@ -78,10 +80,155 @@ const MenuSectionLabel: React.FC<{ children: React.ReactNode }> = ({ children })
   <p className="text-[11px] font-black uppercase tracking-wider text-forge-yellow mb-1.5">{children}</p>
 );
 
+/**
+ * Search field with live catalog suggestions — premium storefront Phase B.
+ * Suggestions come from real published catalog records only (never
+ * invented). Accessible combobox: aria roles, arrow-key navigation,
+ * Escape to dismiss, Enter to search, and an explicit "search for" row so
+ * the full-results path is always one tap away.
+ */
+const SUGGESTIONS_ID = 'navbar-search-suggestions';
+
+const SearchFieldWithSuggestions: React.FC<{
+  placeholder: string;
+  onNavigate?: () => void;
+}> = ({ placeholder, onNavigate }) => {
+  const router = useRouter();
+  const { publishedApps } = useCatalog();
+  const [query, setQuery] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Debounce: keeps typing smooth on low-end Android without per-keystroke work.
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(query), 120);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const suggestions = useMemo(
+    () => suggestApps(publishedApps, debounced, 6),
+    [publishedApps, debounced]
+  );
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  const go = (href: string) => {
+    setOpen(false);
+    setQuery('');
+    setDebounced('');
+    onNavigate?.();
+    router.push(href);
+  };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (active >= 0 && suggestions[active]) {
+      go(`/app/${suggestions[active].app.slug}`);
+      return;
+    }
+    if (query.trim()) go(`/explore?q=${encodeURIComponent(query.trim())}`);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown' && suggestions.length) {
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp' && suggestions.length) {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+      setActiveIndex(-1);
+    }
+  };
+
+  // Derived, clamped highlight: no setState-in-effect needed. If the
+  // suggestion list shrinks, the highlight gracefully falls back to none.
+  const active = suggestions.length ? (activeIndex < suggestions.length ? activeIndex : -1) : -1;
+  const showList = open && suggestions.length > 0;
+
+  return (
+    <div ref={wrapRef} className="relative flex flex-1">
+      <form onSubmit={submit} className="flex flex-1 relative items-center">
+        <Search className="w-4 h-4 text-mut absolute left-3.5 pointer-events-none" aria-hidden="true" />
+        <input
+          type="search"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls={SUGGESTIONS_ID}
+          aria-autocomplete="list"
+          aria-label="Search the marketplace"
+          autoComplete="off"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          className="w-full rounded-full bg-page border border-transparent hover:border-line focus:border-forge-blue focus:bg-card pl-10 pr-4 py-2 text-sm text-ink placeholder-mut transition focus:outline-hidden focus:ring-1 focus:ring-forge-blue"
+        />
+      </form>
+      {showList && (
+        <ul
+          id={SUGGESTIONS_ID}
+          role="listbox"
+          aria-label="Search suggestions"
+          className="absolute left-0 right-0 top-full z-50 mt-2 rounded-2xl bg-card border border-line shadow-2xl overflow-hidden"
+        >
+          {suggestions.map((s, i) => (
+            <li key={s.app.slug} role="option" aria-selected={i === active}>
+              <button
+                type="button"
+                onMouseEnter={() => setActiveIndex(i)}
+                onClick={() => go(`/app/${s.app.slug}`)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition ${
+                  i === active ? 'bg-line/50' : 'hover:bg-line/30'
+                }`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-ink truncate">{s.app.name}</span>
+                  <span className="block text-xs text-mut truncate">
+                    {s.app.developer} · {s.app.category}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-forge-gold border border-forge-gold/40 rounded-md px-1.5 py-0.5">
+                  {s.app.type === 'Android APK' ? 'APK' : s.app.type === 'Web App' ? 'Web' : s.app.type}
+                </span>
+              </button>
+            </li>
+          ))}
+          {query.trim() && (
+            <li>
+              <button
+                type="button"
+                onClick={() => go(`/explore?q=${encodeURIComponent(query.trim())}`)}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-xs font-semibold text-cta border-t border-line hover:bg-line/30 transition"
+              >
+                <Search className="w-3.5 h-3.5" aria-hidden="true" />
+                Search for &ldquo;{query.trim()}&rdquo;
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
   const [favCount, setFavCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { mode, cycleMode } = useTheme();
@@ -113,14 +260,6 @@ export const Navbar: React.FC = () => {
   if (pathname && pathname.replace(/\/$/, '') === '/publisher/pkd') {
     return null;
   }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);
-      setMobileMenuOpen(false);
-    }
-  };
 
   const navLinks = [
     { label: 'Explore', href: '/explore' },
@@ -154,20 +293,10 @@ export const Navbar: React.FC = () => {
           </span>
         </Link>
 
-        {/* Desktop Search Bar */}
-        <form
-          onSubmit={handleSearchSubmit}
-          className="hidden md:flex flex-1 max-w-md mx-4 relative items-center"
-        >
-          <Search className="w-4 h-4 text-mut absolute left-3.5 pointer-events-none" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search apps, APKs, PWAs, tools..."
-            className="w-full rounded-full bg-page border border-transparent hover:border-line focus:border-forge-blue focus:bg-white pl-10 pr-4 py-2 text-sm text-ink placeholder-mut transition focus:outline-hidden focus:ring-1 focus:ring-forge-blue"
-          />
-        </form>
+        {/* Desktop Search Bar — Phase B: live catalog suggestions */}
+        <div className="hidden md:flex flex-1 max-w-md mx-4">
+          <SearchFieldWithSuggestions placeholder="Search apps, APKs, PWAs, tools..." />
+        </div>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1">
@@ -279,27 +408,10 @@ export const Navbar: React.FC = () => {
             <MenuSectionLabel>Discover</MenuSectionLabel>
             <ul className="space-y-1">
               <li>
-                <form onSubmit={handleSearchSubmit} className="relative flex items-center min-h-[44px]">
-                  <Search
-                    aria-hidden="true"
-                    className="w-4 h-4 text-mut absolute left-3 pointer-events-none"
-                  />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search apps, APKs, PWAs, tools..."
-                    aria-label="Search apps, APKs, PWAs, tools"
-                    className="w-full rounded-xl bg-page border border-line pl-9 pr-10 py-2.5 text-sm text-ink placeholder-mut focus:outline-hidden focus:ring-1 focus:ring-forge-blue"
-                  />
-                  <button
-                    type="submit"
-                    aria-label="Run search"
-                    className="absolute right-2 w-7 h-7 rounded-lg flex items-center justify-center text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40"
-                  >
-                    <ArrowRight aria-hidden="true" className="w-4 h-4" />
-                  </button>
-                </form>
+                <SearchFieldWithSuggestions
+                  placeholder="Search apps, APKs, PWAs, tools..."
+                  onNavigate={() => setMobileMenuOpen(false)}
+                />
               </li>
               <li>
                 <MenuRow href="/explore" label="Explore" icon={Sparkles} onNavigate={() => setMobileMenuOpen(false)} />

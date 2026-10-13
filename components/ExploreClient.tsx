@@ -243,6 +243,12 @@ function ExploreContent() {
   /* Categories that actually have published apps — used to turn an empty
      filter result into a guided next step instead of a dead end. Computed
      from the real catalog, never hardcoded. */
+  /* Quick-chip categories — derived from real published records only. */
+  const quickCategories = useMemo(
+    () => Array.from(new Set(publishedApps.map((a) => a.category).filter(Boolean))).sort(),
+    [publishedApps]
+  );
+
   const categoriesWithResults = useMemo(
     () => [...new Set(publishedApps.map((a) => a.category).filter(Boolean))] as string[],
     [publishedApps]
@@ -467,6 +473,75 @@ const clearAllFilters = () => {
         <span className="h-11 px-3 inline-flex items-center rounded-xl bg-cta/10 text-cta text-sm font-bold shrink-0" aria-live="polite">
           {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
         </span>
+      </div>
+
+      {/* ---------- Quick filter chips (mobile-first) — Phase B ---------- */}
+      {/* One-tap toggles driving the SAME filter state as the sheet/toolbar. */}
+      <div
+        className="md:hidden flex items-center gap-2 overflow-x-auto pb-3 mb-1"
+        role="group"
+        aria-label="Quick filters"
+      >
+        {(() => {
+          const chipFiltersActive =
+            selectedCategory !== 'all' || selectedType !== 'all' || filterOriginals || featuredOnly;
+          const chips: { key: string; label: string; active: boolean; on: () => void }[] = [
+            {
+              key: 'all',
+              label: 'All',
+              active: !chipFiltersActive,
+              on: () => {
+                setSelectedCategory('all');
+                setSelectedType('all');
+                setFilterOriginals(false);
+                setFeaturedOnly(false);
+              },
+            },
+            {
+              key: 'apk',
+              label: 'Android APKs',
+              active: selectedType === 'Android APK',
+              on: () => setSelectedType(selectedType === 'Android APK' ? 'all' : 'Android APK'),
+            },
+            {
+              key: 'web',
+              label: 'Web & PWAs',
+              active: selectedType === 'Web App',
+              on: () => setSelectedType(selectedType === 'Web App' ? 'all' : 'Web App'),
+            },
+            {
+              key: 'originals',
+              label: 'Originals',
+              active: filterOriginals,
+              on: () => setFilterOriginals(!filterOriginals),
+            },
+            {
+              key: 'featured',
+              label: 'Featured',
+              active: featuredOnly,
+              on: () => setFeaturedOnly(!featuredOnly),
+            },
+            ...quickCategories.map((c) => ({
+              key: `cat-${c}`,
+              label: c,
+              active: selectedCategory === c,
+              on: () => setSelectedCategory(selectedCategory === c ? 'all' : c),
+            })),
+          ];
+          return chips.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={c.active}
+              onClick={c.on}
+              className={`shrink-0 inline-flex items-center min-h-[40px] px-3.5 rounded-full text-xs font-semibold border transition ${
+                c.active ? 'bg-cta text-white border-cta' : 'bg-card text-ink border-line hover:border-cta/60'
+              }`}
+            >
+              {c.label}
+            </button>
+          ));
+        })()}
       </div>
 
       {/* ---------- Desktop compact filter toolbar ---------- */}
