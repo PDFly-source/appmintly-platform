@@ -105,7 +105,7 @@ export default function CategoryDetailPage() {
 
         <Link
           href={`/explore?category=${encodeURIComponent(category?.slug || slug)}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-[#E52B32] text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
         >
           <Search className="w-3.5 h-3.5" />
           <span>Search in {categoryName}</span>
@@ -121,7 +121,7 @@ export default function CategoryDetailPage() {
         </div>
       ) : (
         <div className="text-center py-16 sm:py-24 px-4 bg-card rounded-3xl border border-line">
-          <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-forge-red flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8" />
           </div>
           <h3 className="text-lg sm:text-xl font-bold text-ink tracking-tight">

@@ -269,7 +269,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-xl text-ink tracking-tight">{app.name}</h3>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-forge-green/15 text-forge-green border border-forge-green/30">
                   <Smartphone className="w-3 h-3" /> Android App
                 </span>
               </div>
@@ -296,19 +296,19 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
                   type="checkbox"
                   checked={trackForUpdates}
                   onChange={(e) => setTrackForUpdates(e.target.checked)}
-                  className="w-4 h-4 accent-[#16A765] cursor-pointer"
+                  className="w-4 h-4 accent-forge-green cursor-pointer"
                 />
                 Get update notifications for this app (v{versionName} recorded as installed)
               </label>
               <button
                 onClick={handleDownload}
-                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-[#16A765] text-white font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
+                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-forge-green text-white font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
               >
                 <Download className="w-5 h-5" />
                 <span>Download APK</span>
               </button>
               <div className="flex items-center justify-center gap-1.5 text-xs text-mut font-semibold">
-                <ShieldCheck className="w-4 h-4 text-[#16A765]" />
+                <ShieldCheck className="w-4 h-4 text-forge-green" />
                 <span>Verified release binary • Download the APK and install it with Android Package Installer.</span>
               </div>
             </>
@@ -317,7 +317,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
           {downloadState === 'downloading' && (
             <div className="py-3 space-y-2">
               <div className="inline-flex items-center gap-2 text-sm font-bold text-ink">
-                <div className="w-4 h-4 border-2 border-[#16A765] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-forge-green border-t-transparent rounded-full animate-spin" />
                 <span>Downloading {fileName}...</span>
               </div>
               <p className="text-xs text-mut">
@@ -328,13 +328,13 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
           {downloadState === 'started' && (
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#16A765]/15 text-[#16A765] text-sm font-bold border border-[#16A765]/30">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-forge-green/15 text-forge-green text-sm font-bold border border-forge-green/30">
                 <Download className="w-4 h-4" />
                 <span>APK download started</span>
               </div>
 
               <div className="p-3 bg-white border border-line rounded-xl text-left flex items-start gap-3">
-                <FolderOpen className="w-5 h-5 text-[#1976F3] shrink-0 mt-0.5" />
+                <FolderOpen className="w-5 h-5 text-forge-blue shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-bold text-ink">Next step to install</p>
                   <p className="text-mut mt-0.5">
@@ -346,7 +346,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
               <div className="flex items-center justify-center gap-3 pt-1">
                 <button
                   onClick={handleDownload}
-                  className="text-xs font-bold text-ink hover:text-[#16A765] underline cursor-pointer inline-flex items-center gap-1"
+                  className="text-xs font-bold text-ink hover:text-forge-green underline cursor-pointer inline-flex items-center gap-1"
                 >
                   <RefreshCw className="w-3 h-3" />
                   <span>Download again</span>
@@ -357,7 +357,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
           {downloadState === 'error' && (
             <div className="space-y-3 text-left">
-              <div className="p-3.5 rounded-xl bg-[#E52B32]/10 border border-[#E52B32]/30 flex items-start gap-2.5 text-xs text-[#E52B32]">
+              <div className="p-3.5 rounded-xl bg-forge-red/10 border border-forge-red/30 flex items-start gap-2.5 text-xs text-forge-red">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold">APK download unavailable</p>
@@ -369,7 +369,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
               <button
                 onClick={handleDownload}
-                className="w-full py-3 px-4 rounded-xl bg-inkbg text-white font-bold text-xs hover:bg-[#16A765] transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-inkbg text-white font-bold text-xs hover:bg-forge-green transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry Download</span>
@@ -427,10 +427,10 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
           </div>
 
           {/* Android Security Notice */}
-          <div className="p-3.5 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 flex items-start gap-2.5 text-xs">
-            <Info className="w-4 h-4 text-[#1976F3] shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-forge-blue/10 border border-forge-blue/25 flex items-start gap-2.5 text-xs">
+            <Info className="w-4 h-4 text-forge-blue shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-bold text-[#1976F3]">Android Package Installer Notice</p>
+              <p className="font-bold text-forge-blue">Android Package Installer Notice</p>
               <p className="text-ink/80 leading-relaxed text-[11px]">
                 If Android displays <em>&quot;Install unknown apps&quot;</em>, allow permission in Settings for your browser to complete installation. This is standard Android security for direct APK packages.
               </p>
@@ -464,7 +464,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
                   className="p-1 rounded-md hover:bg-page text-ink shrink-0 cursor-pointer"
                   title="Copy SHA-256"
                 >
-                  {copiedSha ? <Check className="w-3.5 h-3.5 text-[#16A765]" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedSha ? <Check className="w-3.5 h-3.5 text-forge-green" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>

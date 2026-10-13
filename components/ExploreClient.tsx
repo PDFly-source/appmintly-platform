@@ -243,6 +243,12 @@ function ExploreContent() {
   /* Categories that actually have published apps — used to turn an empty
      filter result into a guided next step instead of a dead end. Computed
      from the real catalog, never hardcoded. */
+  /* Quick-chip categories — derived from real published records only. */
+  const quickCategories = useMemo(
+    () => Array.from(new Set(publishedApps.map((a) => a.category).filter(Boolean))).sort(),
+    [publishedApps]
+  );
+
   const categoriesWithResults = useMemo(
     () => [...new Set(publishedApps.map((a) => a.category).filter(Boolean))] as string[],
     [publishedApps]
@@ -389,7 +395,7 @@ const clearAllFilters = () => {
           aria-pressed={featuredOnly}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             featuredOnly
-              ? 'bg-[#F7B928]/15 border-[#F7B928]/40 text-[#8C6000] dark:text-[#F7B928]'
+              ? 'bg-forge-yellow/15 border-forge-yellow/40 text-[#8C6000] dark:text-forge-yellow'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -469,6 +475,75 @@ const clearAllFilters = () => {
         </span>
       </div>
 
+      {/* ---------- Quick filter chips (mobile-first) — Phase B ---------- */}
+      {/* One-tap toggles driving the SAME filter state as the sheet/toolbar. */}
+      <div
+        className="md:hidden flex items-center gap-2 overflow-x-auto pb-3 mb-1"
+        role="group"
+        aria-label="Quick filters"
+      >
+        {(() => {
+          const chipFiltersActive =
+            selectedCategory !== 'all' || selectedType !== 'all' || filterOriginals || featuredOnly;
+          const chips: { key: string; label: string; active: boolean; on: () => void }[] = [
+            {
+              key: 'all',
+              label: 'All',
+              active: !chipFiltersActive,
+              on: () => {
+                setSelectedCategory('all');
+                setSelectedType('all');
+                setFilterOriginals(false);
+                setFeaturedOnly(false);
+              },
+            },
+            {
+              key: 'apk',
+              label: 'Android APKs',
+              active: selectedType === 'Android APK',
+              on: () => setSelectedType(selectedType === 'Android APK' ? 'all' : 'Android APK'),
+            },
+            {
+              key: 'web',
+              label: 'Web & PWAs',
+              active: selectedType === 'Web App',
+              on: () => setSelectedType(selectedType === 'Web App' ? 'all' : 'Web App'),
+            },
+            {
+              key: 'originals',
+              label: 'Originals',
+              active: filterOriginals,
+              on: () => setFilterOriginals(!filterOriginals),
+            },
+            {
+              key: 'featured',
+              label: 'Featured',
+              active: featuredOnly,
+              on: () => setFeaturedOnly(!featuredOnly),
+            },
+            ...quickCategories.map((c) => ({
+              key: `cat-${c}`,
+              label: c,
+              active: selectedCategory === c,
+              on: () => setSelectedCategory(selectedCategory === c ? 'all' : c),
+            })),
+          ];
+          return chips.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={c.active}
+              onClick={c.on}
+              className={`shrink-0 inline-flex items-center min-h-[40px] px-3.5 rounded-full text-xs font-semibold border transition ${
+                c.active ? 'bg-cta text-white border-cta' : 'bg-card text-ink border-line hover:border-cta/60'
+              }`}
+            >
+              {c.label}
+            </button>
+          ));
+        })()}
+      </div>
+
       {/* ---------- Desktop compact filter toolbar ---------- */}
       <div className="hidden md:flex items-center gap-2 flex-wrap bg-card border border-line rounded-2xl p-2.5 shadow-2xs mb-4">
         <div className="relative">
@@ -527,7 +602,7 @@ const clearAllFilters = () => {
               : 'bg-page border-line text-ink hover:border-ink/25'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" aria-hidden="true" />
+          <Sparkles className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
           Originals
         </button>
         <div className="relative ml-auto">
@@ -781,7 +856,7 @@ const clearAllFilters = () => {
                 className="w-full flex items-center justify-between gap-3 min-h-11 px-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 rounded-xl"
               >
                 <span className="flex items-center gap-2 text-sm font-bold text-ink">
-                  <Sparkles className="w-4 h-4 text-[#F7B928]" aria-hidden="true" />
+                  <Sparkles className="w-4 h-4 text-forge-yellow" aria-hidden="true" />
                   Originals Only
                 </span>
                 <span

@@ -38,14 +38,14 @@ export const BottomNav: React.FC = () => {
               aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center min-h-[44px] py-1 px-2.5 rounded-xl transition-all ${
                 isActive
-                  ? 'text-[#E52B32] font-bold scale-105'
+                  ? 'text-forge-red font-bold scale-105'
                   : 'text-mut hover:text-ink font-semibold'
               }`}
             >
               <div className="relative">
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#E52B32]" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-forge-red" />
                 )}
               </div>
               <span className="text-[10px] mt-0.5 tracking-tight">{item.label}</span>

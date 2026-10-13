@@ -92,12 +92,12 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           {/* Top badge row + bookmark control (Phase 18) */}
           <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E52B32] text-white text-xs font-black tracking-wide uppercase shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-red text-white text-xs font-black tracking-wide uppercase shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Featured App</span>
             </span>
             {current.original && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F7B928]/20 border border-[#F7B928]/40 text-[#F7B928] text-xs font-bold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-forge-yellow/20 border border-forge-yellow/40 text-forge-yellow text-xs font-bold">
                 AppMintly Original
               </span>
             )}
@@ -213,7 +213,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
               key={idx}
               onClick={() => setCurrentIndex(idx)}
               className={`h-2 rounded-full transition-all ${
-                currentIndex === idx ? 'w-6 bg-[#E52B32]' : 'w-2 bg-white/40 hover:bg-white/60'
+                currentIndex === idx ? 'w-6 bg-forge-red' : 'w-2 bg-white/40 hover:bg-white/60'
               }`}
               aria-label={`Slide ${idx + 1}`}
             />

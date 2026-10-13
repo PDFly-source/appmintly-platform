@@ -13,7 +13,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, CornerDownLeft, Home, Compass, LayoutGrid, Bookmark, AppWindow } from 'lucide-react';
+import {
+  Search, CornerDownLeft, Home, Compass, LayoutGrid, Bookmark, AppWindow,
+  Bell, Info, Mail, Wrench, ShieldCheck, PackagePlus, Lightbulb, Bug,
+} from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { useCatalog } from '@/lib/CatalogContext';
 
@@ -30,7 +33,15 @@ const NAV_ACTIONS: NavAction[] = [
   { id: 'home', label: 'Go to Home', hint: 'Home page', href: '/', icon: <Home className="w-4 h-4" />, keywords: 'home start landing marketplace' },
   { id: 'explore', label: 'Go to Explore', hint: 'Browse all apps', href: '/explore', icon: <Compass className="w-4 h-4" />, keywords: 'explore browse all apps search' },
   { id: 'categories', label: 'Go to Categories', hint: 'App categories', href: '/categories', icon: <LayoutGrid className="w-4 h-4" />, keywords: 'categories category directory' },
-  { id: 'library', label: 'Go to Library', hint: 'Your saved apps', href: '/library', icon: <Bookmark className="w-4 h-4" />, keywords: 'library saved favorites bookmarks' },
+  { id: 'library', label: 'Go to Library', hint: 'Your saved apps', href: '/library', icon: <Bookmark className="w-4 h-4" />, keywords: 'library saved favorites bookmarks' },  { id: 'notifications', label: 'Go to Notifications', hint: 'Release & update feed', href: '/notifications', icon: <Bell className="w-4 h-4" />, keywords: 'notifications updates releases feed' },
+  { id: 'about', label: 'About AppMintly', hint: 'What AppMintly is', href: '/about', icon: <Info className="w-4 h-4" />, keywords: 'about company story' },
+  { id: 'contact', label: 'Contact', hint: 'Get in touch', href: '/contact', icon: <Mail className="w-4 h-4" />, keywords: 'contact email support reach' },
+  { id: 'install-help', label: 'Install Help', hint: 'APK & PWA install guides', href: '/services/install-help', icon: <Wrench className="w-4 h-4" />, keywords: 'install help guide apk pwa sideload' },
+  { id: 'security', label: 'Trust & Safety', hint: 'Security & verification overview', href: '/services/security', icon: <ShieldCheck className="w-4 h-4" />, keywords: 'security trust safety verified checksum' },
+  { id: 'request-app', label: 'Request an App', hint: 'Submit an app idea', href: '/services/request-app', icon: <PackagePlus className="w-4 h-4" />, keywords: 'request app submit idea' },
+  { id: 'suggest-feature', label: 'Suggest a Feature', hint: 'Product feedback', href: '/services/suggest-feature', icon: <Lightbulb className="w-4 h-4" />, keywords: 'suggest feature idea feedback' },
+  { id: 'report-issue', label: 'Report an Issue', hint: 'Something broken?', href: '/services/report-issue', icon: <Bug className="w-4 h-4" />, keywords: 'report issue bug broken problem' },
+
 ];
 
 /** Lightweight fuzzy subsequence score: higher = better match, 0 = no match. */
@@ -174,7 +185,20 @@ export function CommandPalette() {
         });
       }
     }
+    // Full-text search fallback — always reachable for the current query.
+    const trimmed = query.trim();
+    if (trimmed) {
+      out.push({
+        key: 'search-fallback',
+        kind: 'action',
+        label: `Search for \u201c${trimmed}\u201d`,
+        hint: 'All results in Explore',
+        icon: <Search className="w-4 h-4" />,
+        href: `/explore?q=${encodeURIComponent(trimmed)}`,
+      });
+    }
     return out.slice(0, 24);
+
   }, [query, publishedApps]);
 
 

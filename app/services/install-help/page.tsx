@@ -17,7 +17,7 @@ export default function InstallHelpPage() {
     <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <Package className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
+          <Package className="w-6 h-6 text-forge-green" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">App Install Help</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
@@ -30,7 +30,7 @@ export default function InstallHelpPage() {
               <li>
                 Optionally confirm the file: compare its SHA-256 checksum with the one listed on
                 the detail page (see{' '}
-                <Link href="/services/security" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+                <Link href="/services/security" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                   Security &amp; Verification
                 </Link>
                 ).
@@ -57,7 +57,7 @@ export default function InstallHelpPage() {
                 <strong className="text-ink">An actual threat warning:</strong> if Play Protect names
                 a specific threat, stop and double-check the source before installing. You can
                 report suspected problems via the{' '}
-                <Link href="/services/report-issue" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+                <Link href="/services/report-issue" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                   Report an Issue
                 </Link>{' '}
                 page.
@@ -80,7 +80,7 @@ export default function InstallHelpPage() {
             <h2 id="help-stuck" className="text-base font-bold mb-2">Still Stuck?</h2>
             <p>
               For app-specific questions, check the release notes on the app&apos;s detail page or the{' '}
-              <Link href="/contact" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+              <Link href="/contact" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                 Contact
               </Link>{' '}
               page for how to reach the marketplace.

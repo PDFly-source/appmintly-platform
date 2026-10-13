@@ -82,14 +82,14 @@ export default function NotificationsPage() {
   const isNative = n.nativeAvailable;
   const permissionView: Record<PermissionState, { label: string; icon: React.ReactNode; tone: string; hint: string }> = isNative
     ? {
-        granted: { label: 'Allowed', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-[#16A765]', hint: 'Android notification permission is granted for the AppMintly app.' },
-        denied: { label: 'Blocked in Android settings', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-[#E52B32]', hint: 'Notifications for the AppMintly app are turned off in Android Settings → Apps → AppMintly → Notifications.' },
+        granted: { label: 'Allowed', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-forge-green', hint: 'Android notification permission is granted for the AppMintly app.' },
+        denied: { label: 'Blocked in Android settings', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-forge-red', hint: 'Notifications for the AppMintly app are turned off in Android Settings → Apps → AppMintly → Notifications.' },
         default: { label: 'Permission required', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The AppMintly app needs the Android notification permission. Enable notifications below to show the system permission dialog.' },
         unsupported: { label: 'Unavailable', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The Android notification permission state could not be read from the app.' },
       }
     : {
-        granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-[#16A765]', hint: 'This browser can show AppMintly notifications.' },
-        denied: { label: 'Blocked', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-[#E52B32]', hint: 'Notifications are blocked by your browser/site settings. AppMintly will not prompt again — re-enable them in the browser site permissions.' },
+        granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-forge-green', hint: 'This browser can show AppMintly notifications.' },
+        denied: { label: 'Blocked', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-forge-red', hint: 'Notifications are blocked by your browser/site settings. AppMintly will not prompt again — re-enable them in the browser site permissions.' },
         default: { label: 'Not requested', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'Enable notifications to receive update and release alerts while AppMintly is open.' },
         unsupported: { label: 'Unsupported', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'This browser does not support the Notification API.' },
       };
@@ -227,7 +227,7 @@ export default function NotificationsPage() {
                 </div>
                 <button
                   onClick={() => n.untrackApp(t.appId)}
-                  className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-line px-3 text-[11px] font-bold text-mut transition hover:text-[#E52B32] focus:outline-none focus:ring-2 focus:ring-cta/60"
+                  className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-line px-3 text-[11px] font-bold text-mut transition hover:text-forge-red focus:outline-none focus:ring-2 focus:ring-cta/60"
                   aria-label={`Stop tracking ${t.appId}`}
                 >
                   Untrack

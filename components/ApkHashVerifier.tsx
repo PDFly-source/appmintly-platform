@@ -70,7 +70,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
   return (
     <section aria-labelledby="apk-verify-heading" className="rounded-2xl bg-card border border-line overflow-hidden shadow-sm">
       <div className="flex items-center gap-2 px-4 py-3.5 bg-page border-b border-line">
-        <ShieldCheck className="w-4 h-4 text-[#16A765]" aria-hidden />
+        <ShieldCheck className="w-4 h-4 text-forge-green" aria-hidden />
         <h3 id="apk-verify-heading" className="text-sm font-bold text-ink">
           Verify APK integrity
         </h3>
@@ -132,7 +132,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
           />
           <label
             htmlFor="apk-verify-file"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-inkbg text-white text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer"
           >
             <FileSearch className="w-4 h-4" aria-hidden />
             Select APK file
@@ -151,20 +151,20 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             aria-live="polite"
             className={`mt-3 rounded-xl border p-3.5 ${
               result.match && result.sizeMatch
-                ? 'bg-[#16A765]/10 border-[#16A765]/40'
-                : 'bg-[#E52B32]/10 border-[#E52B32]/40'
+                ? 'bg-forge-green/10 border-forge-green/40'
+                : 'bg-forge-red/10 border-forge-red/40'
             }`}
           >
             <p className="flex items-center gap-2 text-sm font-bold">
               {result.match && result.sizeMatch ? (
                 <>
-                  <ShieldCheck className="w-4.5 h-4.5 text-[#16A765]" aria-hidden />
-                  <span className="text-[#16A765]">MATCH — authentic {app.name} release</span>
+                  <ShieldCheck className="w-4.5 h-4.5 text-forge-green" aria-hidden />
+                  <span className="text-forge-green">MATCH — authentic {app.name} release</span>
                 </>
               ) : (
                 <>
-                  <ShieldX className="w-4.5 h-4.5 text-[#E52B32]" aria-hidden />
-                  <span className="text-[#E52B32]">
+                  <ShieldX className="w-4.5 h-4.5 text-forge-red" aria-hidden />
+                  <span className="text-forge-red">
                     {result.match ? 'SIZE MISMATCH' : 'MISMATCH'}
                   </span>
                 </>
@@ -176,11 +176,11 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             <p className="mt-1 text-[11px] text-mut">
               Local size: {result.localSize.toLocaleString()} bytes
               {!result.sizeMatch && expectedSize ? (
-                <span className="text-[#E52B32] font-bold">
+                <span className="text-forge-red font-bold">
                   {' '}(expected {expectedSize.toLocaleString()})
                 </span>
               ) : (
-                <CheckCircle2 className="inline w-3 h-3 ml-1 text-[#16A765]" aria-label="size matches" />
+                <CheckCircle2 className="inline w-3 h-3 ml-1 text-forge-green" aria-label="size matches" />
               )}
             </p>
             {!result.match && (
@@ -193,7 +193,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         )}
 
         {result.state === 'error' && (
-          <p role="alert" className="mt-3 rounded-xl bg-[#E52B32]/10 border border-[#E52B32]/40 p-3 text-xs text-ink">
+          <p role="alert" className="mt-3 rounded-xl bg-forge-red/10 border border-forge-red/40 p-3 text-xs text-ink">
             {result.message}
           </p>
         )}

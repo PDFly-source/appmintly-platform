@@ -392,7 +392,7 @@ function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) =>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">v{app.version}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.type}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.category}</span>
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-[#16A765]/30 bg-[#16A765]/10 text-[#16A765]">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-green/30 bg-forge-green/10 text-forge-green">
               <Bookmark aria-hidden="true" className="w-2.5 h-2.5 fill-current" />
               Saved
             </span>
@@ -428,7 +428,7 @@ function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) =>
             type="button"
             onClick={() => onUnsave(app)}
             aria-label={`Remove ${app.name} from saved apps`}
-            className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition"
+            className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-forge-red hover:bg-forge-red/10 transition"
           >
             <X aria-hidden="true" className="w-4 h-4" />
           </button>
@@ -476,7 +476,7 @@ function HistoryRow({
           type="button"
           onClick={onRemove}
           aria-label={`${removeLabel}: ${app.name}`}
-          className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition"
+          className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-forge-red hover:bg-forge-red/10 transition"
         >
           <X aria-hidden="true" className="w-4 h-4" />
         </button>
@@ -512,7 +512,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
           <a
             href={apkUrl}
             onClick={() => trackAppDownloaded(app.id)}
-            className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-[#16A765]/10 text-[#16A765] border border-[#16A765]/25 text-xs font-bold hover:bg-[#16A765] hover:text-white transition"
+            className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-forge-green/10 text-forge-green border border-forge-green/25 text-xs font-bold hover:bg-forge-green hover:text-white transition"
           >
             <Download aria-hidden="true" className="w-3.5 h-3.5" />
             Download again
@@ -597,7 +597,7 @@ function ManageDialog({
 
         {confirmingAll ? (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-[#E52B32]/30 bg-[#E52B32]/10 p-4 space-y-1">
+            <div className="rounded-2xl border border-forge-red/30 bg-forge-red/10 p-4 space-y-1">
               <p className="text-sm font-bold text-ink">Clear local library?</p>
               <p className="text-xs text-mut">
                 This will remove saved apps, recent history and local download records from this device.
@@ -615,7 +615,7 @@ function ManageDialog({
                 type="button"
                 disabled={busy}
                 onClick={() => run(clearAllLocalData, 'Local library data cleared.')}
-                className="min-h-[44px] flex-1 rounded-xl bg-[#E52B32] text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50 transition"
+                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50 transition"
               >
                 {busy ? <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> : <Trash2 aria-hidden="true" className="w-4 h-4" />}
                 Clear data
@@ -637,7 +637,7 @@ function ManageDialog({
                           toggleLocalFavorite(app.id);
                           toast(`Removed "${app.name}" from saved apps.`, 'info');
                         }}
-                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-full text-[11px] font-bold text-mut hover:text-[#E52B32] hover:bg-[#E52B32]/10 transition shrink-0"
+                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-full text-[11px] font-bold text-mut hover:text-forge-red hover:bg-forge-red/10 transition shrink-0"
                       >
                         Remove
                       </button>
@@ -667,7 +667,7 @@ function ManageDialog({
               <button
                 type="button"
                 onClick={() => setConfirmingAll(true)}
-                className="min-h-[44px] w-full rounded-xl border border-[#E52B32]/30 bg-[#E52B32]/10 px-4 text-sm font-bold text-[#E52B32] hover:bg-[#E52B32]/20 transition text-left flex items-center justify-between"
+                className="min-h-[44px] w-full rounded-xl border border-forge-red/30 bg-forge-red/10 px-4 text-sm font-bold text-forge-red hover:bg-forge-red/20 transition text-left flex items-center justify-between"
               >
                 <span>Clear all local data</span>
                 <Trash2 aria-hidden="true" className="w-4 h-4" />

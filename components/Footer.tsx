@@ -41,7 +41,7 @@ export const Footer: React.FC = () => {
             <div className="pt-1">
               <p className="inline-flex items-center gap-2 text-xs font-semibold">
                 <span
-                  className="w-2 h-2 rounded-full bg-[#16A765] animate-pulse motion-reduce:animate-none"
+                  className="w-2 h-2 rounded-full bg-forge-green animate-pulse motion-reduce:animate-none"
                   aria-hidden="true"
                 ></span>
                 All Systems Operational
@@ -62,7 +62,7 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram — PKD Official Profile"
-                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-[#F7B928]/25 bg-[#FAF5ED]/[0.04] transition-all hover:border-[#F7B928]/60 hover:bg-[#F7B928]/[0.08] hover:brightness-110 focus-ring"
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-forge-yellow/25 bg-[#FAF5ED]/[0.04] transition-all hover:border-forge-yellow/60 hover:bg-forge-yellow/[0.08] hover:brightness-110 focus-ring"
               >
                 {/* Zero-size SVG defs — official Instagram brand gradient,
                     applied to the glyph stroke below. No layout impact. */}
@@ -89,31 +89,31 @@ export const Footer: React.FC = () => {
               (no Games content exists in the catalog); the catalog schema still
               supports games for the future. */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Platforms and types">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#F7B928]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
               Platforms &amp; Types
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
               <li>
                 <Link href="/explore?type=Android+APK" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Smartphone className="w-3.5 h-3.5 text-[#16A765]" aria-hidden="true" />
+                  <Smartphone className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
                   <span>Android APKs</span>
                 </Link>
               </li>
               <li>
                 <Link href="/explore?type=Web+App" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Globe className="w-3.5 h-3.5 text-[#1976F3]" aria-hidden="true" />
+                  <Globe className="w-3.5 h-3.5 text-forge-blue" aria-hidden="true" />
                   <span>Web Apps &amp; PWAs</span>
                 </Link>
               </li>
               <li>
                 <Link href="/explore?type=Tool" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Wrench className="w-3.5 h-3.5 text-[#F7B928]" aria-hidden="true" />
+                  <Wrench className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
                   <span>Tools &amp; Utilities</span>
                 </Link>
               </li>
               <li>
                 <Link href="/explore?filter=originals" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" aria-hidden="true" />
+                  <Sparkles className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
                   <span>AppMintly Originals</span>
                 </Link>
               </li>
@@ -124,7 +124,7 @@ export const Footer: React.FC = () => {
               catalog-backed product sites; icons are the existing public/brand
               assets already shipped by the marketplace. */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="The suite">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#F7B928]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
               The Suite
             </h4>
             <ul className="space-y-2.5 text-xs text-[#FAF5ED]/75">
@@ -173,7 +173,7 @@ export const Footer: React.FC = () => {
 
           {/* Marketplace */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Marketplace">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#F7B928]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
               Marketplace
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
@@ -195,7 +195,7 @@ export const Footer: React.FC = () => {
           {/* Legal — properly separated links (Phase 16.6 fixed the previous
               merged "About AppMintlyPrivacy PolicyTerms of Service" run-on). */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Legal">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#F7B928]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
               Legal
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
@@ -219,11 +219,11 @@ export const Footer: React.FC = () => {
               The footer surface is always the dark inkbg (existing design
               language); the wordmark uses the shared Phase 17 per-letter
               brand colors. ---- */}
-        <div className="mt-10 pt-7 border-t border-[#F7B928]/20 flex flex-col items-center gap-2.5 text-center">
+        <div className="mt-10 pt-7 border-t border-forge-yellow/20 flex flex-col items-center gap-2.5 text-center">
           <p className="text-[28px] lg:text-[44px] font-black tracking-tight leading-none select-none">
             <AppMintlyWordmarkText />
           </p>
-          <p className="text-[11px] font-semibold tracking-[0.25em] text-[#F7B928]/90 select-none">
+          <p className="text-[11px] font-semibold tracking-[0.25em] text-forge-yellow/90 select-none">
             DISCOVER <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> INSTALL{' '}
             <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> EXPERIENCE
           </p>
@@ -231,7 +231,7 @@ export const Footer: React.FC = () => {
             Crafted &amp; Developed by{' '}
             <Link
               href="/publisher/pkd"
-              className="font-black text-[#FAF5ED] transition-colors hover:text-[#F7B928] focus-ring rounded-sm"
+              className="font-black text-[#FAF5ED] transition-colors hover:text-forge-yellow focus-ring rounded-sm"
             >
               PKD
             </Link>

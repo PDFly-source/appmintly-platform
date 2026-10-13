@@ -132,19 +132,19 @@ export default function SubmissionForm({
   if (succeeded) {
     return (
       <div
-        className="rounded-2xl border border-[#16A765]/30 bg-card p-6 sm:p-8 text-center motion-safe:animate-in"
+        className="rounded-2xl border border-forge-green/30 bg-card p-6 sm:p-8 text-center motion-safe:animate-in"
         role="status"
         aria-live="polite"
       >
-        <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#16A765]/15 border border-[#16A765]/30 mb-4">
-          <Check className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
+        <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-forge-green/15 border border-forge-green/30 mb-4">
+          <Check className="w-6 h-6 text-forge-green" aria-hidden="true" />
         </span>
         <h2 className="text-lg font-bold mb-1.5">{successTitle}</h2>
         <p className="text-sm text-mut mb-6">{successMessage}</p>
         <button
           type="button"
           onClick={resetForAnother}
-          className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl border border-line bg-transparent text-sm font-bold text-ink hover:border-ink/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/50 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center min-h-[44px] px-5 rounded-xl border border-line bg-transparent text-sm font-bold text-ink hover:border-ink/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/50 transition-colors cursor-pointer"
         >
           Submit another
         </button>
@@ -194,7 +194,7 @@ export default function SubmissionForm({
                 value={values[field.name] || ''}
                 onChange={(e) => setField(field.name, e.target.value)}
                 aria-required={field.required || undefined}
-                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink placeholder:text-mut/70 outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 focus-visible:border-[#1976F3]/60 transition-colors min-h-[44px] ${
+                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink placeholder:text-mut/70 outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 focus-visible:border-forge-blue/60 transition-colors min-h-[44px] ${
                   err ? 'border-[#C2410C]/60' : 'border-line'
                 }`}
               />
@@ -207,7 +207,7 @@ export default function SubmissionForm({
                 aria-required={field.required || undefined}
                 value={values[field.name] || ''}
                 onChange={(e) => setField(field.name, e.target.value)}
-                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 focus-visible:border-[#1976F3]/60 transition-colors min-h-[44px] cursor-pointer ${
+                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 focus-visible:border-forge-blue/60 transition-colors min-h-[44px] cursor-pointer ${
                   err ? 'border-[#C2410C]/60' : 'border-line'
                 } ${values[field.name] ? '' : 'text-mut/70'}`}
               >
@@ -234,7 +234,7 @@ export default function SubmissionForm({
                 aria-required={field.required || undefined}
                 value={values[field.name] || ''}
                 onChange={(e) => setField(field.name, e.target.value)}
-                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink placeholder:text-mut/70 outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 focus-visible:border-[#1976F3]/60 transition-colors min-h-[44px] ${
+                className={`w-full rounded-xl bg-card border px-4 py-3 text-sm text-ink placeholder:text-mut/70 outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 focus-visible:border-forge-blue/60 transition-colors min-h-[44px] ${
                   err ? 'border-[#C2410C]/60' : 'border-line'
                 }`}
               />
@@ -266,7 +266,7 @@ export default function SubmissionForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full min-h-[48px] rounded-xl bg-inkbg hover:bg-[#16A765] text-white font-black text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/50 disabled:opacity-60 disabled:cursor-not-allowed motion-safe:hover:-translate-y-0.5"
+        className="w-full min-h-[48px] rounded-xl bg-inkbg hover:bg-forge-green text-white font-black text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/50 disabled:opacity-60 disabled:cursor-not-allowed motion-safe:hover:-translate-y-0.5"
       >
         <Send className="w-4 h-4" aria-hidden="true" />
         {submitting ? 'Submitting...' : submitLabel}

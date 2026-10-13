@@ -74,7 +74,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className="min-h-screen bg-page text-ink font-sans antialiased selection:bg-[#E52B32]/20 selection:text-[#E52B32]">
+      <body className="min-h-screen bg-page text-ink font-sans antialiased selection:bg-forge-red/20 selection:text-forge-red">
         {/* Sitewide structured data: marketplace Organization + WebSite */}
         <script
           type="application/ld+json"

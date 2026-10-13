@@ -31,11 +31,11 @@ export const VerifiedBadge: React.FC<VerifiedBadgeProps> = ({
     title="Verified Publisher — confirmed by the AppMintly marketplace catalog"
   >
     <BadgeCheck
-      className={`${iconSizes[size]} text-[#1976F3]`}
+      className={`${iconSizes[size]} text-forge-blue`}
       aria-hidden="true"
     />
     {withLabel && (
-      <span className="text-xs font-semibold text-[#1976F3]">Verified Publisher</span>
+      <span className="text-xs font-semibold text-forge-blue">Verified Publisher</span>
     )}
     <span className="sr-only">Verified Publisher</span>
   </span>

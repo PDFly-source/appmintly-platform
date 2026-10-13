@@ -71,7 +71,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
     <section aria-labelledby="bento-heading" className="py-10">
       <div className="flex items-end justify-between mb-5">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#E52B32]">
+          <p className="text-[10px] font-black uppercase tracking-widest text-forge-red">
             Discover
           </p>
           <h2 id="bento-heading" className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -83,7 +83,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
         </div>
         <Link
           href="/explore"
-          className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-ink hover:text-[#E52B32] transition-colors"
+          className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-ink hover:text-forge-red transition-colors"
         >
           View all <ArrowRight className="w-3.5 h-3.5" aria-hidden />
         </Link>
@@ -107,7 +107,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             <div className="relative h-full flex flex-col justify-end p-4 sm:p-5 text-white">
               <div className="flex items-center gap-1.5 flex-wrap mb-2">
                 {tiles.spotlight.original && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F7B928]/25 border border-[#F7B928]/50 text-[#F7B928] text-[10px] font-extrabold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-forge-yellow/25 border border-forge-yellow/50 text-forge-yellow text-[10px] font-extrabold">
                     <Sparkles className="w-3 h-3" aria-hidden /> AppMintly Original
                   </span>
                 )}
@@ -131,7 +131,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           href="/explore?filter=apk"
           className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
         >
-          <Download className="w-5 h-5 text-[#E52B32]" aria-hidden />
+          <Download className="w-5 h-5 text-forge-red" aria-hidden />
           <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-ink">{apkCount}</p>
           <p className="text-xs font-semibold text-ink">verified Android APK{apkCount === 1 ? '' : 's'}</p>
           <p className="mt-1 text-[11px] text-mut leading-snug">
@@ -146,7 +146,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
           href="/explore?filter=originals"
           className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
         >
-          <Sparkles className="w-5 h-5 text-[#F7B928]" aria-hidden />
+          <Sparkles className="w-5 h-5 text-forge-yellow" aria-hidden />
           <p className="mt-2 text-2xl sm:text-3xl font-extrabold text-ink">{originalsCount}</p>
           <p className="text-xs font-semibold text-ink">AppMintly Original{originalsCount === 1 ? '' : 's'}</p>
           <p className="mt-1 text-[11px] text-mut leading-snug">
@@ -160,7 +160,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             href={`/app/${tiles.newestRelease.slug}`}
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
-            <Star className="w-5 h-5 text-[#16A765]" aria-hidden />
+            <Star className="w-5 h-5 text-forge-green" aria-hidden />
             <p className="mt-2 text-sm sm:text-base font-bold text-ink line-clamp-1">
               {tiles.newestRelease.name}
             </p>
@@ -170,7 +170,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             <p className="mt-1 text-[11px] text-mut leading-snug line-clamp-2">
               {tiles.newestRelease.shortDescription || tiles.newestRelease.description}
             </p>
-            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-[#E52B32] transition-colors">
+            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-forge-red transition-colors">
               See what&apos;s new <ArrowRight className="w-3 h-3" aria-hidden />
             </span>
           </Link>
@@ -183,7 +183,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             href={`/category/${c.label.toLowerCase()}`}
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
-            <AppWindow className="w-5 h-5 text-[#1976F3]" aria-hidden />
+            <AppWindow className="w-5 h-5 text-forge-blue" aria-hidden />
             <p className="mt-2 text-sm sm:text-base font-bold text-ink">{c.label}</p>
             <p className="text-xs font-semibold text-mut">
               {c.apps.length} published app{c.apps.length === 1 ? '' : 's'}
@@ -191,7 +191,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             <p className="mt-1 text-[11px] text-mut leading-snug line-clamp-2">
               {c.apps[0]?.shortDescription || c.apps[0]?.description}
             </p>
-            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-[#1976F3] transition-colors">
+            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-forge-blue transition-colors">
               Browse {c.label.toLowerCase()} <ArrowRight className="w-3 h-3" aria-hidden />
             </span>
           </Link>
