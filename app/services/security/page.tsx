@@ -17,7 +17,7 @@ export default function SecurityPage() {
     <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <ShieldCheck className="w-6 h-6 text-[#16A765]" aria-hidden="true" />
+          <ShieldCheck className="w-6 h-6 text-forge-green" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Security &amp; Verification</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 27, 2026</p>
@@ -44,7 +44,7 @@ export default function SecurityPage() {
               <li>
                 <strong className="text-ink">Repository-verified publishers.</strong> Publisher
                 identities are tied to their public repositories, and each has a{' '}
-                <Link href="/publisher/pkd" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+                <Link href="/publisher/pkd" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                   public publisher page
                 </Link>
                 .
@@ -77,11 +77,11 @@ export default function SecurityPage() {
               reproducible checksums — where each file came from and whether your copy matches it.
               For runtime protection, keep Google Play Protect (or your device&apos;s scanner)
               enabled, and only install software you actually intended to download. See the{' '}
-              <Link href="/services/install-help" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+              <Link href="/services/install-help" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                 App Install Help
               </Link>{' '}
               page for practical steps, and the{' '}
-              <Link href="/privacy" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+              <Link href="/privacy" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                 Privacy Policy
               </Link>{' '}
               for data practices.
@@ -92,7 +92,7 @@ export default function SecurityPage() {
             <h2 id="sec-report" className="text-base font-bold mb-2">Found Something Wrong?</h2>
             <p>
               If a checksum does not match or a link looks suspicious, report it through the{' '}
-              <Link href="/services/report-issue" className="font-bold text-[#1976F3] hover:text-[#0f55b8] transition">
+              <Link href="/services/report-issue" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
                 Report an Issue
               </Link>{' '}
               page.

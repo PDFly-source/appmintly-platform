@@ -166,27 +166,27 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const getPublicBadge = () => {
     if (app.type === 'Web Game' || app.type === 'Game') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-red/10 text-forge-red border border-forge-red/25">
           <Gamepad2 className="w-3 h-3" /> GAME
         </span>
       );
     }
     if (app.type === 'Tool') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/35">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/35">
           <Wrench className="w-3 h-3" /> TOOL
         </span>
       );
     }
     if (app.type === 'Android APK') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#16A765]/10 text-[#16A765] border border-[#16A765]/25">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/10 text-forge-green border border-forge-green/25">
           <Smartphone className="w-3 h-3" /> APK
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/25">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-blue/10 text-forge-blue border border-forge-blue/25">
         <Layers className="w-3 h-3" /> APP
       </span>
     );
@@ -214,7 +214,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const getActionIcon = () => {
     if (hasReleasedApk) {
       return downloadedState ? (
-        <Check className="w-3.5 h-3.5 text-[#16A765]" />
+        <Check className="w-3.5 h-3.5 text-forge-green" />
       ) : (
         <Download className="w-3.5 h-3.5" />
       );
@@ -239,16 +239,16 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h4 className="font-semibold text-sm text-ink truncate group-hover:text-[#1976F3] transition-colors">
+              <h4 className="font-semibold text-sm text-ink truncate group-hover:text-forge-blue transition-colors">
                 {app.name}
               </h4>
               {isNewApp(app) && (
-                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#16A765]/20 text-[#16A765]">
+                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-bold bg-forge-green/20 text-forge-green">
                   NEW
                 </span>
               )}
               {app.original && (
-                <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[#F7B928]" title="AppMintly Original" />
+                <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-forge-yellow" title="AppMintly Original" />
               )}
             </div>
             <div className="flex items-center gap-2 text-[11px] text-mut mt-0.5">
@@ -293,9 +293,9 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       exploreBadges.push(
         <span
           key="original"
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#F7B928]/15 text-[#8C6000] dark:text-[#F7B928] border border-[#F7B928]/30"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-forge-yellow/15 text-[#8C6000] dark:text-forge-yellow border border-forge-yellow/30"
         >
-          <Sparkles className="w-3 h-3 text-[#F7B928]" aria-hidden="true" />
+          <Sparkles className="w-3 h-3 text-forge-yellow" aria-hidden="true" />
           Original
         </span>
       );
@@ -401,7 +401,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-base text-ink group-hover:text-[#1976F3] transition-colors line-clamp-1">
+          <h3 className="font-semibold text-base text-ink group-hover:text-forge-blue transition-colors line-clamp-1">
             {app.name}
           </h3>
           <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
@@ -416,15 +416,15 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               matches the Explore variant's cap so cards never look noisy. */}
           {getPublicBadge()}
           {(isNewApp(app) ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/15 text-forge-green border border-forge-green/30">
               NEW
             </span>
           ) : app.original ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
-              <Sparkles className="w-3 h-3 text-[#F7B928]" /> Original
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/40">
+              <Sparkles className="w-3 h-3 text-forge-yellow" /> Original
             </span>
           ) : app.featured ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-forge-red/10 text-forge-red border border-forge-red/25">
               Featured
             </span>
           ) : null)}
@@ -432,14 +432,14 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
         <button
           onClick={handleFavoriteClick}
-          className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-[#E52B32] hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#E52B32]/50"
+          className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-forge-red hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-forge-red/50"
           title={favorite ? 'Remove from Library' : 'Save to Library'}
           aria-label={favorite ? `Remove ${app.name} from Library` : `Save ${app.name} to Library`}
           aria-pressed={favorite}
         >
           <Bookmark
             key={`fav-${favorite}`}
-            className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
+            className={`w-4 h-4 ${favorite ? 'fill-forge-red text-forge-red' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
           />
         </button>
       </div>

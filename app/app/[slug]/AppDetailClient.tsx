@@ -104,7 +104,7 @@ export default function AppDetailPage() {
   if (!app) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#E52B32]/10 text-[#E52B32] flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-forge-red flex items-center justify-center mx-auto mb-4">
           <Info className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-extrabold text-ink">Application Not Found</h1>
@@ -114,7 +114,7 @@ export default function AppDetailPage() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition"
+            className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-forge-red transition"
           >
             Explore Apps
           </Link>
@@ -251,20 +251,20 @@ export default function AppDetailPage() {
   const getPublicTypeBadge = () => {
     if (app.type === 'Web Game') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#E52B32]/10 text-[#E52B32] border border-[#E52B32]/25">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-red/10 text-forge-red border border-forge-red/25">
           <Gamepad2 className="w-3.5 h-3.5" /> GAME
         </span>
       );
     }
     if (app.type === 'Tool') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/35">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/35">
           <Wrench className="w-3.5 h-3.5" /> TOOL
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#1976F3]/10 text-[#1976F3] border border-[#1976F3]/25">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-blue/10 text-forge-blue border border-forge-blue/25">
         <Layers className="w-3.5 h-3.5" /> APP
       </span>
     );
@@ -330,7 +330,7 @@ export default function AppDetailPage() {
                   {resolveDeveloper(app).slug ? (
                     <Link
                       href={`/publisher/${resolveDeveloper(app).slug}`}
-                      className="hover:text-[#1976F3] transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                      className="hover:text-forge-blue transition underline decoration-transparent hover:decoration-current underline-offset-2"
                     >
                       {resolveDeveloper(app).name}
                     </Link>
@@ -376,7 +376,7 @@ export default function AppDetailPage() {
                 >
                   <Bookmark
                     key={`fav-${favorite}`}
-                    className={`w-4 h-4 ${favorite ? 'fill-[#E52B32] text-[#E52B32]' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
+                    className={`w-4 h-4 ${favorite ? 'fill-forge-red text-forge-red' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
                   />
                 </button>
 
@@ -406,7 +406,7 @@ export default function AppDetailPage() {
                   aria-pressed={updateAlertsOn}
                 >
                   {updateAlertsOn ? (
-                    <Bell className="w-4 h-4 text-[#E52B32]" />
+                    <Bell className="w-4 h-4 text-forge-red" />
                   ) : (
                     <BellOff className="w-4 h-4" />
                   )}
@@ -436,12 +436,12 @@ export default function AppDetailPage() {
                   {app.category}
                 </span>
                 {app.original && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-[#F7B928]/20 text-[#8C6000] border border-[#F7B928]/40">
-                    <Sparkles className="w-3.5 h-3.5 text-[#F7B928]" /> Original
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/40">
+                    <Sparkles className="w-3.5 h-3.5 text-forge-yellow" /> Original
                   </span>
                 )}
                 {isStandaloneInstalled && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#16A765]/15 text-[#16A765] border border-[#16A765]/30">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-forge-green/15 text-forge-green border border-forge-green/30">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Installed on device
                   </span>
                 )}
@@ -450,9 +450,9 @@ export default function AppDetailPage() {
               {/* Verified Android APK Distribution Specs */}
               {hasApk && (
                 <div className="pt-2">
-                  <div className="p-3 rounded-2xl bg-[#16A765]/10 border border-[#16A765]/25 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="p-3 rounded-2xl bg-forge-green/10 border border-forge-green/25 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-[#16A765] shrink-0" />
+                      <ShieldCheck className="w-4 h-4 text-forge-green shrink-0" />
                       <div>
                         <span className="font-extrabold text-ink">
                           Verified Android APK Package
@@ -465,7 +465,7 @@ export default function AppDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-mut">
-                      <span className="px-2 py-0.5 rounded-md bg-white border border-[#16A765]/30 text-[#16A765]">
+                      <span className="px-2 py-0.5 rounded-md bg-white border border-forge-green/30 text-forge-green">
                         v{app.version}{app.apk?.versionCode ? ` (${app.apk.versionCode})` : ''}
                       </span>
                       <span>•</span>
@@ -476,7 +476,7 @@ export default function AppDetailPage() {
                       </span>
                       <span>•</span>
                       {app.apk?.sha256 && (
-                        <span className="text-[#16A765] font-bold">Signed &amp; Verified</span>
+                        <span className="text-forge-green font-bold">Signed &amp; Verified</span>
                       )}
                     </div>
                   </div>
@@ -550,7 +550,7 @@ export default function AppDetailPage() {
                       key={idx}
                       className="flex items-start gap-2.5 p-3 rounded-2xl bg-page/70 border border-line"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-[#16A765] shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-4 h-4 text-forge-green shrink-0 mt-0.5" />
                       <span className="text-xs sm:text-sm font-semibold text-ink">
                         {feature}
                       </span>
@@ -574,7 +574,7 @@ export default function AppDetailPage() {
                 <ul className="space-y-2 text-xs sm:text-sm text-ink/85">
                   {app.releaseNotes.map((note, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="text-[#1976F3] font-bold">•</span>
+                      <span className="text-forge-blue font-bold">•</span>
                       <span>{note}</span>
                     </li>
                   ))}
@@ -597,7 +597,7 @@ export default function AppDetailPage() {
                     {resolveDeveloper(app).slug ? (
                       <Link
                         href={`/publisher/${resolveDeveloper(app).slug}`}
-                        className="hover:text-[#1976F3] transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                        className="hover:text-forge-blue transition underline decoration-transparent hover:decoration-current underline-offset-2"
                       >
                         {resolveDeveloper(app).name}
                       </Link>
@@ -627,7 +627,7 @@ export default function AppDetailPage() {
 
                 <div className="flex items-center justify-between">
                   <dt className="text-mut font-bold">Installation</dt>
-                  <dd className="font-semibold text-[#16A765]">
+                  <dd className="font-semibold text-forge-green">
                     {app.type === 'Android APK'
                       ? 'Android Package (.apk)'
                       : app.type === 'PWA'
@@ -654,7 +654,7 @@ export default function AppDetailPage() {
                           toast('SHA-256 checksum copied', 'success');
                         }}
                         aria-label="Copy SHA-256 checksum"
-                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-white text-[10px] font-bold hover:bg-[#E52B32] transition cursor-pointer"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-white text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
                       >
                         Copy
                       </button>
@@ -671,7 +671,7 @@ export default function AppDetailPage() {
 
                 <div className="flex items-center justify-between">
                   <dt className="text-mut font-bold">Privacy &amp; Data</dt>
-                  <dd className="font-semibold text-[#16A765]">No Cloud Tracking</dd>
+                  <dd className="font-semibold text-forge-green">No Cloud Tracking</dd>
                 </div>
               </dl>
 
@@ -686,7 +686,7 @@ export default function AppDetailPage() {
             {app.apk?.enabled && (
               <div className="w-full p-4 rounded-2xl bg-card border border-line shadow-2xs">
                 <h4 className="text-xs font-semibold text-ink mb-2 flex items-center gap-1.5">
-                  <HelpCircle className="w-4 h-4 text-[#1976F3]" />
+                  <HelpCircle className="w-4 h-4 text-forge-blue" />
                   How to install this APK on Android
                 </h4>
                 <ol className="text-[11px] text-mut leading-relaxed list-decimal list-inside space-y-1">
@@ -705,14 +705,14 @@ export default function AppDetailPage() {
                 className="w-full p-4 rounded-2xl bg-card hover:bg-white border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
               >
                 <div>
-                  <h4 className="text-xs font-semibold text-ink group-hover:text-[#1976F3] transition-colors">
+                  <h4 className="text-xs font-semibold text-ink group-hover:text-forge-blue transition-colors">
                     How to install this app?
                   </h4>
                   <p className="text-[11px] text-mut">
                     Step-by-step for Chrome, Edge &amp; Safari
                   </p>
                 </div>
-                <HelpCircle className="w-5 h-5 text-mut group-hover:text-[#1976F3] transition-colors" />
+                <HelpCircle className="w-5 h-5 text-mut group-hover:text-forge-blue transition-colors" />
               </button>
             )}
 
@@ -736,11 +736,11 @@ export default function AppDetailPage() {
               {/* Subtle depth: faint emerald glow */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-[#16A765]/10 blur-3xl"
+                className="pointer-events-none absolute -top-20 -right-20 h-52 w-52 rounded-full bg-forge-green/10 blur-3xl"
               />
               <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                 <div className="flex-1 text-center sm:text-left">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#F7B928]">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-forge-yellow">
                     <span aria-hidden="true">✦ </span>Discover more from {resolveDeveloper(app).name}
                   </p>
                   <p className="mt-1.5 text-xs sm:text-[13px] text-white/70 font-semibold leading-relaxed">
@@ -750,7 +750,7 @@ export default function AppDetailPage() {
                 <Link
                   href="/"
                   aria-label={`Discover official apps by ${resolveDeveloper(app).name} on AppMintly`}
-                  className="inline-flex items-center justify-center gap-1.5 mx-auto sm:mx-0 px-5 min-h-[44px] rounded-full bg-[#16A765] text-[#0A1F14] text-xs font-black tracking-wide hover:bg-[#128551] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#16A765] focus-visible:ring-offset-2 focus-visible:ring-offset-inkbg transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 mx-auto sm:mx-0 px-5 min-h-[44px] rounded-full bg-forge-green text-[#0A1F14] text-xs font-black tracking-wide hover:bg-[#128551] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-green focus-visible:ring-offset-2 focus-visible:ring-offset-inkbg transition-colors"
                 >
                   Discover Apps <span aria-hidden="true">→</span>
                 </Link>
@@ -870,7 +870,7 @@ export default function AppDetailPage() {
                   onClick={() => setSelectedScreenshotIndex(idx)}
                   className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
                     idx === selectedScreenshotIndex
-                      ? 'border-[#E52B32] scale-105'
+                      ? 'border-forge-red scale-105'
                       : 'border-white/20 opacity-60 hover:opacity-100'
                   }`}
                 >
@@ -919,8 +919,8 @@ export default function AppDetailPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-[#1976F3]/10 border border-[#1976F3]/25 space-y-1">
-                <p className="font-bold text-[#1976F3] flex items-center gap-1.5">
+              <div className="p-3.5 rounded-2xl bg-forge-blue/10 border border-forge-blue/25 space-y-1">
+                <p className="font-bold text-forge-blue flex items-center gap-1.5">
                   <Monitor className="w-4 h-4" /> Chrome / Edge (Desktop &amp; Android)
                 </p>
                 <p className="text-ink/80 leading-relaxed">
@@ -928,8 +928,8 @@ export default function AppDetailPage() {
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#E52B32]/10 border border-[#E52B32]/25 space-y-1">
-                <p className="font-bold text-[#E52B32] flex items-center gap-1.5">
+              <div className="p-3.5 rounded-2xl bg-forge-red/10 border border-forge-red/25 space-y-1">
+                <p className="font-bold text-forge-red flex items-center gap-1.5">
                   <Smartphone className="w-4 h-4" /> Safari (iPhone &amp; iPad)
                 </p>
                 <p className="text-ink/80 leading-relaxed">
@@ -945,7 +945,7 @@ export default function AppDetailPage() {
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-[#E52B32] transition cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-forge-red transition cursor-pointer"
               >
                 Understood
               </button>

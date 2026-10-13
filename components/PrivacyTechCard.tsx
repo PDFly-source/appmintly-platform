@@ -40,7 +40,7 @@ function Fact({
         >
           {isUnknown ? 'Not verified' : display}
           {verified && !isUnknown && (
-            <Lock className="inline w-3 h-3 ml-1.5 text-[#16A765]" aria-label="Verified from release evidence" />
+            <Lock className="inline w-3 h-3 ml-1.5 text-forge-green" aria-label="Verified from release evidence" />
           )}
         </p>
       </div>
@@ -59,7 +59,7 @@ export function PrivacyTechCard({ app }: { app: AppItem }) {
   return (
     <section aria-labelledby="privacy-tech-heading" className="rounded-2xl bg-card border border-line overflow-hidden shadow-sm hover:shadow-md transition-shadow motion-reduce:transition-none">
       <div className="flex items-center gap-2 px-4 py-3.5 bg-page border-b border-line">
-        <ShieldCheck className="w-4 h-4 text-[#16A765]" aria-hidden />
+        <ShieldCheck className="w-4 h-4 text-forge-green" aria-hidden />
         <h3 id="privacy-tech-heading" className="text-sm font-bold text-ink">
           Privacy &amp; Technology
         </h3>

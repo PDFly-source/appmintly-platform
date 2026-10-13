@@ -10,25 +10,25 @@
  * bg-inkbg) so both themes stay consistent without per-component hexes.
  */
 :root {
-  --c-page: #F8F2E7;
-  --c-card: #FFFDF8;
-  --c-ink: #17191C;
-  --c-inkbg: #17191C;
-  --c-mut: #6F6F6F;
-  --c-line: #E8DED0;
-  --c-cta: #1B6B48;
-  --c-cta-hover: #155A3B;
+  --c-page: #F6F8FB;
+  --c-card: #FFFFFF;
+  --c-ink: #0E1526;
+  --c-inkbg: #0E1526;
+  --c-mut: #5B6B7F;
+  --c-line: #E3E9F2;
+  --c-cta: #0F766E;
+  --c-cta-hover: #115E59;
 }
 
 .dark {
-  --c-page: #131519;
-  --c-card: #1B1E24;
-  --c-ink: #EDE9E1;
-  --c-inkbg: #262A31;
-  --c-mut: #98A0AA;
-  --c-line: #323744;
-  --c-cta: #1E7A52;
-  --c-cta-hover: #27935F;
+  --c-page: #0B0F16;
+  --c-card: #111826;
+  --c-ink: #E9EDF5;
+  --c-inkbg: #1B2434;
+  --c-mut: #94A0B4;
+  --c-line: #212B3D;
+  --c-cta: #14B8A6;
+  --c-cta-hover: #2DD4BF;
 }
 
 @theme inline {
@@ -43,30 +43,30 @@
 }
 
 @theme {
-  --color-paper-cream: #F8F2E7;
-  --color-warm-ivory: #FFFDF8;
+  --color-paper-cream: #F6F8FB;
+  --color-warm-ivory: #FFFFFF;
   --color-forge-dark: #17191C;
-  --color-forge-green: #16A765;
+  --color-forge-green: #14B8A6;
   --color-forge-blue: #1976F3;
-  --color-forge-red: #E52B32;
-  --color-forge-yellow: #F7B928;
+  --color-forge-red: #E8503D;
+  --color-forge-yellow: #E5B84B;
   --color-forge-orange: #F39A18;
-  --color-forge-gold: #D89A25;
-  --color-soft-border: #E8DED0;
+  --color-forge-gold: #D9A441;
+  --color-soft-border: #E3E9F2;
   --color-muted-text: #6F6F6F;
 }
 
 :root {
-  --paper-cream: #F8F2E7;
-  --warm-ivory: #FFFDF8;
+  --paper-cream: #F6F8FB;
+  --warm-ivory: #FFFFFF;
   --forge-dark: #17191C;
-  --forge-green: #16A765;
+  --forge-green: #14B8A6;
   --forge-blue: #1976F3;
-  --forge-red: #E52B32;
-  --forge-yellow: #F7B928;
+  --forge-red: #E8503D;
+  --forge-yellow: #E5B84B;
   --forge-orange: #F39A18;
-  --forge-gold: #D89A25;
-  --soft-border: #E8DED0;
+  --forge-gold: #D9A441;
+  --soft-border: #E3E9F2;
   --muted-text: #6F6F6F;
 }
 
@@ -170,7 +170,7 @@ body {
     ),
     radial-gradient(
       110% 80% at 90% 10%,
-      color-mix(in srgb, var(--c-card) 90%, #E52B32 5%) 0%,
+      color-mix(in srgb, var(--c-card) 90%, #E8503D 5%) 0%,
       transparent 60%
     );
 }

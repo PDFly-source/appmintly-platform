@@ -39,7 +39,7 @@ export const PWAInstallBanner: React.FC = () => {
               <button
                 id="pwa-install-banner-btn"
                 onClick={install}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E52B32] hover:bg-[#b81f25] text-white font-medium text-xs shadow-sm transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-forge-red hover:bg-[#b81f25] text-white font-medium text-xs shadow-sm transition"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Install</span>
@@ -87,16 +87,16 @@ export const PWAInstallBanner: React.FC = () => {
 
             <div className="mt-4 space-y-3 text-sm text-ink/80">
               <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1976F3] text-xs font-bold text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-blue text-xs font-bold text-white">
                   1
                 </span>
                 <p>
-                  Tap the <Share2 className="w-4 h-4 inline mx-1 text-[#1976F3]" /> <strong>Share</strong> icon in the bottom Safari toolbar.
+                  Tap the <Share2 className="w-4 h-4 inline mx-1 text-forge-blue" /> <strong>Share</strong> icon in the bottom Safari toolbar.
                 </p>
               </div>
 
               <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#16A765] text-xs font-bold text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-green text-xs font-bold text-white">
                   2
                 </span>
                 <p>
@@ -105,7 +105,7 @@ export const PWAInstallBanner: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E52B32] text-xs font-bold text-white">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-red text-xs font-bold text-white">
                   3
                 </span>
                 <p>
@@ -116,7 +116,7 @@ export const PWAInstallBanner: React.FC = () => {
 
             <button
               onClick={() => setShowIOSGuide(false)}
-              className="mt-5 w-full rounded-xl bg-[#E52B32] py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#b81f25] transition"
+              className="mt-5 w-full rounded-xl bg-forge-red py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#b81f25] transition"
             >
               Got it
             </button>

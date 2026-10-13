@@ -28,7 +28,7 @@ interface MenuRowProps {
  */
 const MenuRow: React.FC<MenuRowProps> = ({ href, label, icon: Icon, iconSrc, desc, external, onNavigate }) => {
   const shared =
-    'group flex items-center gap-3 w-full min-h-[44px] px-3 py-2 rounded-xl bg-page/60 border border-transparent hover:border-line hover:bg-line/40 active:bg-line/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40';
+    'group flex items-center gap-3 w-full min-h-[44px] px-3 py-2 rounded-xl bg-page/60 border border-transparent hover:border-line hover:bg-line/40 active:bg-line/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40';
   const labelBlock = (
     <span className="flex-1 min-w-0">
       <span className="block text-sm font-bold text-ink">{label}</span>
@@ -75,7 +75,7 @@ const MenuRow: React.FC<MenuRowProps> = ({ href, label, icon: Icon, iconSrc, des
 
 /** Section label — same gold accent family as the footer headings. */
 const MenuSectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[11px] font-black uppercase tracking-wider text-[#F7B928] mb-1.5">{children}</p>
+  <p className="text-[11px] font-black uppercase tracking-wider text-forge-yellow mb-1.5">{children}</p>
 );
 
 export const Navbar: React.FC = () => {
@@ -134,7 +134,7 @@ export const Navbar: React.FC = () => {
     <header className="sticky top-0 z-40 glass transition-colors motion-reduce:transition-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-[#1976F3] rounded-lg min-h-[44px]">
+        <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-forge-blue rounded-lg min-h-[44px]">
           {/* Phase 17: per-letter brand wordmark colors beside the compact
               mark — 18px/900, still safely narrower than the overflowing md
               horizontal lockup at 360px. */}
@@ -165,7 +165,7 @@ export const Navbar: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search apps, APKs, PWAs, tools..."
-            className="w-full rounded-full bg-page border border-transparent hover:border-line focus:border-[#1976F3] focus:bg-white pl-10 pr-4 py-2 text-sm text-ink placeholder-mut transition focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+            className="w-full rounded-full bg-page border border-transparent hover:border-line focus:border-forge-blue focus:bg-white pl-10 pr-4 py-2 text-sm text-ink placeholder-mut transition focus:outline-hidden focus:ring-1 focus:ring-forge-blue"
           />
         </form>
 
@@ -222,10 +222,10 @@ export const Navbar: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-semibold transition border border-line"
             title="Local Library & Saved Apps"
           >
-            <Bookmark className="w-4 h-4 text-[#E52B32]" />
+            <Bookmark className="w-4 h-4 text-forge-red" />
             <span className="hidden sm:inline">Library</span>
             {favCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-[#E52B32] text-white text-[10px] font-black flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-forge-red text-white text-[10px] font-black flex items-center justify-center">
                 {favCount}
               </span>
             )}
@@ -256,7 +256,7 @@ export const Navbar: React.FC = () => {
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-1.5 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40"
+                className="flex items-center gap-1.5 min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40"
               >
                 <span aria-hidden="true" className="inline-flex items-center">
                   <AppMintlyLogo size="sm" variant="mark" />
@@ -266,7 +266,7 @@ export const Navbar: React.FC = () => {
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-mut shrink-0">
                 <span
                   aria-hidden="true"
-                  className="w-2 h-2 rounded-full bg-[#16A765] animate-pulse motion-reduce:animate-none"
+                  className="w-2 h-2 rounded-full bg-forge-green animate-pulse motion-reduce:animate-none"
                 ></span>
                 Marketplace Online
               </span>
@@ -290,12 +290,12 @@ export const Navbar: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search apps, APKs, PWAs, tools..."
                     aria-label="Search apps, APKs, PWAs, tools"
-                    className="w-full rounded-xl bg-page border border-line pl-9 pr-10 py-2.5 text-sm text-ink placeholder-mut focus:outline-hidden focus:ring-1 focus:ring-[#1976F3]"
+                    className="w-full rounded-xl bg-page border border-line pl-9 pr-10 py-2.5 text-sm text-ink placeholder-mut focus:outline-hidden focus:ring-1 focus:ring-forge-blue"
                   />
                   <button
                     type="submit"
                     aria-label="Run search"
-                    className="absolute right-2 w-7 h-7 rounded-lg flex items-center justify-center text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40"
+                    className="absolute right-2 w-7 h-7 rounded-lg flex items-center justify-center text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40"
                   >
                     <ArrowRight aria-hidden="true" className="w-4 h-4" />
                   </button>
@@ -420,17 +420,17 @@ export const Navbar: React.FC = () => {
           <nav aria-label="Legal" className="pt-2 border-t border-line/60">
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <li>
-                <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
+                <Link href="/privacy" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 rounded px-1">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
+                <Link href="/terms" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 rounded px-1">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/cookies" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 rounded px-1">
+                <Link href="/cookies" onClick={() => setMobileMenuOpen(false)} className="inline-flex items-center min-h-[44px] text-xs font-medium text-mut hover:text-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 rounded px-1">
                   Cookie Policy
                 </Link>
               </li>

@@ -148,7 +148,7 @@ export default function CategoriesPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search categories..."
             aria-label="Search categories"
-            className="w-full max-w-xl rounded-xl bg-card border border-line pl-10 pr-4 py-2.5 text-sm text-ink placeholder:text-mut outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 focus-visible:border-[#1976F3]/60 transition-colors"
+            className="w-full max-w-xl rounded-xl bg-card border border-line pl-10 pr-4 py-2.5 text-sm text-ink placeholder:text-mut outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 focus-visible:border-forge-blue/60 transition-colors"
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function CategoriesPage() {
               type="button"
               aria-pressed={isActive}
               onClick={() => setFilter(key)}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 ${
+              className={`rounded-full px-4 py-1.5 text-xs font-bold border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 ${
                 isActive
                   ? 'bg-[#0F6B4F] text-[#F5EBDD] border-[#0F6B4F]'
                   : 'bg-card text-mut border-line hover:text-ink hover:border-ink/30'
@@ -225,7 +225,7 @@ export default function CategoriesPage() {
                   <Link
                     key={cat.id}
                     href={`/category/${encodeURIComponent(cat.slug)}`}
-                    className="group flex flex-col justify-between p-5 rounded-2xl bg-card border border-line hover:border-ink/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1976F3]/40 transition-all duration-200 motion-reduce:transition-none motion-safe:hover:-translate-y-0.5"
+                    className="group flex flex-col justify-between p-5 rounded-2xl bg-card border border-line hover:border-ink/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/40 transition-all duration-200 motion-reduce:transition-none motion-safe:hover:-translate-y-0.5"
                   >
                     <div>
                       {/* Icon + name + dynamic count */}
