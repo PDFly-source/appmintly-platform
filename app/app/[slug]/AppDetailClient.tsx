@@ -517,6 +517,7 @@ export default function AppDetailPage() {
                     alt={`${app.name} preview ${idx + 1}`}
                     className="w-full h-56 sm:h-64 object-contain group-hover:scale-102 transition-transform duration-300"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <span className="p-2 rounded-full bg-white/90 text-ink shadow-md">
@@ -874,7 +875,7 @@ export default function AppDetailPage() {
                       : 'border-white/20 opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <img src={url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img src={url} alt={`${app.name} screenshot ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
