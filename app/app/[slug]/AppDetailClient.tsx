@@ -56,6 +56,8 @@ import {
 } from '@/lib/localLibrary';
 import { recordDownloadedVersion } from '@/lib/app-installs';
 import { UpdateNotice } from '@/components/UpdateNotice';
+import { ReleaseStory } from '@/components/ReleaseStory';
+import { QuickReactions } from '@/components/QuickReactions';
 
 export default function AppDetailPage() {
   const params = useParams();
@@ -587,6 +589,12 @@ export default function AppDetailPage() {
                 </ul>
               </div>
             )}
+
+            {/* Phase 1B — Release Story: metadata-only narrative timeline */}
+            <ReleaseStory app={app} />
+
+            {/* Phase 1B — Quick Reactions: local-only, honest boundary */}
+            <QuickReactions appId={app.id} appName={app.name} />
           </section>
 
           {/* Sidebar: App Information (App Store Specs) */}
