@@ -2,6 +2,19 @@ name: Launch QA - AppMintly 1.0.10 visual fix (temporary)
 
 on:
   workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Actions run id of the artifact-only build to test'
+        required: true
+        type: string
+      apk_name:
+        description: 'APK file name inside the artifact'
+        required: true
+        type: string
+      apk_sha:
+        description: 'Expected SHA-256 of the APK'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,8 +34,8 @@ jobs:
       - name: Download production-signed test APK from build run
         uses: actions/download-artifact@v4
         with:
-          run-id: 38549292290
-          name: android-apk-38549292290-release
+          run-id: ${{ inputs.build_run_id }}
+          name: android-apk-${{ inputs.build_run_id }}-release
           path: testapk
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -54,8 +67,8 @@ jobs:
             if [ -s /tmp/coords ]; then adb shell input tap $(cat /tmp/coords); log "tapped: $1"; return 0; else return 1; fi
           }
 
-          sha256sum testapk/AppMintly-1.0.10.apk > apk_sha.txt
-          grep -q 271a6e74fa0a5d33c3e96b89b9ee25b8dca88c5f619c291a4a6e86e798f561a3 apk_sha.txt \
+          sha256sum testapk/${{ inputs.apk_name }} > apk_sha.txt
+          grep -q ${{ inputs.apk_sha }} apk_sha.txt \
             && log "SHA256 MATCH: production-signed 1.0.10 test build" || log "SHA256 MISMATCH!"
 
           # ---------------- wait for working device network ----------------
@@ -71,7 +84,7 @@ jobs:
           done
           [ "$NETOK" = "1" ] || log "DEVICE NETWORK NEVER CAME UP"
 
-          adb install -r -t testapk/AppMintly-1.0.10.apk > install.txt 2>&1; cat install.txt
+          adb install -r -t testapk/${{ inputs.apk_name }} > install.txt 2>&1; cat install.txt
           adb shell dumpsys package com.appmintly.appmintly | grep -E 'versionName|versionCode' | head -4 > pkginfo.txt
           adb shell dumpsys package com.appmintly.appmintly | grep -E 'pkgFlags|privateFlags' | head -2 > pkgflags.txt || true
 
