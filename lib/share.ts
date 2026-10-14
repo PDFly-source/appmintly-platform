@@ -69,6 +69,16 @@ export interface ShareEnv {
    * Callers must NOT report plain clipboard success in that case.
    */
   legacyNativeApp?: boolean;
+  /** Receives a non-sensitive reason for every native-bridge attempt. */
+  onDiagnostic?: (d: ShareDiagnostic) => void;
+}
+
+/** Non-sensitive record of what the native bridge attempt did. */
+export interface ShareDiagnostic {
+  stage: 'bridge-present' | 'native-returned' | 'native-threw' | 'native-refused';
+  result?: string;
+  error?: string;
+  bridgeKeys?: string[];
 }
 
 /** Shape of the @JavascriptInterface bridge injected by the marketplace APK. */
@@ -88,14 +98,21 @@ export function getNativeBridgeShare(g: unknown): NativeBridgeShape | undefined 
   const bridge = (g as Record<string, unknown>)['AppMintlyNative'];
   if (typeof bridge !== 'object' || bridge === null) return undefined;
   const b = bridge as NativeBridgeShape;
-  // Legacy APK builds (v1.0.6 and earlier) confirm isNativeApp() but expose
-  // no share method: NOT usable for native sharing.
-  if (b.share === undefined || b.share === null) return undefined;
-  // Tolerant callable check: WebView builds have reported typeof 'object'
-  // for injected interface methods. Everything is invoked inside try/catch,
-  // so an object that turns out uncallable degrades safely to fallbacks.
-  if (typeof b.share !== 'function' && typeof b.share !== 'object') return undefined;
-  if (typeof b.isNativeApp === 'function' && b.isNativeApp() !== true) return undefined;
+  // CALL-BASED detection: Android WebView host objects do not always
+  // expose injected methods through a plain property read (it can be
+  // undefined even though the method is callable), so a property read must
+  // never gate the attempt. The bridge is trusted when it confirms
+  // isNativeApp(); the share call itself is made inside try/catch by
+  // shareContent and its real result decides the outcome.
+  if (typeof b.isNativeApp === 'function') {
+    try {
+      if (b.isNativeApp() !== true) return undefined;
+    } catch {
+      return undefined;
+    }
+  } else if (typeof b.share !== 'function' && typeof b.share !== 'object') {
+    return undefined;
+  }
   return b;
 }
 
@@ -106,21 +123,20 @@ export function getNativeBridgeShare(g: unknown): NativeBridgeShape | undefined 
  * native chooser, so a plain "copied!" success toast would be dishonest —
  * callers get legacyNativeApp=true and must say an update is needed.
  */
-export function isLegacyNativeApp(g: unknown): boolean {
-  if (typeof g !== 'object' || g === null) return false;
-  const bridge = (g as Record<string, unknown>)['AppMintlyNative'];
-  if (typeof bridge !== 'object' || bridge === null) return false;
-  const b = bridge as NativeBridgeShape;
-  if (typeof b.isNativeApp !== 'function' || b.isNativeApp() !== true) return false;
-  return b.share === undefined || b.share === null;
+export function isLegacyNativeApp(_g: unknown): boolean {
+  // Legacy status can no longer be inferred from a property read (host
+  // objects may hide callable methods). It is established only when an
+  // actual share() call fails because the method does not exist; see
+  // shareContent's nativeShare handling.
+  return false;
 }
 
 /** Result of a share attempt. Callers decide the UI feedback from `status`. */
 export type ShareOutcome =
   | { status: 'shared'; url: string }
   | { status: 'cancelled'; url: string }
-  | { status: 'copied'; url: string; legacyNativeApp?: boolean }
-  | { status: 'copy-failed'; url: string; legacyNativeApp?: boolean };
+  | { status: 'copied'; url: string; legacyNativeApp?: boolean; nativeReason?: string }
+  | { status: 'copy-failed'; url: string; legacyNativeApp?: boolean; nativeReason?: string };
 
 /**
  * Canonical app-detail share URL for a catalog slug.
@@ -159,7 +175,7 @@ function browserEnv(): ShareEnv {
         '[share] AppMintly APK bridge is legacy (isNativeApp=true, share unavailable) — update the APK to v1.0.7+ for the native share sheet'
       );
     }
-    return legacyNativeApp ? { ...bridgeEnv, legacyNativeApp: true } : bridgeEnv;
+    return bridgeEnv;
   }
   const legacyNativeApp = isLegacyNativeApp(g);
   if (legacyNativeApp) {
@@ -174,7 +190,7 @@ function browserEnv(): ShareEnv {
         ? navigator.clipboard.writeText.bind(navigator.clipboard)
         : undefined,
     ...bridgeEnv,
-    ...(legacyNativeApp ? { legacyNativeApp: true } : {}),
+    onDiagnostic: (d) => console.warn('[share] native bridge', JSON.stringify(d)),
   };
 }
 
@@ -193,14 +209,24 @@ export async function shareContent(
   // ACTION_SEND chooser. The Java side re-validates the URL against the
   // WebView ownership prefix; a refusal (false) falls through to the web
   // APIs, as does any bridge exception.
+  let nativeMissing = false;
+  let nativeReason: string | undefined;
   if (typeof env.nativeShare === 'function') {
     try {
       const launched = env.nativeShare({ title, text: text || undefined, url });
+      env.onDiagnostic?.({ stage: 'native-returned', result: String(launched) });
       if (launched !== false) {
         return { status: 'shared', url }; // native chooser launched
       }
-    } catch {
-      // bridge failure: fall through to the standard web share APIs
+      env.onDiagnostic?.({ stage: 'native-refused' });
+      nativeReason = 'refused';
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      env.onDiagnostic?.({ stage: 'native-threw', error: msg.slice(0, 160) });
+      // "share is not a function" / undefined target: the installed APK
+      // really has no share method (legacy build).
+      nativeMissing = /not a function|undefined|is not defined/i.test(msg);
+      nativeReason = 'threw: ' + msg.slice(0, 80);
     }
   }
 
@@ -218,7 +244,7 @@ export async function shareContent(
     }
   }
 
-  const legacy = env.legacyNativeApp === true;
+  const legacy = env.legacyNativeApp === true || nativeMissing;
 
   if (typeof env.clipboardWriteText === 'function') {
     try {
@@ -227,8 +253,10 @@ export async function shareContent(
       // the native chooser — never report a plain success there; carry
       // the flag so callers say an app update is needed instead.
       return legacy
-        ? { status: 'copied', url, legacyNativeApp: true }
-        : { status: 'copied', url };
+        ? { status: 'copied', url, legacyNativeApp: true, nativeReason }
+        : nativeReason
+          ? { status: 'copied', url, nativeReason }
+          : { status: 'copied', url };
     } catch {
       return legacy
         ? { status: 'copy-failed', url, legacyNativeApp: true }
