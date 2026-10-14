@@ -18,8 +18,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { QrCode, Download, Copy, Share2, X, Globe, DownloadCloud, Link2, RefreshCw } from 'lucide-react';
 import { AppItem } from '@/data/apps';
-import { hasAuthoritativeApkRelease } from '@/lib/distribution';
-import { BASE_PATH } from '@/lib/api-path';
+import { buildQrTargets } from '@/lib/qr-targets';
 import { shareContent } from '@/lib/share';
 
 interface QrTarget {
@@ -29,30 +28,20 @@ interface QrTarget {
   url: string;
 }
 
+/** Icons live in the component layer; URLs come from the pure lib module. */
+const TARGET_ICONS: Record<string, React.ReactNode> = {
+  detail: <Link2 className="w-3.5 h-3.5" />,
+  web: <Globe className="w-3.5 h-3.5" />,
+  apk: <DownloadCloud className="w-3.5 h-3.5" />,
+};
+
 function buildTargets(app: AppItem): QrTarget[] {
-  const detailUrl = new URL(`${BASE_PATH}/app/${app.slug}`, window.location.origin).toString();
-  const list: QrTarget[] = [
-    { id: 'detail', label: 'App page on AppMintly', icon: <Link2 className="w-3.5 h-3.5" />, url: detailUrl },
-  ];
-  const webUrl = app.launchUrl || app.webUrl || app.pwaUrl || app.url;
-  if (webUrl && webUrl !== detailUrl) {
-    list.push({
-      id: 'web',
-      label: 'Open on Web (app itself)',
-      icon: <Globe className="w-3.5 h-3.5" />,
-      url: webUrl,
-    });
-  }
-  // APK target ONLY from authoritative release evidence — never fabricated.
-  if (hasAuthoritativeApkRelease(app) && app.apk?.apkUrl) {
-    list.push({
-      id: 'apk',
-      label: 'Download APK (official release)',
-      icon: <DownloadCloud className="w-3.5 h-3.5" />,
-      url: app.apk.apkUrl,
-    });
-  }
-  return list;
+  return buildQrTargets(app).map((t) => ({
+    id: t.id,
+    label: t.label,
+    url: t.url,
+    icon: TARGET_ICONS[t.id],
+  }));
 }
 
 interface QrCodeDialogProps {
@@ -248,7 +237,7 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
               ref={canvasRef}
               width={256}
               height={256}
-              className={status === 'ready' ? 'block rounded-lg' : 'hidden'}
+              className={status === 'ready' ? 'block rounded-lg w-full max-w-[256px] h-auto' : 'hidden'}
               role="img"
               aria-label={`QR code linking to ${selected?.label || 'app content'}`}
             />
@@ -261,6 +250,9 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
         </div>
 
         <p className="mt-3 text-[11px] text-mut text-center break-all px-2">{generatedUrl}</p>
+        <p className="mt-1 text-[10px] text-mut text-center px-2">
+          Scan to open this page on your phone, or copy the link below.
+        </p>
 
         <div className="mt-4 grid grid-cols-4 gap-2">
           <button

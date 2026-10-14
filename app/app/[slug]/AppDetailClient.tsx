@@ -397,8 +397,8 @@ export default function AppDetailPage() {
                 <button
                   onClick={() => setShowQrDialog(true)}
                   className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer"
-                  title="Share via QR code"
-                  aria-label="Share via QR code"
+                  title="Scan to Open on Phone — QR code"
+                  aria-label="Scan to Open on Phone — show QR code"
                 >
                   <QrCodeIcon className="w-4 h-4" />
                 </button>
