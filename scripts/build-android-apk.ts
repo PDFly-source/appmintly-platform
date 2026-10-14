@@ -20,6 +20,14 @@ async function main() {
     themeColor: process.env.THEME_COLOR || undefined,
     backgroundColor: process.env.BACKGROUND_COLOR || undefined,
     buildMode: 'webview', authorized: true,
+    welcome: process.env.WELCOME_HEADLINE
+      ? {
+          headline: process.env.WELCOME_HEADLINE,
+          tagline: process.env.WELCOME_TAGLINE || undefined,
+          body: process.env.WELCOME_BODY || undefined,
+          cta: process.env.WELCOME_CTA || 'Get Started',
+        }
+      : undefined,
   });
   const deadline = Date.now() + 10 * 60 * 1000;
   while (Date.now() < deadline) {

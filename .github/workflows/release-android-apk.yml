@@ -41,6 +41,22 @@ on:
         required: true
         default: PDFly-source/appmintly-releases
         type: string
+      welcome_headline:
+        description: Optional one-time welcome screen headline (empty = no welcome screen)
+        required: false
+        type: string
+      welcome_tagline:
+        description: Optional welcome screen tagline
+        required: false
+        type: string
+      welcome_body:
+        description: Optional welcome screen supporting copy
+        required: false
+        type: string
+      welcome_cta:
+        description: Optional welcome screen CTA label
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -59,6 +75,10 @@ env:
   THEME_COLOR: ${{ inputs.theme_color }}
   BACKGROUND_COLOR: ${{ inputs.background_color }}
   DISTRIBUTION_REPO: ${{ inputs.distribution_repo }}
+  WELCOME_HEADLINE: ${{ inputs.welcome_headline }}
+  WELCOME_TAGLINE: ${{ inputs.welcome_tagline }}
+  WELCOME_BODY: ${{ inputs.welcome_body }}
+  WELCOME_CTA: ${{ inputs.welcome_cta }}
   SIGNING_MODE: release
   APK_ARTIFACT_ONLY: '1'
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -158,6 +178,12 @@ jobs:
         run: |
           set -euo pipefail
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
+
+      - name: Premium launch experience anti-regression gate (splash + welcome)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-launch-template.ts
 
       - name: Default the marketplace launcher icon URL (Phase 12.17 fail-closed fix)
         shell: bash

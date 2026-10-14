@@ -27,6 +27,19 @@ export interface ApkBuildOptions {
   packageId?: string;
   fileName?: string;
   authorized: boolean;
+  /**
+   * Premium in-app welcome experience (Splash & Welcome upgrade).
+   * When provided, the generated APK shows a one-time welcome screen
+   * (first launch only, no deep links) between the native splash and
+   * Home. When omitted, the template behaves exactly as before and no
+   * welcome code is generated.
+   */
+  welcome?: {
+    headline: string;
+    tagline?: string;
+    body?: string;
+    cta: string;
+  };
 }
 
 export type BuildState = 'queued' | 'building' | 'signing' | 'validating' | 'uploading' | 'completed' | 'failed';
@@ -361,6 +374,23 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   const themeColor = options.themeColor || '#17191C';
   const backgroundColor = options.backgroundColor || '#FFFDF8';
 
+  // Premium splash palette: derived per-app from the brand theme color so
+  // every AppMintly-family build stays on its own brand. A gently lightened
+  // top shade and a slightly deepened bottom shade form the subtle launch
+  // gradient; both are baked into colors.xml.
+  const mixHex = (hex: string, target: string, amount: number): string => {
+    const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+    const h = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : '#17191C';
+    const to = target === 'white' ? 255 : 0;
+    const r = clamp(parseInt(h.slice(1, 3), 16) * (1 - amount) + to * amount);
+    const g = clamp(parseInt(h.slice(3, 5), 16) * (1 - amount) + to * amount);
+    const b = clamp(parseInt(h.slice(5, 7), 16) * (1 - amount) + to * amount);
+    return '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
+  };
+  const splashBgTop = mixHex(themeColor, 'white', 0.08);
+  const splashBgBottom = mixHex(themeColor, 'black', 0.10);
+  const welcome = options.welcome;
+
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
   const cleanAppName = appName.replace(/[^a-zA-Z0-9]/g, '');
   const canonicalFileName = options.fileName || `${cleanAppName || 'App'}-${versionName}.apk`;
@@ -638,8 +668,34 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     <color name="theme_color">${themeColor}</color>
     <color name="bg_color">${backgroundColor}</color>
     <color name="ic_launcher_background">${adaptiveBackground}</color>
+    <color name="splash_bg_top">${splashBgTop}</color>
+    <color name="splash_bg_bottom">${splashBgBottom}</color>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
+
+      // Premium launch theme: the window background (and, on Android 12+,
+      // the system splash background) carries the brand gradient's bottom
+      // shade instead of the old plain black window, so launch never shows
+      // a black flash frame. values-v31 carries the modern splash-screen
+      // attributes; older releases simply use the themed window background.
+      const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_bg_bottom</item>
+    </style>
+</resources>`;
+      await fs.promises.writeFile(path.join(valuesDir, 'styles.xml'), stylesXml, 'utf8');
+      const stylesV31Xml = `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
+        <item name="android:windowBackground">@color/splash_bg_bottom</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_bg_bottom</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_bg_bottom</item>
+    </style>
+</resources>`;
+      const valuesV31Dir = path.join(resDir, 'values-v31');
+      await fs.promises.mkdir(valuesV31Dir, { recursive: true });
+      await fs.promises.writeFile(path.join(valuesV31Dir, 'styles.xml'), stylesV31Xml, 'utf8');
 
       // ----------------------------------------------------------------
       // NATIVE UPDATE CHECKER GATE (AppMintly notifications).
@@ -688,7 +744,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@android:style/Theme.NoTitleBar"
+        android:theme="@style/AppTheme"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
@@ -737,6 +793,161 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 
       const isTwa = buildMode === 'twa';
 
+      // Premium welcome screen Java pieces (only generated when the build
+      // supplies welcome copy). welcomeViewsJava runs inside
+      // buildLaunchOverlays() where density and iconRes are in scope;
+      // welcomeMethodsJava becomes private methods of MainActivity.
+      const welcomeViewsJava = welcome ? `
+        // --- one-time welcome screen (first launch to Home only) ---
+        welcomeOverlay = new LinearLayout(this);
+        welcomeOverlay.setOrientation(LinearLayout.VERTICAL);
+        welcomeOverlay.setFitsSystemWindows(true);
+        welcomeOverlay.setBackground(launchBackground());
+        welcomeOverlay.setVisibility(View.GONE);
+
+        ScrollView scroller = new ScrollView(this);
+        scroller.setFillViewport(true);
+        welcomeContent = new LinearLayout(this);
+        welcomeContent.setOrientation(LinearLayout.VERTICAL);
+        welcomeContent.setGravity(Gravity.CENTER_HORIZONTAL);
+        int pad = (int) (28 * density);
+        int padV = (int) (56 * density);
+        welcomeContent.setPadding(pad, padV, pad, padV);
+        scroller.addView(welcomeContent, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        welcomeOverlay.addView(scroller, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        ImageView wLogo = new ImageView(this);
+        if (iconRes != 0) {
+            wLogo.setImageResource(iconRes);
+        }
+        wLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams wLogoLp = new LinearLayout.LayoutParams(
+                (int) (88 * density), (int) (88 * density));
+        wLogoLp.bottomMargin = (int) (20 * density);
+        welcomeContent.addView(wLogo, wLogoLp);
+
+        TextView headline = new TextView(this);
+        headline.setText("${escapeJava(welcome.headline)}");
+        headline.setTextColor(Color.WHITE);
+        headline.setTextSize(26.0f);
+        headline.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        headline.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams headlineLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        headlineLp.bottomMargin = (int) (10 * density);
+        welcomeContent.addView(headline, headlineLp);
+
+        TextView tagline = new TextView(this);
+        tagline.setText("${escapeJava(welcome.tagline || '').toUpperCase()}");
+        tagline.setTextColor(Color.parseColor("#F4B400"));
+        tagline.setTextSize(14.0f);
+        tagline.setLetterSpacing(0.14f);
+        tagline.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        tagline.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams taglineLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        taglineLp.bottomMargin = (int) (22 * density);
+        welcomeContent.addView(tagline, taglineLp);
+
+        TextView body = new TextView(this);
+        body.setText("${escapeJava(welcome.body || '')}");
+        body.setTextColor(0xB8FFFFFF);
+        body.setTextSize(15.5f);
+        body.setLineSpacing((int) (4 * density), 1.0f);
+        body.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams bodyLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bodyLp.bottomMargin = (int) (36 * density);
+        welcomeContent.addView(body, bodyLp);
+
+        Button cta = new Button(this);
+        cta.setText("${escapeJava(welcome.cta)}");
+        cta.setAllCaps(false);
+        cta.setTextColor(Color.parseColor("#0E1526"));
+        cta.setTextSize(16.0f);
+        cta.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        cta.setPadding((int) (36 * density), (int) (16 * density), (int) (36 * density), (int) (16 * density));
+        cta.setMinHeight((int) (52 * density));
+        GradientDrawable ctaBg = new GradientDrawable();
+        ctaBg.setShape(GradientDrawable.RECTANGLE);
+        ctaBg.setCornerRadius(28f * density);
+        ctaBg.setColor(Color.parseColor("#14B8A6"));
+        cta.setBackground(ctaBg);
+        cta.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                welcomeAccepted();
+            }
+        });
+        LinearLayout.LayoutParams ctaLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ctaLp.gravity = Gravity.CENTER_HORIZONTAL;
+        ctaLp.topMargin = (int) (36 * density);
+        welcomeContent.addView(cta, ctaLp);
+
+        rootLayout.addView(welcomeOverlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+` : '';
+
+      const welcomeMethodsJava = welcome ? `
+    /** Called once the splash overlay has fully retired. */
+    private void onSplashDismissed() {
+        if (welcomePending && welcomeOverlay != null) {
+            showWelcome();
+        }
+    }
+
+    /**
+     * One-time welcome screen: first cold launch to Home only. Deep links,
+     * failed loads and already-welcomed installs skip straight to Home.
+     */
+    private void showWelcome() {
+        welcomePending = false;
+        if (pageLoadFailed || launchedToDeepLink) {
+            return;
+        }
+        SharedPreferences prefs = getSharedPreferences("appmintly_welcome", MODE_PRIVATE);
+        if (prefs.getBoolean("welcomed", false)) {
+            return;
+        }
+        welcomeOverlay.setVisibility(View.VISIBLE);
+        if (isReducedMotion()) {
+            return;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        int count = welcomeContent.getChildCount();
+        for (int i = 0; i < count; i++) {
+            View child = welcomeContent.getChildAt(i);
+            child.setAlpha(0f);
+            child.setTranslationY(20f * density);
+            child.animate().alpha(1f).translationY(0f)
+                    .setDuration(340L).setStartDelay(140L + i * 70L).start();
+        }
+    }
+
+    /** Marks the welcome as seen (CTA or back) and returns to Home. */
+    private void welcomeAccepted() {
+        SharedPreferences prefs = getSharedPreferences("appmintly_welcome", MODE_PRIVATE);
+        prefs.edit().putBoolean("welcomed", true).apply();
+        if (welcomeOverlay == null || welcomeOverlay.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        if (isReducedMotion()) {
+            welcomeOverlay.setVisibility(View.GONE);
+            return;
+        }
+        welcomeOverlay.animate().alpha(0f).setDuration(220L).withEndAction(new Runnable() {
+            @Override
+            public void run() {
+                welcomeOverlay.setVisibility(View.GONE);
+                welcomeOverlay.setAlpha(1f);
+            }
+        }).start();
+    }
+` : '';
+
       const javaCode = `package ${packageId};
 
 import android.app.Activity;
@@ -746,21 +957,38 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;${
-          isNativeUpdatesBuild
-            ? `
+import android.os.Bundle;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;${
+          isNativeUpdatesBuild
+            ? `
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.webkit.JavascriptInterface;`
             : ''
         }
+import android.graphics.drawable.GradientDrawable;
 import android.os.Environment;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.widget.FrameLayout;
+import android.widget.ImageView;${
+          welcome
+            ? `
+import android.graphics.Typeface;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;`
+            : ''
+        }
 import android.webkit.ConsoleMessage;
 import android.webkit.DownloadListener;
 import android.webkit.ValueCallback;
@@ -779,6 +1007,19 @@ public class MainActivity extends Activity {
     private final static int FILE_CHOOSER_RESULT_CODE = 1001;
     private final String TARGET_URL = "${escapeJava(options.launchUrl)}";
     private final String ALLOWED_ORIGIN = "${escapeJava(allowedPrefix)}";
+
+    // Premium launch experience (Splash & Welcome upgrade). The splash
+    // overlay gives the window a branded first frame behind the WebView
+    // until the first real paint; the one-time welcome screen (optional at
+    // build time) appears only on the very first launch to Home.
+    private FrameLayout rootLayout;
+    private FrameLayout splashOverlay;
+${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable splashTimeout;
+    private boolean pageLoadFailed = false;
+    private boolean splashDismissed = false;
+    private boolean launchedToDeepLink = false;
+    private boolean welcomePending = ${welcome ? 'true' : 'false'};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -847,6 +1088,7 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) {
+                    pageLoadFailed = true;
                     String errorHtml = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
                         + "<style>body{font-family:-apple-system,sans-serif;margin:0;padding:40px 20px;text-align:center;background:#FFFDF8;color:#17191C;}"
                         + "h2{font-size:22px;margin-bottom:8px;font-weight:900;}p{color:#6F6F6F;font-size:14px;line-height:1.5;margin-bottom:24px;}"
@@ -858,6 +1100,16 @@ public class MainActivity extends Activity {
                         + "</body></html>";
                     view.loadDataWithBaseURL(null, errorHtml, "text/html", "UTF-8", null);
                 }
+            }
+
+            // Premium launch experience: the first successful paint of the
+            // page retires the splash overlay (and may show the one-time
+            // welcome screen). The hard timeout scheduled in onCreate
+            // guarantees the overlay can never trap the user behind it
+            // (offline, slow, or blocked loads included).
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                dismissSplashAfterFirstPaint();
             }
         });
 
@@ -937,13 +1189,29 @@ ${
             deepLink = getIntent().getDataString();
         }
         if (deepLink != null && deepLink.startsWith(ALLOWED_ORIGIN)) {
+            // A notification deep link must land on content, never behind a
+            // marketing welcome screen.
+            launchedToDeepLink = true;
             webView.loadUrl(deepLink);
         } else {
             webView.loadUrl(TARGET_URL);
         }`
             : `webView.loadUrl(TARGET_URL);`
         }
-        setContentView(webView);
+
+        // Premium launch experience: branded root with the splash overlay
+        // (and, when built with it, the one-time welcome overlay). The
+        // WebView is already configured and its load has been dispatched —
+        // building these overlays adds no startup-blocking work.
+        buildLaunchOverlays();
+        setContentView(rootLayout);
+        splashTimeout = new Runnable() {
+            @Override
+            public void run() {
+                dismissSplashAfterFirstPaint();
+            }
+        };
+        mainHandler.postDelayed(splashTimeout, 12000L);
     }
 
 ${
@@ -1116,8 +1384,104 @@ ${
         }
     }
 
+    // ================ Premium launch experience ================
+
+    /** Android reduced-motion preference: 0 animator scale disables motion. */
+    private boolean isReducedMotion() {
+        try {
+            float scale = Settings.Global.getFloat(getContentResolver(),
+                    Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            return scale == 0.0f;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Brand launch gradient shared by splash and welcome backgrounds. */
+    private GradientDrawable launchBackground() {
+        return new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")});
+    }
+
+    private void buildLaunchOverlays() {
+        rootLayout = new FrameLayout(this);
+        rootLayout.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // --- in-window splash overlay (matches the system splash) ---
+        // Lightweight: two-color gradient + one centered ImageView. No
+        // network requests, no animations until the first paint, and it
+        // never delays WebView initialization (the load was dispatched
+        // before this method runs).
+        splashOverlay = new FrameLayout(this);
+        splashOverlay.setFitsSystemWindows(true);
+        splashOverlay.setBackground(launchBackground());
+        float density = getResources().getDisplayMetrics().density;
+        int logoSize = Math.min(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.38f),
+                (int) (176 * density));
+        int iconRes = getResources().getIdentifier("ic_launcher_foreground", "mipmap", getPackageName());
+        if (iconRes == 0) {
+            iconRes = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
+        }
+        ImageView logo = new ImageView(this);
+        if (iconRes != 0) {
+            logo.setImageResource(iconRes);
+        }
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logo.setContentDescription("${escapeJava(appName)}");
+        splashOverlay.addView(logo, new FrameLayout.LayoutParams(logoSize, logoSize, Gravity.CENTER));
+        rootLayout.addView(splashOverlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+${welcome ? welcomeViewsJava : ''}    }
+
+    /**
+     * Retires the splash overlay at the first real content paint (or on
+     * the hard timeout). Idempotent; always safe to call from the WebView
+     * callbacks.
+     */
+    private void dismissSplashAfterFirstPaint() {
+        if (splashDismissed || splashOverlay == null) {
+            return;
+        }
+        splashDismissed = true;
+        if (splashTimeout != null) {
+            mainHandler.removeCallbacks(splashTimeout);
+        }
+        if (isReducedMotion()) {
+            splashOverlay.setVisibility(View.GONE);
+            onSplashDismissed();
+            return;
+        }
+        AlphaAnimation fade = new AlphaAnimation(1.0f, 0.0f);
+        fade.setDuration(220L);
+        fade.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                splashOverlay.setVisibility(View.GONE);
+                onSplashDismissed();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+        splashOverlay.startAnimation(fade);
+    }
+
+${welcome ? welcomeMethodsJava : '    private void onSplashDismissed() {\n    }\n'}
+
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() {${welcome ? `
+        if (welcomeOverlay != null && welcomeOverlay.getVisibility() == View.VISIBLE) {
+            // Back on the welcome screen behaves like the CTA: continue to Home.
+            welcomeAccepted();
+            return;
+        }` : ''}
         if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {

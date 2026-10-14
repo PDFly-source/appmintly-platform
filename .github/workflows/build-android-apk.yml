@@ -42,6 +42,22 @@ on:
         default: release
         type: choice
         options: [release, debug]
+      welcome_headline:
+        description: Optional one-time welcome screen headline (empty = no welcome screen)
+        required: false
+        type: string
+      welcome_tagline:
+        description: Optional welcome screen tagline
+        required: false
+        type: string
+      welcome_body:
+        description: Optional welcome screen supporting copy
+        required: false
+        type: string
+      welcome_cta:
+        description: Optional welcome screen CTA label
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -56,6 +72,10 @@ env:
   BACKGROUND_COLOR: ${{ inputs.background_color }}
   BUILD_ID: ${{ inputs.build_id }}
   SIGNING_MODE: ${{ inputs.signing_mode }}
+  WELCOME_HEADLINE: ${{ inputs.welcome_headline }}
+  WELCOME_TAGLINE: ${{ inputs.welcome_tagline }}
+  WELCOME_BODY: ${{ inputs.welcome_body }}
+  WELCOME_CTA: ${{ inputs.welcome_cta }}
   APK_ARTIFACT_ONLY: '1'
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
@@ -137,6 +157,12 @@ jobs:
           echo "R8_JAR=$RUNNER_TEMP/android-build/r8.jar" >> "$GITHUB_ENV"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/android-build/signing.keystore" >> "$GITHUB_ENV"
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
+      - name: Premium launch experience anti-regression gate (splash + welcome)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-launch-template.ts
+
       - name: Compile, sign and validate real APK
         shell: bash
         env:
