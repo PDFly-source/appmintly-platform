@@ -51,8 +51,9 @@ ok(
 );
 ok(
   'splash gradient colors are derived from the per-app theme color (two shades)',
-  /const splashBgTop = mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
-    /const splashBgBottom = mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
+  /const genericSplashTop = mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
+    /const genericSplashBottom = mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
+    /const splashBgTop = premiumLaunch \? PREMIUM_BG_TOP : genericSplashTop;/.test(builderSrc) &&
     /<color name="splash_bg_top">\$\{splashBgTop\}<\/color>/.test(builderSrc),
 );
 
@@ -90,7 +91,7 @@ ok(
 ok(
   'welcome screen is opt-in per build (absent welcome copy generates no welcome code)',
   /const welcome = options\.welcome;/.test(builderSrc) &&
-    /welcome \? welcomeViewsJava : ''/.test(builderSrc) &&
+    /welcome \? \(premiumLaunch \? premiumWelcomeViewsJava : welcomeViewsJava\) : ''/.test(builderSrc) &&
     /welcome \? welcomeMethodsJava :[\s\S]{0,40}private void onSplashDismissed/.test(builderSrc),
 );
 ok(
@@ -151,7 +152,8 @@ ok(
 );
 ok(
   'entrance motion is restrained and staggered after the crossfade (380ms, 260ms start, 90ms stagger)',
-  /setDuration\(380L\)/.test(builderSrc) && /setStartDelay\(260L \+ i \* 90L\)/.test(builderSrc),
+  /setDuration\(380L\)/.test(builderSrc) &&
+    /premiumLaunch \? '120L \+ \(i - 1\) \* 70L' : '260L \+ i \* 90L'/.test(builderSrc),
 );
 ok(
   'no animation blocks startup: overlays are built after the WebView load dispatch',
@@ -268,6 +270,183 @@ ok(
   'debug signing mode remains test-only and unchanged',
   /debug is test-only/.test(buildWf),
 );
+
+
+/* ---------- 7. PREMIUM AppMintly launch design (complete splash replacement) ---------- */
+
+import { execSync } from 'node:child_process';
+import os from 'node:os';
+import path from 'node:path';
+
+// 7a. Source-level gating: premium is marketplace-package-only and fail-closed.
+ok(
+  'premium design is gated to com.appmintly.appmintly AND the explicit premium flag',
+  /const PREMIUM_LAUNCH_PACKAGE = 'com\.appmintly\.appmintly';/.test(builderSrc) &&
+    /const premiumLaunch = !!\(welcome && welcome\.premium && packageId === PREMIUM_LAUNCH_PACKAGE\);/.test(builderSrc),
+);
+ok(
+  'premium palette is the reference midnight navy (#04152E / #020B1C / #010812)',
+  /PREMIUM_BG_TOP = '#04152E'/.test(builderSrc) &&
+    /PREMIUM_BG_MID = '#020B1C'/.test(builderSrc) &&
+    /PREMIUM_BG_BOTTOM = '#010812'/.test(builderSrc),
+);
+ok(
+  'entry script + both workflows forward WELCOME_PREMIUM (default off)',
+  /premium: process\.env\.WELCOME_PREMIUM === '1'/.test(entrySrc) &&
+    /WELCOME_PREMIUM: \$\{\{ inputs\.welcome_premium \}\}/.test(buildWf) &&
+    /WELCOME_PREMIUM: \$\{\{ inputs\.welcome_premium \}\}/.test(releaseWf) &&
+    /welcome_premium:[\s\S]{0,200}default: ''/.test(buildWf),
+);
+ok(
+  'hero mark asset exists, is a transparent PNG, and is small (<60 KB)',
+  (() => {
+    const p = 'public/brand/launch/appmintly-launch-mark.png';
+    if (!fs.existsSync(p)) return false;
+    const b = fs.readFileSync(p);
+    return b.slice(1, 4).toString() === 'PNG' && b.length < 60_000;
+  })(),
+);
+ok(
+  'premium build refuses to compile if the hero mark asset is missing (fail-closed)',
+  /Premium launch build refused: public\/brand\/launch\/appmintly-launch-mark\.png is missing/.test(builderSrc),
+);
+
+// 7b. Behavioural: generate the REAL template for both flavors and inspect it.
+const genScript = path.join(os.tmpdir(), 'launch-gen.mts');
+function stubToolchain(dir: string): Record<string, string> {
+  const jar = path.join(dir, 'android.jar');
+  const r8 = path.join(dir, 'r8.jar');
+  const ks = path.join(dir, 'stub.keystore');
+  const sdk = path.join(dir, 'sdk');
+  fs.mkdirSync(sdk, { recursive: true });
+  for (const p of [jar, r8, ks]) fs.writeFileSync(p, 'stub');
+  // The toolchain preflight only checks `command -v` for these tools; the
+  // template/resources are written to disk before any of them is executed.
+  const bin = path.join(dir, 'bin');
+  fs.mkdirSync(bin, { recursive: true });
+  for (const tool of ['aapt', 'zipalign', 'apksigner', 'unzip', 'convert']) {
+    const p = path.join(bin, tool);
+    fs.writeFileSync(p, '#!/bin/sh\nexit 0\n');
+    fs.chmodSync(p, 0o755);
+  }
+  return {
+    PATH: `${bin}${path.delimiter}${process.env.PATH || ''}`,
+    ANDROID_JAR: jar,
+    R8_JAR: r8,
+    ANDROID_KEYSTORE_PATH: ks,
+    ANDROID_SDK_ROOT: sdk,
+    KEYSTORE_PASSWORD: 'stub',
+    KEY_PASSWORD: 'stub',
+    KEY_ALIAS: 'stub',
+  };
+}
+function generate(pkg: string, premium: boolean): { java: string; res: string } {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'launchgen-'));
+  fs.writeFileSync(
+    genScript,
+    `import { runApkBuild } from '${path.resolve('lib/apk-builder').replace(/\\/g, '/')}';
+(async () => { try { await runApkBuild({ appId:'x', slug:'${pkg.split('.').pop()}', name:'${pkg.split('.').pop()}', version:'1.0.0', launchUrl:'https://appmintly.pages.dev/', packageId:'${pkg}', themeColor:'#0E1526', buildMode:'webview', authorized:true, iconUrl:'/icon-512.png', welcome:{ headline:'Your Digital World, One Place.', tagline:'Discover. Install. Experience.', body:'Discover amazing apps, install with confidence, and experience your digital world \u2014 all in one place.', cta:'Explore AppMintly', premium:${premium} } } as any); } catch (e) {} })();`,
+  );
+  try {
+    execSync(`npm exec --yes --package=tsx@4.20.5 -- tsx ${genScript}`, {
+      stdio: 'ignore',
+      // The generator only needs the toolchain paths to EXIST to reach file
+      // generation (it fails later at javac, which this test ignores). Stub
+      // files make the gate independent of the Android SDK, which CI has not
+      // provisioned yet when this gate step runs.
+      env: { ...process.env, APK_ARTIFACT_ONLY: '1', GITHUB_ACTIONS: 'true', ...stubToolchain(out) },
+      timeout: 120_000,
+    });
+  } catch {
+    /* the pipeline may stop later (signing); generation happens first */
+  }
+  const roots = ['/tmp/appforge-builds', path.join(out, 'appforge-builds')].filter(fs.existsSync);
+  let newest = '';
+  let t = 0;
+  for (const r of roots) {
+    for (const d of fs.readdirSync(r)) {
+      const m = fs.statSync(path.join(r, d)).mtimeMs;
+      if (m > t) {
+        t = m;
+        newest = path.join(r, d);
+      }
+    }
+  }
+  const srcRoot = path.join(newest, 'src');
+  const find = (dir: string): string =>
+    fs.readdirSync(dir, { withFileTypes: true }).reduce((acc, e) => {
+      const p = path.join(dir, e.name);
+      return acc || (e.isDirectory() ? find(p) : e.name === 'MainActivity.java' ? p : '');
+    }, '');
+  return { java: fs.readFileSync(find(srcRoot), 'utf8'), res: path.join(newest, 'res') };
+}
+
+const SKIP_BEHAVIOURAL = process.env.SKIP_BEHAVIOURAL === '1';
+if (!SKIP_BEHAVIOURAL) {
+  const prem = generate('com.appmintly.appmintly', true);
+  const gen = generate('com.example.otherapp', true); // premium requested but WRONG package -> must be ignored
+
+  // old splash removal
+  ok('premium: old emerald halo (#059669) is gone from Java AND resources',
+    !/059669/.test(prem.java) && !/059669/.test(fs.readFileSync(path.join(prem.res, 'drawable/launch_backdrop.xml'), 'utf8')));
+  ok('premium: old generic LaunchBackdrop class is not compiled in (no dead splash code)',
+    !/class LaunchBackdrop /.test(prem.java) && /class PremiumLaunchBackdrop /.test(prem.java));
+  ok('premium: window/system-splash background is the reference navy',
+    /splash_bg_top">#04152E</.test(fs.readFileSync(path.join(prem.res, 'values/colors.xml'), 'utf8')) &&
+      /splash_bg_mid">#020B1C</.test(fs.readFileSync(path.join(prem.res, 'values/colors.xml'), 'utf8')) &&
+      /windowSplashScreenBackground">@color\/splash_bg_mid</.test(fs.readFileSync(path.join(prem.res, 'values-v31/styles.xml'), 'utf8')));
+  ok('premium: system splash + window background stay on the mandatory Android mechanism (AppTheme)',
+    /windowBackground">@drawable\/launch_backdrop</.test(fs.readFileSync(path.join(prem.res, 'values/styles.xml'), 'utf8')));
+
+  // logo visibility / no duplicate
+  ok('premium: hero mark drawable is bundled in drawable-nodpi and referenced by the hero builder',
+    fs.existsSync(path.join(prem.res, 'drawable-nodpi/appmintly_launch_mark.png')) && /appmintly_launch_mark/.test(prem.java));
+  ok('premium: ONE shared hero builder is used by splash and welcome (no duplicate logo implementation)',
+    (prem.java.match(/buildPremiumHero\(\)/g) || []).length === 3 && (prem.java.match(/class .*Hero|ImageView mark /g) || []).length <= 1);
+  ok('premium: hero is not re-animated by the welcome stagger (child 0 skipped) - no logo jump',
+    /for \(int i = 1; i < count; i\+\+\)/.test(prem.java));
+  ok('premium: splash hero and welcome hero share the same top offset (dp(40))',
+    /splashHeroLp\.topMargin = dp\(40\)/.test(prem.java) && /setPadding\(dp\(22\), dp\(40\)/.test(prem.java));
+
+  // required copy hierarchy
+  for (const t of ['DISCOVER. INSTALL. EXPERIENCE.', 'Apps &\\nGames', 'Safe &\\nTrusted', 'Fast &\\nLightweight', 'Curated\\nfor You',
+    '100% Secure', 'Instant Access', 'All Devices', 'Built for You', 'APPS  \\u2022  TOOLS  \\u2022  DIGITAL EXPERIENCES', 'Your Digital World, One Place.', 'Explore AppMintly']) {
+    ok(`premium: contains copy "${t}"`, prem.java.includes(t));
+  }
+  ok('premium: wordmark APP white + MINTLY multicolor spans', /0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,\s*0xFF22C55E/.test(prem.java));
+  ok('premium: headline second line is gold', /0xFFF4B400, nl \+ 1|setSpan\(new ForegroundColorSpan\(0xFFF4B400\), nl \+ 1/.test(prem.java));
+
+  // overlay ordering
+  const iWelcomeAdd = prem.java.indexOf('rootLayout.addView(welcomeOverlay');
+  const iSplashAdd = prem.java.indexOf('rootLayout.addView(splashOverlay');
+  ok('premium: overlay ordering - welcome added before splash so splash is topmost',
+    iWelcomeAdd > 0 && iSplashAdd > iWelcomeAdd);
+  ok('premium: welcome root is a FrameLayout (cannot push content off-screen)',
+    /welcomeOverlay = new FrameLayout\(this\)/.test(prem.java) && !/welcomeOverlay = new LinearLayout/.test(prem.java));
+
+  // CTA + Skip behaviour
+  ok('premium: CTA is a real Button with a visible arrow, >= 48dp (56dp) target and teal->blue gradient',
+    /Button cta = new Button\(this\)/.test(prem.java) && /\\u2192/.test(prem.java) &&
+      /cta\.setMinHeight\(dp\(56\)\)/.test(prem.java) && /0xFF14D3B4, 0xFF1E5CF0/.test(prem.java));
+  ok('premium: CTA and Skip both call welcomeAccepted() and Skip is >= 48dp + accessible',
+    (prem.java.match(/welcomeAccepted\(\);/g) || []).length >= 3 && /skip\.setMinHeight\(dp\(48\)\)/.test(prem.java) &&
+      /skip\.setContentDescription\("Skip welcome"\)/.test(prem.java) && /skip\.setClickable\(true\)/.test(prem.java));
+  ok('premium: repeated taps are debounced (welcomeAcceptedOnce)',
+    /if \(welcomeAcceptedOnce\)/.test(prem.java) && /welcomeAcceptedOnce = true;/.test(prem.java));
+  ok('premium: welcome is first-launch-only, skipped on deep links and load failures',
+    /prefs\.getBoolean\("welcomed", false\)/.test(prem.java) && /pageLoadFailed \|\| launchedToDeepLink/.test(prem.java));
+  ok('premium: reduced-motion is respected for splash and welcome', (prem.java.match(/isReducedMotion\(\)/g) || []).length >= 4);
+  ok('premium: safe timeout + idempotent dismissal retained (never trapped on splash)',
+    /splashTimeout/.test(prem.java) && /if \(splashDismissed \|\| splashOverlay == null\)/.test(prem.java));
+  ok('premium: back on welcome behaves like CTA', /welcomeOverlay\.getVisibility\(\) == View\.VISIBLE\) \{\s*\/\/ Back on the welcome/.test(prem.java));
+  ok('premium: tiles + footer are accessible (content descriptions)', /tile\.setContentDescription\(/.test(prem.java));
+
+  // isolation: other apps never inherit AppMintly premium visuals
+  ok('generic (other package, premium requested): NO premium classes, hero, Skip control or nodpi asset',
+    !/PremiumLaunchBackdrop|buildPremiumHero|TileIcon|skip\.set/.test(gen.java) && !fs.existsSync(path.join(gen.res, 'drawable-nodpi')));
+  ok('generic: keeps the original LaunchBackdrop + theme-derived palette',
+    /class LaunchBackdrop /.test(gen.java) && !/#04152E/.test(fs.readFileSync(path.join(gen.res, 'values/colors.xml'), 'utf8')));
+}
 
 console.log('');
 console.log(`[launch-template] ${checks - failures}/${checks} checks passed`);

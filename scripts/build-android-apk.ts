@@ -26,6 +26,8 @@ async function main() {
           tagline: process.env.WELCOME_TAGLINE || undefined,
           body: process.env.WELCOME_BODY || undefined,
           cta: process.env.WELCOME_CTA || 'Get Started',
+          // Honoured by the builder ONLY for com.appmintly.appmintly.
+          premium: process.env.WELCOME_PREMIUM === '1',
         }
       : undefined,
   });
