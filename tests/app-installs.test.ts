@@ -169,4 +169,30 @@ describe('storage round-trip (stubbed localStorage)', () => {
     expect(getInstallRecord('appmintly')?.downloadedVersion).toBe('1.0.9');
     expect(getInstallRecord('niramay')?.downloadedVersion).toBe('2.1.0');
   });
+
+  // Regression guard for the React error #185 crash (minified:
+  // "Maximum update depth exceeded" / dev warning: "The result of
+  // getSnapshot should be cached to avoid an infinite loop").
+  // useSyncExternalStore REQUIRES a stable snapshot reference while the
+  // store is unchanged; a fresh JSON.parse per read crashed the whole
+  // detail page the moment APK verification started.
+  it('getSnapshot returns a STABLE reference while the store is unchanged', () => {
+    recordDownloadedVersion('appmintly', '1.0.9');
+    recordVerifiedVersion('appmintly', '1.0.9', 'ab'.repeat(32));
+    const snap1 = getInstallRecord('appmintly');
+    const snap2 = getInstallRecord('appmintly');
+    const snap3 = getInstallRecord('appmintly');
+    expect(snap1).not.toBeNull();
+    expect(snap2).toBe(snap1); // SAME object reference — not a fresh parse
+    expect(snap3).toBe(snap1);
+  });
+
+  it('snapshot reference DOES change after a real store update', () => {
+    recordDownloadedVersion('appmintly', '1.0.9');
+    const snap1 = getInstallRecord('appmintly');
+    recordVerifiedVersion('appmintly', '1.0.9', 'cd'.repeat(32));
+    const snap2 = getInstallRecord('appmintly');
+    expect(snap2).not.toBe(snap1);
+    expect(snap2?.verifiedSha256).toBe('cd'.repeat(32));
+  });
 });

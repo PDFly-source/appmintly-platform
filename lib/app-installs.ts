@@ -90,10 +90,26 @@ export function parseStore(raw: string | null): InstallStore {
   }
 }
 
+/**
+ * Snapshot cache for useSyncExternalStore: React REQUIRES getSnapshot to
+ * return the SAME object reference while the store is unchanged — a fresh
+ * JSON.parse on every call creates a new reference each time and drives
+ * React into a maximum-update-depth crash (minified error #185). The cache
+ * is keyed by the raw storage string, so any external write (another tab's
+ * 'storage' event or direct localStorage.setItem) is still detected.
+ */
+let storeSnapshotCache: InstallStore | null = null;
+let storeSnapshotRaw: string | null = null;
+
 function readStore(): InstallStore {
   if (typeof window === 'undefined') return emptyStore();
   try {
-    return parseStore(window.localStorage.getItem(STORAGE_KEY));
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (storeSnapshotCache !== null && raw === storeSnapshotRaw) return storeSnapshotCache;
+    const parsed = parseStore(raw);
+    storeSnapshotCache = parsed;
+    storeSnapshotRaw = raw;
+    return parsed;
   } catch {
     return emptyStore();
   }
@@ -102,7 +118,12 @@ function readStore(): InstallStore {
 function writeStore(store: InstallStore): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const raw = JSON.stringify(store);
+    window.localStorage.setItem(STORAGE_KEY, raw);
+    // Keep the snapshot cache in lockstep so subscribers immediately see
+    // (and stably hold) the new store — same reference across reads.
+    storeSnapshotCache = store;
+    storeSnapshotRaw = raw;
     window.dispatchEvent(new Event(UPDATE_EVENT));
   } catch (err) {
     console.error('app-installs: could not persist install record', err);
