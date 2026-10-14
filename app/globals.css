@@ -31,6 +31,24 @@
   --c-cta-hover: #2DD4BF;
 }
 
+/*
+ * AMOLED true-black theme (Phase 1B). Applied as BOTH `dark` and `amoled`
+ * classes: every `.dark` component rule still applies, and this block
+ * overrides only the semantic tokens with pure/near-black values so
+ * OLED screens show true black. Defined after `.dark` so it wins the
+ * cascade at equal specificity. CTA colors match dark for consistency.
+ */
+.amoled {
+  --c-page: #000000;
+  --c-card: #06080C;
+  --c-ink: #E6EAF2;
+  --c-inkbg: #10141C;
+  --c-mut: #8C98AB;
+  --c-line: #161B24;
+  --c-cta: #14B8A6;
+  --c-cta-hover: #2DD4BF;
+}
+
 @theme inline {
   --color-page: var(--c-page);
   --color-card: var(--c-card);

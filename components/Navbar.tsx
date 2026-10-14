@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bookmark, Menu, X, Bell, Sparkles, ArrowRight, Sun, Moon, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
+import { Search, Bookmark, Menu, X, Bell, Sparkles, ArrowRight, Sun, Moon, MoonStar, MonitorSmartphone, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
@@ -233,8 +233,8 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { mode, cycleMode } = useTheme();
 
-  const themeIcon = mode === 'dark' ? Moon : mode === 'system' ? MonitorSmartphone : Sun;
-  const themeLabel = `Theme: ${mode}. Tap to cycle light, dark, system.`;
+  const themeIcon = mode === 'dark' ? Moon : mode === 'amoled' ? MoonStar : mode === 'system' ? MonitorSmartphone : Sun;
+  const themeLabel = `Theme: ${mode}. Tap to cycle light, dark, AMOLED, system.`;
   const ThemeToggle = (
     <button
       onClick={cycleMode}
