@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { APPS } from '@/data/apps';
+// Canonical host — single source of truth shared with the Share System
+// (lib/share.ts) so shared links and metadata always agree.
+import { CANONICAL_SITE_URL as SITE_URL } from '@/lib/site';
 import { resolveDeveloper } from '@/data/publishers';
 import AppDetailClient from './AppDetailClient';
 
@@ -10,8 +13,6 @@ import AppDetailClient from './AppDetailClient';
 export function generateStaticParams() {
   return APPS.map((a) => ({ slug: a.slug }));
 }
-
-const SITE_URL = 'https://appmintly.pages.dev/';
 
 /** Resolve a catalog icon path (possibly base-path-relative) to an absolute URL. */
 function absoluteIcon(icon: string): string {

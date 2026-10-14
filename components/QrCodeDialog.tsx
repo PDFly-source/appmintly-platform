@@ -20,6 +20,7 @@ import { QrCode, Download, Copy, Share2, X, Globe, DownloadCloud, Link2, Refresh
 import { AppItem } from '@/data/apps';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { BASE_PATH } from '@/lib/api-path';
+import { shareContent } from '@/lib/share';
 
 interface QrTarget {
   id: string;
@@ -156,18 +157,18 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
 
   const handleShare = async () => {
     const url = selectedUrl || generatedUrl;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${app.name} on AppMintly`,
-          text: app.shortDescription || app.name,
-          url,
-        });
-      } catch {
-        /* user dismissed the share sheet */
-      }
-    } else {
-      await handleCopy();
+    // Centralized Share System core (lib/share.ts): native share sheet
+    // with silent AbortError handling; clipboard fallback goes through
+    // this dialog's own honest copy handler below.
+    const outcome = await shareContent({
+      title: `${app.name} on AppMintly`,
+      text: app.shortDescription || app.name,
+      url,
+    });
+    if (outcome.status === 'copied') {
+      toast?.('Link copied to clipboard', 'success');
+    } else if (outcome.status === 'copy-failed') {
+      toast?.('Could not copy the link', 'error');
     }
   };
 

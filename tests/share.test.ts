@@ -1,0 +1,213 @@
+/**
+ * Share System tests (lib/share.ts).
+ *
+ * Covers the production fix contract:
+ *  1. Native share invoked with correct title + canonical URL
+ *  2. Unsupported native sharing falls back to clipboard
+ *  3. Clipboard success is only reported after the write resolves
+ *  4. Clipboard failure reports an honest error (never fake success)
+ *  5. Cancel (AbortError) never triggers a clipboard fallback
+ *  6. All five published catalog slugs produce their correct share URLs
+ *  7. Future/unregistered catalog entries share through the same generic path
+ *  8. Both hosting configurations preserve the canonical host + base path
+ *  9. Repeated taps (single-flight) never duplicate the share operation
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import catalog from '../data/apps.json';
+
+type ShareMod = typeof import('../lib/share');
+
+/** Fresh module with a controlled NEXT_OUTPUT (trailing-slash mode). */
+async function loadShare(outputMode?: string): Promise<ShareMod> {
+  if (outputMode === undefined) delete process.env.NEXT_OUTPUT;
+  else process.env.NEXT_OUTPUT = outputMode;
+  vi.resetModules();
+  return (await import('../lib/share')) as ShareMod;
+}
+
+/** Catalog entries that are actually published (the five production apps). */
+const publishedApps = (catalog as Array<{
+  slug: string;
+  name: string;
+  shortDescription?: string;
+  description?: string;
+  status?: string;
+  published?: boolean;
+}>).filter((a) => (a.status ?? (a.published ? 'published' : 'draft')) === 'published');
+
+const CANONICAL = 'https://appmintly.pages.dev/';
+
+beforeEach(() => {
+  delete process.env.NEXT_OUTPUT;
+  vi.restoreAllMocks();
+});
+
+describe('1+6+8: canonical share URLs for every published app (export mode = production)', () => {
+  it('produces the correct canonical detail URL for all five published apps', async () => {
+    const share = await loadShare('export'); // production static-export builds
+    const expectedSlugs = ['appmintly', 'studyria', 'pdfminifly', 'niramay', 'nexdrop'];
+    expect(publishedApps.map((a) => a.slug).sort()).toEqual([...expectedSlugs].sort());
+    for (const app of publishedApps) {
+      expect(share.buildAppShareUrl(app.slug)).toBe(`${CANONICAL}app/${app.slug}/`);
+    }
+  });
+
+  it('shares the canonical host, never the GitHub Pages base-path mirror', async () => {
+    const share = await loadShare('export');
+    process.env.NEXT_PUBLIC_BASE_PATH = '/appmintly-platform'; // GH Pages build
+    expect(share.buildAppShareUrl('niramay')).toBe(`${CANONICAL}app/niramay/`);
+    expect(share.buildAppShareUrl('niramay')).not.toContain('github.io');
+    expect(share.buildAppShareUrl('niramay')).not.toContain('/appmintly-platform');
+    delete process.env.NEXT_PUBLIC_BASE_PATH;
+  });
+
+  it('matches the metadata canonical strategy (trailing slash in export, none in standalone)', async () => {
+    const exportShare = await loadShare('export');
+    expect(exportShare.buildAppShareUrl('appmintly')).toBe(`${CANONICAL}app/appmintly/`);
+    const standaloneShare = await loadShare('standalone'); // dev server / APK builds
+    expect(standaloneShare.buildAppShareUrl('appmintly')).toBe(`${CANONICAL}app/appmintly`);
+  });
+});
+
+describe('1: native Web Share API is primary and gets the right payload', () => {
+  it('invokes navigator.share with the app title, description and canonical URL', async () => {
+    const share = await loadShare('export');
+    const shareSpy = vi.fn().mockResolvedValue(undefined);
+    const outcome = await share.shareApp(
+      { name: 'Niramay', slug: 'niramay', shortDescription: 'Assamese wellness wisdom' },
+      { share: shareSpy, clipboardWriteText: vi.fn() }
+    );
+    expect(shareSpy).toHaveBeenCalledTimes(1);
+    expect(shareSpy).toHaveBeenCalledWith({
+      title: 'Niramay on AppMintly',
+      text: 'Assamese wellness wisdom',
+      url: `${CANONICAL}app/niramay/`,
+    });
+    expect(outcome).toEqual({ status: 'shared', url: `${CANONICAL}app/niramay/` });
+  });
+
+  it('falls back to shortDescription and then description for share text', async () => {
+    const share = await loadShare();
+    const shareSpy = vi.fn().mockResolvedValue(undefined);
+    await share.shareApp({ name: 'X', slug: 'x', description: 'fallback text' }, { share: shareSpy });
+    expect(shareSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'fallback text' })
+    );
+  });
+});
+
+describe('2+3: clipboard fallback is accurate', () => {
+  it('falls back to clipboard when native sharing is unavailable', async () => {
+    const share = await loadShare('export');
+    const clipSpy = vi.fn().mockResolvedValue(undefined);
+    const outcome = await share.shareApp(
+      { name: 'NexDrop', slug: 'nexdrop', shortDescription: 'private file sharing' },
+      { clipboardWriteText: clipSpy }
+    );
+    expect(outcome.status).toBe('copied');
+    expect(clipSpy).toHaveBeenCalledTimes(1);
+    expect(clipSpy).toHaveBeenCalledWith(`${CANONICAL}app/nexdrop/`);
+  });
+
+  it('reports copied only AFTER the clipboard write resolves', async () => {
+    const share = await loadShare('export');
+    let resolveWrite: (v: void) => void = () => {};
+    const clipSpy = vi.fn(
+      () => new Promise<void>((res) => { resolveWrite = res; })
+    );
+    const pending = share.shareApp(
+      { name: 'Studyria', slug: 'studyria', shortDescription: 'study app' },
+      { clipboardWriteText: clipSpy }
+    );
+    let settled = false;
+    void pending.then(() => { settled = true; });
+    await Promise.resolve(); // let the clipboard call start
+    expect(settled).toBe(false); // no premature success while write is pending
+    resolveWrite();
+    const outcome = await pending;
+    expect(settled).toBe(true);
+    expect(outcome.status).toBe('copied');
+  });
+
+  it('reports copy-failed (with the URL) when the clipboard write rejects', async () => {
+    const share = await loadShare('export');
+    const clipSpy = vi.fn().mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    const outcome = await share.shareApp(
+      { name: 'PDFMiniFly', slug: 'pdfminifly', shortDescription: 'pdf tools' },
+      { clipboardWriteText: clipSpy }
+    );
+    expect(outcome.status).toBe('copy-failed');
+    expect((outcome as { url: string }).url).toBe(`${CANONICAL}app/pdfminifly/`);
+  });
+
+  it('reports copy-failed honestly when the Clipboard API is unavailable entirely', async () => {
+    const share = await loadShare();
+    const outcome = await share.shareApp({ name: 'A', slug: 'a' }, {});
+    expect(outcome.status).toBe('copy-failed');
+  });
+});
+
+describe('5: cancellation handling', () => {
+  it('treats AbortError as cancelled and never touches the clipboard', async () => {
+    const share = await loadShare('export');
+    const clipSpy = vi.fn().mockResolvedValue(undefined);
+    const outcome = await share.shareApp(
+      { name: 'Niramay', slug: 'niramay' },
+      { share: () => Promise.reject(new DOMException('cancelled', 'AbortError')), clipboardWriteText: clipSpy }
+    );
+    expect(outcome.status).toBe('cancelled');
+    expect(clipSpy).not.toHaveBeenCalled(); // no automatic copy after cancel
+  });
+
+  it('still falls back to clipboard on non-cancel share errors', async () => {
+    const share = await loadShare('export');
+    const clipSpy = vi.fn().mockResolvedValue(undefined);
+    const outcome = await share.shareApp(
+      { name: 'Niramay', slug: 'niramay' },
+      { share: () => Promise.reject(new DOMException('not allowed', 'NotAllowedError')), clipboardWriteText: clipSpy }
+    );
+    expect(outcome.status).toBe('copied');
+  });
+});
+
+describe('7: future catalog entries inherit the generic implementation', () => {
+  it('shares a not-yet-registered slug through the same path with its own URL', async () => {
+    const share = await loadShare('export');
+    const shareSpy = vi.fn().mockResolvedValue(undefined);
+    const futureApp = { name: 'Future App 2099', slug: 'future-app-2099', shortDescription: 'brand new' };
+    const outcome = await share.shareApp(futureApp, { share: shareSpy, clipboardWriteText: vi.fn() });
+    expect(outcome.status).toBe('shared');
+    expect(shareSpy).toHaveBeenCalledWith({
+      title: 'Future App 2099 on AppMintly',
+      text: 'brand new',
+      url: `${CANONICAL}app/future-app-2099/`,
+    });
+  });
+});
+
+describe('9: repeated taps never duplicate the operation', () => {
+  it('ignores a second tap while the first share is still in flight', async () => {
+    const share = await loadShare();
+    let resolveShare: (v: void) => void = () => {};
+    const shareSpy = vi.fn(
+      () => new Promise<void>((res) => { resolveShare = res; })
+    );
+    const guarded = share.singleFlight(() => shareSpy());
+    const first = guarded();
+    const second = guarded(); // double-tap while sheet is open
+    expect(second).toBeUndefined(); // ignored, not queued
+    resolveShare();
+    await first;
+    expect(shareSpy).toHaveBeenCalledTimes(1); // share sheet opened exactly once
+  });
+
+  it('allows a new share after the previous one settles', async () => {
+    const share = await loadShare();
+    const shareSpy = vi.fn().mockResolvedValue(undefined);
+    const guarded = share.singleFlight(() => shareSpy());
+    await guarded();
+    await guarded();
+    expect(shareSpy).toHaveBeenCalledTimes(2);
+  });
+});
