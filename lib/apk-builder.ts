@@ -965,6 +965,58 @@ ${
             return true;
         }
 
+        // P0 fix (AppMintly v1.0.7): native Android share sheet. Android
+        // WebView does not implement the Web Share API, so the page's
+        // navigator.share detection can never open a chooser inside the
+        // APK. The page (lib/share.ts) detects this bridge and calls it
+        // FIRST; it refuses anything outside the WebView ownership
+        // prefix, so arbitrary web content can never trigger a chooser.
+        private long lastShareAt = 0L;
+        private final Object shareGuard = new Object();
+
+        @JavascriptInterface
+        public boolean share(String url, String title, String text) {
+            if (url == null) return false;
+            String u = url.trim();
+            // Trust boundary: https-only, and only this app's own owned
+            // deployment namespace (the same prefix shouldOverrideUrlLoading
+            // enforces). Mirror URLs or unrelated pages are refused.
+            if (!u.startsWith("https://") || !u.startsWith(ALLOWED_ORIGIN)) return false;
+            final String shareUrl = u;
+            String t = (title == null ? "" : title).trim();
+            if (t.length() > 200) t = t.substring(0, 200);
+            String x = (text == null ? "" : text).trim();
+            if (x.length() > 500) x = x.substring(0, 500);
+            final String shareTitle = t;
+            final String shareText = x;
+            // Single-flight: ignore taps while a chooser is already up.
+            long now = android.os.SystemClock.elapsedRealtime();
+            synchronized (shareGuard) {
+                if (now - lastShareAt < 800) return true;
+                lastShareAt = now;
+            }
+            final Activity activity = MainActivity.this;
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent send = new Intent(Intent.ACTION_SEND);
+                        send.setType("text/plain");
+                        send.putExtra(Intent.EXTRA_TEXT,
+                                shareText.isEmpty() ? shareUrl : shareText + "\n" + shareUrl);
+                        if (!shareTitle.isEmpty()) {
+                            send.putExtra(Intent.EXTRA_TITLE, shareTitle);
+                        }
+                        Intent chooser = Intent.createChooser(send,
+                                shareTitle.isEmpty() ? "Share" : shareTitle);
+                        activity.startActivity(chooser);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            });
+            return true;
+        }
+
         @JavascriptInterface
         public void requestPermission() {
             final Activity activity = MainActivity.this;
