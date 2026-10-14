@@ -7,26 +7,36 @@
  * into this module.
  *
  * Behavior contract:
- *  1. PRIMARY — Native Web Share API (navigator.share): when the browser
- *     supports it, the native Android/OS share sheet opens with the app's
- *     canonical URL, title and a short description. Success is only reported
- *     after the browser promise RESOLVES — never fabricated up front.
- *  2. CANCELLATION — a closed/cancelled share sheet rejects with AbortError.
+ *  1. PRIMARY (AppMintly APK) — Native Android bridge (AppMintlyNative):
+ *     Android WebView does not implement the Web Share API, so inside the
+ *     marketplace APK navigator.share does not exist. When the trusted
+ *     AppMintlyNative bridge is present (injected only into the APK's own
+ *     WebView), shareContent calls its ACTION_SEND chooser with the app's
+ *     canonical URL, title and description. The Java side independently
+ *     validates that the URL is https and inside the WebView ownership
+ *     prefix, so the chooser can never be launched for foreign content.
+ *     If the bridge refuses the URL (returns false) or throws, we fall
+ *     through to the standard web APIs — never a dead end.
+ *  2. PRIMARY (browsers) — Native Web Share API (navigator.share): when the
+ *     browser supports it, the native Android/OS share sheet opens with the
+ *     app's canonical URL, title and a short description. Success is only
+ *     reported after the browser promise RESOLVES — never fabricated up front.
+ *  3. CANCELLATION — a closed/cancelled share sheet rejects with AbortError.
  *     This is reported as 'cancelled' and the caller stays SILENT: no toast,
  *     and critically NO automatic clipboard fallback (the user chose not to
  *     share; copying the link anyway would be against their intent).
- *  3. CLIPBOARD FALLBACK — when native sharing is unavailable (Firefox on
+ *  4. CLIPBOARD FALLBACK — when native sharing is unavailable (Firefox on
  *     Android, in-app WebViews, desktop browsers without Web Share) or fails
  *     with a non-cancel error, the canonical URL is copied via the async
  *     Clipboard API. The outcome is only 'copied' after the write RESOLVES.
  *     If it rejects, 'copy-failed' is returned so the caller can show an
  *     honest error and another way to copy the link — never a fake success.
- *  4. URLS — every share uses the app's canonical detail-page URL derived
+ *  5. URLS — every share uses the app's canonical detail-page URL derived
  *     from its catalog slug and the canonical-host strategy (lib/site.ts),
  *     with trailing-slash behavior matching lib/canonical-slash.ts. The URL
  *     is identical on both hosting targets and independent of any base-path
  *     mirror the visitor happens to be on. No app URL is ever hardcoded.
- *  5. FUTURE APPS — the implementation is generic: it derives everything
+ *  6. FUTURE APPS — the implementation is generic: it derives everything
  *     (URL, title, description) from the catalog record passed in, so new
  *     catalog entries inherit the full behavior with zero registration.
  */
@@ -46,6 +56,34 @@ export interface ShareableApp {
 export interface ShareEnv {
   share?: (data: ShareData) => Promise<void>;
   clipboardWriteText?: (text: string) => Promise<void>;
+  /**
+   * AppMintly APK native bridge (AppMintlyNative.share). Returns false when
+   * the Java side refuses the URL (outside the ownership prefix), true when
+   * the ACTION_SEND chooser was launched.
+   */
+  nativeShare?: (data: { title: string; text?: string | null; url: string }) => boolean | void;
+}
+
+/** Shape of the @JavascriptInterface bridge injected by the marketplace APK. */
+export interface NativeBridgeShape {
+  share?: (url: string, title: string, text: string) => boolean | void;
+  isNativeApp?: () => boolean;
+  [key: string]: unknown;
+}
+
+/**
+ * Detect the trusted AppMintly APK bridge on a global object. Only honored
+ * when BOTH isNativeApp() (if present) confirms and share() exists. Exposed
+ * so tests can pass fake globals.
+ */
+export function getNativeBridgeShare(g: unknown): NativeBridgeShape | undefined {
+  if (typeof g !== 'object' || g === null) return undefined;
+  const bridge = (g as Record<string, unknown>)['AppMintlyNative'];
+  if (typeof bridge !== 'object' || bridge === null) return undefined;
+  const b = bridge as NativeBridgeShape;
+  if (typeof b.share !== 'function') return undefined;
+  if (typeof b.isNativeApp === 'function' && b.isNativeApp() !== true) return undefined;
+  return b;
 }
 
 /** Result of a share attempt. Callers decide the UI feedback from `status`. */
@@ -80,13 +118,19 @@ export function isAbortError(err: unknown): boolean {
 
 /** Resolve the live browser environment (client-side only). */
 function browserEnv(): ShareEnv {
-  if (typeof navigator === 'undefined') return {};
+  const bridge = getNativeBridgeShare(typeof globalThis !== 'undefined' ? globalThis : undefined);
+  if (typeof navigator === 'undefined') {
+    return bridge
+      ? { nativeShare: ({ title, text, url }) => bridge.share!(url, title, text || '') }
+      : {};
+  }
   return {
     share: typeof navigator.share === 'function' ? navigator.share.bind(navigator) : undefined,
     clipboardWriteText:
       navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
         ? navigator.clipboard.writeText.bind(navigator.clipboard)
         : undefined,
+    ...(bridge ? { nativeShare: ({ title, text, url }) => bridge.share!(url, title, text || '') } : {}),
   };
 }
 
@@ -100,6 +144,21 @@ export async function shareContent(
   env: ShareEnv = browserEnv()
 ): Promise<ShareOutcome> {
   const { title, text, url } = input;
+
+  // PRIMARY inside the AppMintly APK: trusted native bridge -> Android
+  // ACTION_SEND chooser. The Java side re-validates the URL against the
+  // WebView ownership prefix; a refusal (false) falls through to the web
+  // APIs, as does any bridge exception.
+  if (typeof env.nativeShare === 'function') {
+    try {
+      const launched = env.nativeShare({ title, text: text || undefined, url });
+      if (launched !== false) {
+        return { status: 'shared', url }; // native chooser launched
+      }
+    } catch {
+      // bridge failure: fall through to the standard web share APIs
+    }
+  }
 
   if (typeof env.share === 'function') {
     try {

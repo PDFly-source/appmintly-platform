@@ -11,6 +11,9 @@
  *  7. Future/unregistered catalog entries share through the same generic path
  *  8. Both hosting configurations preserve the canonical host + base path
  *  9. Repeated taps (single-flight) never duplicate the share operation
+ * 10. AppMintly APK native bridge (AppMintlyNative.share) is preferred
+ *     inside the marketplace WebView; a bridge refusal or failure falls
+ *     back to the standard web APIs (P0 Android share fix)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -209,5 +212,97 @@ describe('9: repeated taps never duplicate the operation', () => {
     await guarded();
     await guarded();
     expect(shareSpy).toHaveBeenCalledTimes(2);
+  });
+});
+
+
+describe('10: AppMintly APK native bridge (P0 Android share fix)', () => {
+  const appPayload = {
+    title: 'NexDrop on AppMintly',
+    text: 'Private, direct, fast P2P file sharing',
+    url: `${CANONICAL}app/nexdrop/`,
+  };
+
+  it('calls the native bridge FIRST and never touches navigator.share when present', async () => {
+    const share = await loadShare('export');
+    const nativeShare = vi.fn(() => true);
+    const navShare = vi.fn(async () => {});
+    const outcome = await share.shareContent(appPayload, {
+      nativeShare,
+      share: navShare,
+      clipboardWriteText: async () => {},
+    });
+    expect(outcome.status).toBe('shared');
+    expect(nativeShare).toHaveBeenCalledTimes(1);
+    expect(nativeShare).toHaveBeenCalledWith(appPayload);
+    expect(navShare).not.toHaveBeenCalled(); // bridge wins, no double share
+  });
+
+  it('falls back to navigator.share when the bridge refuses the URL (returns false)', async () => {
+    const share = await loadShare('export');
+    const nativeShare = vi.fn(() => false); // Java refused: outside ownership prefix
+    const navShare = vi.fn(async () => {});
+    const outcome = await share.shareContent(appPayload, {
+      nativeShare,
+      share: navShare,
+    });
+    expect(outcome.status).toBe('shared');
+    expect(nativeShare).toHaveBeenCalledTimes(1);
+    expect(navShare).toHaveBeenCalledTimes(1); // standard web API takes over
+  });
+
+  it('falls back to the clipboard when the bridge refuses and navigator.share is absent (mirror URL case)', async () => {
+    const share = await loadShare('export');
+    const clip = vi.fn(async () => {});
+    const outcome = await share.shareContent(
+      { ...appPayload, url: 'https://github.com/PDFly-source/appmintly-releases/releases/download/x/a.apk' },
+      { nativeShare: () => false, clipboardWriteText: clip }
+    );
+    expect(outcome.status).toBe('copied'); // QR-style external URL: honest copy fallback
+    expect(clip).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls through to the web APIs when the bridge throws', async () => {
+    const share = await loadShare('export');
+    const navShare = vi.fn(async () => {});
+    const outcome = await share.shareContent(appPayload, {
+      nativeShare: () => {
+        throw new Error('bridge crashed');
+      },
+      share: navShare,
+    });
+    expect(outcome.status).toBe('shared');
+    expect(navShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('all five published apps share through the bridge with their own canonical URL', async () => {
+    const share = await loadShare('export');
+    for (const app of publishedApps) {
+      const nativeShare = vi.fn(() => true);
+      const outcome = await share.shareContent(
+        {
+          title: `${app.name} on AppMintly`,
+          text: app.shortDescription ?? app.description ?? '',
+          url: share.buildAppShareUrl(app.slug),
+        },
+        { nativeShare }
+      );
+      expect(outcome.status).toBe('shared');
+      expect(nativeShare).toHaveBeenCalledWith(
+        expect.objectContaining({ url: `${CANONICAL}app/${app.slug}/` })
+      );
+    }
+  });
+
+  it('getNativeBridgeShare only trusts a bridge that confirms isNativeApp() and exposes share()', async () => {
+    const share = await loadShare('export');
+    const trusted = { share: vi.fn(() => true), isNativeApp: () => true };
+    const notConfirmed = { share: vi.fn(() => true) }; // no isNativeApp
+    const denied = { share: vi.fn(() => true), isNativeApp: () => false };
+    expect(share.getNativeBridgeShare({ AppMintlyNative: trusted })).toBe(trusted);
+    expect(share.getNativeBridgeShare({})).toBeUndefined();
+    expect(share.getNativeBridgeShare(undefined)).toBeUndefined();
+    expect(share.getNativeBridgeShare({ AppMintlyNative: denied })).toBeUndefined();
+    void notConfirmed;
   });
 });
