@@ -389,6 +389,20 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   };
   const splashBgTop = mixHex(themeColor, 'white', 0.08);
   const splashBgBottom = mixHex(themeColor, 'black', 0.10);
+  // Visual mid-tone of the launch gradient: the Android 12+ system splash
+  // attribute (android:windowSplashScreenBackground) only accepts a solid
+  // color, so the OS splash uses this mid navy that blends seamlessly into
+  // the branded launch_backdrop gradient drawn from the very first frame.
+  const splashBgMid = (() => {
+    const ch = (a: string, b: string, i: number) =>
+      Math.round((parseInt(a.slice(i, i + 2), 16) + parseInt(b.slice(i, i + 2), 16)) / 2);
+    return (
+      '#' +
+      [1, 3, 5]
+        .map((i) => ch(splashBgTop, splashBgBottom, i).toString(16).padStart(2, '0'))
+        .join('')
+    );
+  })();
   const welcome = options.welcome;
 
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
@@ -670,27 +684,60 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     <color name="ic_launcher_background">${adaptiveBackground}</color>
     <color name="splash_bg_top">${splashBgTop}</color>
     <color name="splash_bg_bottom">${splashBgBottom}</color>
+    <color name="splash_bg_mid">${splashBgMid}</color>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
 
-      // Premium launch theme: the window background (and, on Android 12+,
-      // the system splash background) carries the brand gradient's bottom
-      // shade instead of the old plain black window, so launch never shows
-      // a black flash frame. values-v31 carries the modern splash-screen
-      // attributes; older releases simply use the themed window background.
+      // Branded static launch background: the same navy base and a centered
+      // emerald halo behind the logo that the LaunchBackdrop overlay paints
+      // once the first frame is up. Using it as the window background (and
+      // the Android 12+ system splash background) means every stage of
+      // launch - system splash, window background, in-window overlay -
+      // shows the same branded backdrop, with no flat color beat between.
+      const drawableDir = path.join(resDir, 'drawable');
+      await fs.promises.mkdir(drawableDir, { recursive: true });
+      const launchBackdropXml = `<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="@color/splash_bg_top"
+                android:endColor="@color/splash_bg_bottom" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="190dp"
+                android:startColor="#33059669"
+                android:endColor="#00059669" />
+        </shape>
+    </item>
+</layer-list>`;
+      await fs.promises.writeFile(path.join(drawableDir, 'launch_backdrop.xml'), launchBackdropXml, 'utf8');
+
+      // Premium launch theme: the window background carries the branded
+      // launch_backdrop drawable instead of a flat color. On Android 12+,
+      // the OS system splash (a SOLID COLOR by platform contract - the
+      // attribute is declared type=color) uses the launch gradient's
+      // visual mid-tone so the handoff into the branded backdrop gradient
+      // is seamless: OS splash (mid navy + icon) -> window background
+      // (branded gradient + emerald halo) -> LaunchBackdrop overlay.
       const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
-        <item name="android:windowBackground">@color/splash_bg_bottom</item>
+        <item name="android:windowBackground">@drawable/launch_backdrop</item>
     </style>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'styles.xml'), stylesXml, 'utf8');
       const stylesV31Xml = `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
-        <item name="android:windowBackground">@color/splash_bg_bottom</item>
-        <item name="android:windowSplashScreenBackground">@color/splash_bg_bottom</item>
-        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_bg_bottom</item>
+        <item name="android:windowBackground">@drawable/launch_backdrop</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_bg_mid</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_bg_mid</item>
     </style>
 </resources>`;
       const valuesV31Dir = path.join(resDir, 'values-v31');
@@ -1441,15 +1488,26 @@ ${
             int h = getHeight();
             float span = Math.max(w, h);
             canvas.drawRect(0f, 0f, (float) w, (float) h, basePaint);
-            glowPaint.setShader(new RadialGradient(w * 0.50f, h * 0.42f, span * 0.55f,
-                    0x3314B8A6, 0x0014B8A6, Shader.TileMode.CLAMP));
-            canvas.drawCircle(w * 0.50f, h * 0.42f, span * 0.55f, glowPaint);
+            // Primary emerald illumination directly behind the logo
+            // (logo-inspired green), with a tighter teal halo inside it.
+            glowPaint.setShader(new RadialGradient(w * 0.50f, h * 0.42f, span * 0.60f,
+                    0x33059669, 0x00059669, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.50f, h * 0.42f, span * 0.60f, glowPaint);
+            glowPaint.setShader(new RadialGradient(w * 0.50f, h * 0.42f, span * 0.40f,
+                    0x2614B8A6, 0x0014B8A6, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.50f, h * 0.42f, span * 0.40f, glowPaint);
+            // Electric blue depth, lower right; warm metallic gold, lower left.
             glowPaint.setShader(new RadialGradient(w * 0.92f, h * 0.88f, span * 0.45f,
                     0x2E2563EB, 0x002563EB, Shader.TileMode.CLAMP));
             canvas.drawCircle(w * 0.92f, h * 0.88f, span * 0.45f, glowPaint);
             glowPaint.setShader(new RadialGradient(w * 0.08f, h * 1.04f, span * 0.32f,
                     0x29F4B400, 0x00F4B400, Shader.TileMode.CLAMP));
             canvas.drawCircle(w * 0.08f, h * 1.04f, span * 0.32f, glowPaint);
+            // Restrained red accent from the logo, upper right. Kept very
+            // subtle so it reads as warmth in the corner, never a warning.
+            glowPaint.setShader(new RadialGradient(w * 0.94f, h * 0.06f, span * 0.26f,
+                    0x1FE31E24, 0x00E31E24, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.94f, h * 0.06f, span * 0.26f, glowPaint);
         }
     }
 

@@ -36,17 +36,18 @@ ok(
   /android:theme="@style\/AppTheme"/.test(builderSrc),
 );
 ok(
-  'pre-12 window background is the brand splash color (no black flash frame)',
-  /<item name="android:windowBackground">@color\/splash_bg_bottom<\/item>/.test(builderSrc),
+  'pre-12 window background is the branded launch_backdrop drawable (no flat-color frame)',
+  /<item name="android:windowBackground">@drawable\/launch_backdrop<\/item>/.test(builderSrc),
 );
 ok(
-  'Android 12+ system splash background is branded (values-v31)',
+  'Android 12+ system splash background is the brand mid-tone color (attr is type=color)',
   /values-v31/.test(builderSrc) &&
-    /<item name="android:windowSplashScreenBackground">@color\/splash_bg_bottom<\/item>/.test(builderSrc),
+    /<color name="splash_bg_mid">/.test(builderSrc) &&
+    /<item name="android:windowSplashScreenBackground">@color\/splash_bg_mid<\/item>/.test(builderSrc),
 );
 ok(
-  'system splash icon background is branded too (no icon halo mismatch)',
-  /<item name="android:windowSplashScreenIconBackgroundColor">@color\/splash_bg_bottom<\/item>/.test(builderSrc),
+  'system splash icon background uses the same brand mid-tone (no icon halo mismatch)',
+  /<item name="android:windowSplashScreenIconBackgroundColor">@color\/splash_bg_mid<\/item>/.test(builderSrc),
 );
 ok(
   'splash gradient colors are derived from the per-app theme color (two shades)',
@@ -115,9 +116,11 @@ ok(
   /welcomeOverlay\.getVisibility\(\) == View\.VISIBLE\) \{[\s\S]{0,160}welcomeAccepted\(\);/.test(builderSrc),
 );
 ok(
-  'brand accents present: teal glow 0x3314B8A6, blue 0x2E2563EB, gold 0x29F4B400, CTA teal->blue gradient',
-  /0x3314B8A6/.test(builderSrc) && /0x2E2563EB/.test(builderSrc) &&
-    /0x29F4B400/.test(builderSrc) && /setColors\(new int\[\]\{0xFF14B8A6, 0xFF2563EB\}\)/.test(builderSrc),
+  'brand accents present: emerald 0x33059669, teal 0x2614B8A6, blue 0x2E2563EB, gold 0x29F4B400, red 0x1FE31E24, CTA teal->blue gradient',
+  /0x33059669/.test(builderSrc) && /0x2614B8A6/.test(builderSrc) &&
+    /0x2E2563EB/.test(builderSrc) && /0x29F4B400/.test(builderSrc) &&
+    /0x1FE31E24/.test(builderSrc) &&
+    /setColors\(new int\[\]\{0xFF14B8A6, 0xFF2563EB\}\)/.test(builderSrc),
 );
 ok(
   'CTA is an accessible touch target (>=52dp min height)',
@@ -173,11 +176,20 @@ ok(
 /* ---------- 5b. Premium visual fix (P0 launch recording regression) ---------- */
 
 ok(
-  'premium LaunchBackdrop paints a navy gradient + teal/blue/gold glows (one onDraw pass)',
+  'premium LaunchBackdrop paints navy gradient + emerald/teal/blue/gold/red glows (one onDraw pass)',
   /private static class LaunchBackdrop extends View/.test(builderSrc) &&
     /new LinearGradient\(0f, 0f, w \* 0\.35f/.test(builderSrc) &&
     /new RadialGradient/.test(builderSrc) &&
-    /0x3314B8A6, 0x0014B8A6/.test(builderSrc),
+    /0x33059669, 0x00059669/.test(builderSrc) &&
+    (builderSrc.match(/new RadialGradient/g) || []).length >= 5,
+);
+ok(
+  'static launch_backdrop drawable (layer-list: navy gradient + centered emerald halo) backs the window background in BOTH styles blocks',
+  /<layer-list/.test(builderSrc) &&
+    /launch_backdrop\.xml/.test(builderSrc) &&
+    /<item name="android:windowBackground">@drawable\/launch_backdrop<\/item>/.test(builderSrc) &&
+    (builderSrc.match(/<item name="android:windowBackground">@drawable\/launch_backdrop<\/item>/g) || []).length === 2 &&
+    /@color\/splash_bg_top/.test(builderSrc),
 );
 ok(
   'splash and welcome share the same LaunchBackdrop (no background change mid-sequence)',
