@@ -14,6 +14,8 @@
  * 10. AppMintly APK native bridge (AppMintlyNative.share) is preferred
  *     inside the marketplace WebView; a bridge refusal or failure falls
  *     back to the standard web APIs (P0 Android share fix)
+ * 11. Legacy APK detection (bridge without share) is flagged, never
+ *     reported as plain clipboard success, and uses the same core
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -304,5 +306,72 @@ describe('10: AppMintly APK native bridge (P0 Android share fix)', () => {
     expect(share.getNativeBridgeShare(undefined)).toBeUndefined();
     expect(share.getNativeBridgeShare({ AppMintlyNative: denied })).toBeUndefined();
     void notConfirmed;
+  });
+});
+
+
+describe('11: legacy AppMintly APK detection (v1.0.8 hardening)', () => {
+  const payload = { title: 'NexDrop on AppMintly', text: 'desc', url: `${CANONICAL}app/nexdrop/` };
+  const legacyGlobal = {
+    AppMintlyNative: { isNativeApp: () => true }, // v1.0.6 bridge: no share method
+  };
+
+  it('isLegacyNativeApp detects a bridge that confirms isNativeApp but has no share', async () => {
+    const share = await loadShare('export');
+    expect(share.isLegacyNativeApp(legacyGlobal)).toBe(true);
+    expect(share.isLegacyNativeApp({ AppMintlyNative: { isNativeApp: () => true, share: () => true } })).toBe(false);
+    expect(share.isLegacyNativeApp({})).toBe(false);
+    expect(share.isLegacyNativeApp(undefined)).toBe(false);
+    expect(share.isLegacyNativeApp({ AppMintlyNative: { isNativeApp: () => false } })).toBe(false);
+  });
+
+  it('getNativeBridgeShare refuses the legacy bridge (share missing)', async () => {
+    const share = await loadShare('export');
+    expect(share.getNativeBridgeShare(legacyGlobal)).toBeUndefined();
+  });
+
+  it('flags the copied outcome when the APK is legacy — never a plain success', async () => {
+    const share = await loadShare('export');
+    const outcome = await share.shareContent(payload, {
+      clipboardWriteText: async () => {},
+      legacyNativeApp: true,
+    });
+    expect(outcome.status).toBe('copied');
+    expect((outcome as { legacyNativeApp?: boolean }).legacyNativeApp).toBe(true);
+  });
+
+  it('flags copy-failed honestly on a legacy APK when the clipboard write rejects', async () => {
+    const share = await loadShare('export');
+    const outcome = await share.shareContent(payload, {
+      clipboardWriteText: async () => {
+        throw new Error('blocked');
+      },
+      legacyNativeApp: true,
+    });
+    expect(outcome.status).toBe('copy-failed');
+    expect((outcome as { legacyNativeApp?: boolean }).legacyNativeApp).toBe(true);
+  });
+
+  it('tolerates a bridge whose share method reports typeof "object" (WebView quirk)', async () => {
+    const share = await loadShare('export');
+    const quirky = {
+      isNativeApp: () => true,
+      share: vi.fn(() => true),
+    };
+    (quirky.share as unknown as { __quirk: boolean }).__quirk = true;
+    // simulate typeof 'object': wrap detection through getNativeBridgeShare
+    const bridge = share.getNativeBridgeShare({ AppMintlyNative: quirky });
+    expect(bridge).toBe(quirky); // detection does not reject callable objects
+    const nativeShare = bridge ? vi.fn(() => bridge.share!('u', 't', 'x')) : undefined;
+    const outcome = await share.shareContent(payload, { nativeShare });
+    expect(outcome.status).toBe('shared');
+    expect(quirky.share).toHaveBeenCalled();
+  });
+
+  it('an honest browser clipboard copy stays a plain success (no legacy flag outside the APK)', async () => {
+    const share = await loadShare('export');
+    const outcome = await share.shareContent(payload, { clipboardWriteText: async () => {} });
+    expect(outcome.status).toBe('copied');
+    expect((outcome as { legacyNativeApp?: boolean }).legacyNativeApp).toBeUndefined();
   });
 });

@@ -749,8 +749,11 @@ import android.os.Build;
 import android.os.Bundle;${
           isNativeUpdatesBuild
             ? `
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.webkit.JavascriptInterface;`
             : ''
         }
@@ -905,6 +908,26 @@ ${
         // marketplace page (only pages inside the ownership boundary ever
         // load here) and schedule the ~6h background catalog check.
         webView.addJavascriptInterface(new NativeBridge(), "AppMintlyNative");
+        // Fresh content after every app update (v1.0.8 fix): the WebView
+        // HTTP cache outlives an APK upgrade (same-signature installs keep
+        // app data) and can keep serving the previous release's page
+        // bundles. Purge it once per versionCode change so the page always
+        // matches the installed APK generation.
+        try {
+            long verCode;
+            if (Build.VERSION.SDK_INT >= 28) {
+                verCode = getPackageManager().getPackageInfo(getPackageName(), 0).getLongVersionCode();
+            } else {
+                verCode = (long) getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+            }
+            SharedPreferences vsp = getSharedPreferences("appmintly_updates", Context.MODE_PRIVATE);
+            if (vsp.getLong("lastVersionCode", -1L) != verCode) {
+                webView.clearCache(true);
+                vsp.edit().putLong("lastVersionCode", verCode).apply();
+            }
+        } catch (Throwable t) {
+            Log.w("AppMintly", "version-based cache purge skipped", t);
+        }
         UpdateEngine.schedule(this);
 
         // Notification deep link (cold start): only the app's own ownership
@@ -965,6 +988,18 @@ ${
             return true;
         }
 
+        // On-device ground truth: lets the page confirm WHICH APK build is
+        // actually running (diagnostics for share/update bugs).
+        @JavascriptInterface
+        public String getAppVersion() {
+            try {
+                return MainActivity.this.getPackageManager()
+                        .getPackageInfo(MainActivity.this.getPackageName(), 0).versionName;
+            } catch (Throwable t) {
+                return "";
+            }
+        }
+
         // P0 fix (AppMintly v1.0.7): native Android share sheet. Android
         // WebView does not implement the Web Share API, so the page's
         // navigator.share detection can never open a chooser inside the
@@ -1010,7 +1045,8 @@ ${
                         Intent chooser = Intent.createChooser(send,
                                 shareTitle.isEmpty() ? "Share" : shareTitle);
                         activity.startActivity(chooser);
-                    } catch (Throwable ignored) {
+                    } catch (Throwable e) {
+                        Log.w("AppMintlyShare", "native share chooser failed", e);
                     }
                 }
             });
