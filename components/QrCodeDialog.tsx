@@ -166,9 +166,19 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
       url,
     });
     if (outcome.status === 'copied') {
-      toast?.('Link copied to clipboard', 'success');
+      toast?.(
+        outcome.legacyNativeApp
+          ? 'This AppMintly app version cannot open the native share sheet. Update the app to share directly. The link was copied for now.'
+          : 'Link copied to clipboard',
+        outcome.legacyNativeApp ? 'error' : 'success'
+      );
     } else if (outcome.status === 'copy-failed') {
-      toast?.('Could not copy the link', 'error');
+      toast?.(
+        outcome.legacyNativeApp
+          ? 'This AppMintly app version cannot open the native share sheet. Update the app to share directly.'
+          : 'Could not copy the link',
+        'error'
+      );
     }
   };
 

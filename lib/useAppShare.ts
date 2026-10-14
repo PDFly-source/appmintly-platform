@@ -30,13 +30,29 @@ function makeGuardedShare(getToast: () => ToastFn) {
         // User dismissed the share sheet — silent, no clipboard fallback.
         break;
       case 'copied':
-        toast('App link copied to clipboard!', 'success');
+        if (outcome.legacyNativeApp) {
+          // Legacy AppMintly APK (v1.0.6 or older): the user expects the
+          // native chooser; a plain "copied!" success would be dishonest.
+          toast(
+            'This AppMintly app version cannot open the native share sheet. Update the app to share directly. The link was copied for now.',
+            'error'
+          );
+        } else {
+          toast('App link copied to clipboard!', 'success');
+        }
         break;
       case 'copy-failed':
-        toast(
-          'Could not copy the link automatically. Use the QR code button next to Share, or copy the address from your browser bar.',
-          'error'
-        );
+        if (outcome.legacyNativeApp) {
+          toast(
+            'This AppMintly app version cannot open the native share sheet. Update the app to share directly.',
+            'error'
+          );
+        } else {
+          toast(
+            'Could not copy the link automatically. Use the QR code button next to Share, or copy the address from your browser bar.',
+            'error'
+          );
+        }
         break;
     }
     return outcome.status;

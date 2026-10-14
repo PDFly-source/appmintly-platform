@@ -62,6 +62,13 @@ export interface ShareEnv {
    * the ACTION_SEND chooser was launched.
    */
   nativeShare?: (data: { title: string; text?: string | null; url: string }) => boolean | void;
+  /**
+   * True when the installed AppMintly APK is a LEGACY build (v1.0.6 or
+   * older): its bridge confirms isNativeApp() but exposes no share method,
+   * so native sharing is expected by the user yet genuinely unavailable.
+   * Callers must NOT report plain clipboard success in that case.
+   */
+  legacyNativeApp?: boolean;
 }
 
 /** Shape of the @JavascriptInterface bridge injected by the marketplace APK. */
@@ -81,17 +88,39 @@ export function getNativeBridgeShare(g: unknown): NativeBridgeShape | undefined 
   const bridge = (g as Record<string, unknown>)['AppMintlyNative'];
   if (typeof bridge !== 'object' || bridge === null) return undefined;
   const b = bridge as NativeBridgeShape;
-  if (typeof b.share !== 'function') return undefined;
+  // Legacy APK builds (v1.0.6 and earlier) confirm isNativeApp() but expose
+  // no share method: NOT usable for native sharing.
+  if (b.share === undefined || b.share === null) return undefined;
+  // Tolerant callable check: WebView builds have reported typeof 'object'
+  // for injected interface methods. Everything is invoked inside try/catch,
+  // so an object that turns out uncallable degrades safely to fallbacks.
+  if (typeof b.share !== 'function' && typeof b.share !== 'object') return undefined;
   if (typeof b.isNativeApp === 'function' && b.isNativeApp() !== true) return undefined;
   return b;
+}
+
+/**
+ * True when the running AppMintly APK is a legacy build: the bridge is
+ * injected and confirms isNativeApp(), but it has no share method (the
+ * pre-1.0.7 native-update bridge). Inside such an APK the user expects the
+ * native chooser, so a plain "copied!" success toast would be dishonest —
+ * callers get legacyNativeApp=true and must say an update is needed.
+ */
+export function isLegacyNativeApp(g: unknown): boolean {
+  if (typeof g !== 'object' || g === null) return false;
+  const bridge = (g as Record<string, unknown>)['AppMintlyNative'];
+  if (typeof bridge !== 'object' || bridge === null) return false;
+  const b = bridge as NativeBridgeShape;
+  if (typeof b.isNativeApp !== 'function' || b.isNativeApp() !== true) return false;
+  return b.share === undefined || b.share === null;
 }
 
 /** Result of a share attempt. Callers decide the UI feedback from `status`. */
 export type ShareOutcome =
   | { status: 'shared'; url: string }
   | { status: 'cancelled'; url: string }
-  | { status: 'copied'; url: string }
-  | { status: 'copy-failed'; url: string };
+  | { status: 'copied'; url: string; legacyNativeApp?: boolean }
+  | { status: 'copy-failed'; url: string; legacyNativeApp?: boolean };
 
 /**
  * Canonical app-detail share URL for a catalog slug.
@@ -118,11 +147,25 @@ export function isAbortError(err: unknown): boolean {
 
 /** Resolve the live browser environment (client-side only). */
 function browserEnv(): ShareEnv {
-  const bridge = getNativeBridgeShare(typeof globalThis !== 'undefined' ? globalThis : undefined);
+  const g = typeof globalThis !== 'undefined' ? globalThis : undefined;
+  const bridge = getNativeBridgeShare(g);
+  const bridgeEnv = bridge
+    ? { nativeShare: ({ title, text, url }: { title: string; text?: string | null; url: string }) => bridge.share!(url, title, text || '') }
+    : {};
   if (typeof navigator === 'undefined') {
-    return bridge
-      ? { nativeShare: ({ title, text, url }) => bridge.share!(url, title, text || '') }
-      : {};
+    const legacyNativeApp = isLegacyNativeApp(g);
+    if (legacyNativeApp) {
+      console.error(
+        '[share] AppMintly APK bridge is legacy (isNativeApp=true, share unavailable) — update the APK to v1.0.7+ for the native share sheet'
+      );
+    }
+    return legacyNativeApp ? { ...bridgeEnv, legacyNativeApp: true } : bridgeEnv;
+  }
+  const legacyNativeApp = isLegacyNativeApp(g);
+  if (legacyNativeApp) {
+    console.error(
+      '[share] AppMintly APK bridge is legacy (isNativeApp=true, share unavailable) — update the APK to v1.0.7+ for the native share sheet'
+    );
   }
   return {
     share: typeof navigator.share === 'function' ? navigator.share.bind(navigator) : undefined,
@@ -130,7 +173,8 @@ function browserEnv(): ShareEnv {
       navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
         ? navigator.clipboard.writeText.bind(navigator.clipboard)
         : undefined,
-    ...(bridge ? { nativeShare: ({ title, text, url }) => bridge.share!(url, title, text || '') } : {}),
+    ...bridgeEnv,
+    ...(legacyNativeApp ? { legacyNativeApp: true } : {}),
   };
 }
 
@@ -174,17 +218,26 @@ export async function shareContent(
     }
   }
 
+  const legacy = env.legacyNativeApp === true;
+
   if (typeof env.clipboardWriteText === 'function') {
     try {
       await env.clipboardWriteText(url);
-      return { status: 'copied', url }; // clipboard write confirmed
+      // clipboard write confirmed. Inside a LEGACY APK the user expects
+      // the native chooser — never report a plain success there; carry
+      // the flag so callers say an app update is needed instead.
+      return legacy
+        ? { status: 'copied', url, legacyNativeApp: true }
+        : { status: 'copied', url };
     } catch {
-      return { status: 'copy-failed', url };
+      return legacy
+        ? { status: 'copy-failed', url, legacyNativeApp: true }
+        : { status: 'copy-failed', url };
     }
   }
 
   // Clipboard API unavailable (insecure context / restricted WebView).
-  return { status: 'copy-failed', url };
+  return legacy ? { status: 'copy-failed', url, legacyNativeApp: true } : { status: 'copy-failed', url };
 }
 
 /**
