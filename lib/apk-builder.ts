@@ -1003,7 +1003,7 @@ ${
                         Intent send = new Intent(Intent.ACTION_SEND);
                         send.setType("text/plain");
                         send.putExtra(Intent.EXTRA_TEXT,
-                                shareText.isEmpty() ? shareUrl : shareText + "\n" + shareUrl);
+                                shareText.isEmpty() ? shareUrl : shareText + "\\n" + shareUrl);
                         if (!shareTitle.isEmpty()) {
                             send.putExtra(Intent.EXTRA_TITLE, shareTitle);
                         }
