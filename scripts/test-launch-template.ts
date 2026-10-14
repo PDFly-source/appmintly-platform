@@ -80,8 +80,8 @@ ok(
     /FIT_CENTER/.test(builderSrc),
 );
 ok(
-  'splash logo size is bounded (<=38% width, <=176dp; no oversized logo)',
-  /widthPixels \* 0\.38f/.test(builderSrc) && /176 \* density/.test(builderSrc),
+  'splash logo is generously sized (>=128dp floor, ~46% width, <=220dp cap)',
+  /widthPixels \* 0\.46f/.test(builderSrc) && /220 \* density/.test(builderSrc) && /128 \* density/.test(builderSrc),
 );
 
 /* ---------- 3. Welcome screen gating (first launch to Home only) ---------- */
@@ -115,12 +115,13 @@ ok(
   /welcomeOverlay\.getVisibility\(\) == View\.VISIBLE\) \{[\s\S]{0,160}welcomeAccepted\(\);/.test(builderSrc),
 );
 ok(
-  'brand copy uses the design tokens: gold #F4B400 tagline, teal #14B8A6 CTA, ink #0E1526 text',
-  /"#F4B400"/.test(builderSrc) && /"#14B8A6"/.test(builderSrc) && /"#0E1526"/.test(builderSrc),
+  'brand accents present: teal glow 0x3314B8A6, blue 0x2E2563EB, gold 0x29F4B400, CTA teal->blue gradient',
+  /0x3314B8A6/.test(builderSrc) && /0x2E2563EB/.test(builderSrc) &&
+    /0x29F4B400/.test(builderSrc) && /setColors\(new int\[\]\{0xFF14B8A6, 0xFF2563EB\}\)/.test(builderSrc),
 );
 ok(
   'CTA is an accessible touch target (>=52dp min height)',
-  /setMinHeight\(\(int\) \(52 \* density\)\)/.test(builderSrc),
+  /setMinHeight\(\(int\) \(54 \* density\)\)/.test(builderSrc),
 );
 
 /* ---------- 4. Accessibility, insets, small screens, reduced motion ---------- */
@@ -139,8 +140,8 @@ ok(
   /new ScrollView\(this\)/.test(builderSrc) && /setFillViewport\(true\);/.test(builderSrc),
 );
 ok(
-  'entrance motion is a restrained staggered fade+rise (<=340ms, <=70ms stagger)',
-  /setDuration\(340L\)/.test(builderSrc) && /setStartDelay\(140L \+ i \* 70L\)/.test(builderSrc),
+  'entrance motion is restrained and staggered after the crossfade (380ms, 260ms start, 90ms stagger)',
+  /setDuration\(380L\)/.test(builderSrc) && /setStartDelay\(260L \+ i \* 90L\)/.test(builderSrc),
 );
 ok(
   'no animation blocks startup: overlays are built after the WebView load dispatch',
@@ -167,6 +168,63 @@ ok(
 ok(
   'no new permissions are declared beyond the existing set',
   !/uses-permission android:name="android\.permission\.(?!INTERNET|ACCESS_NETWORK_STATE|DOWNLOAD_WITHOUT_NOTIFICATION|POST_NOTIFICATIONS|RECEIVE_BOOT_COMPLETED)/.test(builderSrc),
+);
+
+/* ---------- 5b. Premium visual fix (P0 launch recording regression) ---------- */
+
+ok(
+  'premium LaunchBackdrop paints a navy gradient + teal/blue/gold glows (one onDraw pass)',
+  /private static class LaunchBackdrop extends View/.test(builderSrc) &&
+    /new LinearGradient\(0f, 0f, w \* 0\.35f/.test(builderSrc) &&
+    /new RadialGradient/.test(builderSrc) &&
+    /0x3314B8A6, 0x0014B8A6/.test(builderSrc),
+);
+ok(
+  'splash and welcome share the same LaunchBackdrop (no background change mid-sequence)',
+  (builderSrc.match(/new LaunchBackdrop\(this,/g) || []).length === 2 &&
+    !/launchBackground\(\)/.test(builderSrc),
+);
+ok(
+  'splash overlay is added LAST (topmost): welcome rises beneath the fade',
+  builderSrc.indexOf('rootLayout.addView(welcomeOverlay') <
+    builderSrc.indexOf('rootLayout.addView(splashOverlay'),
+);
+ok(
+  'dismiss reveals the welcome BEFORE fading (crossfade; no blank beat, no raw page flash)',
+  (() => {
+    const m = builderSrc.match(/private void dismissSplashAfterFirstPaint\(\) \{[\s\S]*?\n    \}/);
+    if (!m) return false;
+    const body = m[0];
+    return (
+      body.indexOf('onSplashDismissed();') < body.indexOf('startAnimation(retire)') &&
+      !/onAnimationEnd[\s\S]{0,120}onSplashDismissed/.test(builderSrc)
+    );
+  })(),
+);
+ok(
+  'splash retirement is a restrained fade+lift (280ms, centered pivot)',
+  /setDuration\(280L\)/.test(builderSrc) &&
+    /RELATIVE_TO_SELF, 0\.5f/.test(builderSrc) &&
+    !/fillAfter/.test(builderSrc),
+);
+ok(
+  'logo entrance is a subtle fade+settle (320ms, 0.92->1.0 scale), skipped under reduced motion',
+  /logo\.animate\(\)\.alpha\(1f\)\.scaleX\(1f\)\.scaleY\(1f\)\.setDuration\(320L\)/.test(builderSrc) &&
+    /if \(!isReducedMotion\(\)\) \{[\s\S]{0,140}logo\.setAlpha\(0f\)/.test(builderSrc),
+);
+ok(
+  'welcome content is vertically centered on tall screens (Gravity.CENTER)',
+  /welcomeContent\.setGravity\(Gravity\.CENTER\);/.test(builderSrc),
+);
+ok(
+  'CTA is white-on-gradient with arrow, 54dp min target, 30dp radius',
+  /cta\.setTextColor\(Color\.WHITE\)/.test(builderSrc) &&
+    /\\u2192/.test(builderSrc) &&
+    /setCornerRadius\(30f \* density\)/.test(builderSrc),
+);
+ok(
+  'tagline is gold with wide tracking (13sp, 0.22f letterSpacing)',
+  /"#F4B400"/.test(builderSrc) && /tagline\.setLetterSpacing\(0\.22f\)/.test(builderSrc),
 );
 
 /* ---------- 6. Wiring: entry script + workflows ---------- */

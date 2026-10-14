@@ -802,19 +802,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         welcomeOverlay = new LinearLayout(this);
         welcomeOverlay.setOrientation(LinearLayout.VERTICAL);
         welcomeOverlay.setFitsSystemWindows(true);
-        welcomeOverlay.setBackground(launchBackground());
+        welcomeOverlay.addView(new LaunchBackdrop(this,
+                Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")),
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         welcomeOverlay.setVisibility(View.GONE);
 
         ScrollView scroller = new ScrollView(this);
         scroller.setFillViewport(true);
         welcomeContent = new LinearLayout(this);
         welcomeContent.setOrientation(LinearLayout.VERTICAL);
-        welcomeContent.setGravity(Gravity.CENTER_HORIZONTAL);
+        welcomeContent.setGravity(Gravity.CENTER);
         int pad = (int) (28 * density);
         int padV = (int) (56 * density);
         welcomeContent.setPadding(pad, padV, pad, padV);
         scroller.addView(welcomeContent, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         welcomeOverlay.addView(scroller, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -824,14 +827,15 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         }
         wLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         LinearLayout.LayoutParams wLogoLp = new LinearLayout.LayoutParams(
-                (int) (88 * density), (int) (88 * density));
-        wLogoLp.bottomMargin = (int) (20 * density);
+                (int) (96 * density), (int) (96 * density));
+        wLogoLp.bottomMargin = (int) (28 * density);
         welcomeContent.addView(wLogo, wLogoLp);
 
         TextView headline = new TextView(this);
         headline.setText("${escapeJava(welcome.headline)}");
         headline.setTextColor(Color.WHITE);
-        headline.setTextSize(26.0f);
+        headline.setTextSize(28.0f);
+        headline.setLetterSpacing(0.01f);
         headline.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
         headline.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams headlineLp = new LinearLayout.LayoutParams(
@@ -842,8 +846,8 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         TextView tagline = new TextView(this);
         tagline.setText("${escapeJava(welcome.tagline || '').toUpperCase()}");
         tagline.setTextColor(Color.parseColor("#F4B400"));
-        tagline.setTextSize(14.0f);
-        tagline.setLetterSpacing(0.14f);
+        tagline.setTextSize(13.0f);
+        tagline.setLetterSpacing(0.22f);
         tagline.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         tagline.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams taglineLp = new LinearLayout.LayoutParams(
@@ -853,7 +857,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 
         TextView body = new TextView(this);
         body.setText("${escapeJava(welcome.body || '')}");
-        body.setTextColor(0xB8FFFFFF);
+        body.setTextColor(0xFFC7D2E8);
         body.setTextSize(15.5f);
         body.setLineSpacing((int) (4 * density), 1.0f);
         body.setGravity(Gravity.CENTER);
@@ -863,17 +867,18 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         welcomeContent.addView(body, bodyLp);
 
         Button cta = new Button(this);
-        cta.setText("${escapeJava(welcome.cta)}");
+        cta.setText("${escapeJava(welcome.cta)} \\u2192");
         cta.setAllCaps(false);
-        cta.setTextColor(Color.parseColor("#0E1526"));
+        cta.setTextColor(Color.WHITE);
         cta.setTextSize(16.0f);
         cta.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
-        cta.setPadding((int) (36 * density), (int) (16 * density), (int) (36 * density), (int) (16 * density));
-        cta.setMinHeight((int) (52 * density));
+        cta.setPadding((int) (40 * density), (int) (18 * density), (int) (40 * density), (int) (18 * density));
+        cta.setMinHeight((int) (54 * density));
         GradientDrawable ctaBg = new GradientDrawable();
         ctaBg.setShape(GradientDrawable.RECTANGLE);
-        ctaBg.setCornerRadius(28f * density);
-        ctaBg.setColor(Color.parseColor("#14B8A6"));
+        ctaBg.setOrientation(GradientDrawable.Orientation.TL_BR);
+        ctaBg.setCornerRadius(30f * density);
+        ctaBg.setColors(new int[]{0xFF14B8A6, 0xFF2563EB});
         cta.setBackground(ctaBg);
         cta.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -892,7 +897,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
 ` : '';
 
       const welcomeMethodsJava = welcome ? `
-    /** Called once the splash overlay has fully retired. */
+    /** Called at splash retirement START so the welcome can rise beneath the fade. */
     private void onSplashDismissed() {
         if (welcomePending && welcomeOverlay != null) {
             showWelcome();
@@ -923,7 +928,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
             child.setAlpha(0f);
             child.setTranslationY(20f * density);
             child.animate().alpha(1f).translationY(0f)
-                    .setDuration(340L).setStartDelay(140L + i * 70L).start();
+                    .setDuration(380L).setStartDelay(260L + i * 90L).start();
         }
     }
 
@@ -955,6 +960,11 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Shader;
+import android.graphics.LinearGradient;
+import android.graphics.RadialGradient;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -977,6 +987,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;${
@@ -1397,10 +1409,48 @@ ${
         }
     }
 
-    /** Brand launch gradient shared by splash and welcome backgrounds. */
-    private GradientDrawable launchBackground() {
-        return new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[]{Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")});
+    /**
+     * Premium launch backdrop, shared by the splash and welcome overlays so
+     * the launch sequence never changes background: midnight-navy diagonal
+     * gradient with three restrained light accents (teal behind the logo,
+     * electric-blue depth lower-right, gold warmth lower-left). One cheap
+     * onDraw pass; no layers, no bitmaps, no network.
+     */
+    private static class LaunchBackdrop extends View {
+        private final Paint basePaint = new Paint();
+        private final Paint glowPaint = new Paint();
+        private final int baseTop;
+        private final int baseBottom;
+
+        LaunchBackdrop(Context context, int topColor, int bottomColor) {
+            super(context);
+            baseTop = topColor;
+            baseBottom = bottomColor;
+        }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            basePaint.setShader(new LinearGradient(0f, 0f, w * 0.35f, (float) h,
+                    baseTop, baseBottom, Shader.TileMode.CLAMP));
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            int w = getWidth();
+            int h = getHeight();
+            float span = Math.max(w, h);
+            canvas.drawRect(0f, 0f, (float) w, (float) h, basePaint);
+            glowPaint.setShader(new RadialGradient(w * 0.50f, h * 0.42f, span * 0.55f,
+                    0x3314B8A6, 0x0014B8A6, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.50f, h * 0.42f, span * 0.55f, glowPaint);
+            glowPaint.setShader(new RadialGradient(w * 0.92f, h * 0.88f, span * 0.45f,
+                    0x2E2563EB, 0x002563EB, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.92f, h * 0.88f, span * 0.45f, glowPaint);
+            glowPaint.setShader(new RadialGradient(w * 0.08f, h * 1.04f, span * 0.32f,
+                    0x29F4B400, 0x00F4B400, Shader.TileMode.CLAMP));
+            canvas.drawCircle(w * 0.08f, h * 1.04f, span * 0.32f, glowPaint);
+        }
     }
 
     private void buildLaunchOverlays() {
@@ -1415,11 +1465,14 @@ ${
         // before this method runs).
         splashOverlay = new FrameLayout(this);
         splashOverlay.setFitsSystemWindows(true);
-        splashOverlay.setBackground(launchBackground());
+        splashOverlay.addView(new LaunchBackdrop(this,
+                Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")),
+                new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         float density = getResources().getDisplayMetrics().density;
-        int logoSize = Math.min(
-                (int) (getResources().getDisplayMetrics().widthPixels * 0.38f),
-                (int) (176 * density));
+        int logoSize = Math.max((int) (128 * density), Math.min(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.46f),
+                (int) (220 * density)));
         int iconRes = getResources().getIdentifier("ic_launcher_foreground", "mipmap", getPackageName());
         if (iconRes == 0) {
             iconRes = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
@@ -1431,9 +1484,20 @@ ${
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         logo.setContentDescription("${escapeJava(appName)}");
         splashOverlay.addView(logo, new FrameLayout.LayoutParams(logoSize, logoSize, Gravity.CENTER));
+        if (!isReducedMotion()) {
+            // Restrained logo entrance: fade + settle. Runs after the load
+            // dispatch, never blocking startup.
+            logo.setAlpha(0f);
+            logo.setScaleX(0.92f);
+            logo.setScaleY(0.92f);
+            logo.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(320L).start();
+        }
+${welcome ? welcomeViewsJava : ''}        // The splash must be the TOPMOST overlay: when the welcome is
+        // shown it rises beneath the fading splash, so the raw WebView page
+        // is never visible mid-launch and there is no blank beat.
         rootLayout.addView(splashOverlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-${welcome ? welcomeViewsJava : ''}    }
+    }
 
     /**
      * Retires the splash overlay at the first real content paint (or on
@@ -1448,14 +1512,25 @@ ${welcome ? welcomeViewsJava : ''}    }
         if (splashTimeout != null) {
             mainHandler.removeCallbacks(splashTimeout);
         }
+        // Reveal the welcome (first launch only) BEFORE retiring the splash:
+        // the welcome (and its staggered entrance) rises beneath the fading
+        // splash overlay, so the launch sequence crossfades navy-into-navy
+        // and the raw WebView page is never visible mid-launch. Returning
+        // launches, deep links and failed loads fall through to the page.
+        onSplashDismissed();
         if (isReducedMotion()) {
             splashOverlay.setVisibility(View.GONE);
-            onSplashDismissed();
             return;
         }
+        AnimationSet retire = new AnimationSet(true);
         AlphaAnimation fade = new AlphaAnimation(1.0f, 0.0f);
-        fade.setDuration(220L);
-        fade.setAnimationListener(new Animation.AnimationListener() {
+        retire.addAnimation(fade);
+        ScaleAnimation lift = new ScaleAnimation(1.0f, 1.04f, 1.0f, 1.04f,
+                ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
+                ScaleAnimation.RELATIVE_TO_SELF, 0.5f);
+        retire.addAnimation(lift);
+        retire.setDuration(280L);
+        retire.setAnimationListener(new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
             }
@@ -1463,14 +1538,13 @@ ${welcome ? welcomeViewsJava : ''}    }
             @Override
             public void onAnimationEnd(Animation animation) {
                 splashOverlay.setVisibility(View.GONE);
-                onSplashDismissed();
             }
 
             @Override
             public void onAnimationRepeat(Animation animation) {
             }
         });
-        splashOverlay.startAnimation(fade);
+        splashOverlay.startAnimation(retire);
     }
 
 ${welcome ? welcomeMethodsJava : '    private void onSplashDismissed() {\n    }\n'}
