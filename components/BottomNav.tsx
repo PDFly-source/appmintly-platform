@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles, Compass, Grid, Bookmark } from 'lucide-react';
+import { Sparkles, Compass, Grid, Bookmark, FlaskConical } from 'lucide-react';
 
 export const BottomNav: React.FC = () => {
   const pathname = usePathname();
@@ -17,6 +17,7 @@ export const BottomNav: React.FC = () => {
     { label: 'Home', href: '/', icon: Sparkles },
     { label: 'Explore', href: '/explore', icon: Compass },
     { label: 'Categories', href: '/categories', icon: Grid },
+    { label: 'Lab', href: '/lab', icon: FlaskConical },
     { label: 'Library', href: '/library', icon: Bookmark },
   ];
 

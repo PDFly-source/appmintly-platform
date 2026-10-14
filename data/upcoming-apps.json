@@ -1,0 +1,99 @@
+[
+  {
+    "id": "publisher-console",
+    "slug": "publisher-console",
+    "name": "AppMintly Publisher Console",
+    "developer": "AppMintly Team",
+    "category": "Developer Tools",
+    "type": "Web App",
+    "purpose": "A self-service publishing workspace where developers prepare app records, submit releases for validation, and track their catalog entries end to end.",
+    "intendedUsers": [
+      "Independent developers publishing apps to AppMintly",
+      "Small teams managing multi-app catalogs",
+      "AppMintly staff reviewing submissions"
+    ],
+    "proposedFeatures": [
+      "App record editor with live catalog preview",
+      "Release submission with automatic SHA-256 integrity evidence",
+      "Submission status tracking from draft to published"
+    ],
+    "plannedCapabilities": [
+      "Edit draft app metadata (name, description, category, icons)",
+      "Attach a validated APK release to a draft record",
+      "See the exact public catalog card a record will produce"
+    ],
+    "roadmapStatus": "in-development",
+    "roadmapStatusLabel": "In development",
+    "milestones": [
+      { "title": "Repository and build pipeline created", "status": "done" },
+      { "title": "Record editor and release validation flow", "status": "in-progress" },
+      { "title": "Public launch on AppMintly", "status": "planned" }
+    ],
+    "sourceRepo": "https://github.com/PDFly-source/appmintly-publisher",
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+  },
+  {
+    "id": "register",
+    "slug": "register",
+    "name": "AppMintly Register",
+    "developer": "AppMintly Team",
+    "category": "Developer Tools",
+    "type": "Web App",
+    "purpose": "Identity and onboarding for the AppMintly ecosystem, so publishers can claim and verify their developer identity before publishing.",
+    "intendedUsers": [
+      "New publishers joining AppMintly",
+      "Existing publishers verifying their identity"
+    ],
+    "proposedFeatures": [
+      "Developer identity registration and profile claim",
+      "Verified publisher badge for catalog records",
+      "Link between publisher identity and published apps"
+    ],
+    "plannedCapabilities": [
+      "Create a publisher identity",
+      "Associate published catalog apps with the identity",
+      "Show verified publisher status on the storefront"
+    ],
+    "roadmapStatus": "planned",
+    "roadmapStatusLabel": "Planned",
+    "milestones": [
+      { "title": "Repository created", "status": "done" },
+      { "title": "Identity and claim flow", "status": "planned" },
+      { "title": "Storefront integration", "status": "planned" }
+    ],
+    "sourceRepo": "https://github.com/PDFly-source/register",
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+  },
+  {
+    "id": "pdfly",
+    "slug": "pdfly",
+    "name": "PDFly",
+    "developer": "PDFly Labs",
+    "category": "Productivity",
+    "type": "Web App",
+    "purpose": "A fast, private PDF toolkit: merge, split, compress and convert documents entirely in the browser.",
+    "intendedUsers": [
+      "Students and office workers handling daily document tasks",
+      "Anyone who wants PDF tools without uploading files to a server"
+    ],
+    "proposedFeatures": [
+      "Merge, split and rotate PDF files locally",
+      "Compression with quality control",
+      "No-file-upload privacy: processing stays in the browser"
+    ],
+    "plannedCapabilities": [
+      "Offline-capable in-browser PDF processing",
+      "Installable as a PWA",
+      "Optional Android release on AppMintly"
+    ],
+    "roadmapStatus": "planned",
+    "roadmapStatusLabel": "Planned",
+    "milestones": [
+      { "title": "Repository created", "status": "done" },
+      { "title": "Core PDF tools in the browser", "status": "in-progress" },
+      { "title": "AppMintly catalog launch", "status": "planned" }
+    ],
+    "sourceRepo": "https://github.com/PDFly-source/pdfly-app",
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+  }
+]
