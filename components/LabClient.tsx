@@ -81,7 +81,7 @@ export default function LabClient() {
               type="button"
               onClick={() => setFilter(f.id)}
               aria-pressed={filter === f.id}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+              className={`min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                 filter === f.id
                   ? 'bg-inkbg text-white'
                   : 'bg-card border border-line text-ink hover:border-ink/30'

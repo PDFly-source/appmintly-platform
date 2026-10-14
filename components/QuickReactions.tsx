@@ -68,7 +68,7 @@ export function QuickReactions({ appId, appName }: QuickReactionsProps) {
               type="button"
               onClick={() => handleToggle(reaction)}
               aria-pressed={isSelected}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
                 isSelected
                   ? 'border-inkbg bg-inkbg text-white'
                   : 'border-line bg-page text-ink hover:border-ink/30'

@@ -52,6 +52,13 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
         </span>
       </div>
 
+      {/* Phase 1C content review: make the roadmap boundary explicit —
+          nothing on this card is available or installable today. */}
+      <p className="mt-3 rounded-lg bg-forge-yellow/10 border border-forge-yellow/30 px-3 py-2 text-[11px] font-semibold text-forge-yellow leading-snug">
+        Roadmap preview — not released yet. Nothing here is installable or
+        available on AppMintly today.
+      </p>
+
       <p className="mt-3 text-xs text-ink/90 leading-relaxed">{app.purpose}</p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -117,9 +124,12 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
             void now;
           }}
           aria-pressed={voted}
-          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+            // Phase 1C contrast audit: white on teal CTA is 2.49:1 in
+            // dark/AMOLED (fails AA). Dark page-text on teal passes
+            // AAA (dark) / AA (light) in both modes.
             voted
-              ? 'bg-cta text-white'
+              ? 'bg-cta text-page'
               : 'bg-page border border-line text-ink hover:border-ink/30'
           }`}
         >
@@ -130,7 +140,7 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
           href={app.sourceRepo}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-cta hover:underline"
+          className="inline-flex items-center gap-1 min-h-[44px] py-2 text-[11px] font-semibold text-cta hover:underline"
         >
           Source repository
           <ExternalLink className="w-3 h-3" aria-hidden />
