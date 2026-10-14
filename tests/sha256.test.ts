@@ -94,16 +94,19 @@ describe('sha256 chunking equivalence (vs crypto.subtle)', () => {
   it('file/blob path (slice fallback) matches the reference digest', async () => {
     const data = pseudoRandomBytes(300_003);
     const expected = await referenceSha256(data);
-    // Blob without .stream() forces the chunked slice fallback path.
-    const blob = new Blob([data as unknown as Uint8Array]);
+    const blob = new Blob([data.slice().buffer as ArrayBuffer]);
     expect(typeof blob.stream).toBe('function'); // real Blob has stream()
     // Fake blob WITHOUT .stream() forces the chunked slice fallback path.
-    const noStreamBlob = {
+    interface NoStreamBlob {
+      size: number;
+      slice: (start: number, end: number) => Blob;
+      arrayBuffer: () => Promise<ArrayBuffer>;
+    }
+    const noStreamBlob: NoStreamBlob = {
       size: blob.size,
-      slice: blob.slice.bind(blob),
+      slice: (start, end) => blob.slice(start, end),
       arrayBuffer: () => blob.arrayBuffer(),
-    } as Blob & { stream?: undefined };
-    expect(noStreamBlob.stream).toBeUndefined();
+    };
     expect(await sha256OfFile(noStreamBlob)).toBe(expected);
   });
 });

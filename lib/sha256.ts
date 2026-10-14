@@ -215,16 +215,32 @@ export async function sha256OfReadableStream(
  * browsers, incl. the AppMintly WebView) and falls back to slicing +
  * `arrayBuffer()` chunks for exotic environments.
  */
-export async function sha256OfFile(file: Blob & { stream?: () => ReadableStream<Uint8Array> }): Promise<string> {
+/** Structural Blob stand-in: real Blob satisfies this; tests can fake it. */
+export interface BlobLike {
+  size: number;
+  slice(start?: number, end?: number): { arrayBuffer(): Promise<ArrayBuffer> };
+  stream?(): ReadableStream<Uint8Array>;
+}
+
+export async function sha256OfFile(
+  file: BlobLike,
+  onProgress?: (bytesDone: number, totalBytes: number | null) => void,
+  signal?: AbortSignal
+): Promise<string> {
   if (typeof file.stream === 'function') {
-    return sha256OfReadableStream(file.stream());
+    return sha256OfReadableStream(file.stream(), (done) => onProgress?.(done, file.size), signal);
   }
   // Slicing fallback — still chunked, still bounded memory.
   const CHUNK = 4 * 1024 * 1024;
   const hash = new Sha256Stream();
+  let done = 0;
   for (let off = 0; off < file.size; off += CHUNK) {
-    const slice = file.slice(off, Math.min(off + CHUNK, file.size));
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const end = Math.min(off + CHUNK, file.size);
+    const slice = file.slice(off, end);
     hash.update(new Uint8Array(await slice.arrayBuffer()));
+    done = end;
+    onProgress?.(done, file.size);
   }
   return hash.digest();
 }
