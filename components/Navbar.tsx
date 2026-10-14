@@ -328,7 +328,10 @@ export const Navbar: React.FC = () => {
           {/* Mobile search / quick-action toggle: opens the command palette */}
           <button
             onClick={() => window.dispatchEvent(new Event('appmintly:open-command-palette'))}
-            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-page transition"
+            // Phase 1C small-screen audit: hidden below sm — the drawer's
+            // Discover section opens with the SAME search field, so nothing
+            // is lost; at <sm the bar needs the space (no overflow at 320px).
+            className="hidden sm:inline-flex md:hidden items-center justify-center w-11 h-11 rounded-full text-ink hover:bg-page transition"
             aria-label="Search apps and quick actions"
           >
             <Search className="w-5 h-5" />
@@ -349,7 +352,10 @@ export const Navbar: React.FC = () => {
           {/* Library Link (Favorites & History) */}
           <Link
             href="/library"
-            className="flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-semibold transition border border-line"
+            // Phase 1C small-screen audit: hidden below sm — Library stays
+            // reachable on phones via the BottomNav tab AND the drawer
+            // ("Saved Apps"), freeing bar space at 320px.
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-semibold transition border border-line"
             title="Local Library & Saved Apps"
           >
             <Bookmark className="w-4 h-4 text-forge-red" />
