@@ -846,12 +846,16 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // welcomeMethodsJava becomes private methods of MainActivity.
       const welcomeViewsJava = welcome ? `
         // --- one-time welcome screen (first launch to Home only) ---
-        welcomeOverlay = new LinearLayout(this);
-        welcomeOverlay.setOrientation(LinearLayout.VERTICAL);
+        // Root MUST be a FrameLayout, not a vertical LinearLayout: a
+        // full-size backdrop child in a vertical LinearLayout consumes the
+        // entire measured height and pushes the content ScrollView below
+        // the visible screen (welcome appears as empty navy, CTA
+        // untappable). FrameLayout stacks backdrop + content instead.
+        welcomeOverlay = new FrameLayout(this);
         welcomeOverlay.setFitsSystemWindows(true);
         welcomeOverlay.addView(new LaunchBackdrop(this,
                 Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")),
-                new LinearLayout.LayoutParams(
+                new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         welcomeOverlay.setVisibility(View.GONE);
 
@@ -865,7 +869,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         welcomeContent.setPadding(pad, padV, pad, padV);
         scroller.addView(welcomeContent, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        welcomeOverlay.addView(scroller, new LinearLayout.LayoutParams(
+        welcomeOverlay.addView(scroller, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         ImageView wLogo = new ImageView(this);
@@ -1073,7 +1077,7 @@ public class MainActivity extends Activity {
     // build time) appears only on the very first launch to Home.
     private FrameLayout rootLayout;
     private FrameLayout splashOverlay;
-${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+${welcome ? '    private FrameLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable splashTimeout;
     private boolean pageLoadFailed = false;
     private boolean splashDismissed = false;

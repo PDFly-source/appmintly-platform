@@ -139,6 +139,13 @@ ok(
     /welcomeOverlay\.setFitsSystemWindows\(true\);/.test(builderSrc),
 );
 ok(
+  'welcome root is a FrameLayout (backdrop stacks behind content, never pushes the ScrollView off-screen)',
+  /welcomeOverlay = new FrameLayout\(this\);/.test(builderSrc) &&
+    !/welcomeOverlay = new LinearLayout\(this\);/.test(builderSrc) &&
+    /welcomeOverlay\.addView\(scroller, new FrameLayout\.LayoutParams\(/.test(builderSrc) &&
+    /private FrameLayout welcomeOverlay;/.test(builderSrc),
+);
+ok(
   'welcome content scrolls on small screens (ScrollView, fillViewport)',
   /new ScrollView\(this\)/.test(builderSrc) && /setFillViewport\(true\);/.test(builderSrc),
 );
