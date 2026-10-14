@@ -316,18 +316,16 @@ describe('11: legacy AppMintly APK detection (v1.0.8 hardening)', () => {
     AppMintlyNative: { isNativeApp: () => true }, // v1.0.6 bridge: no share method
   };
 
-  it('isLegacyNativeApp detects a bridge that confirms isNativeApp but has no share', async () => {
+  it('a bridge without share is still ATTEMPTED (call-based), and the failed call marks it legacy', async () => {
     const share = await loadShare('export');
-    expect(share.isLegacyNativeApp(legacyGlobal)).toBe(true);
-    expect(share.isLegacyNativeApp({ AppMintlyNative: { isNativeApp: () => true, share: () => true } })).toBe(false);
-    expect(share.isLegacyNativeApp({})).toBe(false);
-    expect(share.isLegacyNativeApp(undefined)).toBe(false);
-    expect(share.isLegacyNativeApp({ AppMintlyNative: { isNativeApp: () => false } })).toBe(false);
-  });
-
-  it('getNativeBridgeShare refuses the legacy bridge (share missing)', async () => {
-    const share = await loadShare('export');
-    expect(share.getNativeBridgeShare(legacyGlobal)).toBeUndefined();
+    expect(share.getNativeBridgeShare(legacyGlobal)).toBeDefined();
+    const b: any = share.getNativeBridgeShare(legacyGlobal);
+    const outcome: any = await share.shareContent(payload, {
+      nativeShare: ({ title, text, url }) => b.share(url, title, text || ''),
+      clipboardWriteText: async () => {},
+    });
+    expect(outcome.status).toBe('copied');
+    expect(outcome.legacyNativeApp).toBe(true);
   });
 
   it('flags the copied outcome when the APK is legacy — never a plain success', async () => {
@@ -373,5 +371,52 @@ describe('11: legacy AppMintly APK detection (v1.0.8 hardening)', () => {
     const outcome = await share.shareContent(payload, { clipboardWriteText: async () => {} });
     expect(outcome.status).toBe('copied');
     expect((outcome as { legacyNativeApp?: boolean }).legacyNativeApp).toBeUndefined();
+  });
+});
+
+
+describe('12: call-based bridge detection (v1.0.9 P0)', () => {
+  const url = `${CANONICAL}app/nexdrop/`;
+  it('attempts the native call when share is HIDDEN from property reads but callable (WebView host object)', async () => {
+    const share = await loadShare('export');
+    let called = 0;
+    const host: any = { isNativeApp: () => true };
+    // Host-object behavior: property read is undefined, call still works
+    const bridge = new Proxy(host, { get: (t, p) => (p === 'share' ? undefined : t[p]) });
+    const g = { AppMintlyNative: bridge };
+    const b = share.getNativeBridgeShare(g);
+    expect(b).toBeDefined(); // detection no longer gated on a property read
+    const outcome = await share.shareContent(
+      { title: 'NexDrop', url },
+      { nativeShare: () => { called++; return true; } }
+    );
+    expect(called).toBe(1);
+    expect(outcome.status).toBe('shared');
+  });
+  it('a native call that throws "not a function" is reported as legacy, not as success', async () => {
+    const share = await loadShare('export');
+    const outcome: any = await share.shareContent(
+      { title: 'x', url },
+      { nativeShare: () => { throw new TypeError('b.share is not a function'); }, clipboardWriteText: async () => {} }
+    );
+    expect(outcome.status).toBe('copied');
+    expect(outcome.legacyNativeApp).toBe(true);
+  });
+  it('a native refusal (false) falls back to clipboard with an honest reason', async () => {
+    const share = await loadShare('export');
+    const outcome: any = await share.shareContent(
+      { title: 'x', url },
+      { nativeShare: () => false, clipboardWriteText: async () => {} }
+    );
+    expect(outcome.status).toBe('copied');
+    expect(outcome.nativeReason).toBe('refused');
+  });
+  it('a cancelled web share still never triggers the clipboard', async () => {
+    const share = await loadShare('export');
+    const cb = vi.fn(async () => {});
+    const err = Object.assign(new Error('x'), { name: 'AbortError' });
+    const outcome = await share.shareContent({ title: 'x', url }, { share: async () => { throw err; }, clipboardWriteText: cb });
+    expect(outcome.status).toBe('cancelled');
+    expect(cb).not.toHaveBeenCalled();
   });
 });

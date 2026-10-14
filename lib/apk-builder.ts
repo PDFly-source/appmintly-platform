@@ -1047,6 +1047,11 @@ ${
                         activity.startActivity(chooser);
                     } catch (Throwable e) {
                         Log.w("AppMintlyShare", "native share chooser failed", e);
+                        // Never fail silently: tell the user truthfully.
+                        try {
+                            Toast.makeText(activity, "Could not open the share sheet", Toast.LENGTH_SHORT).show();
+                        } catch (Throwable ignored) {
+                        }
                     }
                 }
             });

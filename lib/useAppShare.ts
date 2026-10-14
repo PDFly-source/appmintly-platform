@@ -31,10 +31,15 @@ function makeGuardedShare(getToast: () => ToastFn) {
         break;
       case 'copied':
         if (outcome.legacyNativeApp) {
-          // Legacy AppMintly APK (v1.0.6 or older): the user expects the
-          // native chooser; a plain "copied!" success would be dishonest.
           toast(
             'This AppMintly app version cannot open the native share sheet. Update the app to share directly. The link was copied for now.',
+            'error'
+          );
+        } else if (outcome.nativeReason) {
+          // The native bridge was tried and did not open a chooser: say so
+          // honestly, with a non-sensitive reason code for support.
+          toast(
+            'Could not open the share sheet (' + outcome.nativeReason + '). The link was copied instead.',
             'error'
           );
         } else {
