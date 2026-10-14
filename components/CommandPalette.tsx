@@ -354,7 +354,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
     >
       <Search className="w-3.5 h-3.5" aria-hidden />
       <span>Quick find</span>
-      <kbd className="px-1.5 py-0.5 rounded bg-page border border-line text-[10px] font-bold text-mut">Ctrl K</kbd>
+      <kbd className="hidden xl:inline px-1.5 py-0.5 rounded bg-page border border-line text-[10px] font-bold text-mut">Ctrl K</kbd>
     </button>
   );
 }

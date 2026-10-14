@@ -18,6 +18,7 @@ import { AppItem } from '@/data/apps';
 import { AppIcon } from './AppIcon';
 import { apiUrl } from '@/lib/api-path';
 import { useNotifications } from '@/components/NotificationsProvider';
+import { recordDownloadedVersion } from '@/lib/app-installs';
 
 interface ApkInstallSheetProps {
   app: AppItem;
@@ -91,6 +92,11 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
   // manager owns the transfer end-to-end; this UI never claims completion.
   const handleDownload = async () => {
     setErrorMessage(null);
+
+    // Phase 1A: this is the authoritative moment a release download starts —
+    // record the version in this browser's local version history. (Recorded
+    // as DOWNLOADED, never claimed as installed.)
+    if (versionName) recordDownloadedVersion(app.id, versionName);
 
     // Explicit opt-in recorded at the moment the download starts: the
     // version being downloaded is the version the user has installed.

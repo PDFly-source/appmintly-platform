@@ -30,6 +30,8 @@ import {
   trackAppOpened,
   trackAppDownloaded
 } from '@/lib/localLibrary';
+import { recordDownloadedVersion } from '@/lib/app-installs';
+import { UpdateAvailableBadge } from '@/components/UpdateAvailableBadge';
 
 interface AppCardProps {
   app: AppItem;
@@ -68,6 +70,8 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       const apkUrl = app.apk?.apkUrl || app.apkUrl;
       if (apkUrl || app.apk?.fileName) {
         trackAppDownloaded(app.id);
+        // Phase 1A: local version history (drives "Update Available" badge)
+        recordDownloadedVersion(app.id, app.apk?.versionName || app.version || '');
 
         // 1. Preferred mechanism: plain browser navigation to the verified
         //    public GitHub Release asset. GitHub serves the exact verified
@@ -453,7 +457,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       <div className="pt-3 border-t border-line/60 flex items-center justify-between gap-2">
         <div className="min-w-0 text-left">
           <span className="block text-[11px] font-semibold text-ink/80 truncate">
-            v{app.version}{sizeLabel ? ` • ${sizeLabel}` : ''}
+            v{app.version}{sizeLabel ? ` • ${sizeLabel}` : ''} <UpdateAvailableBadge app={app} />
           </span>
           <span className="block text-[10px] text-mut truncate">
             {app.category} • {stateLabel}

@@ -37,6 +37,7 @@ import {
   trackAppOpened,
   LocalHistoryItem,
 } from '@/lib/localLibrary';
+import { recordDownloadedVersion } from '@/lib/app-installs';
 
 type LibraryView = 'saved' | 'recent' | 'downloads';
 
@@ -511,7 +512,10 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
         {apkUrl ? (
           <a
             href={apkUrl}
-            onClick={() => trackAppDownloaded(app.id)}
+            onClick={() => {
+              trackAppDownloaded(app.id);
+              recordDownloadedVersion(app.id, app.apk?.versionName || app.version || '');
+            }}
             className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-forge-green/10 text-forge-green border border-forge-green/25 text-xs font-bold hover:bg-forge-green hover:text-white transition"
           >
             <Download aria-hidden="true" className="w-3.5 h-3.5" />
