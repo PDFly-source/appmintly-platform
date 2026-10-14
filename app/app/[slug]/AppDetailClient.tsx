@@ -54,6 +54,8 @@ import {
   trackAppOpened,
   trackAppDownloaded
 } from '@/lib/localLibrary';
+import { recordDownloadedVersion } from '@/lib/app-installs';
+import { UpdateNotice } from '@/components/UpdateNotice';
 
 export default function AppDetailPage() {
   const params = useParams();
@@ -189,6 +191,10 @@ export default function AppDetailPage() {
     // 1. Android APK available (Studyria, PDFMiniFly, or built apps)
     if (hasApk) {
       trackAppDownloaded(app.id);
+      // Phase 1A: remember the downloaded release version in THIS browser's
+      // local version history (drives the honest "Update Available" notice).
+      // Recorded as downloaded — never as installed.
+      recordDownloadedVersion(app.id, app.apk?.versionName || app.version || '');
       setShowApkInstallSheet(true);
       return;
     }
@@ -301,6 +307,9 @@ export default function AppDetailPage() {
       </div>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+        {/* Phase 1A: dismissible update notice (local version history only) */}
+        <UpdateNotice app={app} />
+
         {/* 1. TOP HERO SECTION (App Store Style) */}
         <section className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-8">
