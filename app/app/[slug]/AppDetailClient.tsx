@@ -32,6 +32,7 @@ import {
 import { APPS, AppItem } from '@/data/apps';
 import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
+import { useAppShare } from '@/lib/useAppShare';
 import { AppIcon } from '@/components/AppIcon';
 import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -58,6 +59,8 @@ export default function AppDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  // Centralized Share System hook — called unconditionally (rules-of-hooks).
+  const { share: shareApp } = useAppShare();
   const { getAppBySlug, catalog, publishedApps } = useCatalog();
 
   const slug = (params?.slug as string || '').toLowerCase().trim();
@@ -142,19 +145,12 @@ export default function AppDetailPage() {
     );
   };
 
+  // Centralized Share System (lib/useAppShare.ts + lib/share.ts):
+  // native Web Share API first, honest clipboard fallback, silent
+  // cancellation handling, and the app's canonical detail-page URL —
+  // identical for every catalog app, present and future.
   const handleShareClick = () => {
-    if (navigator.share) {
-      navigator
-        .share({
-          title: `${app.name} on AppMintly`,
-          text: app.shortDescription || app.description,
-          url: window.location.href,
-        })
-        .catch(() => {});
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast('App link copied to clipboard!', 'success');
-    }
+    void shareApp(app);
   };
 
   // Phase 10.9: Android APK distribution renders ONLY when the canonical
