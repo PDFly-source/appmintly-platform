@@ -1,4 +1,4 @@
-name: Launch QA - AppMintly 1.0.10 visual fix (temporary)
+name: Launch QA - AppMintly premium splash + welcome (temporary)
 
 on:
   workflow_dispatch:
@@ -24,6 +24,16 @@ jobs:
   launch-qa:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - name: normal-1080x2400
+            size: 1080x2400
+            density: 420
+          - name: small-720x1280
+            size: 720x1280
+            density: 320
     steps:
       - name: Enable KVM for Android emulator
         run: |
@@ -67,6 +77,27 @@ jobs:
             if [ -s /tmp/coords ]; then adb shell input tap $(cat /tmp/coords); log "tapped: $1"; return 0; else return 1; fi
           }
 
+          # in_screen <regex>: node exists AND its bounds are fully inside the visible display
+          in_screen(){
+            dump_retry
+            python3 - "$1" <<'PY'
+          import sys,re,subprocess,xml.etree.ElementTree as ET
+          pat=re.compile(sys.argv[1])
+          sz=subprocess.run(['adb','shell','wm','size'],capture_output=True,text=True).stdout
+          W,H=map(int,re.findall(r'(\d+)x(\d+)',sz.splitlines()[-1])[0])
+          try: t=ET.parse('ui.xml')
+          except Exception: sys.exit(2)
+          for n in t.iter('node'):
+              txt=(n.get('text') or '')+' '+(n.get('content-desc') or '')
+              if pat.search(txt):
+                  l,tp,r,b=map(int,re.findall(r'\d+',n.get('bounds')))
+                  ok = l>=0 and tp>=0 and r<=W and b<=H and r>l and b>tp
+                  print(('INSIDE' if ok else 'OUTSIDE'), sys.argv[1], (l,tp,r,b), 'screen', (W,H))
+                  sys.exit(0 if ok else 1)
+          print('MISSING', sys.argv[1]); sys.exit(3)
+          PY
+          }
+
           sha256sum testapk/${{ inputs.apk_name }} > apk_sha.txt
           grep -q ${{ inputs.apk_sha }} apk_sha.txt \
             && log "SHA256 MATCH: production-signed 1.0.10 test build" || log "SHA256 MISMATCH!"
@@ -84,6 +115,9 @@ jobs:
           done
           [ "$NETOK" = "1" ] || log "DEVICE NETWORK NEVER CAME UP"
 
+          adb shell wm size ${{ matrix.profile.size }}
+          adb shell wm density ${{ matrix.profile.density }}
+          adb shell wm size > wm_size.txt; cat wm_size.txt
           adb install -r -t testapk/${{ inputs.apk_name }} > install.txt 2>&1; cat install.txt
           adb shell dumpsys package com.appmintly.appmintly | grep -E 'versionName|versionCode' | head -4 > pkginfo.txt
           adb shell dumpsys package com.appmintly.appmintly | grep -E 'pkgFlags|privateFlags' | head -2 > pkgflags.txt || true
@@ -94,12 +128,15 @@ jobs:
           REC1=$!
           sleep 2
           adb shell am start -W -n com.appmintly.appmintly/.MainActivity > am_start1.txt 2>&1
-          sleep 20
+          # splash/transition frames (system splash -> branded splash -> welcome)
+          for i in 1 2 3 4 5 6; do adb exec-out screencap -p > shot_seq_$i.png; sleep 0.7; done
+          sleep 14
           dump_retry && cp ui.xml ui_first_launch.xml
           adb exec-out screencap -p > shot_first_launch.png
-          if ui_has 'Your Digital World'; then log "TEST1 PASS: welcome headline visible on first launch"; else log "TEST1 FAIL: welcome headline NOT found"; fi
-          if ui_has 'Explore AppMintly'; then log "TEST1 PASS: welcome CTA visible"; else log "TEST1 FAIL: welcome CTA NOT found"; fi
-          if ui_has 'DISCOVER. INSTALL. EXPERIENCE.'; then log "TEST1 PASS: gold tagline visible"; else log "TEST1 FAIL: tagline NOT found"; fi
+          for pat in 'DISCOVER. INSTALL. EXPERIENCE.' 'Your Digital World' 'Discover amazing apps' 'Apps &|Apps' 'Safe' 'Fast' 'Curated' 'Explore AppMintly' '100% Secure' 'Instant Access' 'All Devices' 'Built for You' 'Skip'; do
+            if in_screen "$pat" | tee -a bounds.txt | grep -q '^INSIDE'; then log "TEST1 PASS: '$pat' visible and inside screen"; else log "TEST1 FAIL: '$pat' missing/clipped/off-screen"; fi
+          done
+          if ui_has 'Your Digital World'; then :; fi
           adb logcat -d > logcat_first.txt 2>&1
           adb logcat -c
           kill $REC1 2>/dev/null; wait $REC1 2>/dev/null; sleep 8
@@ -131,6 +168,39 @@ jobs:
           kill $REC2 2>/dev/null; wait $REC2 2>/dev/null; sleep 8
           adb pull /sdcard/launch2.mp4 . 2>&1 | tail -1
 
+          # ---------------- TEST 4: Skip control dismisses welcome (fresh state) ----------------
+          log "TEST4: Skip control -> Home (fresh install state)"
+          adb shell pm clear com.appmintly.appmintly >/dev/null 2>&1
+          adb shell am start -W -n com.appmintly.appmintly/.MainActivity > am_start3.txt 2>&1
+          sleep 16
+          dump_retry
+          if ui_has 'Your Digital World'; then
+            adb exec-out screencap -p > shot_before_skip.png
+            if find_tap 'Skip welcome|Skip'; then log "TEST4: Skip tapped"; else log "TEST4 FAIL: Skip not found"; fi
+            sleep 5
+            dump_retry && cp ui.xml ui_after_skip.xml
+            adb exec-out screencap -p > shot_after_skip.png
+            if grep -q 'Your Digital World' ui_after_skip.xml 2>/dev/null; then log "TEST4 FAIL: welcome STILL visible after Skip"; else log "TEST4 PASS: welcome dismissed by Skip"; fi
+          else
+            log "TEST4 FAIL: welcome did not appear on fresh state"
+          fi
+
+          # ---------------- TEST 5: double-tap CTA does not break anything ----------------
+          log "TEST5: rapid double-tap on CTA (fresh state) -> single clean dismissal, app alive"
+          adb shell pm clear com.appmintly.appmintly >/dev/null 2>&1
+          adb shell am start -W -n com.appmintly.appmintly/.MainActivity > am_start4.txt 2>&1
+          sleep 16
+          if find_tap 'Explore AppMintly'; then
+            adb shell input tap $(cat /tmp/coords); adb shell input tap $(cat /tmp/coords)
+            sleep 4
+            adb shell pidof com.appmintly.appmintly > pid_after_double.txt
+            if [ -s pid_after_double.txt ]; then log "TEST5 PASS: app alive after double-tap"; else log "TEST5 FAIL: app died"; fi
+          else
+            log "TEST5 FAIL: CTA not found"
+          fi
+          adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime" > crashes.txt 2>&1 || true
+          if [ -s crashes.txt ]; then log "CRASH DETECTED"; cat crashes.txt | head -20; else log "NO CRASHES in logcat"; fi
+
           log "QA script complete"
           EOS
           chmod +x /home/runner/launch-qa.sh
@@ -155,6 +225,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: launch-qa-evidence
+          name: launch-qa-evidence-${{ matrix.profile.name }}
           path: qa-out
           if-no-files-found: warn
