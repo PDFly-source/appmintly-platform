@@ -1,0 +1,147 @@
+name: Launch QA - AppMintly 1.0.10 visual fix (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  launch-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Download production-signed test APK from build run
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38549292290
+          name: android-apk-38549292290-release
+          path: testapk
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write launch QA script
+        run: |
+          cat > /home/runner/launch-qa.sh <<'EOS'
+          #!/bin/bash
+          set -x
+          cd "$HOME/launchqa"
+          log(){ echo "### $*"; }
+
+          dump(){ adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1; }
+          dump_retry(){ for i in 1 2 3 4 5 6; do dump; [ -s ui.xml ] && grep -q '<hierarchy' ui.xml && return 0; sleep 2; done; return 1; }
+          ui_has(){ dump_retry; grep -q "$1" ui.xml 2>/dev/null; }
+
+          find_tap(){
+            dump_retry
+            python3 - "$1" <<'PY' > /tmp/coords
+          import sys,re,xml.etree.ElementTree as ET
+          pat=re.compile(sys.argv[1])
+          try: t=ET.parse('ui.xml')
+          except Exception: sys.exit(0)
+          for n in t.iter('node'):
+              txt=(n.get('text') or '')+' '+(n.get('content-desc') or '')
+              if pat.search(txt):
+                  m=list(map(int,re.findall(r'\d+',n.get('bounds'))))
+                  print((m[0]+m[2])//2,(m[1]+m[3])//2); break
+          PY
+            if [ -s /tmp/coords ]; then adb shell input tap $(cat /tmp/coords); log "tapped: $1"; return 0; else return 1; fi
+          }
+
+          sha256sum testapk/AppMintly-1.0.10.apk > apk_sha.txt
+          grep -q 271a6e74fa0a5d33c3e96b89b9ee25b8dca88c5f619c291a4a6e86e798f561a3 apk_sha.txt \
+            && log "SHA256 MATCH: production-signed 1.0.10 test build" || log "SHA256 MISMATCH!"
+
+          # ---------------- wait for working device network ----------------
+          NETOK=0
+          for i in $(seq 1 45); do
+            if adb shell ping -c1 -W2 8.8.8.8 >/dev/null 2>&1; then log "device network OK at attempt $i"; NETOK=1; break; fi
+            if [ $((i % 5)) -eq 0 ]; then
+              adb shell svc wifi disable >/dev/null 2>&1 || true; sleep 4
+              adb shell svc wifi enable >/dev/null 2>&1 || true
+              log "wifi toggled at attempt $i"
+            fi
+            sleep 8
+          done
+          [ "$NETOK" = "1" ] || log "DEVICE NETWORK NEVER CAME UP"
+
+          adb install -r -t testapk/AppMintly-1.0.10.apk > install.txt 2>&1; cat install.txt
+          adb shell dumpsys package com.appmintly.appmintly | grep -E 'versionName|versionCode' | head -4 > pkginfo.txt
+          adb shell dumpsys package com.appmintly.appmintly | grep -E 'pkgFlags|privateFlags' | head -2 > pkgflags.txt || true
+
+          # ---------------- TEST 1: FIRST cold launch -> welcome + recording ----------------
+          log "TEST1: first cold launch (expect splash -> welcome)"
+          adb shell screenrecord --time-limit 30 --bit-rate 6000000 /sdcard/launch1.mp4 &
+          REC1=$!
+          sleep 2
+          adb shell am start -W -n com.appmintly.appmintly/.MainActivity > am_start1.txt 2>&1
+          sleep 20
+          dump_retry && cp ui.xml ui_first_launch.xml
+          adb exec-out screencap -p > shot_first_launch.png
+          if ui_has 'Your Digital World'; then log "TEST1 PASS: welcome headline visible on first launch"; else log "TEST1 FAIL: welcome headline NOT found"; fi
+          if ui_has 'Explore AppMintly'; then log "TEST1 PASS: welcome CTA visible"; else log "TEST1 FAIL: welcome CTA NOT found"; fi
+          if ui_has 'DISCOVER. INSTALL. EXPERIENCE.'; then log "TEST1 PASS: gold tagline visible"; else log "TEST1 FAIL: tagline NOT found"; fi
+          adb logcat -d > logcat_first.txt 2>&1
+          adb logcat -c
+          kill $REC1 2>/dev/null; wait $REC1 2>/dev/null; sleep 8
+          adb pull /sdcard/launch1.mp4 . 2>&1 | tail -1
+
+          # ---------------- TEST 2: CTA -> Home ----------------
+          log "TEST2: tap CTA Explore AppMintly -> Home"
+          if find_tap 'Explore AppMintly'; then log "TEST2: CTA tapped"; else log "TEST2 FAIL: CTA not found for tap"; fi
+          sleep 6
+          dump_retry && cp ui.xml ui_after_cta.xml
+          adb exec-out screencap -p > shot_after_cta.png
+          adb logcat -d > logcat_cta.txt 2>&1
+          adb logcat -c
+          if grep -q 'Your Digital World' ui_after_cta.xml 2>/dev/null; then log "TEST2 FAIL: welcome STILL visible after CTA"; else log "TEST2 PASS: welcome dismissed after CTA"; fi
+
+          # ---------------- TEST 3: returning launch -> NO welcome ----------------
+          log "TEST3: returning launch (expect NO welcome, straight to Home)"
+          adb shell am force-stop com.appmintly.appmintly
+          sleep 3
+          adb shell screenrecord --time-limit 25 --bit-rate 6000000 /sdcard/launch2.mp4 &
+          REC2=$!
+          sleep 2
+          adb shell am start -W -n com.appmintly.appmintly/.MainActivity > am_start2.txt 2>&1
+          sleep 16
+          dump_retry && cp ui.xml ui_returning.xml
+          adb exec-out screencap -p > shot_returning.png
+          if grep -q 'Your Digital World' ui_returning.xml 2>/dev/null; then log "TEST3 FAIL: welcome shown AGAIN on returning launch"; else log "TEST3 PASS: welcome NOT shown on returning launch"; fi
+          adb logcat -d > logcat_returning.txt 2>&1
+          kill $REC2 2>/dev/null; wait $REC2 2>/dev/null; sleep 8
+          adb pull /sdcard/launch2.mp4 . 2>&1 | tail -1
+
+          log "QA script complete"
+          EOS
+          chmod +x /home/runner/launch-qa.sh
+          mkdir -p /home/runner/launchqa && cp -r testapk /home/runner/launchqa/ 2>/dev/null || true
+
+      - name: Run launch QA on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          script: bash /home/runner/launch-qa.sh
+
+      - name: Collect QA evidence
+        if: always()
+        run: |
+          mkdir -p qa-out
+          cp -r /home/runner/launchqa/* qa-out/ 2>/dev/null || true
+          ls -la qa-out/
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch-qa-evidence
+          path: qa-out
+          if-no-files-found: warn
