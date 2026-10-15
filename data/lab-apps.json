@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "generated_from": "data/upcoming-apps.json (public Lab records incl. Phase 3.1 verification evidence) + retired records recovered from repository history at commit 58fbf67 (publisher-console, pdfly)",
+  "apps": [
+    {
+      "id": "billcraft",
+      "name": "BillCraft",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BILL-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Product Planning & UI/UX Design",
+          "status": "done"
+        },
+        {
+          "title": "Functional Webapp Development",
+          "status": "done"
+        },
+        {
+          "title": "QA & Release Readiness",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 67
+    },
+    {
+      "id": "cartora",
+      "name": "Cartora",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-CART-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Premium UI/UX design and core shopping workflow prototype",
+          "status": "done"
+        },
+        {
+          "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
+          "status": "done"
+        },
+        {
+          "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 67
+    },
+    {
+      "id": "nutrilens",
+      "name": "NutriLens",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-NUTR-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Brand Identity & Scanner Prototype",
+          "status": "done"
+        },
+        {
+          "title": "Core Food Intelligence Engine",
+          "status": "planned"
+        },
+        {
+          "title": "Testing & Release Readiness",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "register",
+      "name": "AppMintly Register",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "register-coreflow-2026-10-15",
+          "category": "core-flow",
+          "result": "passed",
+          "build_id": "register@eb6bc17f92",
+          "summary": "The register repository's own integrity suite passed: 13/13 tests (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17.",
+          "source": "Repository test run (ava suite + reserved-order script) in the AppMintly engineering environment",
+          "date": "2026-10-15",
+          "limitations": "This verifies the current subdomain-registry repository workflow only — not the planned Register identity-claim webapp (still in the Planned roadmap stage). It is not proof of security or release readiness."
+        },
+        {
+          "id": "register-build-2026-10-15",
+          "category": "build",
+          "result": "unable-to-verify",
+          "build_id": "register@eb6bc17f92",
+          "summary": "No production build artifact exists to verify: the inspected repository contains registry data and tests, with no build pipeline output for a Register webapp (the webapp itself is still Planned).",
+          "source": "Repository inspection at commit eb6bc17 (2026-10-15)",
+          "date": "2026-10-15",
+          "limitations": "A checksum or passing test never proves security; this check simply found no build artifact yet."
+        },
+        {
+          "id": "V-REGI-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-REGI-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-REGI-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Repository created",
+          "status": "done"
+        },
+        {
+          "title": "Identity and claim flow",
+          "status": "planned"
+        },
+        {
+          "title": "Storefront integration",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "publisher-console",
+      "name": "AppMintly Publisher Console",
+      "status": "in-development",
+      "hidden": true,
+      "verification": [
+        {
+          "id": "V-PBCN-BUILD",
+          "category": "build",
+          "result": "pending",
+          "summary": "No verification check has been recorded for this entry."
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Repository and build pipeline created",
+          "status": "done"
+        },
+        {
+          "title": "Record editor and release validation flow",
+          "status": "in-progress"
+        },
+        {
+          "title": "Public launch on AppMintly",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "pdfly",
+      "name": "PDFly",
+      "status": "planned",
+      "hidden": true,
+      "verification": [
+        {
+          "id": "V-PDFL-BUILD",
+          "category": "build",
+          "result": "pending",
+          "summary": "No verification check has been recorded for this entry."
+        }
+      ],
+      "milestones": [
+        {
+          "title": "Repository created",
+          "status": "done"
+        },
+        {
+          "title": "Core PDF tools in the browser",
+          "status": "in-progress"
+        },
+        {
+          "title": "AppMintly catalog launch",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    }
+  ]
+}

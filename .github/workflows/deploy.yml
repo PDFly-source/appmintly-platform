@@ -60,7 +60,7 @@ jobs:
         run: rm -rf app/api && NEXT_OUTPUT=export NEXT_PUBLIC_BASE_PATH=/appmintly-platform npm run build
 
       - name: Ship Static Catalog Data
-        run: mkdir -p out/data && cp data/apps.json data/publishers.json data/categories.json data/collections.json out/data/
+        run: mkdir -p out/data && cp data/apps.json data/publishers.json data/categories.json data/collections.json data/engineering-status.json data/lab-apps.json data/engineering-events.json out/data/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -121,7 +121,7 @@ jobs:
         run: rm -rf app/api && NEXT_OUTPUT=export npm run build
 
       - name: Ship Static Catalog Data
-        run: mkdir -p out/data && cp data/apps.json data/publishers.json data/categories.json data/collections.json out/data/
+        run: mkdir -p out/data && cp data/apps.json data/publishers.json data/categories.json data/collections.json data/engineering-status.json data/lab-apps.json data/engineering-events.json out/data/
 
       # Direct Upload to the EXISTING project; --branch=main matches its
       # production branch, so this publishes to https://appmintly.pages.dev/.

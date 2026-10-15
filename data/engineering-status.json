@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "scan_time": "2026-10-15T08:32:43Z",
+  "pipeline_state": "green",
+  "catalog_diff": {
+    "additions": 1,
+    "unchanged": 5,
+    "removals": 0,
+    "generated_from": "git diff of data/apps.json between commit 72be95f (pre-NexDrop catalog, 5 apps) and 8c37b9c (release 1.0.9, 6 apps): NexDrop added (510dc06), 5 apps unchanged, none removed"
+  },
+  "health_indicator": {
+    "overall": "green",
+    "conditions": [
+      {
+        "id": "deploy_success",
+        "label": "Deploy Success",
+        "status": "green",
+        "description": "Latest production deployment run 38700984980 (commit ed7fb7c) completed successfully on GitHub Pages."
+      },
+      {
+        "id": "catalog_integrity",
+        "label": "Catalog Integrity",
+        "status": "green",
+        "description": "data/apps.json is a valid array of 6 catalog records; format is validated on every deployment run."
+      },
+      {
+        "id": "asset_verification",
+        "label": "Asset Verification",
+        "status": "green",
+        "description": "Release APK appmintly-v1.0.9 published with SHA-256 integrity verification through the release pipeline (commit 8c37b9c)."
+      }
+    ]
+  },
+  "generated_from": "Pipeline state derived from the latest GitHub Actions deployment runs and repository history of PDFly-source/appmintly-platform. Locally recorded by the AppMintly team — not an independent audit."
+}

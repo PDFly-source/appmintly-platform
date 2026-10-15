@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "events": [
+    {
+      "id": "EVT-20261015-01",
+      "timestamp": "2026-10-15T08:40:00Z",
+      "type": "verification",
+      "title": "Register repository evidence audit",
+      "description": "Register repo inspected at commit eb6bc17: 13/13 integrity tests + reserved-order check passed; recorded as Core Flow Tested (passed). Build Verified recorded as unable-to-verify (no production artifact exists).",
+      "commit": "efa8e3b",
+      "branch": "feature/phase-31-trust-hardening"
+    },
+    {
+      "id": "EVT-20261015-02",
+      "timestamp": "2026-10-15T07:40:00Z",
+      "type": "deploy",
+      "title": "Lab 3.0 deployed to production",
+      "description": "Merge ed7fb7c deployed via workflow run 38700984980 with success; production Lab QA 39/39, Lab 1E 50/50 and Phase 1C regression 30/30 passed on the live URL.",
+      "commit": "ed7fb7c"
+    },
+    {
+      "id": "EVT-20261014-01",
+      "timestamp": "2026-10-14T20:10:00Z",
+      "type": "deploy",
+      "title": "Phase 1E horizontal showcase deployed",
+      "description": "Five-card horizontal Lab showcase (BillCraft, Cartora, NutriLens, AppMintly Register, More Apps Coming Soon) deployed; Publisher Console and PDFly retired from the public Lab.",
+      "commit": "0c9d818"
+    },
+    {
+      "id": "EVT-20261014-02",
+      "timestamp": "2026-10-14T19:15:00Z",
+      "type": "deploy",
+      "title": "Phase 1D premium Lab UI deployed",
+      "description": "Premium hero, roadmap filter cards, product showcase cards and removal of public GitHub links deployed; production QA suites all green on the live URL.",
+      "commit": "58fbf67"
+    },
+    {
+      "id": "EVT-20261008-01",
+      "timestamp": "2026-10-08T17:06:58Z",
+      "type": "catalog",
+      "title": "NexDrop added to the AppMintly catalog",
+      "description": "NexDrop 1.4.4 added to data/apps.json (commit 510dc06); the catalog now holds 6 records.",
+      "commit": "510dc06"
+    }
+  ],
+  "generated_from": "git log + GitHub Actions deployment runs of PDFly-source/appmintly-platform (2026-10-08 to 2026-10-15)"
+}
