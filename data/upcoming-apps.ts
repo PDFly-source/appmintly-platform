@@ -21,9 +21,20 @@ import rawUpcoming from './upcoming-apps.json';
 
 export type RoadmapStatus = 'planned' | 'in-development' | 'early-testing';
 
+/** Explicit milestone states (Lab 3.0 roadmap engine). */
+export type MilestoneStatus = 'done' | 'in-progress' | 'planned' | 'blocked';
+
 export interface RoadmapMilestone {
+  /** Stable identifier (never changes once shipped). */
+  id: string;
   title: string;
-  status: 'done' | 'in-progress' | 'planned';
+  /** What this milestone covers — team-maintained draft roadmap text. */
+  description: string;
+  status: MilestoneStatus;
+  /** Completion evidence, only when it actually exists. */
+  evidence?: string;
+  /** Last-updated date (ISO), only when a real update date is known. */
+  lastUpdated?: string;
 }
 
 export interface UpcomingApp {
@@ -48,11 +59,55 @@ export interface UpcomingApp {
   sourceRepo?: string;
   /** Official brand asset under /brand/ (rendered by the showcase card). */
   logo?: string;
+  /** Real app screenshots, only when actual captures exist (never logos). */
+  screenshots?: AppScreenshot[];
+  /**
+   * Evidence-driven verification record. Checks are only marked passed
+   * when real evidence exists; otherwise the Lab shows "Verification
+   * pending" — never an invented result.
+   */
+  verification?: VerificationRecord;
   draftNote: string;
 }
 
+/** AppMintly verification categories (distinct checks, not decorations). */
+export const VERIFICATION_CATEGORIES = [
+  'identity',
+  'build',
+  'core-flow',
+  'device',
+  'release',
+] as const;
+export type VerificationCategory = (typeof VERIFICATION_CATEGORIES)[number];
+
+export type VerificationCheckResult = 'pending' | 'passed' | 'failed';
+
+export interface VerificationCheck {
+  category: VerificationCategory;
+  /** pending | passed | failed — never a fabricated pass. */
+  result: VerificationCheckResult;
+  /** What was actually checked + evidence summary, when one exists. */
+  summary?: string;
+  /** ISO date, only when the check actually ran. */
+  date?: string;
+  /** Known limitations discovered by the check. */
+  limitations?: string;
+}
+
+export interface VerificationRecord {
+  /** Honest label for the source and scope of these records. */
+  source: string;
+  checks: VerificationCheck[];
+}
+
+export interface AppScreenshot {
+  /** Path under /brand/ — must exist in the repo, never a placeholder. */
+  src: string;
+  alt: string;
+}
+
 const VALID_STATUSES: RoadmapStatus[] = ['planned', 'in-development', 'early-testing'];
-const VALID_MILESTONE_STATUSES: RoadmapMilestone['status'][] = ['done', 'in-progress', 'planned'];
+const VALID_MILESTONE_STATUSES: MilestoneStatus[] = ['done', 'in-progress', 'planned', 'blocked'];
 
 function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string');
@@ -65,12 +120,41 @@ function normalizeMilestones(v: unknown): RoadmapMilestone[] {
       (m): m is Record<string, unknown> =>
         typeof m === 'object' && m !== null && typeof m.title === 'string'
     )
-    .map((m) => ({
+    .map((m, i) => ({
+      id: typeof m.id === 'string' && m.id ? m.id : `milestone-${i + 1}`,
       title: m.title as string,
-      status: VALID_MILESTONE_STATUSES.includes(m.status as RoadmapMilestone['status'])
-        ? (m.status as RoadmapMilestone['status'])
+      description: typeof m.description === 'string' ? m.description : '',
+      status: VALID_MILESTONE_STATUSES.includes(m.status as MilestoneStatus)
+        ? (m.status as MilestoneStatus)
         : 'planned',
+      evidence: typeof m.evidence === 'string' ? m.evidence : undefined,
+      lastUpdated: typeof m.lastUpdated === 'string' ? m.lastUpdated : undefined,
     }));
+}
+
+/** Normalize a verification record — unknown shapes never become passes. */
+function normalizeVerification(v: unknown): VerificationRecord | undefined {
+  if (typeof v !== 'object' || v === null || !Array.isArray((v as Record<string, unknown>).checks)) return undefined;
+  const raw = v as Record<string, unknown>;
+  const checks: VerificationCheck[] = [];
+  for (const c of raw.checks as unknown[]) {
+    if (typeof c !== 'object' || c === null) continue;
+    const rec = c as Record<string, unknown>;
+    const category = rec.category as VerificationCategory;
+    if (!VERIFICATION_CATEGORIES.includes(category)) continue;
+    const result = rec.result as VerificationCheckResult;
+    checks.push({
+      category,
+      result: result === 'passed' || result === 'failed' ? result : 'pending',
+      summary: typeof rec.summary === 'string' ? rec.summary : undefined,
+      date: typeof rec.date === 'string' ? rec.date : undefined,
+      limitations: typeof rec.limitations === 'string' ? rec.limitations : undefined,
+    });
+  }
+  return {
+    source: typeof raw.source === 'string' ? raw.source : 'AppMintly team — locally recorded verification',
+    checks,
+  };
 }
 
 function normalizeUpcoming(raw: unknown): UpcomingApp | null {
@@ -105,6 +189,15 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
     // Optional official brand asset (public/brand/...) rendered by the
     // showcase card. Only records that actually supplied an asset set it.
     logo: typeof r.logo === 'string' && r.logo.startsWith('/brand/') ? r.logo : undefined,
+    screenshots: Array.isArray(r.screenshots)
+      ? (r.screenshots as unknown[])
+          .filter(
+            (sc): sc is Record<string, unknown> =>
+              typeof sc === 'object' && sc !== null && typeof (sc as Record<string, unknown>).src === 'string'
+          )
+          .map((sc) => ({ src: sc.src as string, alt: typeof sc.alt === 'string' ? sc.alt : '' }))
+      : undefined,
+    verification: normalizeVerification(r.verification),
     draftNote: typeof r.draftNote === 'string' ? r.draftNote : '',
   };
 }

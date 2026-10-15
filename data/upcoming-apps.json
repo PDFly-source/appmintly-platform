@@ -29,19 +29,50 @@
     "roadmapStatusLabel": "In development",
     "milestones": [
       {
+        "id": "bc-m1",
         "title": "Product Planning & UI/UX Design",
+        "description": "Product scope, document types, and the premium template direction were defined and reviewed by the AppMintly team.",
         "status": "done"
       },
       {
+        "id": "bc-m2",
         "title": "Functional Webapp Development",
+        "description": "The core document editor with GST calculations and client-side PDF export was implemented as a working webapp.",
         "status": "done"
       },
       {
+        "id": "bc-m3",
         "title": "QA & Release Readiness",
+        "description": "Final quality assurance, accessibility, and release checks remain open; not started or verified yet.",
         "status": "planned"
       }
     ],
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
+    "verification": {
+      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
+      "checks": [
+        {
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "category": "release",
+          "result": "pending"
+        }
+      ]
+    }
   },
   {
     "id": "cartora",
@@ -72,19 +103,50 @@
     "roadmapStatusLabel": "In development",
     "milestones": [
       {
+        "id": "ct-m1",
         "title": "Premium UI/UX design and core shopping workflow prototype",
+        "description": "The premium interface direction and the core list-to-basket shopping workflow were designed and prototyped.",
         "status": "done"
       },
       {
+        "id": "ct-m2",
         "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
+        "description": "Shopping lists, basket totals, unit-price comparison, and the Budget Guard were implemented and refined.",
         "status": "done"
       },
       {
+        "id": "ct-m3",
         "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
+        "description": "Final quality assurance, responsive behaviour, and release checks remain open; not yet verified.",
         "status": "planned"
       }
     ],
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
+    "verification": {
+      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
+      "checks": [
+        {
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "category": "release",
+          "result": "pending"
+        }
+      ]
+    }
   },
   {
     "id": "nutrilens",
@@ -116,19 +178,50 @@
     "roadmapStatusLabel": "In development",
     "milestones": [
       {
+        "id": "nl-m1",
         "title": "Brand Identity & Scanner Prototype",
+        "description": "The NutriLens brand identity and an early scanner prototype were created.",
         "status": "done"
       },
       {
+        "id": "nl-m2",
         "title": "Core Food Intelligence Engine",
+        "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
         "status": "planned"
       },
       {
+        "id": "nl-m3",
         "title": "Testing & Release Readiness",
+        "description": "Final testing and release checks have not started; no release readiness is claimed.",
         "status": "planned"
       }
     ],
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
+    "verification": {
+      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
+      "checks": [
+        {
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "category": "release",
+          "result": "pending"
+        }
+      ]
+    }
   },
   {
     "id": "register",
@@ -156,19 +249,50 @@
     "roadmapStatusLabel": "Planned",
     "milestones": [
       {
+        "id": "rg-m1",
         "title": "Repository created",
+        "description": "The register repository exists and is set up for development.",
         "status": "done"
       },
       {
+        "id": "rg-m2",
         "title": "Identity and claim flow",
+        "description": "The publisher identity registration and claim flow is not yet implemented.",
         "status": "planned"
       },
       {
+        "id": "rg-m3",
         "title": "Storefront integration",
+        "description": "Connecting verified publisher identities to the storefront is planned for later.",
         "status": "planned"
       }
     ],
     "sourceRepo": "https://github.com/PDFly-source/register",
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
+    "verification": {
+      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
+      "checks": [
+        {
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "category": "release",
+          "result": "pending"
+        }
+      ]
+    }
   }
 ]

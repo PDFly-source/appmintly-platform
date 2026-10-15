@@ -161,6 +161,49 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(register?.roadmapStatus).toBe('planned');
   });
 
+  // ===== Lab 3.0: roadmap engine + verification system =====
+  it('milestones carry stable ids and descriptions', () => {
+    for (const u of UPCOMING_APPS) {
+      expect(u.milestones.length).toBeGreaterThan(0);
+      const ids = new Set<string>();
+      for (const m of u.milestones) {
+        expect(m.id.length).toBeGreaterThan(0);
+        expect(ids.has(m.id)).toBe(false);
+        ids.add(m.id);
+        expect(m.description.length).toBeGreaterThan(0);
+        expect(['done', 'in-progress', 'planned', 'blocked']).toContain(m.status);
+        // No milestone is marked complete without recorded evidence text,
+        // and no date is invented.
+        if (m.status === 'done') expect(m.description.length).toBeGreaterThan(0);
+        expect(m.lastUpdated).toBeUndefined(); // no real update dates exist yet
+      }
+    }
+  });
+
+  it('verification records are honest: every check is explicitly pending', () => {
+    for (const u of UPCOMING_APPS) {
+      expect(u.verification).toBeDefined();
+      expect(u.verification!.checks.length).toBe(5);
+      for (const c of u.verification!.checks) {
+        expect(c.result).toBe('pending');
+        expect(c.date).toBeUndefined(); // no check has actually run
+      }
+      // Source and scope are labelled accurately.
+      expect(u.verification!.source).toContain('AppMintly team');
+      expect(u.verification!.source).toContain('not an independent audit');
+    }
+  });
+
+  it('no record ships screenshots it does not actually have', () => {
+    for (const u of UPCOMING_APPS) {
+      if (u.screenshots !== undefined) {
+        for (const sc of u.screenshots) expect(sc.src.startsWith('/brand/')).toBe(true);
+      }
+    }
+    // Current catalog has no real screenshots — the field stays absent.
+    expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
+  });
+
   it('filter counts derive from real records: all 4, in-development 3, planned 1, early testing 0', () => {
     expect(UPCOMING_APPS.length).toBe(4);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(3);
