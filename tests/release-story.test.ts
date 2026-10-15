@@ -99,8 +99,16 @@ describe('upcoming-apps data — normalization honesty', () => {
     }
   });
 
-  it('every record links to a real https source repository', () => {
-    for (const u of UPCOMING_APPS) expect(u.sourceRepo.startsWith('https://github.com/')).toBe(true);
+  it('records that carry a source repository link to a real https URL', () => {
+    // sourceRepo is OPTIONAL engineering metadata: entries without a
+    // repository yet simply omit it — the Lab never invents one.
+    for (const u of UPCOMING_APPS) {
+      if (u.sourceRepo !== undefined) {
+        expect(u.sourceRepo.startsWith('https://github.com/')).toBe(true);
+      }
+    }
+    // Register still documents its real repository.
+    expect(getUpcomingAppBySlug('register')?.sourceRepo).toBe('https://github.com/PDFly-source/register');
   });
 
   it('records carry the draft-note honesty label', () => {
@@ -108,7 +116,55 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('lookups by slug work', () => {
-    expect(getUpcomingAppBySlug('publisher-console')?.name).toBe('AppMintly Publisher Console');
+    expect(getUpcomingAppBySlug('register')?.name).toBe('AppMintly Register');
     expect(getUpcomingAppBySlug('does-not-exist')).toBeUndefined();
+  });
+
+  // Phase 1E — exact public showcase catalog.
+  it('public catalog is exactly the five showcase entries in order', () => {
+    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['billcraft', 'cartora', 'nutrilens', 'register']);
+  });
+
+  it('Publisher Console and PDFly are absent from the public Lab catalog', () => {
+    expect(getUpcomingAppBySlug('publisher-console')).toBeUndefined();
+    expect(getUpcomingAppBySlug('pdfly')).toBeUndefined();
+    expect(UPCOMING_APPS.some((u) => u.name.includes('Publisher Console'))).toBe(false);
+    expect(UPCOMING_APPS.some((u) => u.name === 'PDFly')).toBe(false);
+  });
+
+  it('new showcase entries carry their official logo assets', () => {
+    expect(getUpcomingAppBySlug('billcraft')?.logo).toBe('/brand/billcraft-logo.png');
+    expect(getUpcomingAppBySlug('cartora')?.logo).toBe('/brand/cartora-logo.png');
+    expect(getUpcomingAppBySlug('nutrilens')?.logo).toBe('/brand/nutrilens-logo.png');
+  });
+
+  it('roadmap statuses and milestone honesty are preserved', () => {
+    const billcraft = getUpcomingAppBySlug('billcraft');
+    expect(billcraft?.roadmapStatus).toBe('in-development');
+    // 2/3 — QA & Release Readiness must stay incomplete.
+    const bcDone = billcraft!.milestones.filter((m) => m.status === 'done').length;
+    expect(bcDone).toBe(2);
+    expect(billcraft!.milestones[2].status).toBe('planned');
+
+    const cartora = getUpcomingAppBySlug('cartora');
+    expect(cartora?.milestones.filter((m) => m.status === 'done').length).toBe(2);
+    expect(cartora!.milestones[2].status).toBe('planned');
+
+    const nutrilens = getUpcomingAppBySlug('nutrilens');
+    // 1/3 — only Brand Identity & Scanner Prototype is complete.
+    expect(nutrilens?.milestones.filter((m) => m.status === 'done').length).toBe(1);
+    expect(nutrilens!.milestones[0].status).toBe('done');
+    expect(nutrilens!.milestones[1].status).toBe('planned');
+
+    // Register keeps its existing accurate status.
+    const register = getUpcomingAppBySlug('register');
+    expect(register?.roadmapStatus).toBe('planned');
+  });
+
+  it('filter counts derive from real records: all 4, in-development 3, planned 1, early testing 0', () => {
+    expect(UPCOMING_APPS.length).toBe(4);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(3);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
   });
 });

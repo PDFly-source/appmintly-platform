@@ -1,35 +1,133 @@
 [
   {
-    "id": "publisher-console",
-    "slug": "publisher-console",
-    "name": "AppMintly Publisher Console",
-    "developer": "AppMintly Team",
-    "category": "Developer Tools",
+    "id": "billcraft",
+    "slug": "billcraft",
+    "name": "BillCraft",
+    "developer": "AppMintly Lab",
+    "category": "Business & Productivity",
     "type": "Web App",
-    "purpose": "A self-service publishing workspace where developers prepare app records, submit releases for validation, and track their catalog entries end to end.",
+    "logo": "/brand/billcraft-logo.png",
+    "purpose": "BillCraft is a premium, privacy-first business document studio for creating professional invoices, quotations, receipts, estimates, and proforma invoices. Designed for freelancers and small businesses, it brings smart calculations, GST support, customizable templates, and real PDF export into one seamless, browser-based experience.",
     "intendedUsers": [
-      "Independent developers publishing apps to AppMintly",
-      "Small teams managing multi-app catalogs",
-      "AppMintly staff reviewing submissions"
+      "Freelancers and small business owners",
+      "Shopkeepers",
+      "Consultants",
+      "Service providers",
+      "Independent professionals"
     ],
     "proposedFeatures": [
-      "App record editor with live catalog preview",
-      "Release submission with automatic SHA-256 integrity evidence",
-      "Submission status tracking from draft to published"
+      "Professional Documents — Create invoices, quotations, receipts, estimates, and proforma invoices with customizable premium templates.",
+      "Smart GST & PDF Export — Calculate GST, CGST, SGST, IGST, discounts, and totals instantly, with client-side PDF generation and export.",
+      "Privacy-First Processing — No account, backend, or cloud document storage; documents are processed locally in the browser."
     ],
     "plannedCapabilities": [
-      "Edit draft app metadata (name, description, category, icons)",
-      "Attach a validated APK release to a draft record",
-      "See the exact public catalog card a record will produce"
+      "Customizable premium document templates",
+      "Client-side GST and totals calculation",
+      "Local-only document generation with PDF export"
     ],
     "roadmapStatus": "in-development",
     "roadmapStatusLabel": "In development",
     "milestones": [
-      { "title": "Repository and build pipeline created", "status": "done" },
-      { "title": "Record editor and release validation flow", "status": "in-progress" },
-      { "title": "Public launch on AppMintly", "status": "planned" }
+      {
+        "title": "Product Planning & UI/UX Design",
+        "status": "done"
+      },
+      {
+        "title": "Functional Webapp Development",
+        "status": "done"
+      },
+      {
+        "title": "QA & Release Readiness",
+        "status": "planned"
+      }
     ],
-    "sourceRepo": "https://github.com/PDFly-source/appmintly-publisher",
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+  },
+  {
+    "id": "cartora",
+    "slug": "cartora",
+    "name": "Cartora",
+    "developer": "AppMintly Lab",
+    "category": "Productivity · Shopping & Budget Management",
+    "type": "Web App",
+    "logo": "/brand/cartora-logo.png",
+    "purpose": "Cartora is a smart grocery and household shopping assistant that helps you organize shopping lists, compare unit prices, calculate basket totals, and stay within budget. Designed with a premium interface and a privacy-first, no-account experience, Cartora makes everyday shopping simpler and smarter.",
+    "intendedUsers": [
+      "Everyday shoppers",
+      "Budget-conscious households",
+      "Families",
+      "Students and independent shoppers"
+    ],
+    "proposedFeatures": [
+      "Smart Shopping & Budget Guard — Organize grocery essentials, track basket totals, and identify when spending exceeds your planned budget.",
+      "Unit Price Comparison & Basket Optimizer — Compare pack values, calculate discounts, and find opportunities to reduce shopping costs.",
+      "Privacy-First Experience — No login, backend, or cloud database; calculations run locally in the browser."
+    ],
+    "plannedCapabilities": [
+      "Shopping lists with basket totals and budget guard",
+      "Unit price comparison and discount calculation",
+      "Local-only, no-account shopping workflow"
+    ],
+    "roadmapStatus": "in-development",
+    "roadmapStatusLabel": "In development",
+    "milestones": [
+      {
+        "title": "Premium UI/UX design and core shopping workflow prototype",
+        "status": "done"
+      },
+      {
+        "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
+        "status": "done"
+      },
+      {
+        "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
+        "status": "planned"
+      }
+    ],
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
+  },
+  {
+    "id": "nutrilens",
+    "slug": "nutrilens",
+    "name": "NutriLens",
+    "developer": "AppMintly Lab",
+    "category": "Health & Nutrition",
+    "type": "Web App",
+    "logo": "/brand/nutrilens-logo.png",
+    "purpose": "NutriLens is a privacy-first food intelligence webapp designed to help users understand packaged food products by scanning nutrition labels, ingredients, allergens, and barcodes. Make more informed food choices with intelligent label analysis, transparent nutrition insights, and a simple, mobile-first experience.",
+    "intendedUsers": [
+      "Health-conscious consumers",
+      "Everyday grocery shoppers",
+      "Fitness-conscious users",
+      "People checking food ingredients and allergens",
+      "People comparing packaged food labels"
+    ],
+    "proposedFeatures": [
+      "Smart Food Scanning — Analyze food-package photos and extract visible product and nutrition information.",
+      "Privacy-First Experience — No account, backend, database, or cloud storage required for the local-first core workflow.",
+      "Nutrition & Ingredient Intelligence — Review nutrition values, ingredients, allergens, and food-label insights with transparent data validation."
+    ],
+    "plannedCapabilities": [
+      "Food-package photo analysis for visible label information",
+      "Local-first workflow with no account or cloud storage",
+      "Transparent nutrition, ingredient, and allergen review"
+    ],
+    "roadmapStatus": "in-development",
+    "roadmapStatusLabel": "In development",
+    "milestones": [
+      {
+        "title": "Brand Identity & Scanner Prototype",
+        "status": "done"
+      },
+      {
+        "title": "Core Food Intelligence Engine",
+        "status": "planned"
+      },
+      {
+        "title": "Testing & Release Readiness",
+        "status": "planned"
+      }
+    ],
     "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
   },
   {
@@ -57,43 +155,20 @@
     "roadmapStatus": "planned",
     "roadmapStatusLabel": "Planned",
     "milestones": [
-      { "title": "Repository created", "status": "done" },
-      { "title": "Identity and claim flow", "status": "planned" },
-      { "title": "Storefront integration", "status": "planned" }
+      {
+        "title": "Repository created",
+        "status": "done"
+      },
+      {
+        "title": "Identity and claim flow",
+        "status": "planned"
+      },
+      {
+        "title": "Storefront integration",
+        "status": "planned"
+      }
     ],
     "sourceRepo": "https://github.com/PDFly-source/register",
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
-  },
-  {
-    "id": "pdfly",
-    "slug": "pdfly",
-    "name": "PDFly",
-    "developer": "PDFly Labs",
-    "category": "Productivity",
-    "type": "Web App",
-    "purpose": "A fast, private PDF toolkit: merge, split, compress and convert documents entirely in the browser.",
-    "intendedUsers": [
-      "Students and office workers handling daily document tasks",
-      "Anyone who wants PDF tools without uploading files to a server"
-    ],
-    "proposedFeatures": [
-      "Merge, split and rotate PDF files locally",
-      "Compression with quality control",
-      "No-file-upload privacy: processing stays in the browser"
-    ],
-    "plannedCapabilities": [
-      "Offline-capable in-browser PDF processing",
-      "Installable as a PWA",
-      "Optional Android release on AppMintly"
-    ],
-    "roadmapStatus": "planned",
-    "roadmapStatusLabel": "Planned",
-    "milestones": [
-      { "title": "Repository created", "status": "done" },
-      { "title": "Core PDF tools in the browser", "status": "in-progress" },
-      { "title": "AppMintly catalog launch", "status": "planned" }
-    ],
-    "sourceRepo": "https://github.com/PDFly-source/pdfly-app",
     "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch."
   }
 ]
