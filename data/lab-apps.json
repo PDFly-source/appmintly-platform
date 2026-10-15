@@ -36,15 +36,21 @@
       ],
       "milestones": [
         {
+          "id": "bc-m1",
           "title": "Product Planning & UI/UX Design",
+          "description": "Product scope, document types, and the premium template direction were defined and reviewed by the AppMintly team.",
           "status": "done"
         },
         {
+          "id": "bc-m2",
           "title": "Functional Webapp Development",
+          "description": "The core document editor with GST calculations and client-side PDF export was implemented as a working webapp.",
           "status": "done"
         },
         {
+          "id": "bc-m3",
           "title": "QA & Release Readiness",
+          "description": "Final quality assurance, accessibility, and release checks remain open; not started or verified yet.",
           "status": "planned"
         }
       ],
@@ -84,15 +90,21 @@
       ],
       "milestones": [
         {
+          "id": "ct-m1",
           "title": "Premium UI/UX design and core shopping workflow prototype",
+          "description": "The premium interface direction and the core list-to-basket shopping workflow were designed and prototyped.",
           "status": "done"
         },
         {
+          "id": "ct-m2",
           "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
+          "description": "Shopping lists, basket totals, unit-price comparison, and the Budget Guard were implemented and refined.",
           "status": "done"
         },
         {
+          "id": "ct-m3",
           "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
+          "description": "Final quality assurance, responsive behaviour, and release checks remain open; not yet verified.",
           "status": "planned"
         }
       ],
@@ -132,15 +144,21 @@
       ],
       "milestones": [
         {
+          "id": "nl-m1",
           "title": "Brand Identity & Scanner Prototype",
+          "description": "The NutriLens brand identity and an early scanner prototype were created.",
           "status": "done"
         },
         {
+          "id": "nl-m2",
           "title": "Core Food Intelligence Engine",
+          "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
           "status": "planned"
         },
         {
+          "id": "nl-m3",
           "title": "Testing & Release Readiness",
+          "description": "Final testing and release checks have not started; no release readiness is claimed.",
           "status": "planned"
         }
       ],
@@ -157,6 +175,7 @@
           "category": "core-flow",
           "result": "passed",
           "build_id": "register@eb6bc17f92",
+          "evidence_class": "automated-test-evidence",
           "summary": "The register repository's own integrity suite passed: 13/13 tests (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17.",
           "source": "Repository test run (ava suite + reserved-order script) in the AppMintly engineering environment",
           "date": "2026-10-15",
@@ -167,6 +186,7 @@
           "category": "build",
           "result": "unable-to-verify",
           "build_id": "register@eb6bc17f92",
+          "evidence_class": "repository-inspection",
           "summary": "No production build artifact exists to verify: the inspected repository contains registry data and tests, with no build pipeline output for a Register webapp (the webapp itself is still Planned).",
           "source": "Repository inspection at commit eb6bc17 (2026-10-15)",
           "date": "2026-10-15",
@@ -190,15 +210,23 @@
       ],
       "milestones": [
         {
+          "id": "rg-m1",
           "title": "Repository created",
-          "status": "done"
+          "description": "The register repository exists and is set up for development.",
+          "status": "done",
+          "evidence": "Repository exists and is maintained (commit eb6bc17, 2026-10-08); its 13-test integrity suite and reserved-order check passed on 2026-10-15.",
+          "evidence_class": "automated-test-evidence"
         },
         {
+          "id": "rg-m2",
           "title": "Identity and claim flow",
+          "description": "The publisher identity registration and claim flow is not yet implemented.",
           "status": "planned"
         },
         {
+          "id": "rg-m3",
           "title": "Storefront integration",
+          "description": "Connecting verified publisher identities to the storefront is planned for later.",
           "status": "planned"
         }
       ],
@@ -211,24 +239,49 @@
       "hidden": true,
       "verification": [
         {
-          "id": "V-PBCN-BUILD",
+          "id": "V-PUBL-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-PUBL-BUILD",
           "category": "build",
-          "result": "pending",
-          "summary": "No verification check has been recorded for this entry."
+          "result": "pending"
+        },
+        {
+          "id": "V-PUBL-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-PUBL-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-PUBL-RELEASE",
+          "category": "release",
+          "result": "pending"
         }
       ],
       "milestones": [
         {
+          "id": "pc-m1",
           "title": "Repository and build pipeline created",
-          "status": "done"
+          "status": "done",
+          "description": "The console repository and its build pipeline exist (team-reported)."
         },
         {
+          "id": "pc-m2",
           "title": "Record editor and release validation flow",
-          "status": "in-progress"
+          "status": "in-progress",
+          "description": "Record editing and release validation are in active development (team-reported)."
         },
         {
+          "id": "pc-m3",
           "title": "Public launch on AppMintly",
-          "status": "planned"
+          "status": "planned",
+          "description": "Public launch on the AppMintly storefront (not started)."
         }
       ],
       "progress_percent": 33
@@ -240,24 +293,49 @@
       "hidden": true,
       "verification": [
         {
+          "id": "V-PDFL-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
           "id": "V-PDFL-BUILD",
           "category": "build",
-          "result": "pending",
-          "summary": "No verification check has been recorded for this entry."
+          "result": "pending"
+        },
+        {
+          "id": "V-PDFL-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-PDFL-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-PDFL-RELEASE",
+          "category": "release",
+          "result": "pending"
         }
       ],
       "milestones": [
         {
+          "id": "pd-m1",
           "title": "Repository created",
-          "status": "done"
+          "status": "done",
+          "description": "The PDFly application repository exists (team-reported)."
         },
         {
+          "id": "pd-m2",
           "title": "Core PDF tools in the browser",
-          "status": "in-progress"
+          "status": "in-progress",
+          "description": "Browser-side PDF tools are in active development (team-reported)."
         },
         {
+          "id": "pd-m3",
           "title": "AppMintly catalog launch",
-          "status": "planned"
+          "status": "planned",
+          "description": "Catalog launch on AppMintly (not started)."
         }
       ],
       "progress_percent": 33

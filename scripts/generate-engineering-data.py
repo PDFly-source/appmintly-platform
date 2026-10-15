@@ -32,6 +32,12 @@ def vchecks(rec):
         # upcoming-apps uses camelCase 'buildId'; lab-apps uses snake_case.
         if c.get('buildId'):
             ck['build_id'] = c['buildId']
+        # Provenance class — separates automated test evidence from
+        # repository inspection. Pending checks carry no class.
+        if c.get('result') == 'passed':
+            ck['evidence_class'] = 'automated-test-evidence'
+        elif c.get('result') == 'unable-to-verify':
+            ck['evidence_class'] = 'repository-inspection'
         for f in ('summary', 'source', 'date', 'limitations'):
             if c.get(f):
                 ck[f] = c[f]
@@ -39,8 +45,32 @@ def vchecks(rec):
     return out
 
 
+def PENDING_ALL(app_id):
+    # All five verification categories, honestly pending — no check has
+    # been recorded for these retired-from-public entries.
+    return [
+        {'id': f'V-{app_id[:4].upper()}-{c.upper()}', 'category': c, 'result': 'pending'}
+        for c in ('identity', 'build', 'core-flow', 'device', 'release')
+    ]
+
+
 def milestone_brief(rec):
-    return [{'title': m['title'], 'status': m['status']} for m in rec['milestones']]
+    out = []
+    for m in rec['milestones']:
+        ms = {
+            'id': m['id'],
+            'title': m['title'],
+            'description': m.get('description', ''),
+            'status': m['status'],
+        }
+        if m.get('evidence'):
+            ms['evidence'] = m['evidence']
+            # rg-m1's evidence is backed by repository inspection + the
+            # automated test suite that ran against it. Every other
+            # completed milestone is team-reported progress only.
+            ms['evidence_class'] = 'automated-test-evidence' if m['id'] == 'rg-m1' else 'team-reported'
+        out.append(ms)
+    return out
 
 
 apps_out = []
@@ -64,14 +94,14 @@ apps_out.append({
     'name': 'AppMintly Publisher Console',
     'status': 'in-development',
     'hidden': True,
-    'verification': [
-        {'id': 'V-PBCN-BUILD', 'category': 'build', 'result': 'pending',
-         'summary': 'No verification check has been recorded for this entry.'},
-    ],
+    'verification': PENDING_ALL('publisher-console'),
     'milestones': [
-        {'title': 'Repository and build pipeline created', 'status': 'done'},
-        {'title': 'Record editor and release validation flow', 'status': 'in-progress'},
-        {'title': 'Public launch on AppMintly', 'status': 'planned'},
+        {'id': 'pc-m1', 'title': 'Repository and build pipeline created', 'status': 'done',
+         'description': 'The console repository and its build pipeline exist (team-reported).'},
+        {'id': 'pc-m2', 'title': 'Record editor and release validation flow', 'status': 'in-progress',
+         'description': 'Record editing and release validation are in active development (team-reported).'},
+        {'id': 'pc-m3', 'title': 'Public launch on AppMintly', 'status': 'planned',
+         'description': 'Public launch on the AppMintly storefront (not started).'},
     ],
     'progress_percent': 33,
 })
@@ -80,14 +110,14 @@ apps_out.append({
     'name': 'PDFly',
     'status': 'planned',
     'hidden': True,
-    'verification': [
-        {'id': 'V-PDFL-BUILD', 'category': 'build', 'result': 'pending',
-         'summary': 'No verification check has been recorded for this entry.'},
-    ],
+    'verification': PENDING_ALL('pdfly'),
     'milestones': [
-        {'title': 'Repository created', 'status': 'done'},
-        {'title': 'Core PDF tools in the browser', 'status': 'in-progress'},
-        {'title': 'AppMintly catalog launch', 'status': 'planned'},
+        {'id': 'pd-m1', 'title': 'Repository created', 'status': 'done',
+         'description': 'The PDFly application repository exists (team-reported).'},
+        {'id': 'pd-m2', 'title': 'Core PDF tools in the browser', 'status': 'in-progress',
+         'description': 'Browser-side PDF tools are in active development (team-reported).'},
+        {'id': 'pd-m3', 'title': 'AppMintly catalog launch', 'status': 'planned',
+         'description': 'Catalog launch on AppMintly (not started).'},
     ],
     'progress_percent': 33,
 })

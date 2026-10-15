@@ -155,3 +155,92 @@ describe('Phase 3.2 — engineering status data', () => {
     expect(engEvents.generated_from.length).toBeGreaterThan(20);
   });
 });
+
+// ===== Phase 3.2: build/release tracker, blockers, provenance classes =====
+describe('Phase 3.2 — build tracker, blockers, and evidence provenance', () => {
+  const builds = readJson('engineering-builds.json');
+
+  it('every build record is a verbatim workflow fact (commit, run id, outcome, timestamp)', () => {
+    expect(Array.isArray(builds.builds)).toBe(true);
+    expect(builds.builds.length).toBeGreaterThan(0);
+    for (const b of builds.builds) {
+      expect(b.commit).toMatch(/^[0-9a-f]{7,40}$/); // real sha, verbatim
+      expect(Number.isInteger(b.workflow_run_id)).toBe(true); // real run id
+      expect(b.workflow_run_id).toBeGreaterThan(0);
+      expect(['success', 'failure', 'cancelled']).toContain(b.outcome); // recorded outcome only
+      expect(b.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/); // real timestamp, never missing
+      expect(b.source.length).toBeGreaterThan(0);
+      expect(b.generated_from ?? builds.generated_from).toContain('GitHub Actions');
+    }
+  });
+
+  it('blockers are documented with reason, affected app, and resolution status', () => {
+    const status = readJson('engineering-status.json');
+    expect(Array.isArray(status.blockers)).toBe(true);
+    for (const b of status.blockers) {
+      expect(b.id.length).toBeGreaterThan(0);
+      expect(b.app.length).toBeGreaterThan(0);
+      expect(b.reason.length).toBeGreaterThan(10);
+      expect(['open', 'resolved']).toContain(b.status);
+      expect(b.recorded_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+    // Known, real blocker is recorded honestly
+    const apk = (status.blockers as Array<{ id: string; status: string }>).find((x) => x.id === 'blk-apk-server-fetch');
+    expect(apk).toBeDefined();
+    expect(apk!.status).toBe('open');
+  });
+
+  it('evidence provenance classes are explicit and never interchangeable', () => {
+    const la = readJson('lab-apps.json');
+    let sawAutomated = false;
+    let sawInspection = false;
+    for (const app of la.apps) {
+      for (const c of app.verification) {
+        if (c.result === 'passed') {
+          expect(c.evidence_class).toBe('automated-test-evidence');
+          sawAutomated = true;
+        }
+        if (c.result === 'unable-to-verify') {
+          expect(c.evidence_class).toBe('repository-inspection');
+          sawInspection = true;
+        }
+        // Pending checks never carry an evidence class.
+        if (c.result === 'pending') expect(c.evidence_class).toBeUndefined();
+      }
+      for (const m of app.milestones) {
+        // Milestone evidence is classed; statuses without evidence stay unclassed.
+        if (m.status === 'done' && !m.evidence) expect(m.evidence_class).toBeUndefined();
+        if (m.evidence_class === 'automated-test-evidence') expect(m.id).toBe('rg-m1'); // only the audited one
+      }
+    }
+    expect(sawAutomated).toBe(true);
+    expect(sawInspection).toBe(true);
+  });
+
+  it('milestones keep stable ids and progress is computed from records', () => {
+    const la = readJson('lab-apps.json');
+    for (const app of la.apps) {
+      expect(app.milestones.length).toBeGreaterThan(0);
+      const ids = new Set(app.milestones.map((m: { id: string }) => m.id));
+      expect(ids.size).toBe(app.milestones.length); // unique stable ids
+      const done = app.milestones.filter((m: { status: string }) => m.status === 'done').length;
+      const expected = Math.round((done / app.milestones.length) * 100);
+      expect(app.progress_percent).toBe(expected); // calculated, never hardcoded drift
+    }
+  });
+
+  it('lab-app milestones stay consistent with the public roadmap source of truth', () => {
+    const la = readJson('lab-apps.json');
+    const upcoming = readJson('upcoming-apps.json');
+    const publicIds = upcoming.map((u: { id: string }) => u.id);
+    const visible = la.apps.filter((a: { hidden: boolean }) => !a.hidden);
+    expect(visible.map((a: { id: string }) => a.id)).toEqual(publicIds); // exact public order preserved
+    for (const app of visible) {
+      const src = upcoming.find((u: { id: string }) => u.id === app.id);
+      expect(src).toBeDefined();
+      expect(app.status).toBe(src.roadmapStatus);
+      expect(app.milestones.length).toBe(src.milestones.length);
+      expect(app.milestones.every((m: { status: string }, i: number) => m.status === src.milestones[i].status)).toBe(true);
+    }
+  });
+});
