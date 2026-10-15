@@ -8,6 +8,12 @@
     "type": "Web App",
     "logo": "/brand/billcraft-logo.png",
     "purpose": "BillCraft is a premium, privacy-first business document studio for creating professional invoices, quotations, receipts, estimates, and proforma invoices. Designed for freelancers and small businesses, it brings smart calculations, GST support, customizable templates, and real PDF export into one seamless, browser-based experience.",
+    "problem": "Freelancers and small businesses need professional invoices, quotations, and GST-ready documents without expensive tools or handing their business data to a cloud.",
+    "benefits": [
+      "Business documents that look premium and stay consistent",
+      "GST, discounts, and totals calculated instantly — no manual math",
+      "Documents stay on your device: no account, no cloud storage"
+    ],
     "intendedUsers": [
       "Freelancers and small business owners",
       "Shopkeepers",
@@ -83,6 +89,12 @@
     "type": "Web App",
     "logo": "/brand/cartora-logo.png",
     "purpose": "Cartora is a smart grocery and household shopping assistant that helps you organize shopping lists, compare unit prices, calculate basket totals, and stay within budget. Designed with a premium interface and a privacy-first, no-account experience, Cartora makes everyday shopping simpler and smarter.",
+    "problem": "Everyday grocery shopping is hard to track — lists scatter, unit prices hide the real deal, and budgets quietly break.",
+    "benefits": [
+      "Clear basket totals and a budget guard before you reach the counter",
+      "Unit-price comparison that shows which pack actually costs less",
+      "No login and no cloud — your shopping data stays on your device"
+    ],
     "intendedUsers": [
       "Everyday shoppers",
       "Budget-conscious households",
@@ -157,6 +169,12 @@
     "type": "Web App",
     "logo": "/brand/nutrilens-logo.png",
     "purpose": "NutriLens is a privacy-first food intelligence webapp designed to help users understand packaged food products by scanning nutrition labels, ingredients, allergens, and barcodes. Make more informed food choices with intelligent label analysis, transparent nutrition insights, and a simple, mobile-first experience.",
+    "problem": "Packaged-food labels are dense and confusing — nutrition values, ingredients, and allergens are hard to read and compare at the shelf.",
+    "benefits": [
+      "Understand a product’s nutrition and ingredients at a glance",
+      "Allergen and ingredient review before a product reaches your basket",
+      "Local-first scanning — no account, no cloud storage"
+    ],
     "intendedUsers": [
       "Health-conscious consumers",
       "Everyday grocery shoppers",
@@ -231,6 +249,12 @@
     "category": "Developer Tools",
     "type": "Web App",
     "purpose": "Identity and onboarding for the AppMintly ecosystem, so publishers can claim and verify their developer identity before publishing.",
+    "problem": "AppMintly publishers need a way to claim and verify their developer identity before their apps join the catalog.",
+    "benefits": [
+      "Claim your publisher identity in one place",
+      "Verified publisher status shown on catalog records",
+      "A clear link between you and the apps you publish"
+    ],
     "intendedUsers": [
       "New publishers joining AppMintly",
       "Existing publishers verifying their identity"

@@ -48,6 +48,10 @@ export interface UpcomingApp {
   purpose: string;
   /** Who the app is being built for. */
   intendedUsers: string[];
+  /** The problem the app exists to solve (team-maintained roadmap copy). */
+  problem?: string;
+  /** Practical user benefits derived from the planned features. */
+  benefits?: string[];
   /** Features proposed for the first public release. */
   proposedFeatures: string[];
   /** Capabilities planned for the product over time. */
@@ -191,6 +195,8 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
     type: typeof r.type === 'string' ? r.type : 'Web App',
     purpose: typeof r.purpose === 'string' ? r.purpose : '',
     intendedUsers: isStringArray(r.intendedUsers) ? r.intendedUsers : [],
+    problem: typeof r.problem === 'string' ? r.problem : undefined,
+    benefits: isStringArray(r.benefits) ? r.benefits : undefined,
     proposedFeatures: isStringArray(r.proposedFeatures) ? r.proposedFeatures : [],
     plannedCapabilities: isStringArray(r.plannedCapabilities) ? r.plannedCapabilities : [],
     roadmapStatus: status,

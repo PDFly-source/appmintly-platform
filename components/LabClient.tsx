@@ -26,12 +26,15 @@ import {
   FlaskConical,
   Info,
   Map as MapIcon,
+  Scale,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { getUpcomingApps } from '@/data/upcoming-apps';
 import type { UpcomingApp } from '@/data/upcoming-apps';
 import { UpcomingAppCard } from '@/components/UpcomingAppCard';
 import { localVoteCount, pruneOrphanVotes, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
+import { localWishlistCount, pruneOrphanWishlist } from '@/lib/upcoming-wishlist';
 
 const FILTERS: { id: 'all' | UpcomingApp['roadmapStatus']; label: string; caption: string }[] = [
   { id: 'all', label: 'All Projects', caption: 'Every roadmap record' },
@@ -50,6 +53,9 @@ export default function LabClient() {
   const upcoming = useMemo(() => getUpcomingApps(), []);
   const [filter, setFilter] = useState<'all' | UpcomingApp['roadmapStatus']>('all');
   const [localVotes, setLocalVotes] = useState<number | null>(null);
+  const [localSaved, setLocalSaved] = useState<number | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -69,11 +75,19 @@ export default function LabClient() {
   // computing it during render would break hydration). Also prune votes
   // for retired roadmap entries so this device's count stays honest.
   React.useEffect(() => {
-    const refresh = () => setLocalVotes(localVoteCount());
+    const refresh = () => {
+      setLocalVotes(localVoteCount());
+      setLocalSaved(localWishlistCount());
+    };
     pruneOrphanVotes(upcoming.map((u) => u.id));
+    pruneOrphanWishlist(upcoming.map((u) => u.id));
     refresh();
     window.addEventListener('appmintly_upcoming_votes_updated', refresh);
-    return () => window.removeEventListener('appmintly_upcoming_votes_updated', refresh);
+    window.addEventListener('appmintly_upcoming_wishlist_updated', refresh);
+    return () => {
+      window.removeEventListener('appmintly_upcoming_votes_updated', refresh);
+      window.removeEventListener('appmintly_upcoming_wishlist_updated', refresh);
+    };
   }, [upcoming]);
 
   const visible = useMemo(() => {
@@ -91,11 +105,31 @@ export default function LabClient() {
     return out;
   }, [filter, upcoming, query, categoryFilter]);
 
-  // Slides = the visible app cards (+ the promo card in the All view).
+  // Slides = the visible app cards (+ the promo card in the All view, but
+  // ONLY when at least one real app card is shown — the promo slide never
+  // stands alone and never inflates the app/project counts).
+  const promoShown = filter === 'all' && visible.length > 0;
   const slides = useMemo(
-    () => (filter === 'all' ? visible.length + 1 : visible.length),
-    [filter, visible]
+    () => (promoShown ? visible.length + 1 : visible.length),
+    [promoShown, visible]
   );
+
+  // Compare Apps — selection of REAL app records only (promo excluded).
+  const MAX_COMPARE = 3;
+  const compareApps = useMemo(
+    () => upcoming.filter((u) => compareIds.includes(u.id)),
+    [upcoming, compareIds]
+  );
+  const toggleCompare = useCallback((appId: string) => {
+    setCompareIds((prev) =>
+      prev.includes(appId)
+        ? prev.filter((x) => x !== appId)
+        : prev.length < MAX_COMPARE
+          ? [...prev, appId]
+          : prev
+    );
+  }, []);
+  const compareFull = compareIds.length >= MAX_COMPARE;
 
   const scrollTo = (target: 'roadmap' | 'projects') => {
     const el = target === 'roadmap' ? roadmapRef.current : projectsRef.current;
@@ -118,15 +152,24 @@ export default function LabClient() {
     if (trackRef.current) trackRef.current.scrollLeft = 0;
   }, [filter, query, categoryFilter]);
 
+  /**
+   * Real slide-to-slide distance (card width + the responsive gap), measured
+   * from the first two slides so it stays correct at every viewport.
+   */
+  const getStride = (track: HTMLElement): number => {
+    const [first, second] = track.querySelectorAll<HTMLElement>('[data-slide]');
+    if (!first) return 0;
+    if (second) return second.offsetLeft - first.offsetLeft;
+    return first.offsetWidth + 16;
+  };
+
   /** Index of the left-most visible slide (1-based position indicator). */
   const onTrackScroll = useCallback(() => {
     const track = trackRef.current;
     if (!track) return;
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
-      const first = track.querySelector<HTMLElement>('[data-slide]');
-      if (!first) return;
-      const stride = first.offsetWidth + 16; // card width + gap-4
+      const stride = getStride(track);
       if (stride <= 0) return;
       const idx = Math.min(
         Math.max(0, Math.round(track.scrollLeft / stride)),
@@ -148,9 +191,8 @@ export default function LabClient() {
     const reduce =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const first = track.querySelector<HTMLElement>('[data-slide]');
-    if (!first) return;
-    const stride = first.offsetWidth + 16;
+    const stride = getStride(track);
+    if (stride <= 0) return;
     const target = Math.min(
       Math.max(0, (Math.round(track.scrollLeft / stride) + delta) * stride),
       track.scrollWidth - track.clientWidth
@@ -164,9 +206,8 @@ export default function LabClient() {
     const reduce =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const first = track.querySelector<HTMLElement>('[data-slide]');
-    if (!first) return;
-    const stride = first.offsetWidth + 16;
+    const stride = getStride(track);
+    if (stride <= 0) return;
     track.scrollTo({ left: i * stride, behavior: reduce ? 'auto' : 'smooth' });
   };
 
@@ -174,7 +215,7 @@ export default function LabClient() {
   const activeProjectWord = filter === 'all' ? 'projects' : `projects ${FILTER_HINTS[filter]}`;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-16">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-16">
       {/* ================= Premium hero ================= */}
       <section
         className="relative mt-4 sm:mt-8 overflow-hidden rounded-3xl border border-line bg-card scroll-mt-24"
@@ -229,6 +270,9 @@ export default function LabClient() {
             {upcoming.length} project{upcoming.length === 1 ? '' : 's'} on the public roadmap
             {localVotes !== null && localVotes > 0
               ? ` · you have voted for ${localVotes} on this device`
+              : ''}
+            {localSaved !== null && localSaved > 0
+              ? ` · you have saved ${localSaved} on this device`
               : ''}
           </p>
         </div>
@@ -365,7 +409,7 @@ export default function LabClient() {
                 onClick={() => scrollBySlides(-1)}
                 disabled={slides <= 1}
                 aria-label="Previous project"
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-line bg-card text-ink hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-card text-ink hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
               >
                 <ChevronLeft className="w-4 h-4" aria-hidden />
               </button>
@@ -374,13 +418,43 @@ export default function LabClient() {
                 onClick={() => scrollBySlides(1)}
                 disabled={slides <= 1}
                 aria-label="Next project"
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-line bg-card text-ink hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+                className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-card text-ink hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
               >
                 <ChevronRight className="w-4 h-4" aria-hidden />
               </button>
             </div>
           </div>
         </div>
+
+        {/* Compare Apps bar — REAL app records only, no promo participation */}
+        {compareApps.length > 0 && (
+          <div
+            className="mt-4 rounded-xl border border-cta/40 bg-cta/5 px-3.5 py-2.5 flex flex-wrap items-center gap-2.5"
+            role="status"
+            aria-live="polite"
+          >
+            <Scale className="w-4 h-4 text-cta shrink-0" aria-hidden />
+            <span className="text-xs font-bold text-ink">
+              Comparing: {compareApps.map((a) => a.name).join(' · ')}
+            </span>
+            <span className="flex-1" aria-hidden />
+            <button
+              type="button"
+              onClick={() => setCompareOpen(true)}
+              disabled={compareApps.length < 2}
+              className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-xl bg-cta text-page text-xs font-bold cursor-pointer transition-all duration-200 hover:bg-cta-hover disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+            >
+              View comparison ({compareApps.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setCompareIds([])}
+              className="inline-flex items-center min-h-[44px] px-3.5 py-2 rounded-xl border border-line bg-card text-xs font-bold text-ink cursor-pointer hover:border-forge-red/40 hover:text-forge-red transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {visible.length === 0 ? (
           <div className="mt-5 rounded-2xl border border-dashed border-line bg-card px-6 py-14 text-center">
@@ -396,7 +470,7 @@ export default function LabClient() {
           <div
             ref={trackRef}
             onScroll={onTrackScroll}
-            className="mt-5 flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth motion-reduce:scroll-auto"
+            className="mt-5 flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth motion-reduce:scroll-auto"
             role="region"
             aria-roledescription="carousel"
             aria-label="App showcase — swipe or use the previous and next buttons"
@@ -406,20 +480,25 @@ export default function LabClient() {
               <div
                 key={app.id}
                 data-slide
-                className="snap-start shrink-0 w-[86%] sm:w-[400px] lg:w-[440px] flex"
+                className="snap-start shrink-0 w-[90%] sm:w-[400px] lg:w-[440px] flex"
               >
-                <UpcomingAppCard app={app} />
+                <UpcomingAppCard
+                  app={app}
+                  compareOn={compareIds.includes(app.id)}
+                  onCompareToggle={toggleCompare}
+                  compareDisabled={compareFull}
+                />
               </div>
             ))}
 
             {/* ===== More Apps Coming Soon — promotional card (not an app record) ===== */}
-            {filter === 'all' && (
+            {promoShown && (
               <div
                 data-slide
-                className="snap-start shrink-0 w-[86%] sm:w-[400px] lg:w-[440px] flex"
+                className="snap-start shrink-0 self-start w-[90%] sm:w-[400px] lg:w-[440px] flex"
               >
                 <article
-                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col justify-between p-6 sm:p-7 min-h-[420px]"
+                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col p-5 sm:p-6"
                   aria-label="More apps coming soon — promotional card"
                 >
                   {/* Ambient gradient + abstract app tiles (decorative) */}
@@ -463,7 +542,7 @@ export default function LabClient() {
                     </p>
                   </div>
 
-                  <div className="relative mt-8">
+                  <div className="relative mt-6">
                     <Link
                       href="/explore"
                       className="inline-flex items-center gap-2 min-h-[46px] px-6 rounded-xl bg-cta text-page text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer hover:bg-cta-hover hover:shadow-md active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
@@ -482,9 +561,9 @@ export default function LabClient() {
           </div>
         )}
 
-        {/* Pagination dots */}
+        {/* Pagination dots — 44px touch targets with a small visual dot */}
         {slides > 0 && (
-          <div className="mt-4 flex items-center justify-center gap-2" role="tablist" aria-label="Go to showcase slide">
+          <div className="mt-3 flex items-center justify-center" role="tablist" aria-label="Go to showcase slide">
             {Array.from({ length: slides }).map((_, i) => (
               <button
                 key={i}
@@ -492,14 +571,151 @@ export default function LabClient() {
                 onClick={() => goToSlide(i)}
                 aria-label={`Go to slide ${i + 1}`}
                 aria-current={slideIndex === i ? 'true' : undefined}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none ${
-                  slideIndex === i ? 'bg-cta w-6' : 'bg-mut/40 hover:bg-mut/70'
-                }`}
-              />
+                className="h-11 w-9 inline-flex items-center justify-center cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded-md"
+              >
+                <span
+                  aria-hidden
+                  className={`block rounded-full transition-all duration-200 motion-reduce:transition-none ${
+                    slideIndex === i ? 'bg-cta w-6 h-2.5' : 'bg-mut/40 w-2.5 h-2.5 hover:bg-mut/70'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}
+
+        {/* Compare Apps dialog — side-by-side, real data only */}
+        {compareOpen && compareApps.length >= 2 && (
+          <CompareDialog apps={compareApps} onClose={() => setCompareOpen(false)} />
+        )}
       </section>
+    </div>
+  );
+}
+
+/** Verification summary computed ONLY from the record's real checks. */
+function verificationSummary(app: UpcomingApp): string {
+  const checks = app.verification?.checks ?? [];
+  if (checks.length === 0) return 'Verification pending';
+  const passed = checks.filter((c) => c.result === 'passed').length;
+  const failed = checks.filter((c) => c.result === 'failed').length;
+  const unable = checks.filter((c) => c.result === 'unable-to-verify').length;
+  const pending = checks.filter((c) => c.result === 'pending').length;
+  const parts: string[] = [];
+  if (passed) parts.push(`${passed} passed`);
+  if (failed) parts.push(`${failed} failed`);
+  if (unable) parts.push(`${unable} could not be verified`);
+  if (pending) parts.push(`${pending} pending`);
+  return parts.length > 0 ? parts.join(' · ') : 'Verification pending';
+}
+
+/**
+ * Compare Apps — side-by-side comparison built ONLY from real project
+ * records: status, milestone-derived progress, features, audience and
+ * the honest verification summary. No fabricated scores or rankings.
+ */
+function CompareDialog({ apps, onClose }: { apps: UpcomingApp[]; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    dialogRef.current?.focus();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="App comparison"
+        tabIndex={-1}
+        className="relative w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl border border-line bg-card p-5 sm:p-6 focus-visible:outline-none"
+      >
+        <div className="flex items-center justify-between gap-3 sticky top-0 bg-card pb-2">
+          <h3 className="text-base font-black text-ink">App comparison</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close app comparison"
+            className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-page text-ink hover:text-forge-red cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
+          >
+            <X className="w-5 h-5" aria-hidden />
+          </button>
+        </div>
+        <p className="text-[11px] text-mut leading-snug">
+          Real roadmap records only — statuses, progress, and verification come from the
+          same data this page displays. Nothing is ranked or scored.
+        </p>
+
+        <div className={`mt-4 grid gap-3 ${apps.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+          {apps.map((a) => {
+            const total = a.milestones.length;
+            const done = a.milestones.filter((m) => m.status === 'done').length;
+            const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+            const current = a.milestones.find((m) => m.status === 'in-progress' || m.status === 'blocked');
+            return (
+              <div key={a.id} className="rounded-xl border border-line bg-page p-3.5 grid content-start gap-2">
+                <p className="text-sm font-bold text-ink leading-snug">{a.name}</p>
+                <p className="text-[11px] text-mut leading-snug">{a.category}</p>
+                <p className="text-[11px] font-bold text-cta">{a.roadmapStatusLabel}</p>
+                <div>
+                  <div className="flex items-center justify-between text-[10px] font-bold text-mut">
+                    <span className="uppercase tracking-wider">Progress</span>
+                    <span className="tabular-nums">
+                      {done}/{total} · {progress}%
+                    </span>
+                  </div>
+                  <div
+                    className="lab-progress-track mt-1 h-1.5 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress}
+                    aria-label={`${a.name} roadmap progress`}
+                  >
+                    <div className="lab-progress-fill h-full rounded-full" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+                {current && (
+                  <p className="text-[10px] text-ink/80 leading-snug">
+                    <span className="font-bold">Current:</span> {current.title}
+                  </p>
+                )}
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-mut">Top planned features</p>
+                  <ul className="mt-1 grid gap-1">
+                    {a.proposedFeatures.slice(0, 3).map((f) => (
+                      <li key={f} className="text-[10px] text-ink/85 leading-snug">
+                        • {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-[10px] text-mut leading-snug">
+                  <span className="font-bold text-ink/80">Built for:</span>{' '}
+                  {a.intendedUsers.join(', ')}
+                </p>
+                <p className="text-[10px] text-mut leading-snug">{verificationSummary(a)}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
