@@ -42,8 +42,19 @@ console.log(`\n[gate] launch/ownership boundary: ${launchUrl} (prefix: ${prefix}
 const suffixDomainHost = new URL(launchUrl).hostname + '.evil.example';
 
 ok('[1] own root URL is owned', isWebViewOwnedUrl(launchUrl, launchUrl));
-ok('[2] own route (/explore) is owned', isWebViewOwnedUrl(new URL('/explore', launchUrl).toString(), launchUrl));
-ok('[3] own marketplace route (/app/nexdrop) is owned', isWebViewOwnedUrl(new URL('/app/nexdrop', launchUrl).toString(), launchUrl));
+// Route resolution must be RELATIVE to the launch URL's own path.
+// Absolute-path resolution ('/explore') drops the namespace path of
+// subpath-hosted apps (e.g. https://pdfly-source.github.io/pdfly-app/)
+// and produces a bare shared-origin URL that MUST stay external — the
+// PDFMiniFly release was blocked by exactly this construction.
+ok(
+  '[2] own in-app route is owned',
+  isWebViewOwnedUrl(new URL('explore', launchUrl).toString(), launchUrl)
+);
+ok(
+  '[3] own marketplace route (app/nexdrop/) is owned',
+  isWebViewOwnedUrl(new URL('app/nexdrop/', launchUrl).toString(), launchUrl)
+);
 
 const legacy = 'https://pdfly-source.github.io/appmintly-platform/';
 if (launchUrl !== legacy) {

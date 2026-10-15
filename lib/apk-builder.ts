@@ -129,6 +129,31 @@ export function generatePackageId(slug: string): string {
 }
 
 /**
+ * Adaptive-icon safe-zone content fit (PDFMiniFly launcher-icon fix).
+ *
+ * Android launchers may mask the adaptive foreground with a circle whose
+ * diameter is 66/108 of the canvas (the documented safe zone). Fitting a
+ * trimmed artwork's bounding box to a blanket 60% of the canvas still
+ * leaves the box's CORNERS outside that circle, so circular masks clip
+ * wide elements such as the PDFMiniFly wordmark and its tagline. Size the
+ * content so its full bounding-box DIAGONAL fits inside the safe circle:
+ * the complete artwork then stays visible under every launcher mask
+ * shape (circle, squircle, rounded square).
+ *
+ * Returns the largest ImageMagick -resize box (square, aspect preserved
+ * by ImageMagick) whose scaled content fits the safe circle.
+ */
+export function adaptiveContentFitSize(canvas: number, contentW: number, contentH: number): number {
+  const SAFE_DIAMETER = 66 / 108; // adaptive-icon visible safe zone
+  if (!(canvas > 0) || !(contentW > 0) || !(contentH > 0)) {
+    return Math.max(1, Math.round(canvas * 0.6)); // defensive fallback: legacy 60% fit
+  }
+  const diagonal = Math.sqrt(contentW * contentW + contentH * contentH);
+  const fit = (canvas * SAFE_DIAMETER * Math.max(contentW, contentH)) / diagonal;
+  return Math.max(1, Math.round(fit));
+}
+
+/**
  * Converts semantic version string to integer versionCode
  */
 export function semanticVersionToCode(version: string): number {
@@ -563,7 +588,9 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       const anydpiDir = path.join(resDir, 'mipmap-anydpi-v26');
       await fs.promises.mkdir(anydpiDir, { recursive: true });
       let adaptiveInputSpec = inputSpec;
-      let adaptiveContentFit = false; // true -> resize content into ~60% of canvas
+      let adaptiveContentFit = false; // true -> resize content into the adaptive safe circle
+      let adaptiveTrimW = 0; // trimmed content bounds (for the diagonal-safe fit)
+      let adaptiveTrimH = 0;
       let adaptiveBackground = iconBuffer ? '#FEFEFE' : themeColor;
       if (iconBuffer) {
         try {
@@ -586,6 +613,8 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
               await execPromise(`convert ${inputSpec} -fuzz 12% -trim +repage "${trimmedPath}"`);
               adaptiveInputSpec = `"${trimmedPath}"`;
               adaptiveContentFit = true;
+              adaptiveTrimW = tw;
+              adaptiveTrimH = th;
               job.stepsCompleted.push('Adaptive icon content fit (trimmed border)');
             }
           }
@@ -603,9 +632,12 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       ];
       for (const d of adaptiveForegroundDensities) {
         if (adaptiveContentFit) {
-          // Fit the trimmed CONTENT inside the visible window (~60% of
-          // canvas; the mask shows ~61%), preserving aspect ratio.
-          const fitSize = Math.round(d.canvas * 0.60);
+          // Fit the trimmed CONTENT so its full bounding-box diagonal sits
+          // inside the 66/108 safe circle (the mask window). A blanket 60%
+          // box fit left wide artwork corners - the PDFMiniFly wordmark and
+          // 'PRIVATE • POWERFUL • LOCAL' tagline - outside the circle, so
+          // circular launcher masks clipped them. See adaptiveContentFitSize.
+          const fitSize = adaptiveContentFitSize(d.canvas, adaptiveTrimW, adaptiveTrimH);
           await execPromise(
             `convert ${adaptiveInputSpec} -resize ${fitSize}x${fitSize} -gravity center -background none -extent ${d.canvas}x${d.canvas} "${path.join(d.dir, 'ic_launcher_foreground.png')}"`
           );
