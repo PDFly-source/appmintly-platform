@@ -152,15 +152,24 @@ export default function LabClient() {
     if (trackRef.current) trackRef.current.scrollLeft = 0;
   }, [filter, query, categoryFilter]);
 
+  /**
+   * Real slide-to-slide distance (card width + the responsive gap), measured
+   * from the first two slides so it stays correct at every viewport.
+   */
+  const getStride = (track: HTMLElement): number => {
+    const [first, second] = track.querySelectorAll<HTMLElement>('[data-slide]');
+    if (!first) return 0;
+    if (second) return second.offsetLeft - first.offsetLeft;
+    return first.offsetWidth + 16;
+  };
+
   /** Index of the left-most visible slide (1-based position indicator). */
   const onTrackScroll = useCallback(() => {
     const track = trackRef.current;
     if (!track) return;
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
-      const first = track.querySelector<HTMLElement>('[data-slide]');
-      if (!first) return;
-      const stride = first.offsetWidth + 16; // card width + gap-4
+      const stride = getStride(track);
       if (stride <= 0) return;
       const idx = Math.min(
         Math.max(0, Math.round(track.scrollLeft / stride)),
@@ -182,9 +191,8 @@ export default function LabClient() {
     const reduce =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const first = track.querySelector<HTMLElement>('[data-slide]');
-    if (!first) return;
-    const stride = first.offsetWidth + 16;
+    const stride = getStride(track);
+    if (stride <= 0) return;
     const target = Math.min(
       Math.max(0, (Math.round(track.scrollLeft / stride) + delta) * stride),
       track.scrollWidth - track.clientWidth
@@ -198,9 +206,8 @@ export default function LabClient() {
     const reduce =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const first = track.querySelector<HTMLElement>('[data-slide]');
-    if (!first) return;
-    const stride = first.offsetWidth + 16;
+    const stride = getStride(track);
+    if (stride <= 0) return;
     track.scrollTo({ left: i * stride, behavior: reduce ? 'auto' : 'smooth' });
   };
 
@@ -463,7 +470,7 @@ export default function LabClient() {
           <div
             ref={trackRef}
             onScroll={onTrackScroll}
-            className="mt-5 flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth motion-reduce:scroll-auto"
+            className="mt-5 flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth motion-reduce:scroll-auto"
             role="region"
             aria-roledescription="carousel"
             aria-label="App showcase — swipe or use the previous and next buttons"
@@ -473,7 +480,7 @@ export default function LabClient() {
               <div
                 key={app.id}
                 data-slide
-                className="snap-start shrink-0 w-[86%] sm:w-[400px] lg:w-[440px] flex"
+                className="snap-start shrink-0 w-[90%] sm:w-[400px] lg:w-[440px] flex"
               >
                 <UpcomingAppCard
                   app={app}
@@ -488,10 +495,10 @@ export default function LabClient() {
             {promoShown && (
               <div
                 data-slide
-                className="snap-start shrink-0 w-[86%] sm:w-[400px] lg:w-[440px] flex"
+                className="snap-start shrink-0 self-start w-[90%] sm:w-[400px] lg:w-[440px] flex"
               >
                 <article
-                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col justify-between p-6 sm:p-7 min-h-[420px]"
+                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col p-5 sm:p-6"
                   aria-label="More apps coming soon — promotional card"
                 >
                   {/* Ambient gradient + abstract app tiles (decorative) */}
@@ -535,7 +542,7 @@ export default function LabClient() {
                     </p>
                   </div>
 
-                  <div className="relative mt-8">
+                  <div className="relative mt-6">
                     <Link
                       href="/explore"
                       className="inline-flex items-center gap-2 min-h-[46px] px-6 rounded-xl bg-cta text-page text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer hover:bg-cta-hover hover:shadow-md active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"

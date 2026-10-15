@@ -322,12 +322,12 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
     >
       {/* ===== Branded visual header ===== */}
       <div
-        className="relative border-b border-line flex items-center justify-center px-6 py-5"
+        className="relative border-b border-line flex items-center justify-center px-5 py-4"
         style={brandBg ? { background: brandBg } : undefined}
       >
         {app.logo && !logoFailed ? (
           <span
-            className={`block bg-white rounded-xl px-5 py-3 shadow-sm transition-opacity duration-200 ${
+            className={`block bg-white rounded-xl px-4 py-2.5 shadow-sm transition-opacity duration-200 ${
               logoLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             aria-hidden={!logoLoaded}
@@ -339,7 +339,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
               alt={`${app.name} official logo`}
               width={200}
               height={200}
-              className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
+              className="w-20 h-20 sm:w-28 sm:h-28 object-contain"
               loading="lazy"
               decoding="async"
               onLoad={() => setLogoLoaded(true)}
@@ -360,7 +360,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         )}
       </div>
 
-      <div className="flex flex-col flex-1 p-5">
+      <div className="flex flex-col flex-1 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-[15px] font-bold text-ink leading-snug">{app.name}</h3>
@@ -377,7 +377,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         </div>
 
         {/* Exact unreleased boundary banner */}
-        <p className="mt-3 rounded-lg bg-forge-yellow/10 border border-forge-yellow/30 px-3 py-2 text-[11px] font-semibold text-forge-yellow leading-snug">
+        <p className="mt-2.5 rounded-lg bg-forge-yellow/10 border border-forge-yellow/30 px-3 py-1.5 text-[11px] font-semibold text-forge-yellow leading-snug">
           Roadmap preview – not released yet. Nothing here is installable or
           available on AppMintly today.
         </p>
@@ -408,7 +408,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         {/* Description — clamped on small cards, functional Show More */}
         <p
           ref={descRef}
-          className={`mt-3 text-xs sm:text-[13px] text-ink/90 leading-relaxed ${
+          className={`mt-2.5 text-xs sm:text-[13px] text-ink/90 leading-relaxed ${
             descOpen ? '' : 'line-clamp-3'
           }`}
         >
@@ -431,7 +431,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
 
         {/* Problem statement — the reason this app exists */}
         {app.problem && (
-          <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-page border border-line px-2.5 py-2 text-[11px] text-ink/85 leading-snug">
+          <p className="mt-2.5 flex items-start gap-1.5 rounded-lg bg-page border border-line px-2.5 py-1.5 text-[11px] text-ink/85 leading-snug">
             <Lightbulb className="w-3.5 h-3.5 shrink-0 mt-px text-forge-yellow" aria-hidden />
             <span>
               <span className="font-bold">The problem:</span> {app.problem}
@@ -441,7 +441,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
 
         {/* Practical user benefits — derived from the planned features */}
         {app.benefits && app.benefits.length > 0 && (
-          <ul className="mt-2.5 grid gap-1" aria-label={`What you get with ${app.name}`}>
+          <ul className="mt-2 grid gap-1" aria-label={`What you get with ${app.name}`}>
             {app.benefits.map((b) => (
               <li key={b} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
                 <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
@@ -482,7 +482,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         </div>
 
         {/* Feature highlights + Show All / Show Less planned capabilities */}
-        <div className="mt-3.5 grid gap-1.5">
+        <div className="mt-3 grid gap-1.5">
           {app.proposedFeatures.slice(0, 3).map((f) => (
             <p key={f} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
@@ -519,7 +519,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         )}
 
         {/* Compact visual roadmap progress — real milestone data */}
-        <div className="mt-4">
+        <div className="mt-3.5">
           <div className="flex items-center justify-between text-[10px] font-bold text-mut">
             <span className="uppercase tracking-wider">Roadmap progress</span>
             <span className="tabular-nums" aria-label={`${done} of ${total} milestones complete`}>
@@ -537,7 +537,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
             <div className="lab-progress-fill h-full rounded-full" style={{ width: `${progress}%` }} />
           </div>
           {/* Completed / current / upcoming summary from real records */}
-          <ul className="mt-2.5 space-y-1">
+          <ul className="mt-2 space-y-1">
             {current && (
               <li className="flex items-center gap-1.5">
                 <MilestoneIcon status={current.status} />
@@ -556,7 +556,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         </div>
 
         {/* Actions — every button performs its advertised function */}
-        <div className="mt-auto pt-4 border-t border-line flex flex-wrap items-center gap-2.5">
+        <div className="mt-auto pt-3 border-t border-line flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={handleVote}
@@ -645,7 +645,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
           </p>
         )}
 
-        <p className="mt-3 text-[10px] text-mut leading-snug">
+        <p className="mt-2.5 text-[10px] text-mut leading-snug">
           {VOTE_SCOPE_LABEL} {WISHLIST_SCOPE_LABEL}
         </p>
 
