@@ -16,11 +16,12 @@
  * these are roadmap records, not installable catalog apps.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
   ChevronLeft,
+  Search,
   ChevronRight,
   FlaskConical,
   Info,
@@ -50,6 +51,14 @@ export default function LabClient() {
   const [filter, setFilter] = useState<'all' | UpcomingApp['roadmapStatus']>('all');
   const [localVotes, setLocalVotes] = useState<number | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
+  const [query, setQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Real categories derived from the shipped records (never hardcoded).
+  const categories = useMemo(
+    () => Array.from(new Set(upcoming.map((u) => u.category))).sort(),
+    [upcoming]
+  );
 
   const projectsRef = useRef<HTMLDivElement>(null);
   const roadmapRef = useRef<HTMLDivElement>(null);
@@ -67,10 +76,20 @@ export default function LabClient() {
     return () => window.removeEventListener('appmintly_upcoming_votes_updated', refresh);
   }, [upcoming]);
 
-  const visible = useMemo(
-    () => (filter === 'all' ? upcoming : upcoming.filter((u) => u.roadmapStatus === filter)),
-    [filter, upcoming]
-  );
+  const visible = useMemo(() => {
+    let out = filter === 'all' ? upcoming : upcoming.filter((u) => u.roadmapStatus === filter);
+    if (categoryFilter !== 'all') out = out.filter((u) => u.category === categoryFilter);
+    const q = query.trim().toLowerCase();
+    if (q) {
+      out = out.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.purpose.toLowerCase().includes(q) ||
+          u.category.toLowerCase().includes(q)
+      );
+    }
+    return out;
+  }, [filter, upcoming, query, categoryFilter]);
 
   // Slides = the visible app cards (+ the promo card in the All view).
   const slides = useMemo(
@@ -86,6 +105,18 @@ export default function LabClient() {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
+
+  // Reset the carousel AFTER the new slide collection commits: browsers
+  // can restore a stale scroll offset when the track content resizes, so
+  // the position is forced back to the first slide on every list change.
+  useLayoutEffect(() => {
+    // scrollTo(0) fires a scroll event when the offset was stale, and the
+    // rAF-driven index handler then reports position 1 — no direct
+    // setState in the effect (which the lint cascade rule forbids).
+    // Direct assignment — instant, bypasses the track's CSS smooth
+    // scrolling so a pending animation can never carry a stale offset.
+    if (trackRef.current) trackRef.current.scrollLeft = 0;
+  }, [filter, query, categoryFilter]);
 
   /** Index of the left-most visible slide (1-based position indicator). */
   const onTrackScroll = useCallback(() => {
@@ -236,11 +267,7 @@ export default function LabClient() {
               <button
                 key={f.id}
                 type="button"
-                onClick={() => {
-                  setFilter(f.id);
-                  setSlideIndex(0);
-                  trackRef.current?.scrollTo({ left: 0 });
-                }}
+                onClick={() => setFilter(f.id)}
                 aria-pressed={active}
                 className={`group text-left rounded-2xl border p-3.5 min-h-[84px] transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none ${
                   active
@@ -265,6 +292,51 @@ export default function LabClient() {
           })}
         </div>
       </section>
+
+      {/* ================= Smart discovery toolbar ================= */}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mut pointer-events-none"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search apps by name or description"
+            aria-label="Search roadmap apps by name or description"
+            className="w-full min-h-[44px] pl-9 pr-3 rounded-xl border border-line bg-card text-xs text-ink placeholder:text-mut/70 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          aria-label="Filter by category"
+          className="min-h-[44px] min-w-0 max-w-full px-3 rounded-xl border border-line bg-card text-xs font-semibold text-ink cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
+        >
+          <option value="all">All categories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        {(query || categoryFilter !== 'all' || filter !== 'all') && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('');
+              setCategoryFilter('all');
+              setFilter('all');
+            }}
+            aria-label="Clear all search and filter selections"
+            className="inline-flex items-center min-h-[44px] px-4 rounded-xl border border-line bg-card text-xs font-bold text-ink hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+          >
+            Clear all
+          </button>
+        )}
+      </div>
 
       {/* ================= Horizontal swipeable showcase ================= */}
       <div ref={projectsRef} className="scroll-mt-24" />
@@ -356,7 +428,7 @@ export default function LabClient() {
                     aria-hidden
                     style={{
                       background:
-                        'radial-gradient(30rem 16rem at 85% -10%, rgba(20, 184, 166, 0.35), transparent 60%), radial-gradient(26rem 18rem at -10% 110%, rgba(232, 80, 61, 0.32), transparent 55%)',
+                        'linear-gradient(160deg, #10141C 0%, #0B2622 85%, #0E3A34 100%), radial-gradient(30rem 16rem at 85% -10%, rgba(20, 184, 166, 0.35), transparent 60%), radial-gradient(26rem 18rem at -10% 110%, rgba(232, 80, 61, 0.32), transparent 55%)',
                     }}
                   />
                   <div className="absolute right-5 top-16 flex flex-col gap-2.5" aria-hidden>
