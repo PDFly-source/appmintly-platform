@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T10:06:29Z",
+  "builds": [
+    {
+      "id": "b-38706256721",
+      "kind": "deploy",
+      "name": "Deploy AppMintly to GitHub Pages (Phase 3.1 release)",
+      "commit": "6619731",
+      "workflow_run_id": 38706256721,
+      "outcome": "success",
+      "timestamp": "2026-10-15T08:31:20Z",
+      "scope": "appmintly-platform production (GitHub Pages)",
+      "source": "GitHub Actions run 38706256721"
+    },
+    {
+      "id": "b-38700984980",
+      "kind": "deploy",
+      "name": "Deploy AppMintly to GitHub Pages (Lab 3.0)",
+      "commit": "ed7fb7c",
+      "workflow_run_id": 38700984980,
+      "outcome": "success",
+      "timestamp": "2026-10-15T07:46:09Z",
+      "scope": "appmintly-platform production (GitHub Pages)",
+      "source": "GitHub Actions run 38700984980"
+    },
+    {
+      "id": "b-38697261156",
+      "kind": "deploy",
+      "name": "Deploy AppMintly to GitHub Pages (Lab 1E showcase)",
+      "commit": "0c9d818",
+      "workflow_run_id": 38697261156,
+      "outcome": "success",
+      "timestamp": "2026-10-15T07:13:03Z",
+      "scope": "appmintly-platform production (GitHub Pages)",
+      "source": "GitHub Actions run 38697261156"
+    },
+    {
+      "id": "b-38618387766",
+      "kind": "deploy",
+      "name": "Deploy AppMintly to GitHub Pages (Phase 1D)",
+      "commit": "58fbf67",
+      "workflow_run_id": 38618387766,
+      "outcome": "success",
+      "timestamp": "2026-10-14T18:49:10Z",
+      "scope": "appmintly-platform production (GitHub Pages)",
+      "source": "GitHub Actions run 38618387766"
+    },
+    {
+      "id": "b-38533313370",
+      "kind": "release",
+      "name": "Release AppMintly v1.0.9",
+      "commit": "4c50bb9",
+      "workflow_run_id": 38533313370,
+      "outcome": "success",
+      "timestamp": "2026-10-14T08:10:57Z",
+      "scope": "AppMintly Android APK v1.0.9 (signed release build)",
+      "source": "GitHub Actions run 38533313370"
+    }
+  ],
+  "generated_from": "GitHub Actions API runs for PDFly-source/appmintly-platform (verbatim ids, commits, conclusions, timestamps)"
+}
