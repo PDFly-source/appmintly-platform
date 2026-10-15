@@ -13,6 +13,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   parseVoteStore,
+  pruneOrphanVotes,
   hasVoted,
   toggleVote,
   localVoteCount,
@@ -128,5 +129,26 @@ describe('vote toggling (stubbed localStorage)', () => {
   it('the honest scope label is exported and mentions local-only', () => {
     expect(VOTE_SCOPE_LABEL).toContain('this device only');
     expect(VOTE_SCOPE_LABEL.toLowerCase()).toContain('no shared vote totals');
+  });
+
+  it('pruneOrphanVotes removes only votes for retired roadmap ids', () => {
+    toggleVote('billcraft');
+    toggleVote('pdfly');           // retired entry
+    toggleVote('publisher-console'); // retired entry
+    toggleVote('register');
+    expect(localVoteCount()).toBe(4);
+    const removed = pruneOrphanVotes(['billcraft', 'cartora', 'nutrilens', 'register']);
+    expect(removed).toBe(2);
+    expect(localVoteCount()).toBe(2);
+    expect(hasVoted('billcraft')).toBe(true);
+    expect(hasVoted('register')).toBe(true);
+    expect(hasVoted('pdfly')).toBe(false);
+    expect(hasVoted('publisher-console')).toBe(false);
+  });
+
+  it('pruneOrphanVotes is a no-op when there are no stale votes', () => {
+    toggleVote('cartora');
+    expect(pruneOrphanVotes(['billcraft', 'cartora'])).toBe(0);
+    expect(localVoteCount()).toBe(1);
   });
 });

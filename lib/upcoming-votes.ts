@@ -111,6 +111,23 @@ export function toggleVote(upcomingId: string): boolean {
 }
 
 /**
+ * Remove local votes for ids that are no longer in the public roadmap
+ * (e.g. catalog entries retired from the Lab). Runs only for THIS
+ * browser's own store; returns how many stale votes were removed.
+ * Never touches votes for apps that still exist.
+ */
+export function pruneOrphanVotes(validIds: string[]): number {
+  if (typeof window === 'undefined') return 0;
+  const valid = new Set(validIds);
+  const store = readStore();
+  const stale = Object.keys(store.votes).filter((id) => !valid.has(id));
+  if (stale.length === 0) return 0;
+  for (const id of stale) delete store.votes[id];
+  writeStore(store);
+  return stale.length;
+}
+
+/**
  * How many upcoming apps THIS browser has voted for. Local count only —
  * it describes this device's interests, never a global tally.
  */

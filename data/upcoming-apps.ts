@@ -44,8 +44,10 @@ export interface UpcomingApp {
   roadmapStatus: RoadmapStatus;
   roadmapStatusLabel: string;
   milestones: RoadmapMilestone[];
-  /** Evidence link — the real GitHub repository of the project. */
-  sourceRepo: string;
+  /** Evidence link — the real repository of the project, when one exists. */
+  sourceRepo?: string;
+  /** Official brand asset under /brand/ (rendered by the showcase card). */
+  logo?: string;
   draftNote: string;
 }
 
@@ -77,7 +79,13 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
   if (typeof r.id !== 'string' || typeof r.name !== 'string' || typeof r.slug !== 'string') return null;
   const status = r.roadmapStatus as RoadmapStatus;
   if (!VALID_STATUSES.includes(status)) return null;
-  if (typeof r.sourceRepo !== 'string' || !/^https:\/\//.test(r.sourceRepo)) return null;
+  // sourceRepo is OPTIONAL engineering metadata: it stays in the data
+  // records for internal use but is NOT rendered in the public Lab
+  // (Phase 1D+). Some roadmap entries have no public repository yet —
+  // the Lab never invents one.
+  const sourceRepo = typeof r.sourceRepo === 'string' && /^https:\/\//.test(r.sourceRepo)
+    ? r.sourceRepo
+    : undefined;
   return {
     id: r.id,
     slug: r.slug,
@@ -93,7 +101,10 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
     roadmapStatusLabel:
       typeof r.roadmapStatusLabel === 'string' ? r.roadmapStatusLabel : status,
     milestones: normalizeMilestones(r.milestones),
-    sourceRepo: r.sourceRepo,
+    sourceRepo,
+    // Optional official brand asset (public/brand/...) rendered by the
+    // showcase card. Only records that actually supplied an asset set it.
+    logo: typeof r.logo === 'string' && r.logo.startsWith('/brand/') ? r.logo : undefined,
     draftNote: typeof r.draftNote === 'string' ? r.draftNote : '',
   };
 }
