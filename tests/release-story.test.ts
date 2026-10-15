@@ -175,22 +175,61 @@ describe('upcoming-apps data — normalization honesty', () => {
         // No milestone is marked complete without recorded evidence text,
         // and no date is invented.
         if (m.status === 'done') expect(m.description.length).toBeGreaterThan(0);
-        expect(m.lastUpdated).toBeUndefined(); // no real update dates exist yet
+        // Real update dates exist only where recorded (register rg-m1).
       }
     }
   });
 
-  it('verification records are honest: every check is explicitly pending', () => {
+  it('verification records are honest: evidence-backed results, explicit pending', () => {
+    const RESULTS = ['pending', 'passed', 'failed', 'unable-to-verify'];
     for (const u of UPCOMING_APPS) {
       expect(u.verification).toBeDefined();
       expect(u.verification!.checks.length).toBe(5);
       for (const c of u.verification!.checks) {
-        expect(c.result).toBe('pending');
-        expect(c.date).toBeUndefined(); // no check has actually run
+        expect(RESULTS).toContain(c.result);
+        if (c.result === 'passed') {
+          // A pass is only allowed with recorded evidence: what, where, when.
+          expect(c.summary!.length).toBeGreaterThan(0);
+          expect(c.source!.length).toBeGreaterThan(0);
+          expect(c.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(c.id!.length).toBeGreaterThan(0);
+        }
+        if (c.result === 'unable-to-verify') {
+          // An inability to verify must also explain WHY it could not run.
+          expect(c.summary!.length).toBeGreaterThan(0);
+          expect(c.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        }
+        if (c.result === 'pending') {
+          // Pending means no check ran — no invented dates or evidence.
+          expect(c.date).toBeUndefined();
+          expect(c.summary).toBeUndefined();
+        }
       }
       // Source and scope are labelled accurately.
       expect(u.verification!.source).toContain('AppMintly team');
       expect(u.verification!.source).toContain('not an independent audit');
+    }
+  });
+
+  it('register carries real recorded evidence; the other apps stay pending', () => {
+    const reg = getUpcomingAppBySlug('register')!;
+    const passed = reg.verification!.checks.filter((c) => c.result === 'passed');
+    const unable = reg.verification!.checks.filter((c) => c.result === 'unable-to-verify');
+    expect(passed.length).toBe(1);
+    expect(passed[0].category).toBe('core-flow');
+    expect(passed[0].buildId).toContain('eb6bc17'); // real repository commit
+    expect(unable.length).toBe(1);
+    expect(unable[0].category).toBe('build');
+    // The rg-m1 completion milestone is now backed by recorded evidence.
+    const m1 = reg.milestones.find((m) => m.id === 'rg-m1')!;
+    expect(m1.status).toBe('done');
+    expect(m1.evidence).toContain('eb6bc17');
+    expect(m1.lastUpdated).toBe('2026-10-15');
+    // BillCraft, Cartora and NutriLens have no recorded checks yet — pending.
+    for (const slug of ['billcraft', 'cartora', 'nutrilens']) {
+      const app = getUpcomingAppBySlug(slug)!;
+      expect(app.verification!.checks.every((c) => c.result === 'pending')).toBe(true);
+      for (const m of app.milestones) expect(m.evidence).toBeUndefined();
     }
   });
 

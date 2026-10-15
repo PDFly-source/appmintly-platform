@@ -176,7 +176,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         setResult({
           state: 'failed',
           source: 'server',
-          message: `The release server responded with HTTP ${res.status}. The APK could not be fetched for verification. You can still verify a file you already downloaded.`,
+          message: `The release server responded with HTTP ${res.status}. The artifact could not be verified in the current environment — this is a fetch failure, not a verdict on the file. You can still verify a file you already downloaded.`,
         });
         return;
       }
@@ -221,7 +221,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         setResult({
           state: 'failed',
           source: 'server',
-          message: 'Could not download the APK for verification (network error, offline mode, or the server does not allow this browser to fetch it). You can still verify a file you already downloaded.',
+          message: 'Could not download the APK for verification in the current environment (network error, offline mode, or the server does not allow this browser to fetch it). This is a fetch failure, not a verdict on the file — you can still verify a file you already downloaded.',
         });
       } else {
         setResult({

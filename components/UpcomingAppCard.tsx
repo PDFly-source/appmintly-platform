@@ -99,7 +99,9 @@ function useVerificationSummary(app: UpcomingApp) {
     VERIFICATION_CATEGORIES.map((category) => ({ category, result: 'pending' as const }));
   const passed = checks.filter((c) => c.result === 'passed');
   const failed = checks.filter((c) => c.result === 'failed');
-  return { checks, passed, failed, anyPassed: passed.length > 0 };
+  const unable = checks.filter((c) => c.result === 'unable-to-verify');
+  const pending = checks.filter((c) => c.result === 'pending');
+  return { checks, passed, failed, unable, pending, anyPassed: passed.length > 0 };
 }
 
 /** Full-screen screenshot viewer — only used for real screenshots. */
@@ -188,7 +190,7 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const justVotedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { checks, anyPassed } = useVerificationSummary(app);
+  const { checks, unable, pending, anyPassed } = useVerificationSummary(app);
 
   useEffect(() => {
     return () => {
@@ -281,6 +283,14 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
           {anyPassed ? (
             <span>
               Verified: {checks.filter((c) => c.result === 'passed').map((c) => VERIFICATION_TITLES[c.category]).join(', ')}
+              {unable.length > 0 && `; ${unable.length} check${unable.length > 1 ? 's' : ''} could not be verified`}
+              {pending.length > 0 && `; ${pending.length} pending`}
+              . See details below.
+            </span>
+          ) : unable.length > 0 ? (
+            <span>
+              {unable.length} verification check{unable.length > 1 ? 's' : ''} could not be
+              verified in the current environment — nothing has passed yet. See details below.
             </span>
           ) : (
             <span>
@@ -431,15 +441,27 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
               <ul className="space-y-1">
                 {checks.map((c) => (
                   <li key={c.category} className="flex items-start gap-1.5">
-                    <MilestoneIcon status={c.result === 'passed' ? 'done' : c.result === 'failed' ? 'blocked' : 'planned'} />
+                    <MilestoneIcon
+                      status={
+                        c.result === 'passed'
+                          ? 'done'
+                          : c.result === 'failed' || c.result === 'unable-to-verify'
+                            ? 'blocked'
+                            : 'planned'
+                      }
+                    />
                     <span className="text-[10px] text-mut leading-snug">
                       <span className="font-bold text-ink/80">{VERIFICATION_TITLES[c.category]}:</span>{' '}
                       {c.result === 'passed'
-                        ? (c.summary ?? 'Passed')
+                        ? `Passed — ${c.summary ?? 'recorded evidence'}`
                         : c.result === 'failed'
-                          ? (c.summary ?? 'Failed')
-                          : 'Pending — no check recorded yet'}
+                          ? `Failed — ${c.summary ?? 'recorded failure'}`
+                          : c.result === 'unable-to-verify'
+                            ? `Unable to verify — ${c.summary ?? 'the check could not be completed'}`
+                            : 'Pending — no check recorded yet'}
+                      {c.buildId ? ` [${c.buildId}]` : ''}
                       {c.date ? ` (${c.date})` : ''}
+                      {c.source ? ` Evidence: ${c.source}.` : ''}
                       {c.limitations ? ` — ${c.limitations}` : ''}
                     </span>
                   </li>
