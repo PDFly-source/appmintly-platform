@@ -80,14 +80,20 @@ export const VERIFICATION_CATEGORIES = [
 ] as const;
 export type VerificationCategory = (typeof VERIFICATION_CATEGORIES)[number];
 
-export type VerificationCheckResult = 'pending' | 'passed' | 'failed';
+export type VerificationCheckResult = 'pending' | 'passed' | 'failed' | 'unable-to-verify';
 
 export interface VerificationCheck {
+  /** Stable check id, e.g. 'register-build-2026-10-15'. */
+  id?: string;
   category: VerificationCategory;
-  /** pending | passed | failed — never a fabricated pass. */
+  /** pending | passed | failed | unable-to-verify — never a fabricated pass. */
   result: VerificationCheckResult;
   /** What was actually checked + evidence summary, when one exists. */
   summary?: string;
+  /** Where the evidence comes from (e.g. 'repository test run', 'manual device test'). */
+  source?: string;
+  /** Build or version identifier tied to the evidence, when one exists. */
+  buildId?: string;
   /** ISO date, only when the check actually ran. */
   date?: string;
   /** Known limitations discovered by the check. */
@@ -144,9 +150,15 @@ function normalizeVerification(v: unknown): VerificationRecord | undefined {
     if (!VERIFICATION_CATEGORIES.includes(category)) continue;
     const result = rec.result as VerificationCheckResult;
     checks.push({
+      id: typeof rec.id === 'string' ? rec.id : undefined,
       category,
-      result: result === 'passed' || result === 'failed' ? result : 'pending',
+      result:
+        result === 'passed' || result === 'failed' || result === 'unable-to-verify'
+          ? result
+          : 'pending',
       summary: typeof rec.summary === 'string' ? rec.summary : undefined,
+      source: typeof rec.source === 'string' ? rec.source : undefined,
+      buildId: typeof rec.buildId === 'string' ? rec.buildId : undefined,
       date: typeof rec.date === 'string' ? rec.date : undefined,
       limitations: typeof rec.limitations === 'string' ? rec.limitations : undefined,
     });
