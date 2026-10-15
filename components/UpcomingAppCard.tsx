@@ -23,6 +23,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
+  ArrowRight,
+  Bookmark,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -32,6 +34,9 @@ import {
   FlaskConical,
   Heart,
   Image as ImageIcon,
+  Lightbulb,
+  Scale,
+  Share2,
   ShieldCheck,
   Users,
   X,
@@ -43,6 +48,11 @@ import type {
 } from '@/data/upcoming-apps';
 import { VERIFICATION_CATEGORIES } from '@/data/upcoming-apps';
 import { useUpcomingVote, toggleVote, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
+import {
+  useWishlist,
+  toggleWishlist,
+  WISHLIST_SCOPE_LABEL,
+} from '@/lib/upcoming-wishlist';
 
 // Production serves the static export under a sub-path — brand assets
 // need the same prefix other public/ references use.
@@ -183,12 +193,66 @@ function ScreenshotViewer({
   );
 }
 
-export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
+export interface UpcomingAppCardProps {
+  app: UpcomingApp;
+  /** Compare Apps feature — selection lives in the Lab page (real data). */
+  compareOn?: boolean;
+  onCompareToggle?: (appId: string) => void;
+  /** Max selections enforced by the parent; used for the honest label. */
+  compareDisabled?: boolean;
+}
+
+export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compareDisabled = false }: UpcomingAppCardProps) {
   const voted = useUpcomingVote(app.id);
+  const saved = useWishlist(app.id);
   const [expanded, setExpanded] = useState(false);
   const [justVoted, setJustVoted] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const justVotedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- Logo loading / error states (graceful fallback, no CLS) ---
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const logoRef = useRef<HTMLImageElement | null>(null);
+
+  // The logo <img> starts loading from the static HTML BEFORE hydration —
+  // onLoad/onError can fire before React attaches them. On mount, sync the
+  // real state of the image from the DOM so a loaded logo is never stuck
+  // hidden and a broken one falls back to the monogram.
+  useEffect(() => {
+    const el = logoRef.current;
+    if (!el || !el.complete) return;
+    if (el.naturalWidth > 0) setLogoLoaded(true);
+    else setLogoFailed(true);
+  }, []);
+
+  // --- Description overflow (Show More / Show Less only if it overflows) ---
+  const descRef = useRef<HTMLParagraphElement | null>(null);
+  const [descClamped, setDescClamped] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
+
+  // --- Inline disclosures: audience + all planned features ---
+  const [audienceOpen, setAudienceOpen] = useState(false);
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+
+  // --- Share feedback (Web Share API + copy-link fallback) ---
+  const [shareNote, setShareNote] = useState('');
+  const shareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Overflow must be measured after hydration — the clamp only matters
+    // in the browser, and the button is hidden during SSR/hydration.
+    // Measured ONCE on mount (with the clamp applied): re-measuring after
+    // an expand would see no overflow and drop the toggle button.
+    const el = descRef.current;
+    if (el) setDescClamped(el.scrollHeight > el.clientHeight + 2);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (shareTimer.current) clearTimeout(shareTimer.current);
+    };
+  }, []);
 
   const { checks, unable, pending, anyPassed } = useVerificationSummary(app);
 
@@ -204,6 +268,39 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
       setJustVoted(true);
       if (justVotedTimer.current) clearTimeout(justVotedTimer.current);
       justVotedTimer.current = setTimeout(() => setJustVoted(false), 600);
+    }
+  };
+
+  const handleWishlist = () => {
+    toggleWishlist(app.id);
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${BASE_PATH}/lab/`;
+    const shareData = {
+      title: `${app.name} — AppMintly Lab roadmap`,
+      text: `${app.name} is on the AppMintly Lab roadmap. See its purpose, features, and honest development progress.`,
+      url,
+    };
+    const setNote = (msg: string) => {
+      setShareNote(msg);
+      if (shareTimer.current) clearTimeout(shareTimer.current);
+      shareTimer.current = setTimeout(() => setShareNote(''), 2200);
+    };
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share(shareData);
+        return; // native sheet closed — no extra note needed
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return; // user dismissed
+        // fall through to the copy-link fallback
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setNote('Lab link copied — share it anywhere.');
+    } catch {
+      setNote(`Could not copy automatically — the Lab link is ${url}`);
     }
   };
 
@@ -228,17 +325,25 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
         className="relative border-b border-line flex items-center justify-center px-6 py-5"
         style={brandBg ? { background: brandBg } : undefined}
       >
-        {app.logo ? (
-          <span className="block bg-white rounded-xl px-5 py-3 shadow-sm">
+        {app.logo && !logoFailed ? (
+          <span
+            className={`block bg-white rounded-xl px-5 py-3 shadow-sm transition-opacity duration-200 ${
+              logoLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            aria-hidden={!logoLoaded}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={logoRef}
               src={`${BASE_PATH}${app.logo}`}
               alt={`${app.name} official logo`}
               width={200}
               height={200}
-              className="w-32 h-32 sm:w-36 sm:h-36 object-contain"
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
               loading="lazy"
               decoding="async"
+              onLoad={() => setLogoLoaded(true)}
+              onError={() => setLogoFailed(true)}
             />
           </span>
         ) : (
@@ -259,7 +364,7 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-[15px] font-bold text-ink leading-snug">{app.name}</h3>
-            <p className="text-[11px] text-mut mt-0.5 truncate">
+            <p className="text-[11px] text-mut mt-0.5 leading-snug">
               {app.category} · by {app.developer}
             </p>
           </div>
@@ -300,17 +405,83 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
           )}
         </p>
 
-        {/* Short, readable description + audience */}
-        <p className="mt-3 text-xs sm:text-[13px] text-ink/90 leading-relaxed">{app.purpose}</p>
-        <p className="mt-2 flex items-start gap-1.5 text-[11px] text-mut leading-snug">
-          <Users className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden />
-          <span>
-            <span className="font-semibold text-ink/80">Built for:</span> {app.intendedUsers[0]}
-            {app.intendedUsers.length > 1 && ` (+${app.intendedUsers.length - 1} more)`}
-          </span>
+        {/* Description — clamped on small cards, functional Show More */}
+        <p
+          ref={descRef}
+          className={`mt-3 text-xs sm:text-[13px] text-ink/90 leading-relaxed ${
+            descOpen ? '' : 'line-clamp-3'
+          }`}
+        >
+          {app.purpose}
         </p>
+        {descClamped && (
+          <button
+            type="button"
+            onClick={() => setDescOpen((v) => !v)}
+            aria-expanded={descOpen}
+            className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-cta cursor-pointer hover:text-cta-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded px-0.5"
+          >
+            {descOpen ? 'Show less' : 'Show more'}
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${descOpen ? 'rotate-180' : ''} motion-reduce:transition-none`}
+              aria-hidden
+            />
+          </button>
+        )}
 
-        {/* Three concise feature highlights */}
+        {/* Problem statement — the reason this app exists */}
+        {app.problem && (
+          <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-page border border-line px-2.5 py-2 text-[11px] text-ink/85 leading-snug">
+            <Lightbulb className="w-3.5 h-3.5 shrink-0 mt-px text-forge-yellow" aria-hidden />
+            <span>
+              <span className="font-bold">The problem:</span> {app.problem}
+            </span>
+          </p>
+        )}
+
+        {/* Practical user benefits — derived from the planned features */}
+        {app.benefits && app.benefits.length > 0 && (
+          <ul className="mt-2.5 grid gap-1" aria-label={`What you get with ${app.name}`}>
+            {app.benefits.map((b) => (
+              <li key={b} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
+                {b}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setAudienceOpen((v) => !v)}
+            aria-expanded={audienceOpen}
+            aria-controls={`${detailsId}-audience`}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-mut hover:text-ink cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded px-0.5 py-0.5 text-left"
+          >
+            <Users className="w-3.5 h-3.5 shrink-0" aria-hidden />
+            Built for: {app.intendedUsers[0]}
+            {app.intendedUsers.length > 1 && (
+              <>
+                {` (+${app.intendedUsers.length - 1} more)`}
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${audienceOpen ? 'rotate-180' : ''} motion-reduce:transition-none`}
+                  aria-hidden
+                />
+              </>
+            )}
+          </button>
+          {audienceOpen && app.intendedUsers.length > 1 && (
+            <ul id={`${detailsId}-audience`} className="mt-1 pl-1 grid gap-0.5">
+              {app.intendedUsers.map((u) => (
+                <li key={u} className="text-[11px] text-mut leading-snug">
+                  • {u}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Feature highlights + Show All / Show Less planned capabilities */}
         <div className="mt-3.5 grid gap-1.5">
           {app.proposedFeatures.slice(0, 3).map((f) => (
             <p key={f} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
@@ -319,6 +490,33 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
             </p>
           ))}
         </div>
+        {app.plannedCapabilities.length > 0 && (
+          <div className="mt-1.5">
+            <button
+              type="button"
+              onClick={() => setFeaturesOpen((v) => !v)}
+              aria-expanded={featuresOpen}
+              aria-controls={`${detailsId}-features`}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-cta cursor-pointer hover:text-cta-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded px-0.5 py-0.5"
+            >
+              {featuresOpen ? 'Show less' : `Show all planned features (${app.proposedFeatures.length + app.plannedCapabilities.length})`}
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${featuresOpen ? 'rotate-180' : ''} motion-reduce:transition-none`}
+                aria-hidden
+              />
+            </button>
+            {featuresOpen && (
+              <ul id={`${detailsId}-features`} className="mt-1.5 grid gap-1">
+                {app.plannedCapabilities.map((c) => (
+                  <li key={c} className="flex items-start gap-1.5 text-[11px] text-mut leading-snug">
+                    <Circle className="w-3 h-3 shrink-0 mt-1 text-mut/70" aria-hidden />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {/* Compact visual roadmap progress — real milestone data */}
         <div className="mt-4">
@@ -395,9 +593,61 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
               Preview Screenshots
             </button>
           )}
+          <button
+            type="button"
+            onClick={handleWishlist}
+            aria-pressed={saved}
+            aria-label={saved ? `Remove ${app.name} from wishlist` : `Save ${app.name} to wishlist`}
+            className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 ${
+              saved
+                ? 'bg-forge-red text-white border border-forge-red'
+                : 'bg-card border border-line text-ink hover:border-forge-red/50 hover:text-forge-red'
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${saved ? 'fill-current' : ''}`} aria-hidden />
+            {saved ? 'Saved' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label={`Share ${app.name} from the AppMintly Lab roadmap`}
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold text-ink border border-line bg-card hover:border-cta/40 hover:text-cta transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
+          >
+            <Share2 className="w-4 h-4" aria-hidden />
+            Share
+          </button>
+          {onCompareToggle && (
+            <button
+              type="button"
+              onClick={() => onCompareToggle(app.id)}
+              aria-pressed={compareOn}
+              disabled={!compareOn && compareDisabled}
+              aria-label={
+                compareDisabled && !compareOn
+                  ? 'Compare selection is full — remove an app first'
+                  : `${compareOn ? 'Remove' : 'Add'} ${app.name} ${compareOn ? 'from' : 'to'} the app comparison`
+              }
+              className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 disabled:opacity-40 disabled:cursor-not-allowed ${
+                compareOn
+                  ? 'bg-cta/15 border border-cta/50 text-cta'
+                  : 'bg-card border border-line text-ink hover:border-cta/40 hover:text-cta'
+              }`}
+            >
+              <Scale className="w-4 h-4" aria-hidden />
+              {compareOn ? 'Comparing' : 'Compare'}
+            </button>
+          )}
         </div>
 
-        <p className="mt-3 text-[10px] text-mut">{VOTE_SCOPE_LABEL}</p>
+        {shareNote && (
+          <p className="mt-2 text-[11px] font-semibold text-cta" role="status" aria-live="polite">
+            {shareNote}
+          </p>
+        )}
+
+        <p className="mt-3 text-[10px] text-mut leading-snug">
+          {VOTE_SCOPE_LABEL} {WISHLIST_SCOPE_LABEL}
+        </p>
 
         {/* Expandable details: full timeline + verification center */}
         {expanded && (
