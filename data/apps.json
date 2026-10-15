@@ -668,13 +668,13 @@
     "launchUrl": "https://pdfly-source.github.io/nexdrop/",
     "webUrl": "https://pdfly-source.github.io/nexdrop/",
     "pwaUrl": "https://pdfly-source.github.io/nexdrop/",
-    "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v0752ea2/NexDrop-release.apk",
+    "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-vf5ea1e0/NexDrop-release.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "previousVersion": "",
     "releaseDate": "2026-10-08",
-    "lastUpdated": "2026-10-12",
+    "lastUpdated": "2026-10-15",
     "publishedAt": "2026-10-08T11:29:22.000Z",
     "themeColor": "#070B0C",
     "backgroundColor": "#070B0C",
@@ -787,6 +787,6 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-10-12T07:41:12.168Z"
+    "updatedAt": "2026-10-15T23:57:19.512Z"
   }
 ]
