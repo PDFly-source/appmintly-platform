@@ -32,6 +32,10 @@ import {
 import type { UpcomingApp } from '@/data/upcoming-apps';
 import { useUpcomingVote, toggleVote, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
 
+// Production serves the static export under a sub-path — brand assets need
+// the same prefix the other public/ references use (AppMintlyLogo, Footer).
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 const STATUS_STYLES: Record<UpcomingApp['roadmapStatus'], string> = {
   planned: 'bg-forge-blue/10 text-forge-blue border-forge-blue/30',
   'in-development': 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40',
@@ -110,7 +114,7 @@ export function UpcomingAppCard({ app }: { app: UpcomingApp }) {
           <span className="block bg-white rounded-xl px-5 py-3 shadow-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={app.logo}
+              src={`${BASE_PATH}${app.logo}`}
               alt={`${app.name} official logo`}
               width={200}
               height={200}
