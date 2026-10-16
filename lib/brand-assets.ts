@@ -22,10 +22,13 @@ export interface RepoBrandAsset {
 }
 
 export const REPO_BRAND_ASSETS: RepoBrandAsset[] = [
-  { path: '/brand/appmintly-icon-192.png', sha256: '4efd0a2a54f00f54cdbbe9af4dd87ed47765c6dcf22be9d4ae045720ab24a4ba', size: 42774 },
-  { path: '/brand/appmintly-icon.png', sha256: 'c66e3b709139d17cb3bace4ac8699c85645469e1794b7cc7b79dc3a48be68473', size: 377332 },
-  { path: '/brand/appmintly-logo-compact.png', sha256: 'a8514765952de3ceaa73ee7e3ad78b5c884574b34f291292c2ac622a00ce6ba2', size: 572472 },
-  { path: '/brand/appmintly-logo-full.png', sha256: '538c505357775a479edbd09a198a833830b517d863a799952f2d4ddb539d5cab', size: 796741 },
+  { path: '/brand/appmintly-icon-192.png', sha256: '9d9cac752e44dcf41d4d71555751048887210468172c9c773b6223151eac525e', size: 28718 },
+  { path: '/brand/appmintly-logo-official.png', sha256: '74e7386ec91e11db3daa3bc804efdb72fe668b607a4d6ba952e5156c767105db', size: 1196688 },
+  { path: '/icon-512.png', sha256: '6db4e143053bd3aebc04bed0703f36720ce9fe9e6f4e4c474ef881f3047e9287', size: 198042 },
+  { path: '/icon-512-maskable.png', sha256: 'ee9cd79e5ff6d310417d70d0847eb66366558a0fb656d6b71ae51be2d05c46e0', size: 67003 },
+  { path: '/brand/appmintly-icon.png', sha256: '14ad90aa88df9c6a69ec9c5cd0005cc9a81bc5a4f688b8f4ca52c23d032e171d', size: 349646 },
+  { path: '/brand/appmintly-logo-compact.png', sha256: 'a28e6b4714687046a497b967f24cda929ee959f949b7fb6d972480571d561e1c', size: 626877 },
+  { path: '/brand/appmintly-logo-full.png', sha256: '2938ebd05d095325d5924a647a69a9964040f83462d9d77d0a324d04cab51a78', size: 527361 },
   { path: '/brand/pdfminifly-icon-384.png', sha256: '499ba529ee4ef582692213e3e0eaab751f9c9791c0db5cd10b484b1534d74f38', size: 109668 },
   { path: '/brand/pdfminifly-logo-official.png', sha256: 'aa8f4139c8130bac014a092c487f3227d1e2854a5a7e9dfca793ad84d42a2bed', size: 1154717 },
   { path: '/brand/studyria-icon-384.png', sha256: 'd73721749806d27c2df00aea8a6c4bf675465d49591c0a97578101db9a71896b', size: 142118 },
