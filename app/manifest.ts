@@ -30,7 +30,11 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
       {
-        src: `${BASE}/icon-512.png`,
+        // Phase 4: dedicated maskable asset — the complete official artwork
+        // (symbol + AppMintly wordmark + DISCOVER - INSTALL - EXPERIENCE
+        // tagline) diagonal-fitted into the 66/108 safe circle, so mask
+        // cropping can never clip the wordmark or tagline.
+        src: `${BASE}/icon-512-maskable.png`,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
