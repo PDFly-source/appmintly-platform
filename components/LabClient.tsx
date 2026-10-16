@@ -38,15 +38,17 @@ import { localWishlistCount, pruneOrphanWishlist } from '@/lib/upcoming-wishlist
 
 const FILTERS: { id: 'all' | UpcomingApp['roadmapStatus']; label: string; caption: string }[] = [
   { id: 'all', label: 'All Projects', caption: 'Every roadmap record' },
+  { id: 'planned', label: 'Planned', caption: 'Idea & planning ahead' },
   { id: 'in-development', label: 'In Development', caption: 'Being built now' },
-  { id: 'planned', label: 'Planned', caption: 'On the roadmap ahead' },
-  { id: 'early-testing', label: 'Early Testing', caption: 'In limited early use' },
+  { id: 'early-testing', label: 'Early Testing', caption: 'Internal testing only' },
+  { id: 'published', label: 'Published / Released', caption: 'Live and publicly available' },
 ];
 
 const FILTER_HINTS: Record<UpcomingApp['roadmapStatus'], string> = {
   'in-development': 'in development',
   planned: 'planned',
   'early-testing': 'in early testing',
+  published: 'published / released',
 };
 
 export default function LabClient() {
@@ -299,7 +301,7 @@ export default function LabClient() {
         </p>
 
         <div
-          className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3"
+          className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3"
           role="group"
           aria-label="Filter by roadmap status"
         >

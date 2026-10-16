@@ -11,10 +11,15 @@
  * (only for records that actually have real screenshots) and the
  * LOCAL-ONLY vote button with its honest scope label.
  *
- * Honesty rules (unchanged since Phase 1B):
- *  - "Roadmap preview – not released": a logo or repository existing
- *    never means a product is released or downloadable.
- *  - Never shows download buttons, versions or install CTAs.
+ * Honesty rules (finalized Lab status system):
+ *  - The status badge, availability banner and primary CTA are ALL
+ *    status-driven: planned (purple, "Coming Later"), in-development
+ *    (amber, informational CTA), early-testing (blue, developer-only
+ *    CTA) and published (green/teal, real "Open App" destination).
+ *  - Never shows download buttons, versions or install CTAs. The only
+ *    public destination CTA is "Open App" on a PUBLISHED record with a
+ *    real publicUrl — a build or internal APK never makes a product
+ *    published (the data normalizer enforces this fail-closed).
  *  - No public source-repository link.
  *  - A verification check is only 'passed' with real recorded evidence;
  *    a checksum proves integrity, never security.
@@ -59,15 +64,49 @@ import {
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 const STATUS_STYLES: Record<UpcomingApp['roadmapStatus'], string> = {
-  planned: 'bg-forge-blue/10 text-forge-blue border-forge-blue/30',
+  planned: 'bg-forge-purple/10 text-forge-purple border-forge-purple/30',
   'in-development': 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40',
-  'early-testing': 'bg-cta/10 text-cta border-cta/30',
+  'early-testing': 'bg-forge-blue/10 text-forge-blue border-forge-blue/30',
+  published: 'bg-forge-green/10 text-forge-green border-forge-green/30',
 };
 
 const STATUS_MONOGRAM: Record<UpcomingApp['roadmapStatus'], string> = {
-  planned: 'bg-forge-blue/12 text-forge-blue border-forge-blue/25',
+  planned: 'bg-forge-purple/12 text-forge-purple border-forge-purple/25',
   'in-development': 'bg-forge-yellow/12 text-forge-yellow border-forge-yellow/30',
-  'early-testing': 'bg-cta/12 text-cta border-cta/30',
+  'early-testing': 'bg-forge-blue/12 text-forge-blue border-forge-blue/30',
+  published: 'bg-forge-green/12 text-forge-green border-forge-green/25',
+};
+
+/** Status-specific availability banner (record copy wins over the default). */
+const STATUS_BANNER: Record<UpcomingApp['roadmapStatus'], { className: string; message: string }> = {
+  planned: {
+    className: 'bg-forge-purple/10 border-forge-purple/30 text-forge-purple',
+    message: 'Development has not started. No application access yet.',
+  },
+  'in-development': {
+    className: 'bg-forge-yellow/10 border-forge-yellow/30 text-forge-yellow',
+    message: 'Currently being built — public release not available.',
+  },
+  'early-testing': {
+    className: 'bg-forge-blue/10 border-forge-blue/30 text-forge-blue',
+    message: 'Internal builds are in testing. Developer-only — not publicly accessible.',
+  },
+  published: {
+    className: 'bg-forge-green/10 border-forge-green/30 text-forge-green',
+    message: 'Public Release — genuinely available to the public.',
+  },
+};
+
+/**
+ * Primary CTA per status. Informational for every non-published status
+ * (an honest statement, not a fake action); a REAL destination link only
+ * for published (publicUrl) or a planned record with a real concept page.
+ */
+const STATUS_CTA_LABEL: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'Coming Later',
+  'in-development': 'In Development',
+  'early-testing': 'Internal Testing Only',
+  published: 'Open App',
 };
 
 const MILESTONE_LABELS: Record<MilestoneStatus, string> = {
@@ -376,11 +415,45 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
           </span>
         </div>
 
-        {/* Exact unreleased boundary banner */}
-        <p className="mt-2.5 rounded-lg bg-forge-yellow/10 border border-forge-yellow/30 px-3 py-1.5 text-[11px] font-semibold text-forge-yellow leading-snug">
-          Roadmap preview – not released yet. Nothing here is installable or
-          available on AppMintly today.
+        {/* Status-specific availability banner — record copy wins over the default */}
+        <p
+          className={`mt-2.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold leading-snug ${STATUS_BANNER[app.roadmapStatus].className}`}
+        >
+          {app.accessMessage ?? STATUS_BANNER[app.roadmapStatus].message}
         </p>
+
+        {/* Primary CTA — status-driven and honest.
+            PUBLISHED: a real link to the record's verified publicUrl.
+            PLANNED with a real concept page: "View Concept".
+            Everything else: an informational statement, never a fake action
+            and never an install/download button. */}
+        {app.roadmapStatus === 'published' && app.publicUrl ? (
+          <a
+            href={app.publicUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-2 inline-flex items-center justify-center gap-1.5 min-h-[40px] w-full rounded-xl bg-forge-green text-white text-xs font-bold shadow-sm transition-all duration-200 hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-forge-green/60"
+          >
+            <ArrowRight className="w-4 h-4" aria-hidden />
+            {STATUS_CTA_LABEL.published}
+          </a>
+        ) : app.roadmapStatus === 'planned' && app.conceptUrl ? (
+          <a
+            href={app.conceptUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-2 inline-flex items-center justify-center gap-1.5 min-h-[40px] w-full rounded-xl border border-forge-purple/40 bg-forge-purple/10 text-forge-purple text-xs font-bold transition-all duration-200 hover:bg-forge-purple/15 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-forge-purple/60"
+          >
+            View Concept
+          </a>
+        ) : (
+          <p
+            aria-disabled="true"
+            className="mt-2 inline-flex items-center justify-center min-h-[40px] w-full rounded-xl border border-line bg-page px-3 text-[11px] font-bold text-mut cursor-default select-none"
+          >
+            {STATUS_CTA_LABEL[app.roadmapStatus]}
+          </p>
+        )}
 
         {/* Verification — badges ONLY with evidence; otherwise honest pending. */}
         <p className="mt-2 flex items-center gap-1.5 text-[10px] text-mut leading-snug">

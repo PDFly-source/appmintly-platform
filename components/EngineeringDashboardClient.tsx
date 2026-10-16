@@ -323,6 +323,7 @@ export default function EngineeringDashboardClient() {
               <option value="in-development">In development</option>
               <option value="planned">Planned</option>
               <option value="early-testing">Early testing</option>
+              <option value="published">Published / Released</option>
             </select>
             <div className="flex items-center gap-1.5">
               <ArrowUpDown className="w-3.5 h-3.5 text-mut" aria-hidden />

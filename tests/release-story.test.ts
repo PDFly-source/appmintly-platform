@@ -139,8 +139,11 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('roadmap statuses and milestone honesty are preserved', () => {
+    // Finalized Lab status system (owner-approved): BillCraft moved to
+    // early testing (internal only — never public access); milestones stay
+    // untouched: QA & Release Readiness remains incomplete.
     const billcraft = getUpcomingAppBySlug('billcraft');
-    expect(billcraft?.roadmapStatus).toBe('in-development');
+    expect(billcraft?.roadmapStatus).toBe('early-testing');
     // 2/3 — QA & Release Readiness must stay incomplete.
     const bcDone = billcraft!.milestones.filter((m) => m.status === 'done').length;
     expect(bcDone).toBe(2);
@@ -159,6 +162,10 @@ describe('upcoming-apps data — normalization honesty', () => {
     // Register keeps its existing accurate status.
     const register = getUpcomingAppBySlug('register');
     expect(register?.roadmapStatus).toBe('planned');
+
+    // Cartora and NutriLens stay in development under the finalized system.
+    expect(getUpcomingAppBySlug('cartora')?.roadmapStatus).toBe('in-development');
+    expect(getUpcomingAppBySlug('nutrilens')?.roadmapStatus).toBe('in-development');
   });
 
   // ===== Lab 3.0: roadmap engine + verification system =====
@@ -243,10 +250,15 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: all 4, in-development 3, planned 1, early testing 0', () => {
+  it('filter counts derive from real records: all 4, planned 1, in-development 2, early testing 1, published 0', () => {
+    // Finalized status system — counts match the real dataset exactly:
+    // register planned; cartora + nutrilens in development; billcraft in
+    // early testing (internal only); nothing is published until a record
+    // has a real verified public URL.
     expect(UPCOMING_APPS.length).toBe(4);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(3);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(1);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(0);
   });
 });
