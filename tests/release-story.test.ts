@@ -7,7 +7,7 @@
  *    the catalog/release record — no invented dates, sections or history
  *  - entries carry the record field they were derived from (evidence)
  *  - timeline orders dated entries oldest-first
- *  - the real production catalog record (appmintly 1.0.9) produces a real,
+ *  - the real production catalog record (appmintly 1.0.10) produces a real,
  *    verifiable story — tested against data/apps.json itself
  *  - upcoming-apps.json records survive normalization only when they carry
  *    a valid roadmap status and a real https source repository link
@@ -25,7 +25,7 @@ describe('buildReleaseStory — metadata-only narrative', () => {
     expect(appmintly).toBeDefined();
     const story = buildReleaseStory(appmintly as never);
     expect(story.appName).toBe('AppMintly');
-    expect(story.version).toBe('1.0.9');
+    expect(story.version).toBe('1.0.10');
     expect(story.timeline.length).toBeGreaterThan(0);
     // Release notes are passed through verbatim — never rewritten.
     expect(story.releaseNotes).toEqual((appmintly as unknown as { releaseNotes: string[] }).releaseNotes);
@@ -48,11 +48,11 @@ describe('buildReleaseStory — metadata-only narrative', () => {
     expect(labels).toContain('Catalog record updated');
   });
 
-  it('states the REAL version/build — 1.0.9 / 10009', () => {
+  it('states the REAL version/build — 1.0.10 / 10010', () => {
     const story = buildReleaseStory(appmintly as never);
     const rel = story.timeline.find((e) => e.label === 'Latest release published');
-    expect(rel?.detail).toContain('1.0.9');
-    expect(rel?.detail).toContain('10009');
+    expect(rel?.detail).toContain('1.0.10');
+    expect(rel?.detail).toContain('10010');
   });
 
   it('orders dated entries oldest-first', () => {
