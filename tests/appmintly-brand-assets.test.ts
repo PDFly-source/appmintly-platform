@@ -4,7 +4,7 @@
  * Locks every replaced AppMintly branding asset to the exact bytes derived
  * from the supplied official master artwork (complete composition: A-symbol
  * with green/blue ribbon strokes + floating blue/red/amber pixels,
- * "AppMintly" wordmark — App in green #028B3E, Mintly in blue #0047B7 —
+ * "AppMintly" wordmark — the original nine per-letter brand colors —
  * and the DISCOVER - INSTALL - EXPERIENCE tagline with gold separators, on
  * the artwork's white background). Any revert to the old emblem-only
  * artwork, or any accidental re-crop/recolor, changes a sha256 and fails
@@ -113,10 +113,26 @@ describe('AppMintly official brand assets (Phase 4)', () => {
     }
   });
 
-  it('the wordmark label colors are sampled from the official artwork', () => {
+  it('the wordmark label uses the exact original nine letter colors', () => {
+    // Phase 4 regression fix: the per-letter UI wordmark palette must be
+    // the original brand colors, not the artwork-sampled two-tone system.
     const c = readFileSync('components/AppMintlyLogo.tsx', 'utf-8');
-    expect(c).toContain("#028B3E"); // App — artwork green
-    expect(c).toContain("#0047B7"); // Mintly — artwork blue
-    expect(c).not.toContain('#087A5B'); // old palette must be gone
-  });
-});
+    const m = c.match(/const WORDMARK_LETTER_COLORS = \[([\s\S]*?)\];/);
+    if (!m) throw new Error('WORDMARK_LETTER_COLORS array not found');
+    const colors = [...m[1].matchAll(/'#[0-9A-Fa-f]{6}'/g)].map((x) => x[0]);
+    // all nine assignments, in "AppMintly" letter order
+    expect(colors).toEqual([
+      "'#087A5B'", // A
+      "'#087A5B'", // p
+      "'#087A5B'", // p
+      "'#1248A8'", // M
+      "'#1565E8'", // i
+      "'#E31E24'", // n
+      "'#F4B400'", // t
+      "'#1267E8'", // l
+      "'#E31E24'", // y
+    ]);
+    // the unauthorized Phase 4 sampled colors must be gone
+    expect(c).not.toContain('#028B3E');
+    expect(c).not.toContain('#0047B7');
+  });});
