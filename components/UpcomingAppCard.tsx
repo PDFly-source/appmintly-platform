@@ -51,7 +51,11 @@ import type {
   UpcomingApp,
   VerificationCheck,
 } from '@/data/upcoming-apps';
-import { VERIFICATION_CATEGORIES } from '@/data/upcoming-apps';
+import {
+  VERIFICATION_CATEGORIES,
+  ROADMAP_STATUS_LABEL,
+  ROADMAP_STATUS_SUBTITLE,
+} from '@/data/upcoming-apps';
 import { useUpcomingVote, toggleVote, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
 import {
   useWishlist,
@@ -68,6 +72,14 @@ const STATUS_STYLES: Record<UpcomingApp['roadmapStatus'], string> = {
   'in-development': 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40',
   'early-testing': 'bg-forge-blue/10 text-forge-blue border-forge-blue/30',
   published: 'bg-forge-green/10 text-forge-green border-forge-green/30',
+};
+
+/** Text-only status colors — used for the status subtitle under the badge. */
+const STATUS_TEXT: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'text-forge-purple',
+  'in-development': 'text-forge-yellow',
+  'early-testing': 'text-forge-blue',
+  published: 'text-forge-green',
 };
 
 const STATUS_MONOGRAM: Record<UpcomingApp['roadmapStatus'], string> = {
@@ -407,11 +419,16 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
               {app.category} · by {app.developer}
             </p>
           </div>
-          <span
-            className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLES[app.roadmapStatus]}`}
-          >
-            <FlaskConical className="w-3 h-3" aria-hidden />
-            {app.roadmapStatusLabel}
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLES[app.roadmapStatus]}`}
+            >
+              <FlaskConical className="w-3 h-3" aria-hidden />
+              {ROADMAP_STATUS_LABEL[app.roadmapStatus]}
+            </span>
+            <span className={`text-[9px] font-bold uppercase tracking-wide ${STATUS_TEXT[app.roadmapStatus]}`}>
+              {app.roadmapStatusLabel ?? ROADMAP_STATUS_SUBTITLE[app.roadmapStatus]}
+            </span>
           </span>
         </div>
 
@@ -514,7 +531,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
 
         {/* Practical user benefits — derived from the planned features */}
         {app.benefits && app.benefits.length > 0 && (
-          <ul className="mt-2 grid gap-1" aria-label={`What you get with ${app.name}`}>
+          <ul className="mt-2 grid gap-1" aria-label={`Planned benefits of ${app.name}`}>
             {app.benefits.map((b) => (
               <li key={b} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
                 <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
@@ -554,14 +571,21 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
           )}
         </div>
 
-        {/* Feature highlights + Show All / Show Less planned capabilities */}
-        <div className="mt-3 grid gap-1.5">
-          {app.proposedFeatures.slice(0, 3).map((f) => (
-            <p key={f} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
-              {f}
-            </p>
-          ))}
+        {/* Feature highlights — PLANNED features, explicitly labelled so
+            nothing reads as already implemented. Show All / Show Less
+            planned capabilities below. */}
+        <div className="mt-3">
+          <p className="text-[10px] font-black uppercase tracking-wider text-mut mb-1.5">
+            Planned features
+          </p>
+          <div className="grid gap-1.5">
+            {app.proposedFeatures.slice(0, 3).map((f) => (
+              <p key={f} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
+                <Circle className="w-3 h-3 shrink-0 mt-1 text-mut/70" aria-hidden />
+                {f}
+              </p>
+            ))}
+          </div>
         </div>
         {app.plannedCapabilities.length > 0 && (
           <div className="mt-1.5">
