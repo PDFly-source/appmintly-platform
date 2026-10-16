@@ -85,7 +85,19 @@ const externals: Array<[string, string]> = [
   ['[18n] userinfo credential trick → external (fail-closed)', `https://user@${new URL(launchUrl).host}/`],
   ['[18o] bare origin without trailing slash → external (fail-closed)', new URL(launchUrl).origin],
 ];
-for (const [name, url] of externals) ok(name, !isWebViewOwnedUrl(url, launchUrl));
+// An entry that IS the launch boundary (or inside its prefix) belongs to the
+// app being released: it must be OWNED — exactly the semantics of the 4e
+// ownership matrix below. Everything else must stay external. This keeps the
+// gate fail-closed for every sibling/attack URL while making a release of the
+// app listed here (e.g. the Niramay APK whose SOURCE_URL is entry [5]) pass
+// its own boundary definition instead of contradicting it.
+for (const [name, url] of externals) {
+  const selfOwned = url === launchUrl || url.startsWith(prefix);
+  ok(
+    selfOwned ? `${name} [self-boundary → must be OWNED]` : name,
+    selfOwned ? isWebViewOwnedUrl(url, launchUrl) : !isWebViewOwnedUrl(url, launchUrl),
+  );
+}
 
 ok('[12a] javascript: scheme never owned', !isWebViewOwnedUrl('javascript:alert(1)', launchUrl));
 ok('[12b] data: scheme never owned', !isWebViewOwnedUrl('data:text/html,<script>1</script>', launchUrl));
@@ -178,10 +190,20 @@ const ownedAfter = catalogAfter.filter((a) => {
   return t ? isWebViewOwnedUrl(t, launchUrl) : false;
 }).map((a) => a.name);
 ok('publishing a new app changes nobody\'s ownership', JSON.stringify(ownedBefore) === JSON.stringify(ownedAfter), `before=[${ownedBefore}] after=[${ownedAfter}]`);
+const staysExternalAfterPublish = (app: any, label: string) => {
+  const target = resolveOpenOnWebUrl(app) ?? '';
+  // A catalog app whose URL IS this release's boundary is the app being
+  // released — 4e semantics say it must be OWNED, never 'external'.
+  const selfOwned = target === launchUrl || target.startsWith(prefix);
+  ok(
+    selfOwned ? `${label} is the release boundary itself after publish (must be OWNED)` : `${label} stays external after publish`,
+    selfOwned ? isWebViewOwnedUrl(target, launchUrl) : !isWebViewOwnedUrl(target, launchUrl),
+  );
+};
 const niramay = catalog.find((a: any) => a.slug === 'niramay');
-if (niramay) ok('Niramay stays external after publish', !isWebViewOwnedUrl(resolveOpenOnWebUrl(niramay) ?? '', launchUrl));
+if (niramay) staysExternalAfterPublish(niramay, 'Niramay');
 const nexdrop = catalog.find((a: any) => a.slug === 'nexdrop');
-if (nexdrop) ok('NexDrop stays external after publish', !isWebViewOwnedUrl(resolveOpenOnWebUrl(nexdrop) ?? '', launchUrl));
+if (nexdrop) staysExternalAfterPublish(nexdrop, 'NexDrop');
 
 // 4e. the marketplace's own app record resolves to the owned boundary only
 // when it is literally the marketplace's own URL.
