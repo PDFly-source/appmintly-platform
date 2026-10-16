@@ -604,7 +604,7 @@
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/niramay-v2.1.1/Niramay-2.1.1.apk",
       "fileSizeBytes": 337774,
       "releaseTag": "niramay-v2.1.1",
-      "generatedAt": "2026-10-16T05:02:40.711Z",
+      "generatedAt": "2026-10-16T05:02:39.000Z",
       "buildStatus": "released",
       "verified": true,
       "downloadAvailable": true,
@@ -641,7 +641,7 @@
       "installationType": "Web App + signed Android APK package",
       "externalServices": []
     },
-    "updatedAt": "2026-10-16T05:02:40.711Z",
+    "updatedAt": "2026-10-16T05:04:06.501Z",
     "status": "published"
   },
   {
