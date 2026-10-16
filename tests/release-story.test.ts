@@ -222,11 +222,16 @@ describe('upcoming-apps data — normalization honesty', () => {
     const reg = getUpcomingAppBySlug('register')!;
     const passed = reg.verification!.checks.filter((c) => c.result === 'passed');
     const unable = reg.verification!.checks.filter((c) => c.result === 'unable-to-verify');
-    expect(passed.length).toBe(1);
-    expect(passed[0].category).toBe('core-flow');
-    expect(passed[0].buildId).toContain('eb6bc17'); // real repository commit
-    expect(unable.length).toBe(1);
-    expect(unable[0].category).toBe('build');
+    // Status-consistency audit (2026-10-16): the repository/registry
+    // integrity suite is preserved as evidence but is NOT a passed
+    // application core-flow check — nothing about the planned Register
+    // webapp has passed yet.
+    expect(passed.length).toBe(0);
+    const coreFlow = unable.find((c) => c.category === 'core-flow')!;
+    expect(coreFlow.buildId).toContain('eb6bc17'); // real repository commit
+    expect(coreFlow.summary).toMatch(/repository\/registry integrity verification/i);
+    expect(unable.length).toBe(2);
+    expect(unable.map((c) => c.category).sort()).toEqual(['build', 'core-flow']);
     // The rg-m1 completion milestone is now backed by recorded evidence.
     const m1 = reg.milestones.find((m) => m.id === 'rg-m1')!;
     expect(m1.status).toBe('done');

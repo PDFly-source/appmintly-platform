@@ -30,7 +30,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { getUpcomingApps } from '@/data/upcoming-apps';
+import { getUpcomingApps, ROADMAP_STATUS_LABEL } from '@/data/upcoming-apps';
 import type { UpcomingApp } from '@/data/upcoming-apps';
 import { UpcomingAppCard } from '@/components/UpcomingAppCard';
 import { localVoteCount, pruneOrphanVotes, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
@@ -674,7 +674,7 @@ function CompareDialog({ apps, onClose }: { apps: UpcomingApp[]; onClose: () => 
               <div key={a.id} className="rounded-xl border border-line bg-page p-3.5 grid content-start gap-2">
                 <p className="text-sm font-bold text-ink leading-snug">{a.name}</p>
                 <p className="text-[11px] text-mut leading-snug">{a.category}</p>
-                <p className="text-[11px] font-bold text-cta">{a.roadmapStatusLabel}</p>
+                <p className="text-[11px] font-bold text-cta">{ROADMAP_STATUS_LABEL[a.roadmapStatus]}</p>
                 <div>
                   <div className="flex items-center justify-between text-[10px] font-bold text-mut">
                     <span className="uppercase tracking-wider">Progress</span>

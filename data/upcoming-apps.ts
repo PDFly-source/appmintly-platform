@@ -96,6 +96,27 @@ export interface UpcomingApp {
   draftNote: string;
 }
 
+/**
+ * Canonical status labels of the finalized four-status system. The badge on
+ * every Lab card shows THIS label (e.g. "Early Testing"); the record's
+ * `roadmapStatusLabel` is the status SUBTITLE (e.g. "Internal Only") and is
+ * rendered as a secondary line, never as the badge itself.
+ */
+export const ROADMAP_STATUS_LABEL: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'Planned',
+  'in-development': 'In Development',
+  'early-testing': 'Early Testing',
+  published: 'Published / Released',
+};
+
+/** Default status subtitles (used when a record does not carry its own). */
+export const ROADMAP_STATUS_SUBTITLE: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'Idea & Planning',
+  'in-development': 'Building Now',
+  'early-testing': 'Internal Only',
+  published: 'Public Release',
+};
+
 /** AppMintly verification categories (distinct checks, not decorations). */
 export const VERIFICATION_CATEGORIES = [
   'identity',
