@@ -800,7 +800,7 @@
     "shortName": "BillCraft",
     "developer": "PKD",
     "developerSlug": "pkd",
-    "type": "PWA",
+    "type": "Web App",
     "category": "Productivity",
     "description": "BillCraft — Create. Calculate. Share.\n\nBillCraft is a privacy-first document creation tool designed to help freelancers, independent professionals and small business owners create polished business documents without unnecessary complexity.\n\nCreate invoices, quotations, receipts and estimates using professionally designed templates. Calculate GST, discounts and totals, convert amounts into words, and prepare documents for sharing or PDF export.\n\nKey Features:\n\n1. Professional Invoice Creator\n2. Quotation & Estimate Generator\n3. Receipt Creation\n4. Premium Document Templates\n5. GST Calculator — CGST, SGST & IGST\n6. Discount & Savings Calculator\n7. Amount in Words\n8. PDF Export\n9. UPI QR Support\n10. Local-First Privacy Workflow\n\nTarget audience: Freelancers, independent professionals, small business owners, consultants and service providers.\n\nBillCraft works entirely on your device — no account, no cloud document storage, no backend server. Your business documents stay yours. PDF export and UPI QR codes are generated locally in your browser.",
     "shortDescription": "Create professional invoices, quotations, receipts and estimates with private, local-first PDF tools.",
@@ -886,12 +886,22 @@
     "apk": {
       "enabled": false,
       "buildMode": "webview",
-      "packageId": "",
-      "authorized": false
+      "packageId": "com.appforge.billcraft",
+      "authorized": true
     },
     "privacyTech": {
       "permissions": [],
-      "notes": "Browser PWA. No Android permissions. All document data is stored locally in the browser (IndexedDB/localStorage) and never transmitted to a server. Works offline after first load."
+      "dataCollection": "No accounts, no analytics, no telemetry. Invoices, clients, products and settings are stored only in this browser (IndexedDB + localStorage) and never transmitted to a server.",
+      "tracking": "No trackers, ads or telemetry — verified from the source dependency tree and a runtime request audit (zero third-party requests on load).",
+      "networkRequirement": "offline-capable",
+      "offlineSupport": "Service worker caches the app shell (same-origin only). First load needs a connection; after that document creation, calculations and PDF export work offline on this device.",
+      "pwaSupport": "verified-installable",
+      "installationType": "Installable Web App (PWA)",
+      "storage": "Browser local storage only: documents, clients, products, drafts and settings in IndexedDB and localStorage on your own device. No cloud document storage.",
+      "externalServices": [
+        "GitHub Pages (site hosting)"
+      ],
+      "notes": "Verified 2026-10-17 from the BillCraft source audit and a deployed-site runtime audit (mobile emulation, zero cross-origin requests, no console errors, service worker active). Android permissions pending the first signed APK manifest inspection."
     },
     "updatedAt": "2026-10-17T13:00:00.000Z"
   }

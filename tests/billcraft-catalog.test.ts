@@ -39,7 +39,7 @@ describe('BillCraft official publication — catalog record', () => {
     expect(bc.id).toBe('billcraft');
     expect(bc.developer).toBe('PKD');
     expect(bc.developerSlug).toBe('pkd');
-    expect(bc.type).toBe('PWA');
+    expect(bc.type).toBe('Web App'); // dual distribution: web app + APK (like the AppMintly app)
     expect(bc.category).toBe('Productivity');
     expect(bc.version).toBe('0.1.0'); // derived from the repository package.json
     expect(bc.status).toBe('published');
@@ -57,9 +57,14 @@ describe('BillCraft official publication — catalog record', () => {
     // No accounting/tax-filing overclaim.
     expect(bc.description.toLowerCase()).not.toContain('tax filing');
     expect(bc.description.toLowerCase()).not.toContain('regulatory');
-    // No APK claims — PWA-only listing.
-    expect(bc.apk?.enabled).toBe(false);
-    expect(bc.apkUrl ?? '').toBe('');
+    // Dual-release preparation: the APK is pre-configured for the
+    // Production APK Release workflow (found by packageId), but stays
+    // DISABLED until that workflow's fail-closed gates publish a verified
+    // signed binary. Never enabled without a real artifact URL.
+    expect(bc.apk?.packageId).toBe('com.appforge.billcraft');
+    expect(bc.apk?.buildMode).toBe('webview');
+    expect(bc.apk?.enabled).toBe(!!(bc.apk?.apkUrl && bc.apk?.sha256 && bc.apk?.fileSizeBytes));
+    expect(bc.apkUrl ?? '').toBe(bc.apk?.apkUrl ?? '');
   });
 
   test('exactly 10 verified key features and 3 release notes', () => {
@@ -152,5 +157,69 @@ describe('BillCraft official publication — isolation', () => {
     const official = readFileSync(join(REPO, 'public', 'brand', 'appmintly-logo-official.png'));
     expect(createHash('sha256').update(official).digest('hex').slice(0, 12)).toBe('74e7386ec91e');
     for (const p of Object.keys(pins)) expect(existsSync(join(REPO, p))).toBe(true);
+  });
+});
+
+describe('BillCraft dual release — evidence-based verification', () => {
+  const bc = readCatalog().find((a: any) => a.slug === 'billcraft')!;
+  const pt = bc.privacyTech;
+
+  test('privacyTech: seven web-verified fields carry real evidence', () => {
+    expect(pt.dataCollection).toContain('IndexedDB');
+    expect(pt.tracking.toLowerCase()).toContain('no trackers');
+    expect(pt.networkRequirement).toBe('offline-capable');
+    expect(pt.offlineSupport.toLowerCase()).toContain('service worker');
+    expect(pt.pwaSupport).toBe('verified-installable');
+    expect(pt.storage).toContain('localStorage');
+    expect(pt.installationType).toContain('PWA');
+    expect(pt.externalServices).toContain('GitHub Pages (site hosting)');
+  });
+
+  test('Android permissions are NEVER claimed before a real APK manifest inspection', () => {
+    // Fail-closed: permissions may only appear with permissionsSource
+    // 'apk-manifest' (the signed binary's actual manifest), and only when
+    // an authoritative APK release exists.
+    if (pt.permissions && pt.permissions.length > 0) {
+      expect(pt.permissionsSource).toBe('apk-manifest');
+      expect(bc.apk?.enabled).toBe(true);
+      expect(bc.apk?.verified).toBe(true);
+      for (const perm of pt.permissions) {
+        expect(perm).toMatch(/^android\.permission\./);
+      }
+    } else {
+      expect(pt.permissionsSource ?? 'pending').not.toBe('apk-manifest');
+    }
+  });
+
+  test('APK metadata, when released, is internally consistent and never a downgrade', () => {
+    if (bc.apk?.enabled) {
+      expect(bc.apk.apkUrl).toMatch(/^https:\/\/github\.com\/PDFly-source\/appmintly-releases\/releases\/download\/billcraft-v[\d.]+\/BillCraft-[\d.]+\.apk$/);
+      expect(bc.apk.sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(bc.apk.fileSizeBytes).toBeGreaterThan(45000);
+      expect(bc.apk.versionName).toBe(bc.version);
+      expect(bc.apk.versionCode).toBeGreaterThanOrEqual(100); // 0.1.0 -> 100
+      expect(bc.apk.buildStatus).toBe('released');
+      expect(bc.apk.verified).toBe(true);
+      expect(bc.apk.certificateSha256Fingerprint).toBe(
+        'dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368'
+      );
+      expect(bc.apkUrl).toBe(bc.apk.apkUrl);
+    } else {
+      // Pre-release: no download claims anywhere on the listing.
+      expect(bc.apkUrl ?? '').toBe('');
+      expect(bc.downloadUrl ?? '').toBe('');
+    }
+  });
+
+  test('installationType only claims the APK path once the APK is verified', () => {
+    if (!bc.apk?.enabled) {
+      expect(pt.installationType).not.toContain('APK');
+      expect(pt.externalServices).not.toContain('GitHub Releases (APK distribution)');
+    }
+  });
+
+  test('version code derivation for 0.1.0 matches the builder formula', () => {
+    const [major, minor, patch] = bc.version.split('.').map(Number);
+    expect(major * 10000 + minor * 100 + patch).toBe(100);
   });
 });
