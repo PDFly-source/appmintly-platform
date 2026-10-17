@@ -788,5 +788,107 @@
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
     "updatedAt": "2026-10-16T04:12:44.072Z"
+  },
+  {
+    "id": "billcraft",
+    "slug": "billcraft",
+    "name": "BillCraft",
+    "shortName": "BillCraft",
+    "developer": "PKD",
+    "developerSlug": "pkd",
+    "type": "PWA",
+    "category": "Productivity",
+    "description": "BillCraft — Create. Calculate. Share.\n\nBillCraft is a privacy-first document creation tool designed to help freelancers, independent professionals and small business owners create polished business documents without unnecessary complexity.\n\nCreate invoices, quotations, receipts and estimates using professionally designed templates. Calculate GST, discounts and totals, convert amounts into words, and prepare documents for sharing or PDF export.\n\nKey Features:\n\n1. Professional Invoice Creator\n2. Quotation & Estimate Generator\n3. Receipt Creation\n4. Premium Document Templates\n5. GST Calculator — CGST, SGST & IGST\n6. Discount & Savings Calculator\n7. Amount in Words\n8. PDF Export\n9. UPI QR Support\n10. Local-First Privacy Workflow\n\nTarget audience: Freelancers, independent professionals, small business owners, consultants and service providers.\n\nBillCraft works entirely on your device — no account, no cloud document storage, no backend server. Your business documents stay yours. PDF export and UPI QR codes are generated locally in your browser.",
+    "shortDescription": "Create professional invoices, quotations, receipts and estimates with private, local-first PDF tools.",
+    "icon": "/brand/billcraft-icon-384.png",
+    "screenshots": [
+      "/assets/apps/billcraft/screenshots/screenshot-1-e080ebcaf9.png",
+      "/assets/apps/billcraft/screenshots/screenshot-2-4c1e807db3.png",
+      "/assets/apps/billcraft/screenshots/screenshot-3-395e3b75aa.png",
+      "/assets/apps/billcraft/screenshots/screenshot-4-41f3f7f9f5.png"
+    ],
+    "banner": "",
+    "url": "https://pdfly-source.github.io/billcraft/",
+    "launchUrl": "https://pdfly-source.github.io/billcraft/",
+    "webUrl": "https://pdfly-source.github.io/billcraft/",
+    "pwaUrl": "https://pdfly-source.github.io/billcraft/",
+    "apkUrl": "",
+    "playStoreUrl": "",
+    "appStoreUrl": "",
+    "version": "0.1.0",
+    "previousVersion": "",
+    "releaseDate": "2026-10-17",
+    "lastUpdated": "2026-10-17",
+    "publishedAt": "2026-10-17T13:00:00.000Z",
+    "themeColor": "#593C8F",
+    "backgroundColor": "#FAF6EE",
+    "manifestUrl": "https://pdfly-source.github.io/billcraft/manifest.webmanifest",
+    "startUrl": "https://pdfly-source.github.io/billcraft/",
+    "scope": "https://pdfly-source.github.io/billcraft/",
+    "pwa": {
+      "detected": true,
+      "installable": true,
+      "manifestDetected": true,
+      "serviceWorkerDetected": true,
+      "statusSummary": "PWA Ready"
+    },
+    "features": [
+      "Professional Invoice Creator — Build tax invoices with line items, HSN/SAC codes and live totals.",
+      "Quotation & Estimate Generator — Create quotations and estimates, then convert them to other document types.",
+      "Receipt Creation — Issue receipts with payment records and balance tracking.",
+      "Premium Document Templates — Ten professionally designed templates with six colour themes.",
+      "GST Calculator — CGST, SGST and IGST breakdowns on every document plus a standalone quick tool.",
+      "Discount & Savings Calculator — Per-line and document-level discounts with an offline savings tool.",
+      "Amount in Words — Automatic written amounts in rupees for printed documents.",
+      "PDF Export — Client-side A4 PDF generation with a pre-flight document health check.",
+      "UPI QR Support — Payment QR codes generated locally on the document, with payment records.",
+      "Local-First Privacy Workflow — Documents stay on your device: no account, no cloud storage, no backend."
+    ],
+    "tags": [
+      "invoicing",
+      "gst",
+      "pdf",
+      "quotations",
+      "receipts",
+      "estimates",
+      "upi",
+      "qr",
+      "business",
+      "finance",
+      "local-first",
+      "no-account",
+      "privacy",
+      "offline",
+      "pwa"
+    ],
+    "releaseNotes": [
+      "BillCraft launches on AppMintly as its sixth published application.",
+      "Create invoices, quotations, receipts and estimates with the available templates and calculation tools.",
+      "Explore a privacy-focused document workflow with PDF export and business-document utilities."
+    ],
+    "changelog": [],
+    "featured": false,
+    "original": true,
+    "published": true,
+    "status": "published",
+    "pwaUrlNote": "",
+    "isDemo": false,
+    "size": "",
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ],
+    "apk": {
+      "enabled": false,
+      "buildMode": "webview",
+      "packageId": "",
+      "authorized": false
+    },
+    "privacyTech": {
+      "permissions": [],
+      "notes": "Browser PWA. No Android permissions. All document data is stored locally in the browser (IndexedDB/localStorage) and never transmitted to a server. Works offline after first load."
+    },
+    "updatedAt": "2026-10-17T13:00:00.000Z"
   }
 ]

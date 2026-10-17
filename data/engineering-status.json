@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "scan_time": "2026-10-15T10:06:28Z",
+  "scan_time": "2026-10-17T13:24:10Z",
   "pipeline_state": "green",
   "catalog_diff": {
     "additions": 1,
-    "unchanged": 5,
+    "unchanged": 6,
     "removals": 0,
-    "generated_from": "git diff of data/apps.json between commit 72be95f (pre-NexDrop catalog, 5 apps) and 8c37b9c (release 1.0.9, 6 apps): NexDrop added (510dc06), 5 apps unchanged, none removed"
+    "generated_from": "git diff of data/apps.json between the pre-BillCraft catalog (commit 7200370, 7 records incl. 1 draft) and this publication commit: BillCraft 0.1.0 added (2026-10-17), 6 records unchanged, none removed"
   },
   "health_indicator": {
     "overall": "green",
@@ -15,19 +15,19 @@
         "id": "deploy_success",
         "label": "Deploy Success",
         "status": "green",
-        "description": "Latest production deployment run 38700984980 (commit ed7fb7c) completed successfully on GitHub Pages."
+        "description": "Latest production deployment of the AppMintly marketplace completed successfully on GitHub Pages (pages.dev mirror propagates within minutes)."
       },
       {
         "id": "catalog_integrity",
         "label": "Catalog Integrity",
         "status": "green",
-        "description": "data/apps.json is a valid array of 6 catalog records; format is validated on every deployment run."
+        "description": "data/apps.json is a valid array of 7 catalog records (6 published + 1 draft); format is validated on every deployment run."
       },
       {
         "id": "asset_verification",
         "label": "Asset Verification",
         "status": "green",
-        "description": "Release APK appmintly-v1.0.9 published with SHA-256 integrity verification through the release pipeline (commit 8c37b9c)."
+        "description": "AppMintly v1.0.10 release APK published with SHA-256 integrity verification through the release pipeline (commit 7200370). BillCraft 0.1.0 PWA publication verified with regression suites on both repositories before merge."
       }
     ]
   },

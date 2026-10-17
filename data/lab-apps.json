@@ -3,60 +3,6 @@
   "generated_from": "data/upcoming-apps.json (public Lab records incl. Phase 3.1 verification evidence) + retired records recovered from repository history at commit 58fbf67 (publisher-console, pdfly)",
   "apps": [
     {
-      "id": "billcraft",
-      "name": "BillCraft",
-      "status": "in-development",
-      "hidden": false,
-      "verification": [
-        {
-          "id": "V-BILL-IDENTITY",
-          "category": "identity",
-          "result": "pending"
-        },
-        {
-          "id": "V-BILL-BUILD",
-          "category": "build",
-          "result": "pending"
-        },
-        {
-          "id": "V-BILL-CORE-FLOW",
-          "category": "core-flow",
-          "result": "pending"
-        },
-        {
-          "id": "V-BILL-DEVICE",
-          "category": "device",
-          "result": "pending"
-        },
-        {
-          "id": "V-BILL-RELEASE",
-          "category": "release",
-          "result": "pending"
-        }
-      ],
-      "milestones": [
-        {
-          "id": "bc-m1",
-          "title": "Product Planning & UI/UX Design",
-          "description": "Product scope, document types, and the premium template direction were defined and reviewed by the AppMintly team.",
-          "status": "done"
-        },
-        {
-          "id": "bc-m2",
-          "title": "Functional Webapp Development",
-          "description": "The core document editor with GST calculations and client-side PDF export was implemented as a working webapp.",
-          "status": "done"
-        },
-        {
-          "id": "bc-m3",
-          "title": "QA & Release Readiness",
-          "description": "Final quality assurance, accessibility, and release checks remain open; not started or verified yet.",
-          "status": "planned"
-        }
-      ],
-      "progress_percent": 67
-    },
-    {
       "id": "cartora",
       "name": "Cartora",
       "status": "in-development",

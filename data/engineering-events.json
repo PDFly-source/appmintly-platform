@@ -2,6 +2,13 @@
   "schema_version": 1,
   "events": [
     {
+      "id": "EVT-20261017-01",
+      "timestamp": "2026-10-17T13:30:00Z",
+      "type": "catalog",
+      "title": "BillCraft published as AppMintly's sixth application",
+      "description": "BillCraft 0.1.0 (PWA) added to data/apps.json as the sixth published catalog record; Lab status moved to released; complete-lockup launcher branding prepared on PDFly-source/billcraft release/official-publication (c84f0a5)."
+    },
+    {
       "id": "EVT-20261015-01",
       "timestamp": "2026-10-15T08:40:00Z",
       "type": "verification",
@@ -25,14 +32,6 @@
       "title": "Phase 1E horizontal showcase deployed",
       "description": "Five-card horizontal Lab showcase (BillCraft, Cartora, NutriLens, AppMintly Register, More Apps Coming Soon) deployed; Publisher Console and PDFly retired from the public Lab.",
       "commit": "0c9d818"
-    },
-    {
-      "id": "EVT-20261014-02",
-      "timestamp": "2026-10-14T19:15:00Z",
-      "type": "deploy",
-      "title": "Phase 1D premium Lab UI deployed",
-      "description": "Premium hero, roadmap filter cards, product showcase cards and removal of public GitHub links deployed; production QA suites all green on the live URL.",
-      "commit": "58fbf67"
     },
     {
       "id": "EVT-20261008-01",

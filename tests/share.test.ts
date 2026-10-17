@@ -49,9 +49,9 @@ beforeEach(() => {
 });
 
 describe('1+6+8: canonical share URLs for every published app (export mode = production)', () => {
-  it('produces the correct canonical detail URL for all five published apps', async () => {
+  it('produces the correct canonical detail URL for all six published apps', async () => {
     const share = await loadShare('export'); // production static-export builds
-    const expectedSlugs = ['appmintly', 'studyria', 'pdfminifly', 'niramay', 'nexdrop'];
+    const expectedSlugs = ['appmintly', 'studyria', 'pdfminifly', 'niramay', 'nexdrop', 'billcraft'];
     expect(publishedApps.map((a) => a.slug).sort()).toEqual([...expectedSlugs].sort());
     for (const app of publishedApps) {
       expect(share.buildAppShareUrl(app.slug)).toBe(`${CANONICAL}app/${app.slug}/`);

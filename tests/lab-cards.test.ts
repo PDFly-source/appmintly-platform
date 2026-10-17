@@ -24,7 +24,7 @@ const FORBIDDEN_CLAIMS = [
 
 describe('problem statements and benefits — honest, complete, claim-free', () => {
   it('every public app record carries a problem statement and benefits', () => {
-    expect(UPCOMING_APPS.length).toBe(4);
+    expect(UPCOMING_APPS.length).toBe(3); // BillCraft graduated to the catalog (2026-10-17)
     for (const app of UPCOMING_APPS) {
       expect(app.problem, `${app.id} problem`).toBeTruthy();
       expect(app.benefits, `${app.id} benefits`).toBeTruthy();

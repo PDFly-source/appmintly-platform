@@ -25,7 +25,7 @@ describe('buildReleaseStory — metadata-only narrative', () => {
     expect(appmintly).toBeDefined();
     const story = buildReleaseStory(appmintly as never);
     expect(story.appName).toBe('AppMintly');
-    expect(story.version).toBe('1.0.9');
+    expect(story.version).toBe('1.0.10');
     expect(story.timeline.length).toBeGreaterThan(0);
     // Release notes are passed through verbatim — never rewritten.
     expect(story.releaseNotes).toEqual((appmintly as unknown as { releaseNotes: string[] }).releaseNotes);
@@ -48,11 +48,11 @@ describe('buildReleaseStory — metadata-only narrative', () => {
     expect(labels).toContain('Catalog record updated');
   });
 
-  it('states the REAL version/build — 1.0.9 / 10009', () => {
+  it('states the REAL version/build — 1.0.10 / 10010', () => {
     const story = buildReleaseStory(appmintly as never);
     const rel = story.timeline.find((e) => e.label === 'Latest release published');
-    expect(rel?.detail).toContain('1.0.9');
-    expect(rel?.detail).toContain('10009');
+    expect(rel?.detail).toContain('1.0.10');
+    expect(rel?.detail).toContain('10010');
   });
 
   it('orders dated entries oldest-first', () => {
@@ -121,8 +121,8 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   // Phase 1E — exact public showcase catalog.
-  it('public catalog is exactly the five showcase entries in order', () => {
-    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['billcraft', 'cartora', 'nutrilens', 'register']);
+  it('public catalog is exactly the three showcase entries in order (BillCraft published)', () => {
+    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['cartora', 'nutrilens', 'register']);
   });
 
   it('Publisher Console and PDFly are absent from the public Lab catalog', () => {
@@ -133,18 +133,13 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('new showcase entries carry their official logo assets', () => {
-    expect(getUpcomingAppBySlug('billcraft')?.logo).toBe('/brand/billcraft-logo.png');
     expect(getUpcomingAppBySlug('cartora')?.logo).toBe('/brand/cartora-logo.png');
     expect(getUpcomingAppBySlug('nutrilens')?.logo).toBe('/brand/nutrilens-logo.png');
   });
 
   it('roadmap statuses and milestone honesty are preserved', () => {
-    const billcraft = getUpcomingAppBySlug('billcraft');
-    expect(billcraft?.roadmapStatus).toBe('in-development');
-    // 2/3 — QA & Release Readiness must stay incomplete.
-    const bcDone = billcraft!.milestones.filter((m) => m.status === 'done').length;
-    expect(bcDone).toBe(2);
-    expect(billcraft!.milestones[2].status).toBe('planned');
+    // BillCraft graduated to the published catalog (2026-10-17) — no longer showcased.
+    expect(getUpcomingAppBySlug('billcraft')).toBeUndefined();
 
     const cartora = getUpcomingAppBySlug('cartora');
     expect(cartora?.milestones.filter((m) => m.status === 'done').length).toBe(2);
@@ -226,7 +221,7 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(m1.evidence).toContain('eb6bc17');
     expect(m1.lastUpdated).toBe('2026-10-15');
     // BillCraft, Cartora and NutriLens have no recorded checks yet — pending.
-    for (const slug of ['billcraft', 'cartora', 'nutrilens']) {
+    for (const slug of ['cartora', 'nutrilens']) { // billcraft graduated (2026-10-17)
       const app = getUpcomingAppBySlug(slug)!;
       expect(app.verification!.checks.every((c) => c.result === 'pending')).toBe(true);
       for (const m of app.milestones) expect(m.evidence).toBeUndefined();
@@ -243,9 +238,9 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: all 4, in-development 3, planned 1, early testing 0', () => {
-    expect(UPCOMING_APPS.length).toBe(4);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(3);
+  it('filter counts derive from real records: all 3, in-development 2, planned 1, early testing 0', () => {
+    expect(UPCOMING_APPS.length).toBe(3);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
   });

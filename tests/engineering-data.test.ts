@@ -8,7 +8,7 @@
  *    evidence (summary + date + source) — a missing check is never a pass
  *  - 'unable-to-verify' checks explain why
  *  - engineering-status health conditions are all green with descriptions
- *  - catalog diff matches the real git-derived numbers (NexDrop addition)
+ *  - catalog diff matches the real git-derived numbers (BillCraft addition)
  *  - the 5 latest events are real, ordered newest-first, no placeholders
  *  - scan_time is a recent real ISO timestamp
  *  - no "SPEC PLACEHOLDER" strings survive anywhere
@@ -27,11 +27,11 @@ const engEvents = readJson('engineering-events.json');
 const VALID_RESULTS = ['pending', 'passed', 'failed', 'unable-to-verify'];
 
 describe('Phase 3.2 — engineering status data', () => {
-  it('lab-apps contains exactly six records: 4 public + 2 hidden', () => {
+  it('lab-apps contains exactly five records: 3 public + 2 hidden (BillCraft graduated)', () => {
     const apps = labApps.apps as Array<{ id: string; hidden: boolean }>;
-    expect(apps).toHaveLength(6);
+    expect(apps).toHaveLength(5);
     expect(apps.filter((a) => !a.hidden).map((a) => a.id)).toEqual([
-      'billcraft', 'cartora', 'nutrilens', 'register',
+      'cartora', 'nutrilens', 'register',
     ]);
     expect(apps.filter((a) => a.hidden).map((a) => a.id).sort()).toEqual([
       'pdfly', 'publisher-console',
@@ -109,12 +109,12 @@ describe('Phase 3.2 — engineering status data', () => {
     }
   });
 
-  it('catalog diff matches the git-derived reality (1 addition: NexDrop)', () => {
+  it('catalog diff matches the git-derived reality (1 addition: BillCraft)', () => {
     expect(engStatus.catalog_diff.additions).toBe(1);
-    expect(engStatus.catalog_diff.unchanged).toBe(5);
+    expect(engStatus.catalog_diff.unchanged).toBe(6);
     expect(engStatus.catalog_diff.removals).toBe(0);
-    expect(engStatus.catalog_diff.generated_from).toContain('NexDrop');
-    expect(engStatus.catalog_diff.generated_from).toContain('72be95f');
+    expect(engStatus.catalog_diff.generated_from).toContain('BillCraft');
+    expect(engStatus.catalog_diff.generated_from).toContain('7200370');
   });
 
   it('exactly five real, newest-first engineering events', () => {
