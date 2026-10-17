@@ -121,8 +121,8 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   // Phase 1E — exact public showcase catalog.
-  it('public catalog is exactly the five showcase entries in order', () => {
-    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['billcraft', 'cartora', 'nutrilens', 'register']);
+  it('public catalog is exactly the three showcase entries in order (BillCraft published)', () => {
+    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['cartora', 'nutrilens', 'register']);
   });
 
   it('Publisher Console and PDFly are absent from the public Lab catalog', () => {
@@ -133,21 +133,14 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('new showcase entries carry their official logo assets', () => {
-    expect(getUpcomingAppBySlug('billcraft')?.logo).toBe('/brand/billcraft-logo.png');
     expect(getUpcomingAppBySlug('cartora')?.logo).toBe('/brand/cartora-logo.png');
     expect(getUpcomingAppBySlug('nutrilens')?.logo).toBe('/brand/nutrilens-logo.png');
   });
 
   it('roadmap statuses and milestone honesty are preserved', () => {
-    // Finalized Lab status system (owner-approved): BillCraft moved to
-    // early testing (internal only — never public access); milestones stay
-    // untouched: QA & Release Readiness remains incomplete.
-    const billcraft = getUpcomingAppBySlug('billcraft');
-    expect(billcraft?.roadmapStatus).toBe('early-testing');
-    // 2/3 — QA & Release Readiness must stay incomplete.
-    const bcDone = billcraft!.milestones.filter((m) => m.status === 'done').length;
-    expect(bcDone).toBe(2);
-    expect(billcraft!.milestones[2].status).toBe('planned');
+    // BillCraft graduated to the published catalog (2026-10-17) — no longer
+    // showcased in the Lab dataset. (Supersedes the earlier early-testing state.)
+    expect(getUpcomingAppBySlug('billcraft')).toBeUndefined();
 
     const cartora = getUpcomingAppBySlug('cartora');
     expect(cartora?.milestones.filter((m) => m.status === 'done').length).toBe(2);
@@ -238,7 +231,7 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(m1.evidence).toContain('eb6bc17');
     expect(m1.lastUpdated).toBe('2026-10-15');
     // BillCraft, Cartora and NutriLens have no recorded checks yet — pending.
-    for (const slug of ['billcraft', 'cartora', 'nutrilens']) {
+    for (const slug of ['cartora', 'nutrilens']) { // billcraft graduated (2026-10-17)
       const app = getUpcomingAppBySlug(slug)!;
       expect(app.verification!.checks.every((c) => c.result === 'pending')).toBe(true);
       for (const m of app.milestones) expect(m.evidence).toBeUndefined();
@@ -255,15 +248,13 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: all 4, planned 1, in-development 2, early testing 1, published 0', () => {
-    // Finalized status system — counts match the real dataset exactly:
-    // register planned; cartora + nutrilens in development; billcraft in
-    // early testing (internal only); nothing is published until a record
-    // has a real verified public URL.
-    expect(UPCOMING_APPS.length).toBe(4);
+  it('filter counts derive from real records: all 3, planned 1, in-development 2, early testing 0, published 0', () => {
+    // Post-graduation dataset (2026-10-17): billcraft left the Lab when it
+    // was published to the catalog; nothing in the Lab dataset is published.
+    expect(UPCOMING_APPS.length).toBe(3);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(1);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(0);
   });
 });
