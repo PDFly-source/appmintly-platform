@@ -816,7 +816,7 @@
     "launchUrl": "https://pdfly-source.github.io/billcraft/",
     "webUrl": "https://pdfly-source.github.io/billcraft/",
     "pwaUrl": "https://pdfly-source.github.io/billcraft/",
-    "apkUrl": "",
+    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/billcraft-v0.1.0/BillCraft-0.1.0.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
     "version": "0.1.0",
@@ -884,10 +884,38 @@
       "Mobile"
     ],
     "apk": {
-      "enabled": false,
+      "enabled": true,
       "buildMode": "webview",
       "packageId": "com.appforge.billcraft",
-      "authorized": true
+      "authorized": true,
+      "versionName": "0.1.0",
+      "versionCode": 100,
+      "fileName": "BillCraft-0.1.0.apk",
+      "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/billcraft-v0.1.0/BillCraft-0.1.0.apk",
+      "fileSizeBytes": 305006,
+      "sha256": "3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc",
+      "releaseTag": "billcraft-v0.1.0",
+      "releaseDate": "2026-10-17",
+      "generatedAt": "2026-10-17T16:50:20.789Z",
+      "buildStatus": "released",
+      "platform": "android",
+      "architecture": "universal",
+      "downloadAvailable": true,
+      "verified": true,
+      "minSdk": 21,
+      "targetSdk": 36,
+      "certificateSubject": "AppMintly",
+      "certificateSha256Fingerprint": "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368",
+      "signatureSchemes": {
+        "v1": true,
+        "v2": true,
+        "v3": true
+      },
+      "securityCheckStatus": "passed",
+      "securityCheckTimestamp": "2026-10-17T16:50:17.466Z",
+      "validatorVersion": "11.6.0",
+      "releaseId": 415938205,
+      "assetId": 651013654
     },
     "privacyTech": {
       "permissions": [],
@@ -903,6 +931,6 @@
       ],
       "notes": "Verified 2026-10-17 from the BillCraft source audit and a deployed-site runtime audit (mobile emulation, zero cross-origin requests, no console errors, service worker active). Android permissions pending the first signed APK manifest inspection."
     },
-    "updatedAt": "2026-10-17T13:00:00.000Z"
+    "updatedAt": "2026-10-17T16:50:20.789Z"
   }
 ]
