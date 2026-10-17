@@ -30,7 +30,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { getUpcomingApps } from '@/data/upcoming-apps';
+import { getUpcomingApps, ROADMAP_STATUS_LABEL } from '@/data/upcoming-apps';
 import type { UpcomingApp } from '@/data/upcoming-apps';
 import { UpcomingAppCard } from '@/components/UpcomingAppCard';
 import { localVoteCount, pruneOrphanVotes, VOTE_SCOPE_LABEL } from '@/lib/upcoming-votes';
@@ -38,15 +38,17 @@ import { localWishlistCount, pruneOrphanWishlist } from '@/lib/upcoming-wishlist
 
 const FILTERS: { id: 'all' | UpcomingApp['roadmapStatus']; label: string; caption: string }[] = [
   { id: 'all', label: 'All Projects', caption: 'Every roadmap record' },
+  { id: 'planned', label: 'Planned', caption: 'Idea & planning ahead' },
   { id: 'in-development', label: 'In Development', caption: 'Being built now' },
-  { id: 'planned', label: 'Planned', caption: 'On the roadmap ahead' },
-  { id: 'early-testing', label: 'Early Testing', caption: 'In limited early use' },
+  { id: 'early-testing', label: 'Early Testing', caption: 'Internal testing only' },
+  { id: 'published', label: 'Published / Released', caption: 'Live and publicly available' },
 ];
 
 const FILTER_HINTS: Record<UpcomingApp['roadmapStatus'], string> = {
   'in-development': 'in development',
   planned: 'planned',
   'early-testing': 'in early testing',
+  published: 'published / released',
 };
 
 export default function LabClient() {
@@ -299,7 +301,7 @@ export default function LabClient() {
         </p>
 
         <div
-          className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3"
+          className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-3"
           role="group"
           aria-label="Filter by roadmap status"
         >
@@ -672,7 +674,7 @@ function CompareDialog({ apps, onClose }: { apps: UpcomingApp[]; onClose: () => 
               <div key={a.id} className="rounded-xl border border-line bg-page p-3.5 grid content-start gap-2">
                 <p className="text-sm font-bold text-ink leading-snug">{a.name}</p>
                 <p className="text-[11px] text-mut leading-snug">{a.category}</p>
-                <p className="text-[11px] font-bold text-cta">{a.roadmapStatusLabel}</p>
+                <p className="text-[11px] font-bold text-cta">{ROADMAP_STATUS_LABEL[a.roadmapStatus]}</p>
                 <div>
                   <div className="flex items-center justify-between text-[10px] font-bold text-mut">
                     <span className="uppercase tracking-wider">Progress</span>

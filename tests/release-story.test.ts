@@ -7,7 +7,7 @@
  *    the catalog/release record — no invented dates, sections or history
  *  - entries carry the record field they were derived from (evidence)
  *  - timeline orders dated entries oldest-first
- *  - the real production catalog record (appmintly 1.0.9) produces a real,
+ *  - the real production catalog record (appmintly 1.0.10) produces a real,
  *    verifiable story — tested against data/apps.json itself
  *  - upcoming-apps.json records survive normalization only when they carry
  *    a valid roadmap status and a real https source repository link
@@ -138,7 +138,8 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('roadmap statuses and milestone honesty are preserved', () => {
-    // BillCraft graduated to the published catalog (2026-10-17) — no longer showcased.
+    // BillCraft graduated to the published catalog (2026-10-17) — no longer
+    // showcased in the Lab dataset. (Supersedes the earlier early-testing state.)
     expect(getUpcomingAppBySlug('billcraft')).toBeUndefined();
 
     const cartora = getUpcomingAppBySlug('cartora');
@@ -154,6 +155,10 @@ describe('upcoming-apps data — normalization honesty', () => {
     // Register keeps its existing accurate status.
     const register = getUpcomingAppBySlug('register');
     expect(register?.roadmapStatus).toBe('planned');
+
+    // Cartora and NutriLens stay in development under the finalized system.
+    expect(getUpcomingAppBySlug('cartora')?.roadmapStatus).toBe('in-development');
+    expect(getUpcomingAppBySlug('nutrilens')?.roadmapStatus).toBe('in-development');
   });
 
   // ===== Lab 3.0: roadmap engine + verification system =====
@@ -210,11 +215,16 @@ describe('upcoming-apps data — normalization honesty', () => {
     const reg = getUpcomingAppBySlug('register')!;
     const passed = reg.verification!.checks.filter((c) => c.result === 'passed');
     const unable = reg.verification!.checks.filter((c) => c.result === 'unable-to-verify');
-    expect(passed.length).toBe(1);
-    expect(passed[0].category).toBe('core-flow');
-    expect(passed[0].buildId).toContain('eb6bc17'); // real repository commit
-    expect(unable.length).toBe(1);
-    expect(unable[0].category).toBe('build');
+    // Status-consistency audit (2026-10-16): the repository/registry
+    // integrity suite is preserved as evidence but is NOT a passed
+    // application core-flow check — nothing about the planned Register
+    // webapp has passed yet.
+    expect(passed.length).toBe(0);
+    const coreFlow = unable.find((c) => c.category === 'core-flow')!;
+    expect(coreFlow.buildId).toContain('eb6bc17'); // real repository commit
+    expect(coreFlow.summary).toMatch(/repository\/registry integrity verification/i);
+    expect(unable.length).toBe(2);
+    expect(unable.map((c) => c.category).sort()).toEqual(['build', 'core-flow']);
     // The rg-m1 completion milestone is now backed by recorded evidence.
     const m1 = reg.milestones.find((m) => m.id === 'rg-m1')!;
     expect(m1.status).toBe('done');
@@ -238,10 +248,13 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: all 3, in-development 2, planned 1, early testing 0', () => {
+  it('filter counts derive from real records: all 3, planned 1, in-development 2, early testing 0, published 0', () => {
+    // Post-graduation dataset (2026-10-17): billcraft left the Lab when it
+    // was published to the catalog; nothing in the Lab dataset is published.
     expect(UPCOMING_APPS.length).toBe(3);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(0);
   });
 });

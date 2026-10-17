@@ -668,7 +668,7 @@
     "launchUrl": "https://pdfly-source.github.io/nexdrop/",
     "webUrl": "https://pdfly-source.github.io/nexdrop/",
     "pwaUrl": "https://pdfly-source.github.io/nexdrop/",
-    "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v322461e/NexDrop-release.apk",
+    "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-vf47cb23/NexDrop-release.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
     "version": "1.4.6",
@@ -714,9 +714,13 @@
       "sha-256"
     ],
     "releaseNotes": [
-      "Refined media previews with compact poster-scale cards and improved thumbnail cache recovery.",
-      "Improved connection clarity with truthful readiness states, clearer permissions and better connection guidance.",
-      "Polished send/receive checklists, nearby-device states and dark-mode footer contrast for a cleaner production experience."
+      "Fixed Open: received files now open directly from the Transfer Complete screen and from transfer History with the correct app for each file type.",
+      "Fixed Save: the Save action opens Android's system folder picker and saves any received file as a verified size-complete copy.",
+      "Fixed Install: received APK files open Android's package installer with the proper permission flow, so apps can be installed directly.",
+      "Added Share: share any received file straight to other apps from both the receive screen and transfer History.",
+      "Per-file actions in transfer History: every record offers Open, Save, Share and Install for its own file.",
+      "Multi-file receive sessions: each received file gets its own individual Open, Save, Share and Install actions.",
+      "Duplicate filename protection: saving a file with an existing name adds a numbered suffix instead of overwriting the first file."
     ],
     "changelog": [],
     "featured": true,
@@ -735,14 +739,14 @@
       "buildMode": "webview",
       "packageId": "com.nexdrop.ndt1",
       "authorized": true,
-      "sha256": "ebf396c91129ec62e66dd672b151bff470d9d846969e97dfc5c76d923213e047",
+      "sha256": "fe58c2a10ef433906edbefc007f1acc70d3b84bc09b695c4f20b5987d146997a",
       "versionName": "1.4.6",
       "versionCode": 19,
       "fileName": "NexDrop-release.apk",
-      "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v322461e/NexDrop-release.apk",
-      "fileSizeBytes": 3516446,
-      "releaseTag": "nexdrop-android-v322461e",
-      "generatedAt": "2026-10-16T04:40:00.000Z",
+      "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-vf47cb23/NexDrop-release.apk",
+      "fileSizeBytes": 3528426,
+      "releaseTag": "nexdrop-android-vf47cb23",
+      "generatedAt": "2026-10-16T10:25:47.625Z",
       "buildStatus": "released",
       "verified": true,
       "downloadAvailable": true,
@@ -757,8 +761,8 @@
         "v2": true,
         "v3": true
       },
-      "releaseId": 406754057,
-      "assetId": 621636770
+      "releaseId": 414809950,
+      "assetId": 646933645
     },
     "privacyTech": {
       "permissions": [
@@ -787,7 +791,7 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-10-16T04:12:44.072Z"
+    "updatedAt": "2026-10-16T10:25:47.625Z"
   },
   {
     "id": "billcraft",

@@ -42,23 +42,26 @@ const FULL_SRC = `${BASE_PATH}/brand/appmintly-logo-full.png`;
  * earlier two-tone system. Fixed brand colors in all placements and both
  * themes (logotype treatment); the logo/icon artwork images themselves
  * are never recolored.
- *   Phase 4 artwork wordmark: A p p = #028B3E (green)
- *   M i n t l y = #0047B7 (blue) — sampled from the official master.
+ *   A p p = #087A5B Deep Emerald   M = #1248A8 Deep Sapphire
+ *   i = #1565E8 Bright Blue         n = #E31E24 Brand Red
+ *   t = #F4B400 Rich Gold           l = #1267E8 Royal Blue
+ *   y = #E31E24 Brand Red
  */
 const WORDMARK = 'AppMintly';
-// Phase 4 — colors sampled per letter from the official artwork wordmark
-// (pixel medians of the letter runs): "App" green #028B3E, "Mintly" blue
-// #0047B7. This is a UI label only; the logo artwork itself is never redrawn.
+// Restored original per-letter brand palette (Phase 4 regression fix:
+// commit 78f1907 temporarily replaced these with artwork-sampled colors
+// without owner authorization). This is a UI label only; the official
+// logo artwork itself is never redrawn or recolored.
 const WORDMARK_LETTER_COLORS = [
-  '#028B3E', // A — artwork "App" green
-  '#028B3E', // p — artwork "App" green
-  '#028B3E', // p — artwork "App" green
-  '#0047B7', // M — artwork "Mintly" blue
-  '#0047B7', // i — artwork "Mintly" blue
-  '#0047B7', // n — artwork "Mintly" blue
-  '#0047B7', // t — artwork "Mintly" blue
-  '#0047B7', // l — artwork "Mintly" blue
-  '#0047B7', // y — artwork "Mintly" blue
+  '#087A5B', // A — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#087A5B', // p — Deep Emerald
+  '#1248A8', // M — Deep Sapphire
+  '#1565E8', // i — Bright Blue
+  '#E31E24', // n — Brand Red
+  '#F4B400', // t — Rich Gold
+  '#1267E8', // l — Royal Blue
+  '#E31E24', // y — Brand Red
 ];
 
 interface AppMintlyWordmarkTextProps {

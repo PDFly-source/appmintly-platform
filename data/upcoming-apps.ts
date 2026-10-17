@@ -13,13 +13,18 @@ import rawUpcoming from './upcoming-apps.json';
  *    capabilities) is team-maintained draft roadmap content — each record
  *    carries a `draftNote` saying exactly that.
  *  - roadmapStatus is a controlled vocabulary: 'planned' | 'in-development'
- *    | 'early-testing'. Anything else is rejected by the normalizer and the
- *    record is skipped — the Lab never renders an unknown status.
- *  - These records are NOT installable catalog apps. The Lab UI must never
- *    show download buttons or version numbers for them.
+ *    | 'early-testing' | 'published'. Anything else is rejected by the
+ *    normalizer and the record is skipped — the Lab never renders an
+ *    unknown status. 'published' is FAIL-CLOSED: a published record without
+ *    a valid https publicUrl is skipped — a product is never marked
+ *    published merely because a build or internal APK exists.
+ *  - These records are roadmap projects, not installable catalog apps. The
+ *    Lab UI never shows download buttons or version numbers for them; the
+ *    only public destination CTA is 'Open App' on a published record with
+ *    a real public URL.
  */
 
-export type RoadmapStatus = 'planned' | 'in-development' | 'early-testing';
+export type RoadmapStatus = 'planned' | 'in-development' | 'early-testing' | 'published';
 
 /** Explicit milestone states (Lab 3.0 roadmap engine). */
 export type MilestoneStatus = 'done' | 'in-progress' | 'planned' | 'blocked';
@@ -58,6 +63,23 @@ export interface UpcomingApp {
   plannedCapabilities: string[];
   roadmapStatus: RoadmapStatus;
   roadmapStatusLabel: string;
+  /**
+   * Status-specific availability message rendered in the card banner
+   * (team-maintained copy, e.g. 'Internal Testing Only — Not publicly
+   * accessible.'). Falls back to the per-status default in the card.
+   */
+  accessMessage?: string;
+  /**
+   * Verified public product URL — ONLY valid on 'published' records. A
+   * published record without a real https destination is never rendered.
+   */
+  publicUrl?: string;
+  /**
+   * Real concept-page URL for a 'planned' record. When it exists the CTA
+   * is 'View Concept'; otherwise the honest CTA is 'Coming Later'. The
+   * Lab never invents or guesses a concept destination.
+   */
+  conceptUrl?: string;
   milestones: RoadmapMilestone[];
   /** Evidence link — the real repository of the project, when one exists. */
   sourceRepo?: string;
@@ -73,6 +95,27 @@ export interface UpcomingApp {
   verification?: VerificationRecord;
   draftNote: string;
 }
+
+/**
+ * Canonical status labels of the finalized four-status system. The badge on
+ * every Lab card shows THIS label (e.g. "Early Testing"); the record's
+ * `roadmapStatusLabel` is the status SUBTITLE (e.g. "Internal Only") and is
+ * rendered as a secondary line, never as the badge itself.
+ */
+export const ROADMAP_STATUS_LABEL: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'Planned',
+  'in-development': 'In Development',
+  'early-testing': 'Early Testing',
+  published: 'Published / Released',
+};
+
+/** Default status subtitles (used when a record does not carry its own). */
+export const ROADMAP_STATUS_SUBTITLE: Record<UpcomingApp['roadmapStatus'], string> = {
+  planned: 'Idea & Planning',
+  'in-development': 'Building Now',
+  'early-testing': 'Internal Only',
+  published: 'Public Release',
+};
 
 /** AppMintly verification categories (distinct checks, not decorations). */
 export const VERIFICATION_CATEGORIES = [
@@ -116,7 +159,7 @@ export interface AppScreenshot {
   alt: string;
 }
 
-const VALID_STATUSES: RoadmapStatus[] = ['planned', 'in-development', 'early-testing'];
+const VALID_STATUSES: RoadmapStatus[] = ['planned', 'in-development', 'early-testing', 'published'];
 const VALID_MILESTONE_STATUSES: MilestoneStatus[] = ['done', 'in-progress', 'planned', 'blocked'];
 
 function isStringArray(v: unknown): v is string[] {
@@ -179,6 +222,13 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
   if (typeof r.id !== 'string' || typeof r.name !== 'string' || typeof r.slug !== 'string') return null;
   const status = r.roadmapStatus as RoadmapStatus;
   if (!VALID_STATUSES.includes(status)) return null;
+  const httpsUrl = (v: unknown) =>
+    typeof v === 'string' && /^https:\/\//.test(v) && !/\s/.test(v) ? (v as string) : undefined;
+  const publicUrl = httpsUrl(r.publicUrl);
+  const conceptUrl = httpsUrl(r.conceptUrl);
+  // FAIL-CLOSED: 'published' requires a real, verified public destination.
+  // A build, internal APK or repository never makes a product published.
+  if (status === 'published' && !publicUrl) return null;
   // sourceRepo is OPTIONAL engineering metadata: it stays in the data
   // records for internal use but is NOT rendered in the public Lab
   // (Phase 1D+). Some roadmap entries have no public repository yet —
@@ -202,6 +252,9 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
     roadmapStatus: status,
     roadmapStatusLabel:
       typeof r.roadmapStatusLabel === 'string' ? r.roadmapStatusLabel : status,
+    accessMessage: typeof r.accessMessage === 'string' ? r.accessMessage : undefined,
+    publicUrl,
+    conceptUrl,
     milestones: normalizeMilestones(r.milestones),
     sourceRepo,
     // Optional official brand asset (public/brand/...) rendered by the

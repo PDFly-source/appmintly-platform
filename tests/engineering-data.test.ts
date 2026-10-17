@@ -82,17 +82,23 @@ describe('Phase 3.2 — engineering status data', () => {
     }
   });
 
-  it('register carries the real evidence audit (passed core-flow + unable-to-verify build)', () => {
+  it('register evidence audit: repository integrity, never a passed application core-flow', () => {
     const reg = labApps.apps.find((a: { id: string }) => a.id === 'register') as
-      | { verification: Array<{ category: string; build_id?: string; result: string; id: string }> }
+      | { verification: Array<{ category: string; build_id?: string; result: string; id: string; summary?: string; evidence_class?: string }> }
       | undefined;
     expect(reg).toBeDefined();
     const core = reg!.verification.find((c) => c.category === 'core-flow')!;
     const build = reg!.verification.find((c) => c.category === 'build')!;
+    // Status-consistency audit (2026-10-16): the 13/13 repository/registry
+    // integrity suite is NOT a passed Register core-flow test — the webapp's
+    // flow is unimplemented. Evidence is preserved but relabelled.
     expect(core.id).toBe('register-coreflow-2026-10-15'); // stable id preserved
-    expect(core.result).toBe('passed');
+    expect(core.result).toBe('unable-to-verify');
     expect(core.build_id).toContain('eb6bc17');
-    expect(build.result).toBe('unable-to-verify');
+    expect(core.evidence_class).toBe('repository-inspection');
+    expect(core.summary).toMatch(/repository\/registry integrity verification/i);
+    expect(core.summary).toMatch(/not the Register application's core flow/);
+    expect(build.result).toBe('unable-to-verify'); // no fabricated build artifact
   });
 
   it('health indicator is green with three described conditions', () => {
@@ -114,7 +120,7 @@ describe('Phase 3.2 — engineering status data', () => {
     expect(engStatus.catalog_diff.unchanged).toBe(6);
     expect(engStatus.catalog_diff.removals).toBe(0);
     expect(engStatus.catalog_diff.generated_from).toContain('BillCraft');
-    expect(engStatus.catalog_diff.generated_from).toContain('7200370');
+    expect(engStatus.catalog_diff.generated_from).toContain('f967553');
   });
 
   it('exactly five real, newest-first engineering events', () => {
@@ -211,8 +217,12 @@ describe('Phase 3.2 — build tracker, blockers, and evidence provenance', () =>
         // Milestone evidence is classed; statuses without evidence stay unclassed.
         if (m.status === 'done' && !m.evidence) expect(m.evidence_class).toBeUndefined();
         if (m.evidence_class === 'automated-test-evidence') expect(m.id).toBe('rg-m1'); // only the audited one
+        if (m.evidence_class === 'automated-test-evidence') sawAutomated = true;
       }
     }
+    // No verification check is currently passed (honest dataset) — the
+    // automated-test-evidence class now appears only on the audited rg-m1
+    // milestone; repository-inspection appears on the Register checks.
     expect(sawAutomated).toBe(true);
     expect(sawInspection).toBe(true);
   });

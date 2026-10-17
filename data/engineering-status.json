@@ -6,7 +6,7 @@
     "additions": 1,
     "unchanged": 6,
     "removals": 0,
-    "generated_from": "git diff of data/apps.json between the pre-BillCraft catalog (commit 7200370, 7 records incl. 1 draft) and this publication commit: BillCraft 0.1.0 added (2026-10-17), 6 records unchanged, none removed"
+    "generated_from": "git diff of data/apps.json between origin/main f967553 (6 records: 5 published + 1 draft, incl. NexDrop 1.4.6 vf47cb23 from PR #18) and this publication commit: BillCraft 0.1.0 added (2026-10-17), 6 records unchanged, none removed"
   },
   "health_indicator": {
     "overall": "green",
@@ -15,7 +15,7 @@
         "id": "deploy_success",
         "label": "Deploy Success",
         "status": "green",
-        "description": "Latest production deployment of the AppMintly marketplace completed successfully on GitHub Pages (pages.dev mirror propagates within minutes)."
+        "description": "Latest production deployment run 38700984980 (commit ed7fb7c) completed successfully on GitHub Pages."
       },
       {
         "id": "catalog_integrity",
@@ -27,7 +27,7 @@
         "id": "asset_verification",
         "label": "Asset Verification",
         "status": "green",
-        "description": "AppMintly v1.0.10 release APK published with SHA-256 integrity verification through the release pipeline (commit 7200370). BillCraft 0.1.0 PWA publication verified with regression suites on both repositories before merge."
+        "description": "AppMintly v1.0.10 release APK published with SHA-256 integrity verification through the release pipeline. BillCraft 0.1.0 PWA publication verified with regression suites on both repositories before merge."
       }
     ]
   },

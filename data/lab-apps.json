@@ -119,13 +119,13 @@
         {
           "id": "register-coreflow-2026-10-15",
           "category": "core-flow",
-          "result": "passed",
+          "result": "unable-to-verify",
           "build_id": "register@eb6bc17f92",
-          "evidence_class": "automated-test-evidence",
-          "summary": "The register repository's own integrity suite passed: 13/13 tests (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17.",
-          "source": "Repository test run (ava suite + reserved-order script) in the AppMintly engineering environment",
+          "evidence_class": "repository-inspection",
+          "summary": "The planned Register webapp's registration and identity-claim flow has not been implemented or tested yet. The only recorded evidence is repository/registry integrity verification: the subdomain-registry repository's own integrity suite passed 13/13 (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17 — these verify the registry data workflow, not the Register application's core flow.",
+          "source": "Repository/registry integrity test run (ava integrity suite + reserved-order script) in the AppMintly engineering environment — not an application-flow test",
           "date": "2026-10-15",
-          "limitations": "This verifies the current subdomain-registry repository workflow only — not the planned Register identity-claim webapp (still in the Planned roadmap stage). It is not proof of security or release readiness."
+          "limitations": "Repository/registry integrity tests do not prove the Register webapp's core flow works, and a checksum or passing suite never proves security or release readiness. No core-flow, device, or release verification exists; the project stays Planned."
         },
         {
           "id": "register-build-2026-10-15",

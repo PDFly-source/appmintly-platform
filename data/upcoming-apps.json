@@ -4,11 +4,11 @@
     "slug": "cartora",
     "name": "Cartora",
     "developer": "AppMintly Lab",
-    "category": "Productivity · Shopping & Budget Management",
+    "category": "Shopping & Productivity",
     "type": "Web App",
     "logo": "/brand/cartora-logo.png",
-    "purpose": "Cartora is a smart grocery and household shopping assistant that helps you organize shopping lists, compare unit prices, calculate basket totals, and stay within budget. Designed with a premium interface and a privacy-first, no-account experience, Cartora makes everyday shopping simpler and smarter.",
-    "problem": "Everyday grocery shopping is hard to track — lists scatter, unit prices hide the real deal, and budgets quietly break.",
+    "purpose": "Cartora is a smart shopping assistant concept designed to help users organize shopping lists, compare product value, and manage grocery budgets.",
+    "problem": "Shoppers need an easier way to organize purchases, compare unit prices, and control spending.",
     "benefits": [
       "Clear basket totals and a budget guard before you reach the counter",
       "Unit-price comparison that shows which pack actually costs less",
@@ -16,14 +16,13 @@
     ],
     "intendedUsers": [
       "Everyday shoppers",
-      "Budget-conscious households",
       "Families",
-      "Students and independent shoppers"
+      "Budget-conscious households"
     ],
     "proposedFeatures": [
-      "Smart Shopping & Budget Guard — Organize grocery essentials, track basket totals, and identify when spending exceeds your planned budget.",
-      "Unit Price Comparison & Basket Optimizer — Compare pack values, calculate discounts, and find opportunities to reduce shopping costs.",
-      "Privacy-First Experience — No login, backend, or cloud database; calculations run locally in the browser."
+      "Smart Shopping Lists — Organize planned purchases.",
+      "Unit Price Comparison — Compare product value where supported.",
+      "Budget Guard — Track estimated shopping totals against a budget."
     ],
     "plannedCapabilities": [
       "Shopping lists with basket totals and budget guard",
@@ -31,7 +30,7 @@
       "Local-only, no-account shopping workflow"
     ],
     "roadmapStatus": "in-development",
-    "roadmapStatusLabel": "In development",
+    "roadmapStatusLabel": "Building Now",
     "milestones": [
       {
         "id": "ct-m1",
@@ -77,7 +76,8 @@
           "result": "pending"
         }
       ]
-    }
+    },
+    "accessMessage": "Currently being built — public release not available."
   },
   {
     "id": "nutrilens",
@@ -87,24 +87,21 @@
     "category": "Health & Nutrition",
     "type": "Web App",
     "logo": "/brand/nutrilens-logo.png",
-    "purpose": "NutriLens is a privacy-first food intelligence webapp designed to help users understand packaged food products by scanning nutrition labels, ingredients, allergens, and barcodes. Make more informed food choices with intelligent label analysis, transparent nutrition insights, and a simple, mobile-first experience.",
-    "problem": "Packaged-food labels are dense and confusing — nutrition values, ingredients, and allergens are hard to read and compare at the shelf.",
+    "purpose": "NutriLens is a privacy-first food intelligence product concept intended to help users understand packaged-food labels, ingredients, and nutrition information.",
+    "problem": "Nutrition labels and ingredient lists can be difficult for everyday shoppers to interpret.",
     "benefits": [
-      "Understand a product’s nutrition and ingredients at a glance",
-      "Allergen and ingredient review before a product reaches your basket",
-      "Local-first scanning — no account, no cloud storage"
+      "Understand packaged-food labels and ingredients more easily",
+      "More informed food choices with transparent label information",
+      "Privacy-first processing — no account, no cloud storage"
     ],
     "intendedUsers": [
-      "Health-conscious consumers",
       "Everyday grocery shoppers",
-      "Fitness-conscious users",
-      "People checking food ingredients and allergens",
-      "People comparing packaged food labels"
+      "People who want to make informed food choices"
     ],
     "proposedFeatures": [
-      "Smart Food Scanning — Analyze food-package photos and extract visible product and nutrition information.",
-      "Privacy-First Experience — No account, backend, database, or cloud storage required for the local-first core workflow.",
-      "Nutrition & Ingredient Intelligence — Review nutrition values, ingredients, allergens, and food-label insights with transparent data validation."
+      "Food Label Scanner — Planned photo-based label scanning and text extraction.",
+      "Nutrition Insights — Intended to explain nutrition facts and ingredients.",
+      "Privacy-First Processing — Prioritize local processing wherever technically supported."
     ],
     "plannedCapabilities": [
       "Food-package photo analysis for visible label information",
@@ -112,7 +109,7 @@
       "Transparent nutrition, ingredient, and allergen review"
     ],
     "roadmapStatus": "in-development",
-    "roadmapStatusLabel": "In development",
+    "roadmapStatusLabel": "Building Now",
     "milestones": [
       {
         "id": "nl-m1",
@@ -158,38 +155,38 @@
           "result": "pending"
         }
       ]
-    }
+    },
+    "accessMessage": "Currently being built — public release not available."
   },
   {
     "id": "register",
     "slug": "register",
     "name": "AppMintly Register",
     "developer": "AppMintly Team",
-    "category": "Developer Tools",
+    "category": "Registration & Onboarding",
     "type": "Web App",
-    "purpose": "Identity and onboarding for the AppMintly ecosystem, so publishers can claim and verify their developer identity before publishing.",
-    "problem": "AppMintly publishers need a way to claim and verify their developer identity before their apps join the catalog.",
+    "purpose": "A planned registration and onboarding experience for the AppMintly ecosystem. The final scope and functionality will be defined during the planning stage.",
+    "problem": "Users benefit from a clear, consistent, and accessible onboarding experience.",
     "benefits": [
-      "Claim your publisher identity in one place",
-      "Verified publisher status shown on catalog records",
-      "A clear link between you and the apps you publish"
+      "A clear, consistent onboarding experience for AppMintly services",
+      "Simple, accessible registration planned from the start",
+      "Privacy and security requirements defined before development"
     ],
     "intendedUsers": [
-      "New publishers joining AppMintly",
-      "Existing publishers verifying their identity"
+      "Users of supported AppMintly services"
     ],
     "proposedFeatures": [
-      "Developer identity registration and profile claim",
-      "Verified publisher badge for catalog records",
-      "Link between publisher identity and published apps"
+      "Registration Experience — Plan an intuitive onboarding flow.",
+      "User-Friendly Interface — Define a simple, accessible experience.",
+      "Privacy & Security Planning — Establish suitable data-handling and security requirements before development."
     ],
     "plannedCapabilities": [
-      "Create a publisher identity",
-      "Associate published catalog apps with the identity",
-      "Show verified publisher status on the storefront"
+      "An intuitive onboarding flow for supported AppMintly services",
+      "A simple, accessible registration experience",
+      "Suitable data-handling and security requirements established during planning"
     ],
     "roadmapStatus": "planned",
-    "roadmapStatusLabel": "Planned",
+    "roadmapStatusLabel": "Idea & Planning",
     "milestones": [
       {
         "id": "rg-m1",
@@ -220,12 +217,12 @@
         {
           "id": "register-coreflow-2026-10-15",
           "category": "core-flow",
-          "result": "passed",
-          "summary": "The register repository's own integrity suite passed: 13/13 tests (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17.",
-          "source": "Repository test run (ava suite + reserved-order script) in the AppMintly engineering environment",
+          "result": "unable-to-verify",
+          "summary": "The planned Register webapp's registration and identity-claim flow has not been implemented or tested yet. The only recorded evidence is repository/registry integrity verification: the subdomain-registry repository's own integrity suite passed 13/13 (valid JSON records, required fields, domain nesting and proxy rules, single-character limits, per-user ownership) plus the reserved-order check, run from source at commit eb6bc17 — these verify the registry data workflow, not the Register application's core flow.",
+          "source": "Repository/registry integrity test run (ava integrity suite + reserved-order script) in the AppMintly engineering environment — not an application-flow test",
           "buildId": "register@eb6bc17f92",
           "date": "2026-10-15",
-          "limitations": "This verifies the current subdomain-registry repository workflow only — not the planned Register identity-claim webapp (still in the Planned roadmap stage). It is not proof of security or release readiness."
+          "limitations": "Repository/registry integrity tests do not prove the Register webapp's core flow works, and a checksum or passing suite never proves security or release readiness. No core-flow, device, or release verification exists; the project stays Planned."
         },
         {
           "id": "register-build-2026-10-15",
@@ -250,6 +247,7 @@
           "result": "pending"
         }
       ]
-    }
+    },
+    "accessMessage": "Development has not started."
   }
 ]
