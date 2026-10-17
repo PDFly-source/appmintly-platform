@@ -871,7 +871,7 @@
       "Explore a privacy-focused document workflow with PDF export and business-document utilities."
     ],
     "changelog": [],
-    "featured": false,
+    "featured": true,
     "original": true,
     "published": true,
     "status": "published",
@@ -888,20 +888,20 @@
       "buildMode": "webview",
       "packageId": "com.appforge.billcraft",
       "authorized": true,
+      "sha256": "3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc",
       "versionName": "0.1.0",
       "versionCode": 100,
       "fileName": "BillCraft-0.1.0.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/billcraft-v0.1.0/BillCraft-0.1.0.apk",
       "fileSizeBytes": 305006,
-      "sha256": "3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc",
       "releaseTag": "billcraft-v0.1.0",
-      "releaseDate": "2026-10-17",
       "generatedAt": "2026-10-17T16:50:20.789Z",
       "buildStatus": "released",
-      "platform": "android",
-      "architecture": "universal",
-      "downloadAvailable": true,
       "verified": true,
+      "downloadAvailable": true,
+      "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-10-17",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -937,6 +937,6 @@
       "notes": "Verified 2026-10-17 from the BillCraft source audit and a deployed-site runtime audit (mobile emulation, zero cross-origin requests, no console errors, service worker active). Android permissions recorded from the actual signed BillCraft 0.1.0 APK manifest (billcraft-v0.1.0, SHA-256 3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc, production certificate dbafc6d3...f68, apksigner v1+v2+v3 verified).",
       "permissionsSource": "apk-manifest"
     },
-    "updatedAt": "2026-10-17T16:50:20.789Z"
+    "updatedAt": "2026-10-17T19:54:18.933Z"
   }
 ]
