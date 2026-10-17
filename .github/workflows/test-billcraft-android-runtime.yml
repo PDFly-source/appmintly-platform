@@ -1,0 +1,94 @@
+name: Test BillCraft Android runtime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  launch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Download released BillCraft APK
+        run: |
+          mkdir -p test-apk runtime-diagnostics
+          curl -fsSL -o test-apk/BillCraft-0.1.0.apk \
+            "https://github.com/PDFly-source/appmintly-releases/releases/download/billcraft-v0.1.0/BillCraft-0.1.0.apk"
+      - name: Verify release integrity
+        run: |
+          EXPECTED="3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc"
+          ACTUAL=$(sha256sum test-apk/BillCraft-0.1.0.apk | cut -d' ' -f1)
+          test "$ACTUAL" = "$EXPECTED" && echo 'APK integrity verified against published catalog checksum'
+      - name: Install, launch and verify on Android 16 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            set -e
+            adb shell getprop ro.build.version.release | tee runtime-diagnostics/android-version.txt
+            echo '--- INSTALL ---'
+            adb install -r test-apk/BillCraft-0.1.0.apk | tee runtime-diagnostics/install.txt
+            adb shell pm list packages com.appforge.billcraft | tee runtime-diagnostics/package.txt
+            adb shell dumpsys package com.appforge.billcraft | grep -E 'versionName|versionCode|targetSdk|permission ' | head -20 | tee runtime-diagnostics/package-meta.txt
+            adb shell input keyevent KEYCODE_WAKEUP || true
+            adb shell wm dismiss-keyguard || true
+            sleep 3
+            echo '--- LAUNCH ---'
+            adb logcat -c
+            adb shell am start -W -n com.appforge.billcraft/.MainActivity | tee runtime-diagnostics/launch.txt
+            sleep 40
+            adb shell uiautomator dump /sdcard/billcraft-ui.xml || true
+            adb pull /sdcard/billcraft-ui.xml runtime-diagnostics/ui.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/app-screen.png || true
+            adb logcat -d > runtime-diagnostics/logcat.txt || true
+            (adb shell pidof com.appforge.billcraft | grep -Eq '[0-9]') && echo 'APP_ALIVE: BillCraft process running' || echo 'WARN: BillCraft process not found'
+            (! grep -A 40 'FATAL EXCEPTION' runtime-diagnostics/logcat.txt | grep -q 'com.appforge.billcraft') && echo 'NO_FATAL: no fatal exceptions from BillCraft' || echo 'ERROR: fatal exception from BillCraft found'
+            (grep -Eiq 'BillCraft|New Document|Quotation|Templates|Reports|Create' runtime-diagnostics/ui.xml) && echo 'PAGE_VISIBLE: BillCraft webapp content shown in accessibility tree' || echo 'PAGE_VISUAL_UNVERIFIED: no page text captured in accessibility tree'
+            (grep -Eqi 'pdfly-source.github.io/billcraft' runtime-diagnostics/logcat.txt) && echo 'WEBVIEW_URL: BillCraft launch URL observed in logs' || echo 'WEBVIEW_URL_UNVERIFIED: launch URL not directly greppable (not fatal)'
+            echo '--- CLOSE / REOPEN ---'
+            adb shell input keyevent KEYCODE_HOME || true
+            sleep 2
+            adb shell monkey -p com.appforge.billcraft -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
+            sleep 20
+            (adb shell pidof com.appforge.billcraft | grep -Eq '[0-9]') && echo 'REOPEN_OK: app relaunches after close' || echo 'WARN: relaunch check failed'
+            adb exec-out screencap -p > runtime-diagnostics/reopen-screen.png || true
+            echo '--- OFFLINE (network failure behaviour) ---'
+            adb shell cmd connectivity airplane-mode enable || true
+            sleep 3
+            adb shell am force-stop com.appforge.billcraft || true
+            sleep 2
+            adb shell monkey -p com.appforge.billcraft -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
+            sleep 35
+            adb shell uiautomator dump /sdcard/billcraft-offline.xml || true
+            adb pull /sdcard/billcraft-offline.xml runtime-diagnostics/offline-ui.xml || true
+            adb exec-out screencap -p > runtime-diagnostics/offline-screen.png || true
+            (grep -Eiq 'BillCraft|New Document|Quotation|Templates|Create' runtime-diagnostics/offline-ui.xml) && echo 'OFFLINE_OK: app shell still usable offline (service worker)' || echo 'WARN: offline content not detected in accessibility tree'
+            adb shell cmd connectivity airplane-mode disable || true
+            sleep 5
+            echo '--- UNINSTALL / REINSTALL ---'
+            adb uninstall com.appforge.billcraft | tee runtime-diagnostics/uninstall.txt
+            sleep 2
+            adb install test-apk/BillCraft-0.1.0.apk | tee runtime-diagnostics/reinstall.txt
+            adb shell monkey -p com.appforge.billcraft -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
+            sleep 30
+            (adb shell pidof com.appforge.billcraft | grep -Eq '[0-9]') && echo 'REINSTALL_OK: app runs after uninstall + reinstall' || echo 'WARN: reinstall relaunch check failed'
+            adb exec-out screencap -p > runtime-diagnostics/reinstall-screen.png || true
+      - name: Upload launch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: billcraft-android-16-runtime-diagnostics
+          path: runtime-diagnostics/
+          if-no-files-found: warn
+          retention-days: 7

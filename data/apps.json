@@ -918,18 +918,24 @@
       "assetId": 651013654
     },
     "privacyTech": {
-      "permissions": [],
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
       "dataCollection": "No accounts, no analytics, no telemetry. Invoices, clients, products and settings are stored only in this browser (IndexedDB + localStorage) and never transmitted to a server.",
       "tracking": "No trackers, ads or telemetry — verified from the source dependency tree and a runtime request audit (zero third-party requests on load).",
       "networkRequirement": "offline-capable",
       "offlineSupport": "Service worker caches the app shell (same-origin only). First load needs a connection; after that document creation, calculations and PDF export work offline on this device.",
       "pwaSupport": "verified-installable",
-      "installationType": "Installable Web App (PWA)",
+      "installationType": "Installable Web App (PWA) + signed Android APK package",
       "storage": "Browser local storage only: documents, clients, products, drafts and settings in IndexedDB and localStorage on your own device. No cloud document storage.",
       "externalServices": [
-        "GitHub Pages (site hosting)"
+        "GitHub Pages (site hosting)",
+        "GitHub Releases (APK distribution)"
       ],
-      "notes": "Verified 2026-10-17 from the BillCraft source audit and a deployed-site runtime audit (mobile emulation, zero cross-origin requests, no console errors, service worker active). Android permissions pending the first signed APK manifest inspection."
+      "notes": "Verified 2026-10-17 from the BillCraft source audit and a deployed-site runtime audit (mobile emulation, zero cross-origin requests, no console errors, service worker active). Android permissions recorded from the actual signed BillCraft 0.1.0 APK manifest (billcraft-v0.1.0, SHA-256 3127b50f9a28fecd6c269eeaa6f084ca10c30b95264b8c2e1dc7226c484339cc, production certificate dbafc6d3...f68, apksigner v1+v2+v3 verified).",
+      "permissionsSource": "apk-manifest"
     },
     "updatedAt": "2026-10-17T16:50:20.789Z"
   }
