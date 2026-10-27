@@ -1066,19 +1066,23 @@
       "assetId": 682050501
     },
     "privacyTech": {
-      "permissions": [],
-      "permissionsSource": "pwa-audit (no Android build in this release)",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.DOWNLOAD_WITHOUT_NOTIFICATION"
+      ],
+      "permissionsSource": "apk-manifest",
       "dataCollection": "Release-audited: playback history, playlists, favorites, subtitles and settings are stored only in the browser (IndexedDB) and never transmitted. Video files are played locally and never uploaded; the app makes no account, analytics or telemetry requests.",
       "tracking": "Release-audited: no trackers, ads or analytics — a full network-interception test showed only same-origin requests.",
       "networkRequirement": "offline-capable",
       "offlineSupport": "Service worker precaches the full app shell (verified live: 96 assets, including all pages). First load needs a connection; after install every page loads offline (verified with the network emulated offline) and playback of local files needs no network. Only optional device-to-device transfer needs connectivity during connection setup.",
       "storage": "IndexedDB (cineflow_db): playback history, playlists, saved subtitles and user settings. Video files themselves are opened locally per session and not persisted to storage.",
       "pwaSupport": "verified-installable",
-      "installationType": "Installable PWA (Web App); Android APK in preparation",
+      "installationType": "Installable PWA (Web App) + signed Android APK package",
       "externalServices": [
         "None for playback. Optional device-to-device transfer uses WebRTC with a public Google STUN server for connection setup only — files go directly between your devices, never through a server."
       ],
-      "notes": "Verified 2026-10-27 from the CineFlow source audit (PDFly-source/cineflow @ dec873b) and a live-site runtime audit: real H.264/VP9 playback, SRT+VTT subtitles, offline shell verified with network emulation, network interception showed same-origin requests only (zero non-GET). Android permissions pending the first signed APK manifest inspection."
+      "notes": "Verified 2026-10-27: web audit (PDFly-source/cineflow @ dec873b — real H.264/VP9 playback, SRT+VTT subtitles, offline shell with network emulation, same-origin-only interception) AND signed APK inspection of CineFlow-0.1.0 (SHA-256 a98a80b5...df594): package com.appforge.cineflow, versionCode 100, minSdk 21 / targetSdk 36, exactly three permissions (INTERNET to load the app, ACCESS_NETWORK_STATE for connectivity detection, DOWNLOAD_WITHOUT_NOTIFICATION for update delivery), no storage/media permissions, cleartext traffic disabled, v1+v2+v3 signatures under the AppMintly release certificate (fingerprint dbafc6d3...f61368) — the same key as BillCraft and the rest of the AppMintly APK family."
     },
     "updatedAt": "2026-10-27T15:43:50.629Z"
   }
