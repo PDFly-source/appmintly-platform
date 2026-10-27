@@ -139,6 +139,11 @@ hist = json.loads(subprocess.run(
 hist_ids = {r['id'] for r in hist}
 assert {'publisher-console', 'pdfly'} <= hist_ids, 'retired records not found in history'
 
+
+# Known engineering blockers — recorded honestly (2026-10-15+); regenerated
+# verbatim so the status file stays reproducible.
+blockers = json.loads('''[{"id": "blk-apk-server-fetch", "app": "appmintly-platform", "reason": "The GitHub release host blocks browser-side artifact fetches (CORS / HTTP 503), so server-mode APK verification cannot complete in production browsers.", "status": "open", "note": "File-mode verification is the supported fallback; the UI shows an explicit fetch-failure diagnostic. No backend will be added to bypass this.", "recorded_at": "2026-10-15"}, {"id": "blk-evidence-billcraft", "app": "billcraft", "reason": "No repository, build artifact, or verification evidence is available to the pipeline yet, so all verification checks remain pending.", "status": "open", "note": "Verification stays honestly pending until real evidence is supplied.", "recorded_at": "2026-10-15"}, {"id": "blk-evidence-cartora", "app": "cartora", "reason": "No repository, build artifact, or verification evidence is available to the pipeline yet, so all verification checks remain pending.", "status": "open", "note": "Verification stays honestly pending until real evidence is supplied.", "recorded_at": "2026-10-15"}, {"id": "blk-evidence-nutrilens", "app": "nutrilens", "reason": "No repository, build artifact, or verification evidence is available to the pipeline yet, so all verification checks remain pending.", "status": "open", "note": "Verification stays honestly pending until real evidence is supplied.", "recorded_at": "2026-10-15"}, {"id": "blk-register-webapp-artifact", "app": "register", "reason": "The register repository contains registry tooling only; no production build artifact for the planned Register webapp exists yet, so Build Verified is unable-to-verify.", "status": "open", "note": "The webapp is in the Planned roadmap stage; the check will move out of unable-to-verify when a real artifact exists.", "recorded_at": "2026-10-15"}]''')
+
 json.dump({
     'schema_version': 1,
     'scan_time': now,
@@ -169,6 +174,7 @@ json.dump({
                              '(commit 8c37b9c).')},
         ],
     },
+    'blockers': blockers,
     'generated_from': (
         'Pipeline state derived from the latest GitHub Actions deployment runs '
         'and repository history of PDFly-source/appmintly-platform. Locally '
