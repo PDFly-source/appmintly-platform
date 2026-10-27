@@ -938,5 +938,124 @@
       "permissionsSource": "apk-manifest"
     },
     "updatedAt": "2026-10-17T19:56:08.203Z"
+  },
+  {
+    "id": "cineflow",
+    "slug": "cineflow",
+    "name": "CineFlow",
+    "shortName": "CineFlow",
+    "developer": "PKD",
+    "developerSlug": "pkd",
+    "type": "Web App",
+    "category": "Entertainment",
+    "description": "CineFlow — Private · Cinema · Control\n\nCineFlow is a private, device-first local video player built for people who want full control over their own media.\n\nOpen compatible local video files, build playlists, resume playback where you left off, and use an advanced subtitle studio with SRT and WebVTT support, timing offset and styling controls. A browser diagnostics screen shows which formats your device can actually decode.\n\nKey Features:\n\n1. Local Video Playback\n2. Multi-File Selection & Queue\n3. Video Library with Search\n4. Recent Playback History\n5. Resume Playback\n6. Playlist Management\n7. Favorites\n8. SRT & VTT Subtitle Support\n9. Subtitle Timing Offset & Styling\n10. Playback Diagnostics\n11. Device-to-Device Transfer\n12. Installable PWA with Offline Shell\n\nTarget audience: People who store videos on their own devices and want a private, local-first player.\n\nCineFlow works entirely on your device. Playback history, playlists, favorites, subtitles and settings are stored locally in your browser (IndexedDB) — video files are never uploaded, and no account or cloud storage is involved. Playback compatibility depends on your device, browser, codec and file format.\n\nYour videos. Your device. Your control.",
+    "shortDescription": "Play local videos privately with playlists, subtitles and playback resume — your media stays on your device.",
+    "icon": "/brand/cineflow-icon-384.png",
+    "screenshots": [
+      "/assets/apps/cineflow/screenshots/screenshot-1-0b71a0858f.png",
+      "/assets/apps/cineflow/screenshots/screenshot-2-1cbb7929d2.png",
+      "/assets/apps/cineflow/screenshots/screenshot-3-6c9add3adc.png",
+      "/assets/apps/cineflow/screenshots/screenshot-4-ad0aaf6ce5.png"
+    ],
+    "banner": "",
+    "url": "https://pdfly-source.github.io/cineflow/",
+    "launchUrl": "https://pdfly-source.github.io/cineflow/",
+    "webUrl": "https://pdfly-source.github.io/cineflow/",
+    "pwaUrl": "https://pdfly-source.github.io/cineflow/",
+    "apkUrl": "",
+    "playStoreUrl": "",
+    "appStoreUrl": "",
+    "version": "0.1.0",
+    "previousVersion": "",
+    "releaseDate": "2026-10-27",
+    "lastUpdated": "2026-10-27",
+    "publishedAt": "2026-10-27T14:00:00.000Z",
+    "themeColor": "#0A0D14",
+    "backgroundColor": "#0A0D14",
+    "manifestUrl": "https://pdfly-source.github.io/cineflow/manifest.json",
+    "startUrl": "https://pdfly-source.github.io/cineflow/",
+    "scope": "https://pdfly-source.github.io/cineflow/",
+    "pwa": {
+      "detected": true,
+      "installable": true,
+      "manifestDetected": true,
+      "serviceWorkerDetected": true,
+      "statusSummary": "PWA Ready"
+    },
+    "features": [
+      "Local Video Playback — Open and play compatible video files directly from your device (H.264/MP4 and VP9/WebM verified in release testing).",
+      "Multi-File Selection & Queue — Select several videos at once and manage the playback queue.",
+      "Video Library — Imported videos appear with duration, size, last-played date and progress in a searchable library.",
+      "Video Search — Filter your library instantly by name.",
+      "Recent Playback History — Every played video is recorded locally and can be resumed or removed.",
+      "Resume Playback — Continue where you left off; saved positions are restored across sessions.",
+      "Playlist Management — Create, rename and organize playlists of video sets.",
+      "Favorites — Mark videos as favorites and view them in a dedicated tab.",
+      "SRT & VTT Subtitle Support — Load local SubRip (.srt) and WebVTT (.vtt) files with on-screen cues.",
+      "Subtitle Timing Offset & Styling — Adjust audio-sync offset and choose font, size, colour and placement presets.",
+      "Playback Diagnostics — A dedicated screen probes your browser's live decoder and codec support.",
+      "Device-to-Device Transfer — Optional WebRTC transfer sends files directly between your own devices with manual pairing codes; no server involved.",
+      "Installable PWA with Offline Shell — Install as an app; the interface loads offline via a precached service-worker shell.",
+      "Local-First Storage — History, playlists, favorites, subtitles and settings stay in your browser's IndexedDB; video files never leave your device."
+    ],
+    "tags": [
+      "video player",
+      "local video",
+      "subtitles",
+      "srt",
+      "vtt",
+      "playlists",
+      "media",
+      "offline",
+      "pwa",
+      "local-first",
+      "no-account",
+      "privacy",
+      "resume"
+    ],
+    "releaseNotes": [
+      "Introducing CineFlow, an AppMintly Original local video-player app.",
+      "Explore the verified playback, library, playlist and subtitle features available in this release.",
+      "Includes release-tested offline, installation and local-storage privacy behaviour verified on the live app."
+    ],
+    "changelog": [],
+    "featured": true,
+    "original": true,
+    "published": true,
+    "status": "published",
+    "pwaUrlNote": "",
+    "isDemo": false,
+    "size": "",
+    "platform": [
+      "Web Browser",
+      "Desktop",
+      "Mobile"
+    ],
+    "apk": {
+      "enabled": false,
+      "buildMode": "",
+      "packageId": "",
+      "authorized": false,
+      "versionName": "",
+      "buildStatus": "not-built",
+      "verified": false,
+      "downloadAvailable": false,
+      "platform": "android"
+    },
+    "privacyTech": {
+      "permissions": [],
+      "permissionsSource": "pwa-audit (no Android build in this release)",
+      "dataCollection": "Release-audited: playback history, playlists, favorites, subtitles and settings are stored only in the browser (IndexedDB) and never transmitted. Video files are played locally and never uploaded; the app makes no account, analytics or telemetry requests.",
+      "tracking": "Release-audited: no trackers, ads or analytics — a full network-interception test showed only same-origin requests.",
+      "networkRequirement": "Loads offline after first install (precached shell); playback itself needs no network.",
+      "offlineSupport": "Verified: the app shell and all pages load offline via service-worker precache.",
+      "storage": "IndexedDB (cineflow_db): playback history, playlists, saved subtitles and user settings. Video files themselves are opened locally per session and not persisted to storage.",
+      "pwaSupport": "PWA Ready — manifest, service worker and install prompt verified live.",
+      "installationType": "Installable PWA (Web App); no APK in this release",
+      "externalServices": [
+        "None for playback. Optional device-to-device transfer uses WebRTC with a public Google STUN server for connection setup only — files go directly between your devices, never through a server."
+      ]
+    },
+    "updatedAt": "2026-10-27T14:00:00.000Z"
   }
 ]

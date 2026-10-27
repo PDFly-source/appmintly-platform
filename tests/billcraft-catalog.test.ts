@@ -27,7 +27,8 @@ describe('BillCraft official publication — catalog record', () => {
     const bc = apps.filter((a) => a.slug === 'billcraft');
     expect(bc).toHaveLength(1);
     const published = apps.filter((a) => a.published === true && a.status === 'published');
-    expect(published).toHaveLength(6);
+    // CineFlow joined the catalog on 2026-10-27 as the seventh published app.
+    expect(published).toHaveLength(7);
     expect(published.map((a) => a.slug)).toContain('billcraft');
     // Ordering: the draft distribution-test record is never published.
     expect(published.some((a) => a.slug === 'distribution-test')).toBe(false);

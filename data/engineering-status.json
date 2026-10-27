@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "scan_time": "2026-10-17T13:24:10Z",
+  "scan_time": "2026-10-27T14:11:29Z",
   "pipeline_state": "green",
   "catalog_diff": {
     "additions": 1,
-    "unchanged": 6,
+    "unchanged": 7,
     "removals": 0,
-    "generated_from": "git diff of data/apps.json between origin/main f967553 (6 records: 5 published + 1 draft, incl. NexDrop 1.4.6 vf47cb23 from PR #18) and this publication commit: BillCraft 0.1.0 added (2026-10-17), 6 records unchanged, none removed"
+    "generated_from": "git diff of data/apps.json between commit 1fe1caa (pre-CineFlow catalog, 7 records) and the CineFlow official-app-7 release branch: CineFlow added as the seventh published app, 7 records unchanged, none removed"
   },
   "health_indicator": {
     "overall": "green",
@@ -21,13 +21,13 @@
         "id": "catalog_integrity",
         "label": "Catalog Integrity",
         "status": "green",
-        "description": "data/apps.json is a valid array of 7 catalog records (6 published + 1 draft); format is validated on every deployment run."
+        "description": "data/apps.json is a valid array of 8 catalog records (7 published + 1 draft test record); format is validated on every deployment run."
       },
       {
         "id": "asset_verification",
         "label": "Asset Verification",
         "status": "green",
-        "description": "AppMintly v1.0.10 release APK published with SHA-256 integrity verification through the release pipeline. BillCraft 0.1.0 PWA publication verified with regression suites on both repositories before merge."
+        "description": "Release APK appmintly-v1.0.9 published with SHA-256 integrity verification through the release pipeline (commit 8c37b9c)."
       }
     ]
   },
