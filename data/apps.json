@@ -946,7 +946,7 @@
     "shortName": "CineFlow",
     "developer": "PKD",
     "developerSlug": "pkd",
-    "type": "Web App",
+    "type": "Android APK",
     "category": "Entertainment",
     "description": "CineFlow — Private · Cinema · Control\n\nCineFlow is a private, device-first local video player built for people who want full control over their own media.\n\nOpen compatible local video files, build playlists, resume playback where you left off, and use an advanced subtitle studio with SRT and WebVTT support, timing offset and styling controls. A browser diagnostics screen shows which formats your device can actually decode.\n\nKey Features:\n\n1. Local Video Playback\n2. Multi-File Selection & Queue\n3. Video Library with Search\n4. Recent Playback History\n5. Resume Playback\n6. Playlist Management\n7. Favorites\n8. SRT & VTT Subtitle Support\n9. Subtitle Timing Offset & Styling\n10. Playback Diagnostics\n11. Device-to-Device Transfer\n12. Installable PWA with Offline Shell\n\nTarget audience: People who store videos on their own devices and want a private, local-first player.\n\nCineFlow works entirely on your device. Playback history, playlists, favorites, subtitles and settings are stored locally in your browser (IndexedDB) — video files are never uploaded, and no account or cloud storage is involved. Playback compatibility depends on your device, browser, codec and file format.\n\nYour videos. Your device. Your control.",
     "shortDescription": "Play local videos privately with playlists, subtitles and playback resume — your media stays on your device.",
