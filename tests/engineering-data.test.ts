@@ -115,17 +115,16 @@ describe('Phase 3.2 — engineering status data', () => {
     }
   });
 
-  it('catalog diff matches the git-derived reality (1 addition: BillCraft)', () => {
+  it('catalog diff matches the git-derived reality (1 addition: CineFlow)', () => {
     expect(engStatus.catalog_diff.additions).toBe(1);
-    expect(engStatus.catalog_diff.unchanged).toBe(6);
+    expect(engStatus.catalog_diff.unchanged).toBe(7);
     expect(engStatus.catalog_diff.removals).toBe(0);
-    expect(engStatus.catalog_diff.generated_from).toContain('BillCraft');
-    expect(engStatus.catalog_diff.generated_from).toContain('f967553');
+    expect(engStatus.catalog_diff.generated_from).toContain('CineFlow');
   });
 
-  it('exactly five real, newest-first engineering events', () => {
+  it('exactly seven real, newest-first engineering events', () => {
     const events = engEvents.events;
-    expect(events).toHaveLength(5);
+    expect(events).toHaveLength(7);
     for (let i = 1; i < events.length; i++) {
       expect(events[i - 1].timestamp >= events[i].timestamp).toBe(true);
     }

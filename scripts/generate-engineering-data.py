@@ -145,12 +145,13 @@ json.dump({
     'pipeline_state': 'green',
     'catalog_diff': {
         'additions': 1,
-        'unchanged': 5,
+        'unchanged': 7,
         'removals': 0,
         'generated_from': (
-            'git diff of data/apps.json between commit 72be95f (pre-NexDrop '
-            'catalog, 5 apps) and 8c37b9c (release 1.0.9, 6 apps): NexDrop '
-            'added (510dc06), 5 apps unchanged, none removed'
+            'git diff of data/apps.json between commit 1fe1caa (pre-CineFlow '
+            'catalog, 7 records) and the CineFlow official-app-7 release branch: '
+            'CineFlow added as the seventh published app, 7 records unchanged, '
+            'none removed'
         ),
     },
     'health_indicator': {
@@ -160,7 +161,7 @@ json.dump({
              'description': ('Latest production deployment run 38700984980 '
                               '(commit ed7fb7c) completed successfully on GitHub Pages.')},
             {'id': 'catalog_integrity', 'label': 'Catalog Integrity', 'status': 'green',
-             'description': ('data/apps.json is a valid array of 6 catalog records; '
+             'description': ('data/apps.json is a valid array of 8 catalog records (7 published + 1 draft test record); '
                               'format is validated on every deployment run.')},
             {'id': 'asset_verification', 'label': 'Asset Verification', 'status': 'green',
              'description': ('Release APK appmintly-v1.0.9 published with SHA-256 '
@@ -176,6 +177,18 @@ json.dump({
 }, open('data/engineering-status.json', 'w'), indent=2, ensure_ascii=False)
 
 events = [
+    {'id': 'EVT-20261027-01', 'timestamp': '2026-10-27T14:10:00Z', 'type': 'catalog',
+     'title': 'CineFlow published as the seventh AppMintly Original',
+     'description': ('CineFlow 0.1.0 (AppMintly Original, Web App / PWA) added to data/apps.json as the '
+                     'seventh published catalog record. Release-audited live at '
+                     'https://pdfly-source.github.io/cineflow/: 132/132 repo tests, real H.264/VP9 '
+                     'playback, SRT+VTT subtitles, library/search/favorites/playlists, resume, offline '
+                     'shell via service worker, and a clean same-origin-only network interception audit.')},
+    {'id': 'EVT-20261017-01', 'timestamp': '2026-10-17T13:30:00Z', 'type': 'catalog',
+     'title': "BillCraft published as AppMintly's sixth application",
+     'description': ('BillCraft 0.1.0 (PWA) added to data/apps.json as the sixth published catalog '
+                     'record; Lab status moved to released; complete-lockup launcher branding prepared '
+                     'on PDFly-source/billcraft release/official-publication (c84c0a5).')},
     {'id': 'EVT-20261015-01', 'timestamp': '2026-10-15T08:40:00Z', 'type': 'verification',
      'title': 'Register repository evidence audit',
      'description': ('Register repo inspected at commit eb6bc17: 13/13 integrity '
