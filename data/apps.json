@@ -962,7 +962,7 @@
     "launchUrl": "https://pdfly-source.github.io/cineflow/",
     "webUrl": "https://pdfly-source.github.io/cineflow/",
     "pwaUrl": "https://pdfly-source.github.io/cineflow/",
-    "apkUrl": "",
+    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.1.0/CineFlow-0.1.0.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
     "version": "0.1.0",
@@ -1032,15 +1032,38 @@
       "Mobile"
     ],
     "apk": {
-      "enabled": false,
+      "enabled": true,
       "buildMode": "webview",
       "packageId": "com.appforge.cineflow",
       "authorized": true,
-      "versionName": "",
-      "buildStatus": "not-built",
-      "verified": false,
-      "downloadAvailable": false,
-      "platform": "android"
+      "versionName": "0.1.0",
+      "buildStatus": "released",
+      "verified": true,
+      "downloadAvailable": true,
+      "platform": "android",
+      "versionCode": 100,
+      "fileName": "CineFlow-0.1.0.apk",
+      "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.1.0/CineFlow-0.1.0.apk",
+      "fileSizeBytes": 276334,
+      "sha256": "a98a80b526bb1c90ce74645e1ac5cd42b3035d2191a9e95dcb00dd1bd2bdf594",
+      "releaseTag": "cineflow-v0.1.0",
+      "releaseDate": "2026-10-27",
+      "generatedAt": "2026-10-27T15:43:50.629Z",
+      "architecture": "universal",
+      "minSdk": 21,
+      "targetSdk": 36,
+      "certificateSubject": "AppMintly",
+      "certificateSha256Fingerprint": "dbafc6d389516069518826d1e1320cebcf7970eec9249d749de699b730f61368",
+      "signatureSchemes": {
+        "v1": true,
+        "v2": true,
+        "v3": true
+      },
+      "securityCheckStatus": "passed",
+      "securityCheckTimestamp": "2026-10-27T15:43:45.238Z",
+      "validatorVersion": "11.6.0",
+      "releaseId": 425658214,
+      "assetId": 682050501
     },
     "privacyTech": {
       "permissions": [],
@@ -1057,6 +1080,6 @@
       ],
       "notes": "Verified 2026-10-27 from the CineFlow source audit (PDFly-source/cineflow @ dec873b) and a live-site runtime audit: real H.264/VP9 playback, SRT+VTT subtitles, offline shell verified with network emulation, network interception showed same-origin requests only (zero non-GET). Android permissions pending the first signed APK manifest inspection."
     },
-    "updatedAt": "2026-10-27T14:00:00.000Z"
+    "updatedAt": "2026-10-27T15:43:50.629Z"
   }
 ]
