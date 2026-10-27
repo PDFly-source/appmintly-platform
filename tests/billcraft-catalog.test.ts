@@ -84,10 +84,11 @@ describe('BillCraft official publication — catalog record', () => {
   test('Lab graduation: billcraft left the Lab and upcoming registries when published', () => {
     const lab = JSON.parse(readFileSync(join(REPO, 'data', 'lab-apps.json'), 'utf8'));
     expect((lab.apps as any[]).some((a) => a.id === 'billcraft')).toBe(false); // graduated, like NexDrop
-    // Lab stays internally consistent: 3 public + 2 hidden.
-    expect((lab.apps as any[]).filter((a) => !a.hidden).map((a) => a.id)).toEqual([
-      'cartora', 'nutrilens', 'register',
-    ]);
+    // Lab stays internally consistent: 33 public (3 showcase + 30 imported
+    // roadmap apps, 2026-10-27) + 2 hidden.
+    expect((lab.apps as any[]).filter((a) => !a.hidden).map((a) => a.id)).toEqual(
+      ["cartora", "nutrilens", "register", "hisaabkhata", "qr-forge", "unitx-axom", "emiwise", "agex", "docuscan-mint", "imageslim", "audiotrim", "passportlab", "colorsnap", "textcraft", "billsplit-mint", "typeaxom", "focusmint", "notecheck", "measuremint", "wagebook", "randhoon", "billscan", "signlab", "cropcraft", "soundmeter", "breathease", "bhoomimap", "cardmint", "fileswitch", "lightlux", "slipgen", "kharcha", "morselab"] as string[]
+    );
   });
 
   test('engineering events record the publication', () => {

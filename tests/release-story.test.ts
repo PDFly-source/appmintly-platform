@@ -121,8 +121,8 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   // Phase 1E — exact public showcase catalog.
-  it('public catalog is exactly the three showcase entries in order (BillCraft published)', () => {
-    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['cartora', 'nutrilens', 'register']);
+  it('public catalog is the 3 showcase entries + 30 imported roadmap apps, in order', () => {
+    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['cartora', 'nutrilens', 'register', 'hisaabkhata', 'qr-forge', 'unitx-axom', 'emiwise', 'agex', 'docuscan-mint', 'imageslim', 'audiotrim', 'passportlab', 'colorsnap', 'textcraft', 'billsplit-mint', 'typeaxom', 'focusmint', 'notecheck', 'measuremint', 'wagebook', 'randhoon', 'billscan', 'signlab', 'cropcraft', 'soundmeter', 'breathease', 'bhoomimap', 'cardmint', 'fileswitch', 'lightlux', 'slipgen', 'kharcha', 'morselab']);
   });
 
   it('Publisher Console and PDFly are absent from the public Lab catalog', () => {
@@ -251,10 +251,10 @@ describe('upcoming-apps data — normalization honesty', () => {
   it('filter counts derive from real records: all 3, planned 1, in-development 2, early testing 0, published 0', () => {
     // Post-graduation dataset (2026-10-17): billcraft left the Lab when it
     // was published to the catalog; nothing in the Lab dataset is published.
-    expect(UPCOMING_APPS.length).toBe(3);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(1);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(2);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(0);
+    expect(UPCOMING_APPS.length).toBe(33);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(18);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(12);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(3);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(0);
   });
 });

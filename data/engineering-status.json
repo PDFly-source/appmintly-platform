@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "scan_time": "2026-10-27T14:11:29Z",
+  "scan_time": "2026-10-27T18:30:19Z",
   "pipeline_state": "green",
   "catalog_diff": {
     "additions": 1,
@@ -31,7 +31,6 @@
       }
     ]
   },
-  "generated_from": "Pipeline state derived from the latest GitHub Actions deployment runs and repository history of PDFly-source/appmintly-platform. Locally recorded by the AppMintly team — not an independent audit.",
   "blockers": [
     {
       "id": "blk-apk-server-fetch",
@@ -73,5 +72,6 @@
       "note": "The webapp is in the Planned roadmap stage; the check will move out of unable-to-verify when a real artifact exists.",
       "recorded_at": "2026-10-15"
     }
-  ]
+  ],
+  "generated_from": "Pipeline state derived from the latest GitHub Actions deployment runs and repository history of PDFly-source/appmintly-platform. Locally recorded by the AppMintly team — not an independent audit."
 }

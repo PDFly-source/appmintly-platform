@@ -179,6 +179,1626 @@
       "progress_percent": 33
     },
     {
+      "id": "hisaabkhata",
+      "name": "HisaabKhata",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-HISA-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-HISA-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-HISA-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-HISA-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-HISA-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "hisaabkhata-m1",
+          "title": "Core ledger engine with local PDF generation built",
+          "description": "Core ledger engine with local PDF generation built",
+          "status": "done"
+        },
+        {
+          "id": "hisaabkhata-m2",
+          "title": "Premium UI + Assamese/English bilingual + voice input",
+          "description": "Premium UI + Assamese/English bilingual + voice input",
+          "status": "in-progress"
+        },
+        {
+          "id": "hisaabkhata-m3",
+          "title": "PWA packaging & verification",
+          "description": "PWA packaging & verification",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "qr-forge",
+      "name": "QR Forge",
+      "status": "early-testing",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-QR-F-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-QR-F-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-QR-F-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-QR-F-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-QR-F-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "qr-forge-m1",
+          "title": "Core QR engine + 12 formats + offline render",
+          "description": "Core QR engine + 12 formats + offline render",
+          "status": "done"
+        },
+        {
+          "id": "qr-forge-m2",
+          "title": "High-res export + logo overlay system",
+          "description": "High-res export + logo overlay system",
+          "status": "done"
+        },
+        {
+          "id": "qr-forge-m3",
+          "title": "Batch QR + scanner history hardening",
+          "description": "Batch QR + scanner history hardening",
+          "status": "in-progress"
+        }
+      ],
+      "progress_percent": 67
+    },
+    {
+      "id": "unitx-axom",
+      "name": "UnitX Axom",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-UNIT-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-UNIT-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-UNIT-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-UNIT-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-UNIT-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "unitx-axom-m1",
+          "title": "Core conversion engine + 7 Assam variants",
+          "description": "Core conversion engine + 7 Assam variants",
+          "status": "done"
+        },
+        {
+          "id": "unitx-axom-m2",
+          "title": "Field mode UI + voice input + history",
+          "description": "Field mode UI + voice input + history",
+          "status": "in-progress"
+        },
+        {
+          "id": "unitx-axom-m3",
+          "title": "Polygon area calc & sharing sheet",
+          "description": "Polygon area calc & sharing sheet",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "emiwise",
+      "name": "EMIWise",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-EMIW-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-EMIW-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-EMIW-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-EMIW-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-EMIW-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "emiwise-m1",
+          "title": "Interest engine spec + formula verification",
+          "description": "Interest engine spec + formula verification",
+          "status": "in-progress"
+        },
+        {
+          "id": "emiwise-m2",
+          "title": "Assamese explanation UI + chart system",
+          "description": "Assamese explanation UI + chart system",
+          "status": "planned"
+        },
+        {
+          "id": "emiwise-m3",
+          "title": "PDF schedule export + comparison mode",
+          "description": "PDF schedule export + comparison mode",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "agex",
+      "name": "AgeX",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-AGEX-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-AGEX-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-AGEX-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-AGEX-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-AGEX-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "agex-m1",
+          "title": "Precise age engine + leap-year safe calc",
+          "description": "Precise age engine + leap-year safe calc",
+          "status": "done"
+        },
+        {
+          "id": "agex-m2",
+          "title": "Exam database + eligibility logic",
+          "description": "Exam database + eligibility logic",
+          "status": "in-progress"
+        },
+        {
+          "id": "agex-m3",
+          "title": "Horoscope-free UI + share card export",
+          "description": "Horoscope-free UI + share card export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "docuscan-mint",
+      "name": "DocuScan Mint",
+      "status": "early-testing",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-DOCU-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-DOCU-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-DOCU-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-DOCU-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-DOCU-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "docuscan-mint-m1",
+          "title": "Edge detection + filters + PDF engine",
+          "description": "Edge detection + filters + PDF engine",
+          "status": "done"
+        },
+        {
+          "id": "docuscan-mint-m2",
+          "title": "OCR layer + search in PDF (local)",
+          "description": "OCR layer + search in PDF (local)",
+          "status": "done"
+        },
+        {
+          "id": "docuscan-mint-m3",
+          "title": "Batch mode & cloud-free backup file",
+          "description": "Batch mode & cloud-free backup file",
+          "status": "in-progress"
+        }
+      ],
+      "progress_percent": 67
+    },
+    {
+      "id": "imageslim",
+      "name": "ImageSlim",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-IMAG-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-IMAG-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-IMAG-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-IMAG-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-IMAG-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "imageslim-m1",
+          "title": "Core compressor + format converter (WebP/AVIF)",
+          "description": "Core compressor + format converter (WebP/AVIF)",
+          "status": "done"
+        },
+        {
+          "id": "imageslim-m2",
+          "title": "Exact KB target + batch queue UI",
+          "description": "Exact KB target + batch queue UI",
+          "status": "in-progress"
+        },
+        {
+          "id": "imageslim-m3",
+          "title": "Before/after loupe + export presets",
+          "description": "Before/after loupe + export presets",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "audiotrim",
+      "name": "AudioTrim",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-AUDI-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-AUDI-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-AUDI-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-AUDI-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-AUDI-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "audiotrim-m1",
+          "title": "Waveform engine + trimming logic research",
+          "description": "Waveform engine + trimming logic research",
+          "status": "in-progress"
+        },
+        {
+          "id": "audiotrim-m2",
+          "title": "Merge + fade + export pipeline",
+          "description": "Merge + fade + export pipeline",
+          "status": "planned"
+        },
+        {
+          "id": "audiotrim-m3",
+          "title": "Ringtone + share sheet integration",
+          "description": "Ringtone + share sheet integration",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "passportlab",
+      "name": "PassportLab",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-PASS-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-PASS-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-PASS-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-PASS-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-PASS-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "passportlab-m1",
+          "title": "Size engine + face detection + BG removal (local)",
+          "description": "Size engine + face detection + BG removal (local)",
+          "status": "done"
+        },
+        {
+          "id": "passportlab-m2",
+          "title": "Suit overlay + print sheet generator",
+          "description": "Suit overlay + print sheet generator",
+          "status": "in-progress"
+        },
+        {
+          "id": "passportlab-m3",
+          "title": "Compliance check + export",
+          "description": "Compliance check + export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "colorsnap",
+      "name": "ColorSnap",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-COLO-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-COLO-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-COLO-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-COLO-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-COLO-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "colorsnap-m1",
+          "title": "Camera color engine + HEX/RGB/LAB calc",
+          "description": "Camera color engine + HEX/RGB/LAB calc",
+          "status": "in-progress"
+        },
+        {
+          "id": "colorsnap-m2",
+          "title": "Paint DB + palette extractor",
+          "description": "Paint DB + palette extractor",
+          "status": "planned"
+        },
+        {
+          "id": "colorsnap-m3",
+          "title": "Export ASE + share",
+          "description": "Export ASE + share",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "textcraft",
+      "name": "TextCraft",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-TEXT-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-TEXT-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-TEXT-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-TEXT-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-TEXT-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "textcraft-m1",
+          "title": "Unicode converter engine + case tools built",
+          "description": "Unicode converter engine + case tools built",
+          "status": "done"
+        },
+        {
+          "id": "textcraft-m2",
+          "title": "Premium editor + Assamese keyboard helper",
+          "description": "Premium editor + Assamese keyboard helper",
+          "status": "in-progress"
+        },
+        {
+          "id": "textcraft-m3",
+          "title": "Export + share + history",
+          "description": "Export + share + history",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "billsplit-mint",
+      "name": "BillSplit Mint",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BILL-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "billsplit-mint-m1",
+          "title": "Split engine + settle algorithm research",
+          "description": "Split engine + settle algorithm research",
+          "status": "in-progress"
+        },
+        {
+          "id": "billsplit-mint-m2",
+          "title": "Group UI + expense add flow",
+          "description": "Group UI + expense add flow",
+          "status": "planned"
+        },
+        {
+          "id": "billsplit-mint-m3",
+          "title": "UPI link + image share export",
+          "description": "UPI link + image share export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "typeaxom",
+      "name": "TypeAxom",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-TYPE-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-TYPE-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-TYPE-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-TYPE-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-TYPE-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "typeaxom-m1",
+          "title": "Typing engine + Assamese keyboard + WPM calc",
+          "description": "Typing engine + Assamese keyboard + WPM calc",
+          "status": "done"
+        },
+        {
+          "id": "typeaxom-m2",
+          "title": "Exam passages + accuracy heatmap",
+          "description": "Exam passages + accuracy heatmap",
+          "status": "in-progress"
+        },
+        {
+          "id": "typeaxom-m3",
+          "title": "Certificate image export + history",
+          "description": "Certificate image export + history",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "focusmint",
+      "name": "FocusMint",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-FOCU-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-FOCU-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-FOCU-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-FOCU-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-FOCU-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "focusmint-m1",
+          "title": "Timer engine + notification spec",
+          "description": "Timer engine + notification spec",
+          "status": "in-progress"
+        },
+        {
+          "id": "focusmint-m2",
+          "title": "Sound engine + focus UI",
+          "description": "Sound engine + focus UI",
+          "status": "planned"
+        },
+        {
+          "id": "focusmint-m3",
+          "title": "Report + streak system",
+          "description": "Report + streak system",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "notecheck",
+      "name": "NoteCheck",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-NOTE-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-NOTE-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-NOTE-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-NOTE-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-NOTE-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "notecheck-m1",
+          "title": "RBI feature DB + illustration research",
+          "description": "RBI feature DB + illustration research",
+          "status": "in-progress"
+        },
+        {
+          "id": "notecheck-m2",
+          "title": "Checklist UI + comparison mode",
+          "description": "Checklist UI + comparison mode",
+          "status": "planned"
+        },
+        {
+          "id": "notecheck-m3",
+          "title": "Denomination guide + report tips",
+          "description": "Denomination guide + report tips",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "measuremint",
+      "name": "MeasureMint",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-MEAS-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-MEAS-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-MEAS-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-MEAS-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-MEAS-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "measuremint-m1",
+          "title": "Coin detection + calibration logic",
+          "description": "Coin detection + calibration logic",
+          "status": "in-progress"
+        },
+        {
+          "id": "measuremint-m2",
+          "title": "Measurement overlay UI",
+          "description": "Measurement overlay UI",
+          "status": "planned"
+        },
+        {
+          "id": "measuremint-m3",
+          "title": "Export + save history",
+          "description": "Export + save history",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "wagebook",
+      "name": "WageBook",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-WAGE-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-WAGE-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-WAGE-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-WAGE-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-WAGE-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "wagebook-m1",
+          "title": "Attendance engine + wage calc + advance tracker",
+          "description": "Attendance engine + wage calc + advance tracker",
+          "status": "done"
+        },
+        {
+          "id": "wagebook-m2",
+          "title": "Labour profiles + site grouping UI",
+          "description": "Labour profiles + site grouping UI",
+          "status": "in-progress"
+        },
+        {
+          "id": "wagebook-m3",
+          "title": "PDF wage slip + weekly report export",
+          "description": "PDF wage slip + weekly report export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "randhoon",
+      "name": "Randhoon",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-RAND-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-RAND-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-RAND-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-RAND-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-RAND-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "randhoon-m1",
+          "title": "Recipe DB + ingredient matcher spec",
+          "description": "Recipe DB + ingredient matcher spec",
+          "status": "in-progress"
+        },
+        {
+          "id": "randhoon-m2",
+          "title": "Assamese input + filter UI",
+          "description": "Assamese input + filter UI",
+          "status": "planned"
+        },
+        {
+          "id": "randhoon-m3",
+          "title": "Cook mode + timer",
+          "description": "Cook mode + timer",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "billscan",
+      "name": "BillScan",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BILL-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-BILL-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "billscan-m1",
+          "title": "OCR engine + total extractor built",
+          "description": "OCR engine + total extractor built",
+          "status": "done"
+        },
+        {
+          "id": "billscan-m2",
+          "title": "Item parser + category auto-tag",
+          "description": "Item parser + category auto-tag",
+          "status": "in-progress"
+        },
+        {
+          "id": "billscan-m3",
+          "title": "Expense report + export",
+          "description": "Expense report + export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "signlab",
+      "name": "SignLab",
+      "status": "early-testing",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-SIGN-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-SIGN-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-SIGN-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-SIGN-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-SIGN-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "signlab-m1",
+          "title": "Drawing engine + smoothing + pressure sim",
+          "description": "Drawing engine + smoothing + pressure sim",
+          "status": "done"
+        },
+        {
+          "id": "signlab-m2",
+          "title": "Transparent export + size presets",
+          "description": "Transparent export + size presets",
+          "status": "done"
+        },
+        {
+          "id": "signlab-m3",
+          "title": "Signature styles + save manager",
+          "description": "Signature styles + save manager",
+          "status": "in-progress"
+        }
+      ],
+      "progress_percent": 67
+    },
+    {
+      "id": "cropcraft",
+      "name": "CropCraft",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-CROP-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-CROP-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-CROP-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-CROP-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-CROP-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "cropcraft-m1",
+          "title": "Crop engine + ratio presets spec",
+          "description": "Crop engine + ratio presets spec",
+          "status": "in-progress"
+        },
+        {
+          "id": "cropcraft-m2",
+          "title": "Batch mode + preview UI",
+          "description": "Batch mode + preview UI",
+          "status": "planned"
+        },
+        {
+          "id": "cropcraft-m3",
+          "title": "Export + custom ratio",
+          "description": "Export + custom ratio",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "soundmeter",
+      "name": "SoundMeter",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-SOUN-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-SOUN-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-SOUN-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-SOUN-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-SOUN-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "soundmeter-m1",
+          "title": "dB engine + calibration research",
+          "description": "dB engine + calibration research",
+          "status": "in-progress"
+        },
+        {
+          "id": "soundmeter-m2",
+          "title": "Graph UI + history",
+          "description": "Graph UI + history",
+          "status": "planned"
+        },
+        {
+          "id": "soundmeter-m3",
+          "title": "Export + threshold alerts",
+          "description": "Export + threshold alerts",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "breathease",
+      "name": "BreathEase",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BREA-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-BREA-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-BREA-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-BREA-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-BREA-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "breathease-m1",
+          "title": "Breathing patterns + timer engine",
+          "description": "Breathing patterns + timer engine",
+          "status": "in-progress"
+        },
+        {
+          "id": "breathease-m2",
+          "title": "Guide UI + haptics",
+          "description": "Guide UI + haptics",
+          "status": "planned"
+        },
+        {
+          "id": "breathease-m3",
+          "title": "History + streaks",
+          "description": "History + streaks",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "bhoomimap",
+      "name": "BhoomiMap",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BHOO-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-BHOO-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-BHOO-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-BHOO-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-BHOO-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "bhoomimap-m1",
+          "title": "Polygon engine + area calc spec",
+          "description": "Polygon engine + area calc spec",
+          "status": "in-progress"
+        },
+        {
+          "id": "bhoomimap-m2",
+          "title": "Map UI + GPS walk mode",
+          "description": "Map UI + GPS walk mode",
+          "status": "planned"
+        },
+        {
+          "id": "bhoomimap-m3",
+          "title": "Export image + Bigha conversion",
+          "description": "Export image + Bigha conversion",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "cardmint",
+      "name": "CardMint",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-CARD-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-CARD-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-CARD-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-CARD-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-CARD-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "cardmint-m1",
+          "title": "Template engine + text layout research",
+          "description": "Template engine + text layout research",
+          "status": "in-progress"
+        },
+        {
+          "id": "cardmint-m2",
+          "title": "QR integration + editor UI",
+          "description": "QR integration + editor UI",
+          "status": "planned"
+        },
+        {
+          "id": "cardmint-m3",
+          "title": "PDF export + print sheet",
+          "description": "PDF export + print sheet",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "fileswitch",
+      "name": "FileSwitch",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-FILE-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-FILE-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-FILE-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-FILE-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-FILE-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "fileswitch-m1",
+          "title": "Parser engine + converter logic",
+          "description": "Parser engine + converter logic",
+          "status": "in-progress"
+        },
+        {
+          "id": "fileswitch-m2",
+          "title": "Table editor UI + preview",
+          "description": "Table editor UI + preview",
+          "status": "planned"
+        },
+        {
+          "id": "fileswitch-m3",
+          "title": "Export + share",
+          "description": "Export + share",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "lightlux",
+      "name": "LightLux",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-LIGH-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-LIGH-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-LIGH-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-LIGH-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-LIGH-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "lightlux-m1",
+          "title": "Lux engine + calibration research",
+          "description": "Lux engine + calibration research",
+          "status": "in-progress"
+        },
+        {
+          "id": "lightlux-m2",
+          "title": "Guide UI + threshold",
+          "description": "Guide UI + threshold",
+          "status": "planned"
+        },
+        {
+          "id": "lightlux-m3",
+          "title": "History + export",
+          "description": "History + export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "slipgen",
+      "name": "SlipGen",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-SLIP-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-SLIP-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-SLIP-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-SLIP-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-SLIP-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "slipgen-m1",
+          "title": "Slip engine + PDF template built",
+          "description": "Slip engine + PDF template built",
+          "status": "done"
+        },
+        {
+          "id": "slipgen-m2",
+          "title": "Rent receipt + stamp + multi-tenant",
+          "description": "Rent receipt + stamp + multi-tenant",
+          "status": "in-progress"
+        },
+        {
+          "id": "slipgen-m3",
+          "title": "Batch generate + export",
+          "description": "Batch generate + export",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
+    },
+    {
+      "id": "kharcha",
+      "name": "Kharcha",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-KHAR-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-KHAR-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-KHAR-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-KHAR-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-KHAR-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "kharcha-m1",
+          "title": "Memory-only engine + reset logic",
+          "description": "Memory-only engine + reset logic",
+          "status": "in-progress"
+        },
+        {
+          "id": "kharcha-m2",
+          "title": "Quick-add UI + tags",
+          "description": "Quick-add UI + tags",
+          "status": "planned"
+        },
+        {
+          "id": "kharcha-m3",
+          "title": "Daily summary + share",
+          "description": "Daily summary + share",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
+      "id": "morselab",
+      "name": "MorseLab",
+      "status": "planned",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-MORS-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-MORS-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-MORS-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-MORS-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-MORS-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "morselab-m1",
+          "title": "Morse engine + translator + audio",
+          "description": "Morse engine + translator + audio",
+          "status": "in-progress"
+        },
+        {
+          "id": "morselab-m2",
+          "title": "Flashlight + quiz UI",
+          "description": "Flashlight + quiz UI",
+          "status": "planned"
+        },
+        {
+          "id": "morselab-m3",
+          "title": "Learn mode + history",
+          "description": "Learn mode + history",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",

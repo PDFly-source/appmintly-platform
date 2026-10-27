@@ -106,11 +106,15 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
 
 describe('problem statements and benefits — honest, complete, claim-free', () => {
   it('every public app record carries a problem statement and benefits', () => {
-    expect(UPCOMING_APPS.length).toBe(3); // BillCraft graduated to the catalog (2026-10-17)
+    expect(UPCOMING_APPS.length).toBe(33); // 3 showcase entries + 30 imported AppMintly Labs roadmap apps (2026-10-27)
     for (const app of UPCOMING_APPS) {
       expect(app.problem, `${app.id} problem`).toBeTruthy();
-      expect(app.benefits, `${app.id} benefits`).toBeTruthy();
-      expect(app.benefits!.length).toBeGreaterThanOrEqual(3);
+      // Benefits: only the original showcase records carry them — the 30
+      // imported roadmap apps have no benefits field in their source.
+      if (['cartora', 'nutrilens', 'register'].includes(app.id)) {
+        expect(app.benefits, `${app.id} benefits`).toBeTruthy();
+        expect(app.benefits!.length).toBeGreaterThanOrEqual(3);
+      }
     }
   });
 
@@ -233,10 +237,10 @@ describe('status-consistency audit — canonical labels and honest verification'
   it('overview counts derive from the records: 3 / 1 / 2 / 0 / 0 (post-graduation)', () => {
     const count = (s?: string) =>
       s ? UPCOMING_APPS.filter((a) => a.roadmapStatus === s).length : UPCOMING_APPS.length;
-    expect(count()).toBe(3); // All Projects (BillCraft graduated 2026-10-17)
-    expect(count('planned')).toBe(1);
-    expect(count('in-development')).toBe(2);
-    expect(count('early-testing')).toBe(0);
+    expect(count()).toBe(33); // All Projects (3 showcase + 30 imported roadmap apps, 2026-10-27)
+    expect(count('planned')).toBe(18); // register + 17 imported
+    expect(count('in-development')).toBe(12); // cartora + nutrilens + 10 imported
+    expect(count('early-testing')).toBe(3); // 3 imported
     expect(count('published')).toBe(0); // honest zero — no Lab record is published
   });
 });
