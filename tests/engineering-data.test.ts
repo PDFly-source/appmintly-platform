@@ -27,11 +27,43 @@ const engEvents = readJson('engineering-events.json');
 const VALID_RESULTS = ['pending', 'passed', 'failed', 'unable-to-verify'];
 
 describe('Phase 3.2 — engineering status data', () => {
-  it('lab-apps contains exactly five records: 3 public + 2 hidden (BillCraft graduated)', () => {
+  it('lab-apps contains exactly 35 records: 33 public (3 showcase + 30 imported roadmap apps) + 2 hidden', () => {
     const apps = labApps.apps as Array<{ id: string; hidden: boolean }>;
-    expect(apps).toHaveLength(5);
+    expect(apps).toHaveLength(35);
     expect(apps.filter((a) => !a.hidden).map((a) => a.id)).toEqual([
-      'cartora', 'nutrilens', 'register',
+      'cartora',
+      'nutrilens',
+      'register',
+      'hisaabkhata',
+      'qr-forge',
+      'unitx-axom',
+      'emiwise',
+      'agex',
+      'docuscan-mint',
+      'imageslim',
+      'audiotrim',
+      'passportlab',
+      'colorsnap',
+      'textcraft',
+      'billsplit-mint',
+      'typeaxom',
+      'focusmint',
+      'notecheck',
+      'measuremint',
+      'wagebook',
+      'randhoon',
+      'billscan',
+      'signlab',
+      'cropcraft',
+      'soundmeter',
+      'breathease',
+      'bhoomimap',
+      'cardmint',
+      'fileswitch',
+      'lightlux',
+      'slipgen',
+      'kharcha',
+      'morselab',
     ]);
     expect(apps.filter((a) => a.hidden).map((a) => a.id).sort()).toEqual([
       'pdfly', 'publisher-console',
