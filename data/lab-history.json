@@ -390,5 +390,13 @@
     "target": "CropCraft",
     "summary": "update record \"CropCraft\" (cropcraft), status planned; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:34:39.452Z",
+    "actor": "console",
+    "action": "update",
+    "target": "BillScan",
+    "summary": "update record \"BillScan\" (billscan), status in-development; changed: no material change",
+    "commitSha": null
   }
 ]
