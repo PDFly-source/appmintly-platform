@@ -1981,22 +1981,6 @@
       "progress_percent": 100
     },
     {
-      "id": "lab-cms-smoke-test",
-      "name": "Lab CMS Smoke Test (edited)",
-      "status": "planned",
-      "hidden": false,
-      "verification": [],
-      "milestones": [
-        {
-          "id": "smoke-m1",
-          "title": "Created via console smoke test",
-          "description": "Temporary milestone created by the Publisher Console CRUD verification on 2026-10-28.",
-          "status": "in-progress"
-        }
-      ],
-      "progress_percent": 0
-    },
-    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",
