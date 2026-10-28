@@ -3984,11 +3984,11 @@
   {
     "id": "lab-cms-smoke-test",
     "slug": "lab-cms-smoke-test",
-    "name": "Lab CMS Smoke Test",
+    "name": "Lab CMS Smoke Test (edited)",
     "developer": "PKD",
     "category": "Productivity",
     "type": "Web App",
-    "purpose": "Temporary console CRUD verification record. Will be removed immediately after the smoke test.",
+    "purpose": "Edited purpose line — verifying update persistence.",
     "intendedUsers": [
       "AppMintly QA"
     ],
@@ -4004,7 +4004,7 @@
         "id": "smoke-m1",
         "title": "Created via console smoke test",
         "description": "Temporary milestone created by the Publisher Console CRUD verification on 2026-10-28.",
-        "status": "planned"
+        "status": "in-progress"
       }
     ],
     "roadmapStatus": "planned",
