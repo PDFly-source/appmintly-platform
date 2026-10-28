@@ -1981,24 +1981,6 @@
       "progress_percent": 100
     },
     {
-      "id": "qa-probe-phase1d",
-      "name": "QA Probe (temporary)",
-      "status": "early-testing",
-      "hidden": false,
-      "verification": [],
-      "milestones": [
-        {
-          "id": "qa-m1",
-          "title": "Probe milestone",
-          "description": "Disposable QA milestone for live verification.",
-          "status": "in-progress",
-          "evidence": "https://example.com/probe-evidence",
-          "evidence_class": "team-reported"
-        }
-      ],
-      "progress_percent": 0
-    },
-    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",
