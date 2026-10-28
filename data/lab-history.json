@@ -102,5 +102,13 @@
     "target": "QR Forge",
     "summary": "update record \"QR Forge\" (qr-forge), status early-testing",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:05:57.934Z",
+    "actor": "console",
+    "action": "update",
+    "target": "EMIWise",
+    "summary": "update record \"EMIWise\" (emiwise), status planned",
+    "commitSha": null
   }
 ]
