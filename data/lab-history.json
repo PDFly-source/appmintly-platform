@@ -382,5 +382,13 @@
     "target": "SignLab",
     "summary": "update record \"SignLab\" (signlab), status early-testing; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:33:33.819Z",
+    "actor": "console",
+    "action": "update",
+    "target": "CropCraft",
+    "summary": "update record \"CropCraft\" (cropcraft), status planned; changed: no material change",
+    "commitSha": null
   }
 ]
