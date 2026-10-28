@@ -1991,7 +1991,9 @@
           "id": "qmp-a",
           "title": "Probe Alpha",
           "description": "First disposable milestone.",
-          "status": "planned"
+          "status": "done",
+          "evidence": "https://example.com/qa-evidence-1793179812948",
+          "evidence_class": "team-reported"
         },
         {
           "id": "qmp-b",
@@ -2000,7 +2002,7 @@
           "status": "planned"
         }
       ],
-      "progress_percent": 0
+      "progress_percent": 50
     },
     {
       "id": "publisher-console",
