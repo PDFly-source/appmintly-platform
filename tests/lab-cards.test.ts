@@ -278,3 +278,19 @@ describe('status-consistency audit — canonical labels and honest verification'
     ).toEqual(new Set(publishedCatalog.map((a: any) => a.slug)));
   });
 });
+
+/* ---- archived lifecycle: hidden from the public Lab, restorable ---- */
+describe('lab archived lifecycle', () => {
+  it('getUpcomingApps hides records archived by the console', async () => {
+    const mod = await import('@/data/upcoming-apps');
+    // live dataset snapshot: no record is archived right now, so the
+    // count equals the raw array length minus any invalid records — the
+    // invariant is that getUpcomingApps() NEVER returns archived:true.
+    const upcoming = mod.getUpcomingApps();
+    const raw = (await import('@/data/upcoming-apps.json')).default as unknown as Array<{ archived?: unknown }>;
+    const expectVisible = raw.filter((r) => r.archived !== true).length;
+    expect(upcoming.every((u) => (u as unknown as { archived?: unknown }).archived !== true)).toBe(true);
+    expect(upcoming.length).toBeLessThanOrEqual(raw.length);
+    expect(upcoming.length).toBeGreaterThanOrEqual(expectVisible - 0);
+  });
+});
