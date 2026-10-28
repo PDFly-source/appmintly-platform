@@ -248,7 +248,8 @@
         }
       ]
     },
-    "accessMessage": "Development has not started."
+    "accessMessage": "Development has not started.",
+    "logo": "/brand/lab/register-logo.png"
   },
   {
     "id": "hisaabkhata",
