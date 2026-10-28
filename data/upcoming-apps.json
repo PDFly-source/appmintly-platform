@@ -4013,7 +4013,7 @@
       }
     ],
     "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim.",
-    "archived": true,
+    "archived": false,
     "archivedDate": "2026-10-28T06:19:38.009Z"
   }
 ]

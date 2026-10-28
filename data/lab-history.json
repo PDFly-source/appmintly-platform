@@ -62,5 +62,13 @@
     "target": "40 projects",
     "summary": "new public display order saved",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:19:45.477Z",
+    "actor": "console",
+    "action": "bulk-restore",
+    "target": "1 projects",
+    "summary": "restored: Premium E2E Probe",
+    "commitSha": null
   }
 ]
