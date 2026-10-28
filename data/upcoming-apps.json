@@ -4213,9 +4213,10 @@
         "id": "qa-m1",
         "title": "Probe milestone",
         "description": "Disposable QA milestone for live verification.",
-        "status": "blocked",
-        "note": "probe blocked",
-        "lastUpdated": "2026-10-28T07:45:14.193Z"
+        "status": "in-progress",
+        "note": "with evidence",
+        "lastUpdated": "2026-10-28T07:45:19.790Z",
+        "evidence": "https://example.com/probe-evidence"
       }
     ]
   }
