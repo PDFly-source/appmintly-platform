@@ -46,5 +46,13 @@
     "target": "Premium E2E Probe",
     "summary": "create record \"Premium E2E Probe\" (lab-premium-e2e), status planned",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:19:38.009Z",
+    "actor": "console",
+    "action": "archive",
+    "target": "Premium E2E Probe",
+    "summary": "archived record \"Premium E2E Probe\" (lab-premium-e2e)",
+    "commitSha": null
   }
 ]
