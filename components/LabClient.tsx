@@ -565,26 +565,52 @@ export default function LabClient() {
 
         {/* Pagination dots — 44px touch targets with a small visual dot */}
         {slides > 0 && (
-                    <div className="mt-3 flex flex-wrap items-center justify-center gap-y-1 max-w-full" role="tablist" aria-label="Go to showcase slide">
-            {/* Wraps on narrow screens: one 40x44 dot per slide would otherwise widen the page. */}
-            {Array.from({ length: slides }).map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => goToSlide(i)}
-                aria-label={`Go to slide ${i + 1}`}
-                aria-current={slideIndex === i ? 'true' : undefined}
-                className="h-11 w-10 inline-flex items-center justify-center cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded-md"
-              >
+          <>
+            {/* Phones: a 41-dot row is unreadable here, so the compact indicator
+                states the position outright. Swipe and the previous/next
+                buttons remain the slide navigation. */}
+            <div
+              className="mt-3 flex items-center justify-center gap-3 sm:hidden"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <span className="text-xs font-bold text-ink">
+                {slideIndex + 1} <span className="font-medium text-mut">of {slides}</span>
+              </span>
+              <span aria-hidden className="h-1.5 w-24 overflow-hidden rounded-full bg-line">
                 <span
-                  aria-hidden
-                  className={`block rounded-full transition-all duration-200 motion-reduce:transition-none ${
-                    slideIndex === i ? 'bg-cta w-6 h-2.5' : 'bg-mut/40 w-2.5 h-2.5 hover:bg-mut/70'
-                  }`}
+                  className="block h-full rounded-full bg-cta transition-all duration-200 motion-reduce:transition-none"
+                  style={{ width: `${Math.round(((slideIndex + 1) / slides) * 100)}%` }}
                 />
-              </button>
-            ))}
-          </div>
+              </span>
+            </div>
+
+            {/* Wider screens keep the full dot navigation (44px targets, wrapping). */}
+            <div
+              className="mt-3 hidden flex-wrap items-center justify-center gap-y-1 max-w-full sm:flex"
+              role="tablist"
+              aria-label="Go to showcase slide"
+            >
+              {Array.from({ length: slides }).map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => goToSlide(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  aria-current={slideIndex === i ? 'true' : undefined}
+                  className="h-11 w-10 inline-flex items-center justify-center cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded-md"
+                >
+                  <span
+                    aria-hidden
+                    className={`block rounded-full transition-all duration-200 motion-reduce:transition-none ${
+                      slideIndex === i ? 'bg-cta w-6 h-2.5' : 'bg-mut/40 w-2.5 h-2.5 hover:bg-mut/70'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Compare Apps dialog — side-by-side, real data only */}
