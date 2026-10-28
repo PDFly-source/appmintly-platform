@@ -1,0 +1,72 @@
+name: Sync Lab Published from Catalog
+
+# Phase 4 — automatic catalog synchronization for the AppMintly Lab
+# "Published / Released" section.
+#
+# The roadmap dataset (data/upcoming-apps.json) is the single source of
+# truth for the Lab page (static export — no backend). This workflow
+# derives the published records from the authoritative production catalog
+# (data/apps.json) and commits them idempotently:
+#   - a newly published catalog app gains its sync-managed published record;
+#   - a withdrawn app loses its sync-managed record (curated records are
+#     reverted to early-testing, never deleted);
+#   - no changes -> no commit (fully idempotent).
+# The committed data/** change then triggers the standard Pages deploy
+# (deploy.yml) — no separate deployment path exists.
+#
+# Triggers:
+#   - scheduled (every 6 hours) so public releases propagate without any
+#     manual action;
+#   - workflow_dispatch so the Publisher Console Lab section (via the
+#     Worker /lab/sync endpoint) and operators can force a refresh.
+#
+# Failure behaviour: the sync script aborts on any catalog read/parse
+# failure BEFORE writing, so a failed run never produces a false
+# zero-count overwrite; valid committed data is never replaced by empty
+# or malformed output.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'lab-sync'
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository (full history — the engineering mirror reads retired-record history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sync published roadmap records from the catalog
+        run: node scripts/sync-published-lab.mjs
+
+      - name: Regenerate engineering mirror data
+        run: python3 scripts/generate-engineering-data.py
+
+      - name: Commit only when the sync produced changes
+        run: |
+          git config user.name "appmintly-lab-sync"
+          git config user.email "actions@users.noreply.github.com"
+          if [ -n "$(git status --porcelain data/)" ]; then
+            git add data/upcoming-apps.json data/lab-apps.json data/engineering-status.json
+            git commit -m "lab-sync: synchronize Published/Released records from the production catalog (automated)"
+            git push
+            echo "sync=committed" >> "$GITHUB_OUTPUT"
+          else
+            echo "In sync — no changes to commit."
+            echo "sync=in-sync" >> "$GITHUB_OUTPUT"
+          fi
