@@ -446,5 +446,13 @@
     "target": "QA Milestone Probe (temp)",
     "summary": "deleted record \"QA Milestone Probe (temp)\" (qa-ms-probe); prior state preserved in Git history",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T10:12:47.900Z",
+    "actor": "console",
+    "action": "update",
+    "target": "NutriLens",
+    "summary": "update record \"NutriLens\" (nutrilens), status early-testing; changed: no material change",
+    "commitSha": null
   }
 ]
