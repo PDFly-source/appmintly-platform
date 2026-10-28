@@ -3609,5 +3609,376 @@
     },
     "logo": "/brand/lab/morselab-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+  },
+  {
+    "id": "catalog-appmintly",
+    "slug": "appmintly",
+    "catalogSlug": "appmintly",
+    "syncManaged": true,
+    "name": "AppMintly",
+    "developer": "PKD",
+    "category": "Marketplace",
+    "type": "Web App",
+    "purpose": "Discover, install, and experience apps in one place. Modern & Lightweight",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "Discover Apps, Web Apps, Games and Tools",
+      "Explore Apps by Category",
+      "Fast and Simple App Discovery",
+      "Search and Discover New Digital Products",
+      "Installable Android Apps"
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/appmintly/",
+    "releaseVersion": "1.0.10",
+    "releaseDate": "2026-03-23",
+    "milestones": [
+      {
+        "id": "pub-appmintly-m1",
+        "title": "Publicly released on the AppMintly marketplace (v1.0.10)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/appmintly/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-APPM-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.10.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ]
+    },
+    "logo": "/brand/appmintly-icon-512.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-studyria",
+    "slug": "studyria",
+    "catalogSlug": "studyria",
+    "syncManaged": true,
+    "name": "Studyria",
+    "developer": "PKD",
+    "category": "Education",
+    "type": "Web App",
+    "purpose": "Assam-focused study app for ADRE, APSC, Assam Police & TET with PDFs, PYQs, quizzes, mock tests, MCQs, current affairs and career updates.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "ADRE, APSC, Assam Police, and TET specialized exam syllabus prep",
+      "Curated study materials, downloadable PDFs, and previous years question papers (PYQs)",
+      "Interactive timed mock tests, chapter-wise MCQs, and real-time score tracking",
+      "Daily Assam & Northeast current affairs digest and syllabus-focused notes",
+      "Instant career announcements and government recruitment notification updates"
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/studyria/",
+    "releaseVersion": "2.0.2",
+    "releaseDate": "2026-09-20",
+    "milestones": [
+      {
+        "id": "pub-studyria-m1",
+        "title": "Publicly released on the AppMintly marketplace (v2.0.2)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/studyria/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-STUD-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.0.2.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-09-27"
+        }
+      ]
+    },
+    "logo": "/brand/studyria-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-pdfminifly",
+    "slug": "pdfminifly",
+    "catalogSlug": "pdfminifly",
+    "syncManaged": true,
+    "name": "PDFMiniFly",
+    "developer": "PKD",
+    "category": "Tools",
+    "type": "Web App",
+    "purpose": "Private PDF Tools. Powerful. Fast. Local.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "Local-first document processing with zero cloud uploads",
+      "Merge, split, compress, and reorder PDF pages in real time",
+      "Protect sensitive documents with client-side password encryption",
+      "Works 100% offline once opened or installed as a PWA",
+      "Zero account required, no tracking, completely private"
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/pdfminifly/",
+    "releaseVersion": "2.1.2",
+    "releaseDate": "2026-03-01",
+    "milestones": [
+      {
+        "id": "pub-pdfminifly-m1",
+        "title": "Publicly released on the AppMintly marketplace (v2.1.2)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/pdfminifly/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-PDFM-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.2.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-15"
+        }
+      ]
+    },
+    "logo": "/brand/pdfminifly-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-niramay",
+    "slug": "niramay",
+    "catalogSlug": "niramay",
+    "syncManaged": true,
+    "name": "Niramay",
+    "developer": "PKD",
+    "category": "Health",
+    "type": "Web App",
+    "purpose": "Explore traditional Assamese & Indian wellness wisdom through 105 symptoms, kitchen ingredients, remedies, seasonal guidance and bilingual health knowledge.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "105-Symptom Directory: explore a broad directory of 105 common symptoms and wellness concerns",
+      "Ailment & Spice Search: search by symptom, ailment, or household spice/ingredient",
+      "Ingredient Matching: check traditional remedy information against commonly available kitchen ingredients",
+      "Assamese + English + Dual: switch between English, Assamese, or a combined bilingual experience",
+      "Traditional Remedy Guidance: explore traditional kitchen-based preparation and wellness reference information"
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/niramay/",
+    "releaseVersion": "2.1.1",
+    "releaseDate": "2026-09-30",
+    "milestones": [
+      {
+        "id": "pub-niramay-m1",
+        "title": "Publicly released on the AppMintly marketplace (v2.1.1)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/niramay/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-NIRA-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.1.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ]
+    },
+    "logo": "/brand/niramay-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-nexdrop",
+    "slug": "nexdrop",
+    "catalogSlug": "nexdrop",
+    "syncManaged": true,
+    "name": "NexDrop",
+    "developer": "PKD",
+    "category": "Utilities",
+    "type": "Android APK",
+    "purpose": "Fast, private Android file sharing with direct local transfer and file verification.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "Direct Android-to-Android Transfer — Share files directly over a local Wi-Fi or hotspot connection.",
+      "Large File Sharing — Transfer large videos, documents, APKs and other files.",
+      "Multi-File Transfer Queue — Select, organize and send multiple files in sequence.",
+      "Smart File Previews — Preview supported images, videos, PDFs and APK details before sending.",
+      "Pause & Resume Transfers — Pause active transfers and resume supported interrupted transfers."
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/nexdrop/",
+    "releaseVersion": "1.4.6",
+    "releaseDate": "2026-10-08",
+    "milestones": [
+      {
+        "id": "pub-nexdrop-m1",
+        "title": "Publicly released on the AppMintly marketplace (v1.4.6)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/nexdrop/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-NEXD-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.4.6.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ]
+    },
+    "logo": "/brand/nexdrop-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-billcraft",
+    "slug": "billcraft",
+    "catalogSlug": "billcraft",
+    "syncManaged": true,
+    "name": "BillCraft",
+    "developer": "PKD",
+    "category": "Productivity",
+    "type": "Web App",
+    "purpose": "Create professional invoices, quotations, receipts and estimates with private, local-first PDF tools.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "Professional Invoice Creator — Build tax invoices with line items, HSN/SAC codes and live totals.",
+      "Quotation & Estimate Generator — Create quotations and estimates, then convert them to other document types.",
+      "Receipt Creation — Issue receipts with payment records and balance tracking.",
+      "Premium Document Templates — Ten professionally designed templates with six colour themes.",
+      "GST Calculator — CGST, SGST and IGST breakdowns on every document plus a standalone quick tool."
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/billcraft/",
+    "releaseVersion": "0.1.0",
+    "releaseDate": "2026-10-17",
+    "milestones": [
+      {
+        "id": "pub-billcraft-m1",
+        "title": "Publicly released on the AppMintly marketplace (v0.1.0)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/billcraft/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-BILL-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-17"
+        }
+      ]
+    },
+    "logo": "/brand/billcraft-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "catalog-cineflow",
+    "slug": "cineflow",
+    "catalogSlug": "cineflow",
+    "syncManaged": true,
+    "name": "CineFlow",
+    "developer": "PKD",
+    "category": "Entertainment",
+    "type": "Android APK",
+    "purpose": "Play local videos privately with playlists, subtitles and playback resume — your media stays on your device.",
+    "intendedUsers": [
+      "Public AppMintly marketplace users"
+    ],
+    "proposedFeatures": [
+      "Local Video Playback — Open and play compatible video files directly from your device (H.264/MP4 and VP9/WebM verified in release testing).",
+      "Multi-File Selection & Queue — Select several videos at once and manage the playback queue.",
+      "Video Library — Imported videos appear with duration, size, last-played date and progress in a searchable library.",
+      "Video Search — Filter your library instantly by name.",
+      "Recent Playback History — Every played video is recorded locally and can be resumed or removed."
+    ],
+    "plannedCapabilities": [
+      "Live on the AppMintly marketplace (auto-synced from the production catalog)."
+    ],
+    "roadmapStatus": "published",
+    "roadmapStatusLabel": "published",
+    "publicUrl": "https://appmintly.pages.dev/app/cineflow/",
+    "releaseVersion": "0.1.0",
+    "releaseDate": "2026-10-27",
+    "milestones": [
+      {
+        "id": "pub-cineflow-m1",
+        "title": "Publicly released on the AppMintly marketplace (v0.1.0)",
+        "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/cineflow/.",
+        "status": "done"
+      }
+    ],
+    "verification": {
+      "source": "AppMintly production catalog (data/apps.json)",
+      "checks": [
+        {
+          "id": "V-CINE-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-27"
+        }
+      ]
+    },
+    "logo": "/brand/cineflow-icon-384.png",
+    "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
   }
 ]
