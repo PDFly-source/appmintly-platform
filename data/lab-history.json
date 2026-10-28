@@ -94,5 +94,13 @@
     "target": "Premium E2E Probe",
     "summary": "deleted record \"Premium E2E Probe\" (lab-premium-e2e); prior state preserved in Git history",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:42:49.043Z",
+    "actor": "console",
+    "action": "update",
+    "target": "QR Forge",
+    "summary": "update record \"QR Forge\" (qr-forge), status early-testing",
+    "commitSha": null
   }
 ]
