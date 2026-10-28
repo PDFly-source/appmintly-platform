@@ -230,5 +230,13 @@
     "target": "1 projects",
     "summary": "restored: QA Probe (temporary)",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:49:04.322Z",
+    "actor": "console",
+    "action": "delete",
+    "target": "QA Probe (temporary)",
+    "summary": "deleted record \"QA Probe (temporary)\" (qa-probe-temp); prior state preserved in Git history",
+    "commitSha": null
   }
 ]

@@ -4191,35 +4191,5 @@
     },
     "logo": "/brand/cineflow-icon-384.png",
     "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
-  },
-  {
-    "id": "qa-probe-phase1d",
-    "slug": "qa-probe-temp",
-    "name": "QA Probe (temporary)",
-    "roadmapStatus": "early-testing",
-    "category": "Tools",
-    "intendedUsers": [
-      "QA"
-    ],
-    "benefits": [
-      "Probe benefit one for testing",
-      "Probe benefit two for testing",
-      "Probe benefit three for testing",
-      "Probe benefit four for testing",
-      "Probe benefit five for testing"
-    ],
-    "milestones": [
-      {
-        "id": "qa-m1",
-        "title": "Probe milestone",
-        "description": "Disposable QA milestone for live verification.",
-        "status": "in-progress",
-        "note": "with evidence",
-        "lastUpdated": "2026-10-28T07:45:19.790Z",
-        "evidence": "https://example.com/probe-evidence"
-      }
-    ],
-    "archived": false,
-    "archivedDate": "2026-10-28T07:45:42.567Z"
   }
 ]
