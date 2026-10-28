@@ -531,7 +531,7 @@
       "Next-level: Area mismatch alert if buyer/seller values differ >2%",
       "Next-level: One-tap generates Assamese land slip with stamp"
     ],
-    "roadmapStatus": "in-development",
+    "roadmapStatus": "planned",
     "roadmapStatusLabel": "Building Now",
     "milestones": [
       {
@@ -584,7 +584,8 @@
       ]
     },
     "logo": "/brand/lab/unitx-axom-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": []
   },
   {
     "id": "emiwise",
