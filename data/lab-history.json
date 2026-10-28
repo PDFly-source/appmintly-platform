@@ -430,5 +430,13 @@
     "target": "QA Milestone Probe (temp)",
     "summary": "milestone \"qmp-a\" on \"QA Milestone Probe (temp)\" (qa-ms-probe): Done -> Done; note: QA persistence note 1793179839191",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T09:31:17.824Z",
+    "actor": "console",
+    "action": "milestone-update",
+    "target": "QA Milestone Probe (temp)",
+    "summary": "milestone \"qmp-a\" on \"QA Milestone Probe (temp)\" (qa-ms-probe): Done -> Done; note: QA persistence note 1793179866538",
+    "commitSha": null
   }
 ]
