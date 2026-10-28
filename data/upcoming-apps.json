@@ -4218,9 +4218,9 @@
         "title": "Probe Alpha",
         "description": "First disposable milestone.",
         "status": "done",
-        "note": "QA persistence note 1793179812947",
-        "evidence": "https://example.com/qa-evidence-1793179812948",
-        "lastUpdated": "2026-10-28T09:30:23.600Z"
+        "note": "QA persistence note 1793179839191",
+        "evidence": "https://example.com/qa-evidence-1793179839191",
+        "lastUpdated": "2026-10-28T09:30:50.381Z"
       },
       {
         "id": "qmp-b",
