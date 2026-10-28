@@ -3991,7 +3991,7 @@
     "developer": "PKD pkd",
     "category": "Tools",
     "type": "Web App",
-    "purpose": "E2E probe for the premium console features.",
+    "purpose": "Updated via import.",
     "problem": "",
     "intendedUsers": [
       "qa"
@@ -4003,7 +4003,7 @@
     "plannedCapabilities": [
       "probe"
     ],
-    "roadmapStatus": "in-development",
+    "roadmapStatus": "early-testing",
     "milestones": [
       {
         "id": "e2e-m1",
@@ -4012,8 +4012,6 @@
         "status": "planned"
       }
     ],
-    "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim.",
-    "archived": false,
-    "archivedDate": "2026-10-28T06:19:38.009Z"
+    "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim."
   }
 ]

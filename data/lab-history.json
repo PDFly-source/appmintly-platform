@@ -78,5 +78,13 @@
     "target": "1 projects",
     "summary": "set status to in-development: Premium E2E Probe",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:19:52.826Z",
+    "actor": "console",
+    "action": "import",
+    "target": "1 records",
+    "summary": "merge import: 0 new, 1 updated; validated server-side, single commit",
+    "commitSha": null
   }
 ]
