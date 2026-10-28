@@ -4219,7 +4219,7 @@
         "evidence": "https://example.com/probe-evidence"
       }
     ],
-    "archived": true,
+    "archived": false,
     "archivedDate": "2026-10-28T07:45:42.567Z"
   }
 ]

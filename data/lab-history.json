@@ -222,5 +222,13 @@
     "target": "1 projects",
     "summary": "set status to early-testing: QA Probe (temporary)",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:48:00.376Z",
+    "actor": "console",
+    "action": "bulk-restore",
+    "target": "1 projects",
+    "summary": "restored: QA Probe (temporary)",
+    "commitSha": null
   }
 ]
