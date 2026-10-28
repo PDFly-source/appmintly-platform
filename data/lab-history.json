@@ -366,5 +366,13 @@
     "target": "TextCraft",
     "summary": "update record \"TextCraft\" (textcraft), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:26:18.039Z",
+    "actor": "console",
+    "action": "update",
+    "target": "LightLux",
+    "summary": "update record \"LightLux\" (lightlux), status planned; changed: no material change",
+    "commitSha": null
   }
 ]
