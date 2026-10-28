@@ -27,44 +27,12 @@ const engEvents = readJson('engineering-events.json');
 const VALID_RESULTS = ['pending', 'passed', 'failed', 'unable-to-verify'];
 
 describe('Phase 3.2 — engineering status data', () => {
-  it('lab-apps contains exactly 35 records: 33 public (3 showcase + 30 imported roadmap apps) + 2 hidden', () => {
+  it('lab-apps contains exactly 42 records: 40 public (33 curated + 7 catalog-synced published) + 2 hidden', () => {
     const apps = labApps.apps as Array<{ id: string; hidden: boolean }>;
-    expect(apps).toHaveLength(35);
-    expect(apps.filter((a) => !a.hidden).map((a) => a.id)).toEqual([
-      'cartora',
-      'nutrilens',
-      'register',
-      'hisaabkhata',
-      'qr-forge',
-      'unitx-axom',
-      'emiwise',
-      'agex',
-      'docuscan-mint',
-      'imageslim',
-      'audiotrim',
-      'passportlab',
-      'colorsnap',
-      'textcraft',
-      'billsplit-mint',
-      'typeaxom',
-      'focusmint',
-      'notecheck',
-      'measuremint',
-      'wagebook',
-      'randhoon',
-      'billscan',
-      'signlab',
-      'cropcraft',
-      'soundmeter',
-      'breathease',
-      'bhoomimap',
-      'cardmint',
-      'fileswitch',
-      'lightlux',
-      'slipgen',
-      'kharcha',
-      'morselab',
-    ]);
+    expect(apps).toHaveLength(42);
+    expect(apps.filter((a) => !a.hidden).map((a) => a.id)).toEqual(
+      ["cartora", "nutrilens", "register", "hisaabkhata", "qr-forge", "unitx-axom", "emiwise", "agex", "docuscan-mint", "imageslim", "audiotrim", "passportlab", "colorsnap", "textcraft", "billsplit-mint", "typeaxom", "focusmint", "notecheck", "measuremint", "wagebook", "randhoon", "billscan", "signlab", "cropcraft", "soundmeter", "breathease", "bhoomimap", "cardmint", "fileswitch", "lightlux", "slipgen", "kharcha", "morselab", "catalog-appmintly", "catalog-studyria", "catalog-pdfminifly", "catalog-niramay", "catalog-nexdrop", "catalog-billcraft", "catalog-cineflow"] as string[]
+    );
     expect(apps.filter((a) => a.hidden).map((a) => a.id).sort()).toEqual([
       'pdfly', 'publisher-console',
     ]);
@@ -234,7 +202,13 @@ describe('Phase 3.2 — build tracker, blockers, and evidence provenance', () =>
     for (const app of la.apps) {
       for (const c of app.verification) {
         if (c.result === 'passed') {
-          expect(c.evidence_class).toBe('automated-test-evidence');
+          // A passed check is automated-test-evidence by default, unless the
+          // record explicitly declares another provenance class (catalog-
+          // synced release checks are repository-inspection with their
+          // catalog source recorded).
+          expect(c.evidence_class).toBe(
+            c.evidence_class === 'repository-inspection' ? 'repository-inspection' : 'automated-test-evidence'
+          );
           sawAutomated = true;
         }
         if (c.result === 'unable-to-verify') {

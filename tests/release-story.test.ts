@@ -95,7 +95,12 @@ describe('upcoming-apps data — normalization honesty', () => {
       expect(u.intendedUsers.length).toBeGreaterThan(0);
       expect(u.proposedFeatures.length).toBeGreaterThan(0);
       expect(u.plannedCapabilities.length).toBeGreaterThan(0);
-      expect(['planned', 'in-development', 'early-testing']).toContain(u.roadmapStatus);
+      expect(['planned', 'in-development', 'early-testing', 'published']).toContain(u.roadmapStatus);
+      // A published record must be catalog-synced with a real destination
+      // (fail-closed normalizer enforces publicUrl as well).
+      if (u.roadmapStatus === 'published') {
+        expect(u.publicUrl).toMatch(/^https:\/\//);
+      }
     }
   });
 
@@ -112,7 +117,14 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   it('records carry the draft-note honesty label', () => {
-    for (const u of UPCOMING_APPS) expect(u.draftNote).toContain('Draft roadmap entry');
+    for (const u of UPCOMING_APPS) {
+      if (u.syncManaged) {
+        // Catalog-synced published records honestly label their provenance.
+        expect(u.draftNote).toContain('auto-synced from the production AppMintly catalog');
+      } else {
+        expect(u.draftNote).toContain('Draft roadmap entry');
+      }
+    }
   });
 
   it('lookups by slug work', () => {
@@ -121,8 +133,8 @@ describe('upcoming-apps data — normalization honesty', () => {
   });
 
   // Phase 1E — exact public showcase catalog.
-  it('public catalog is the 3 showcase entries + 30 imported roadmap apps, in order', () => {
-    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(['cartora', 'nutrilens', 'register', 'hisaabkhata', 'qr-forge', 'unitx-axom', 'emiwise', 'agex', 'docuscan-mint', 'imageslim', 'audiotrim', 'passportlab', 'colorsnap', 'textcraft', 'billsplit-mint', 'typeaxom', 'focusmint', 'notecheck', 'measuremint', 'wagebook', 'randhoon', 'billscan', 'signlab', 'cropcraft', 'soundmeter', 'breathease', 'bhoomimap', 'cardmint', 'fileswitch', 'lightlux', 'slipgen', 'kharcha', 'morselab']);
+  it('public catalog is 33 curated + 7 catalog-synced published records, in order', () => {
+    expect(UPCOMING_APPS.map((u) => u.slug)).toEqual(["cartora", "nutrilens", "register", "hisaabkhata", "qr-forge", "unitx-axom", "emiwise", "agex", "docuscan-mint", "imageslim", "audiotrim", "passportlab", "colorsnap", "textcraft", "billsplit-mint", "typeaxom", "focusmint", "notecheck", "measuremint", "wagebook", "randhoon", "billscan", "signlab", "cropcraft", "soundmeter", "breathease", "bhoomimap", "cardmint", "fileswitch", "lightlux", "slipgen", "kharcha", "morselab", "appmintly", "studyria", "pdfminifly", "niramay", "nexdrop", "billcraft", "cineflow"]);
   });
 
   it('Publisher Console and PDFly are absent from the public Lab catalog', () => {
@@ -140,7 +152,13 @@ describe('upcoming-apps data — normalization honesty', () => {
   it('roadmap statuses and milestone honesty are preserved', () => {
     // BillCraft graduated to the published catalog (2026-10-17) — no longer
     // showcased in the Lab dataset. (Supersedes the earlier early-testing state.)
-    expect(getUpcomingAppBySlug('billcraft')).toBeUndefined();
+    // The graduated CURATED record is gone; the slug is now owned by the
+    // sync-managed catalog projection of the live published app.
+    const syncedBc = getUpcomingAppBySlug('billcraft');
+    expect(syncedBc?.id).toBe('catalog-billcraft');
+    expect(syncedBc?.roadmapStatus).toBe('published');
+    expect(syncedBc?.publicUrl).toBe('https://appmintly.pages.dev/app/billcraft/');
+    expect(UPCOMING_APPS.filter((u) => u.slug === 'billcraft')).toHaveLength(1);
 
     const cartora = getUpcomingAppBySlug('cartora');
     expect(cartora?.milestones.filter((m) => m.status === 'done').length).toBe(2);
@@ -184,7 +202,9 @@ describe('upcoming-apps data — normalization honesty', () => {
     const RESULTS = ['pending', 'passed', 'failed', 'unable-to-verify'];
     for (const u of UPCOMING_APPS) {
       expect(u.verification).toBeDefined();
-      expect(u.verification!.checks.length).toBe(5);
+      // Curated records carry the five-category verification set;
+      // sync-managed catalog projections carry at most one release check.
+      expect(u.verification!.checks.length).toBe(u.syncManaged ? 1 : 5);
       for (const c of u.verification!.checks) {
         expect(RESULTS).toContain(c.result);
         if (c.result === 'passed') {
@@ -206,8 +226,12 @@ describe('upcoming-apps data — normalization honesty', () => {
         }
       }
       // Source and scope are labelled accurately.
-      expect(u.verification!.source).toContain('AppMintly team');
-      expect(u.verification!.source).toContain('not an independent audit');
+      if (u.syncManaged) {
+        expect(u.verification!.source).toContain('data/apps.json');
+      } else {
+        expect(u.verification!.source).toContain('AppMintly team');
+        expect(u.verification!.source).toContain('not an independent audit');
+      }
     }
   });
 
@@ -248,13 +272,14 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: all 3, planned 1, in-development 2, early testing 0, published 0', () => {
-    // Post-graduation dataset (2026-10-17): billcraft left the Lab when it
-    // was published to the catalog; nothing in the Lab dataset is published.
-    expect(UPCOMING_APPS.length).toBe(33);
+  it('filter counts derive from real records: 40 / 18 / 12 / 3 / 7 (catalog-synced)', () => {
+    // 33 curated roadmap records + 7 catalog-synced published records.
+    // The published count is derived from the production catalog set —
+    // never a hardcoded number (scripts/sync-published-lab.mjs).
+    expect(UPCOMING_APPS.length).toBe(40);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(18);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(12);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(3);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(0);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(7);
   });
 });

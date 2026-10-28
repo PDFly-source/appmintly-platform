@@ -9,7 +9,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { UPCOMING_APPS, ROADMAP_STATUS_LABEL, ROADMAP_STATUS_SUBTITLE } from '../data/upcoming-apps';
+
+const REPO = join(__dirname, '..');
 
 /** Phrases the card copy must NEVER use — they'd imply release/readiness. */
 const FORBIDDEN_CLAIMS = [
@@ -58,9 +62,14 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
     expect(byId('register')?.accessMessage).toBe('Development has not started.');
   });
 
-  it('BillCraft left the Lab dataset entirely when it graduated', () => {
-    // Published apps leave the Lab (NexDrop pattern): no card, no CTA, no stale record.
+  it('BillCraft is represented by the catalog-synced published record, never a duplicate', () => {
+    // Phase-2 sync semantics: the graduated raw record stays gone; the live
+    // catalog app is represented by exactly one sync-managed published record.
     expect(byId('billcraft')).toBeUndefined();
+    const synced = UPCOMING_APPS.filter((a) => a.catalogSlug === 'billcraft' || a.id === 'catalog-billcraft');
+    expect(synced).toHaveLength(1);
+    expect(synced[0].roadmapStatus).toBe('published');
+    expect(synced[0].publicUrl).toBe('https://appmintly.pages.dev/app/billcraft/');
   });
 
   it('no non-published record exposes a public destination CTA', () => {
@@ -77,8 +86,11 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
         expect(app.publicUrl, `${app.id} published without a real destination`).toMatch(/^https:\/\//);
       }
     }
-    // Current dataset: nothing has been published yet — an honest count of 0.
-    expect(UPCOMING_APPS.filter((a) => a.roadmapStatus === 'published').length).toBe(0);
+    // Current dataset: the published set is DERIVED from the production
+    // catalog by scripts/sync-published-lab.mjs — the count is whatever the
+    // catalog says, never a hardcoded number.
+    const synced = UPCOMING_APPS.filter((a) => a.roadmapStatus === 'published');
+    expect(synced.every((a) => a.syncManaged === true && a.catalogSlug)).toBe(true);
   });
 
   it('Register (Planned) has no concept URL — the CTA is honestly "Coming Later"', () => {
@@ -88,9 +100,18 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
   it('no fabricated verification: pending checks stay pending, no invented passes', () => {
     for (const app of UPCOMING_APPS) {
       for (const check of app.verification?.checks ?? []) {
-        // Only Register has recorded real evidence; all other checks stay pending.
-        if (app.id !== 'register') {
+        // Only Register has recorded real evidence; all other CURATED checks stay pending.
+        if (app.id !== 'register' && !app.syncManaged) {
           expect(check.result, `${app.id} ${check.category}`).toBe('pending');
+        }
+        // Sync-managed catalog records may carry exactly one release check,
+        // explicitly labeled repository-inspection with its catalog source.
+        if (app.syncManaged) {
+          expect(app.verification?.checks.length).toBeLessThanOrEqual(1);
+          if (check.result === 'passed') {
+            expect(check.evidence_class ?? 'repository-inspection').toBe('repository-inspection');
+            expect(check.source ?? '').toContain('data/apps.json');
+          }
         }
       }
     }
@@ -105,9 +126,15 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
 });
 
 describe('problem statements and benefits — honest, complete, claim-free', () => {
-  it('every public app record carries a problem statement and benefits', () => {
-    expect(UPCOMING_APPS.length).toBe(33); // 3 showcase entries + 30 imported AppMintly Labs roadmap apps (2026-10-27)
+  it('every curated app record carries a problem statement; benefits where sourced', () => {
+    expect(UPCOMING_APPS.length).toBe(40); // 33 curated + 7 catalog-synced published records (2026-10-28)
     for (const app of UPCOMING_APPS) {
+      // Sync-managed catalog projections describe a LIVE release; their copy
+      // is the catalog short description, not a roadmap problem statement.
+      if (app.syncManaged) {
+        expect(app.purpose, `${app.id} purpose`).toBeTruthy();
+        continue;
+      }
       expect(app.problem, `${app.id} problem`).toBeTruthy();
       // Benefits: only the original showcase records carry them — the 30
       // imported roadmap apps have no benefits field in their source.
@@ -234,13 +261,20 @@ describe('status-consistency audit — canonical labels and honest verification'
     expect(register.verification!.checks.every((c) => c.result !== 'passed')).toBe(true);
   });
 
-  it('overview counts derive from the records: 3 / 1 / 2 / 0 / 0 (post-graduation)', () => {
+  it('overview counts derive from the records: 40 / 18 / 12 / 3 / 7 (catalog-synced)', () => {
     const count = (s?: string) =>
       s ? UPCOMING_APPS.filter((a) => a.roadmapStatus === s).length : UPCOMING_APPS.length;
-    expect(count()).toBe(33); // All Projects (3 showcase + 30 imported roadmap apps, 2026-10-27)
+    expect(count()).toBe(40); // 33 curated + 7 catalog-synced published records
     expect(count('planned')).toBe(18); // register + 17 imported
     expect(count('in-development')).toBe(12); // cartora + nutrilens + 10 imported
     expect(count('early-testing')).toBe(3); // 3 imported
-    expect(count('published')).toBe(0); // honest zero — no Lab record is published
+    // Published count MUST equal the catalog's published set — derived, never hardcoded.
+    const catalog = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8'));
+    const publishedCatalog = catalog.filter(
+      (a: any) => a.status === 'published' && a.published === true
+    );
+    expect(count('published')).toBe(publishedCatalog.length);
+    expect(new Set(UPCOMING_APPS.filter((a) => a.roadmapStatus === 'published').map((a) => a.catalogSlug))
+    ).toEqual(new Set(publishedCatalog.map((a: any) => a.slug)));
   });
 });

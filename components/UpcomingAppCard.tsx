@@ -418,6 +418,19 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
             <p className="text-[11px] text-mut mt-0.5 leading-snug">
               {app.category} · by {app.developer}
             </p>
+            {app.roadmapStatus === 'published' && (app.releaseVersion || app.releaseDate) ? (
+              <p className="text-[10px] text-mut/90 mt-0.5 leading-snug">
+                {app.releaseVersion ? `v${app.releaseVersion}` : ''}
+                {app.releaseVersion && app.releaseDate ? ' · ' : ''}
+                {app.releaseDate
+                  ? `Released ${new Date(app.releaseDate).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}`
+                  : ''}
+              </p>
+            ) : null}
           </div>
           <span className="flex shrink-0 flex-col items-end gap-1">
             <span

@@ -94,6 +94,22 @@ export interface UpcomingApp {
    */
   verification?: VerificationRecord;
   draftNote: string;
+  /**
+   * Stable link to the production catalog app this record represents
+   * (data/apps.json slug). Set on catalog-synced published records and on
+   * curated records explicitly linked via the Publisher Console.
+   */
+  catalogSlug?: string;
+  /**
+   * True when the record was created/managed by the catalog synchronization
+   * (scripts/sync-published-lab.mjs), not hand-curated. Sync-managed records
+   * are refreshed from the catalog on every sync run.
+   */
+  syncManaged?: boolean;
+  /** Current released version (catalog metadata; published records only). */
+  releaseVersion?: string;
+  /** Public release date (ISO, from catalog metadata; published records only). */
+  releaseDate?: string;
 }
 
 /**
@@ -145,6 +161,12 @@ export interface VerificationCheck {
   date?: string;
   /** Known limitations discovered by the check. */
   limitations?: string;
+  /**
+   * Explicit provenance class. Records may declare it directly (catalog-
+   * synced release checks are repository-inspection); otherwise the
+   * engineering mirror derives it from the result.
+   */
+  evidence_class?: 'automated-test-evidence' | 'repository-inspection';
 }
 
 export interface VerificationRecord {
@@ -208,6 +230,10 @@ function normalizeVerification(v: unknown): VerificationRecord | undefined {
       buildId: typeof rec.buildId === 'string' ? rec.buildId : undefined,
       date: typeof rec.date === 'string' ? rec.date : undefined,
       limitations: typeof rec.limitations === 'string' ? rec.limitations : undefined,
+      evidence_class:
+        rec.evidence_class === 'automated-test-evidence' || rec.evidence_class === 'repository-inspection'
+          ? rec.evidence_class
+          : undefined,
     });
   }
   return {
@@ -270,6 +296,12 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
       : undefined,
     verification: normalizeVerification(r.verification),
     draftNote: typeof r.draftNote === 'string' ? r.draftNote : '',
+    catalogSlug:
+      typeof r.catalogSlug === 'string' && /^[a-z0-9-]+$/.test(r.catalogSlug) ? r.catalogSlug : undefined,
+    syncManaged: r.syncManaged === true ? true : undefined,
+    releaseVersion: typeof r.releaseVersion === 'string' ? r.releaseVersion : undefined,
+    releaseDate:
+      typeof r.releaseDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(r.releaseDate) ? r.releaseDate : undefined,
   };
 }
 
