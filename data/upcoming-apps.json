@@ -4196,7 +4196,7 @@
     "id": "qa-probe-phase1d",
     "slug": "qa-probe-temp",
     "name": "QA Probe (temporary)",
-    "roadmapStatus": "planned",
+    "roadmapStatus": "early-testing",
     "category": "Tools",
     "intendedUsers": [
       "QA"

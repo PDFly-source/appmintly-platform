@@ -214,5 +214,13 @@
     "target": "QA Probe (temporary)",
     "summary": "milestone \"qa-m1\" on \"QA Probe (temporary)\" (qa-probe-temp): Blocked -> In Progress; note: with evidence",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:45:26.353Z",
+    "actor": "console",
+    "action": "bulk-status",
+    "target": "1 projects",
+    "summary": "set status to early-testing: QA Probe (temporary)",
+    "commitSha": null
   }
 ]
