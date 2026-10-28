@@ -4003,7 +4003,7 @@
     "plannedCapabilities": [
       "probe"
     ],
-    "roadmapStatus": "planned",
+    "roadmapStatus": "in-development",
     "milestones": [
       {
         "id": "e2e-m1",
