@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Circle,
   CircleDot,
+  Clock,
   FlaskConical,
   Heart,
   Image as ImageIcon,
@@ -125,6 +126,7 @@ const MILESTONE_LABELS: Record<MilestoneStatus, string> = {
   done: 'Completed',
   'in-progress': 'In progress',
   planned: 'Planned',
+  pending: 'Pending',
   blocked: 'Blocked',
 };
 
@@ -149,6 +151,7 @@ const BRAND_HEADER: Record<string, string> = {
 function MilestoneIcon({ status }: { status: MilestoneStatus }) {
   if (status === 'done') return <CheckCircle2 className="w-3.5 h-3.5 text-cta" aria-hidden />;
   if (status === 'in-progress') return <CircleDot className="w-3.5 h-3.5 text-forge-yellow" aria-hidden />;
+  if (status === 'pending') return <Clock className="w-3.5 h-3.5 text-forge-blue" aria-hidden />;
   if (status === 'blocked') return <AlertCircle className="w-3.5 h-3.5 text-forge-red" aria-hidden />;
   return <Circle className="w-3.5 h-3.5 text-mut" aria-hidden />;
 }
@@ -359,7 +362,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
   const total = app.milestones.length;
   const done = app.milestones.filter((m) => m.status === 'done').length;
   const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-  const current = app.milestones.find((m) => m.status === 'in-progress' || m.status === 'blocked');
+  const current = app.milestones.find((m) => m.status === 'in-progress' || m.status === 'pending' || m.status === 'blocked');
   const upcoming = app.milestones.find((m) => m.status === 'planned');
 
   const detailsId = `roadmap-details-${app.slug}`;
@@ -545,7 +548,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
         {/* Practical user benefits — derived from the planned features */}
         {app.benefits && app.benefits.length > 0 && (
           <ul className="mt-2 grid gap-1" aria-label={`Planned benefits of ${app.name}`}>
-            {app.benefits.map((b) => (
+            {(app.benefits ?? []).map((b) => (
               <li key={b} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
                 <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-px text-cta/80" aria-hidden />
                 {b}
@@ -858,6 +861,21 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
                 ))}
               </ul>
             </div>
+            {(app.benefits?.length ?? 0) > 0 && (
+              <div className="sm:col-span-2">
+                <h4 className="text-[10px] font-black uppercase tracking-wider text-mut mb-1.5">
+                  Key benefits
+                </h4>
+                <ul className="space-y-1">
+                  {(app.benefits ?? []).map((b) => (
+                    <li key={b} className="flex items-start gap-1.5 text-[11px] text-ink/85 leading-snug">
+                      <CheckCircle2 className="w-3 h-3 shrink-0 mt-1 text-cta" aria-hidden />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {app.draftNote && (
               <p className="sm:col-span-2 text-[10px] text-mut/80 border-t border-line pt-2.5">
                 {app.draftNote}

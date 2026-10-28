@@ -27,7 +27,9 @@ import rawUpcoming from './upcoming-apps.json';
 export type RoadmapStatus = 'planned' | 'in-development' | 'early-testing' | 'published';
 
 /** Explicit milestone states (Lab 3.0 roadmap engine). */
-export type MilestoneStatus = 'done' | 'in-progress' | 'planned' | 'blocked';
+// Five milestone statuses (Milestone Update Manager). The original four
+// shipped values are a strict subset — existing data needs no migration.
+export type MilestoneStatus = 'done' | 'in-progress' | 'planned' | 'pending' | 'blocked';
 
 export interface RoadmapMilestone {
   /** Stable identifier (never changes once shipped). */
@@ -40,6 +42,8 @@ export interface RoadmapMilestone {
   evidence?: string;
   /** Last-updated date (ISO), only when a real update date is known. */
   lastUpdated?: string;
+  /** Optional editor update note — what changed and why. */
+  note?: string;
 }
 
 /**
@@ -190,7 +194,7 @@ export interface AppScreenshot {
 }
 
 const VALID_STATUSES: RoadmapStatus[] = ['planned', 'in-development', 'early-testing', 'published'];
-const VALID_MILESTONE_STATUSES: MilestoneStatus[] = ['done', 'in-progress', 'planned', 'blocked'];
+const VALID_MILESTONE_STATUSES: MilestoneStatus[] = ['done', 'in-progress', 'planned', 'pending', 'blocked'];
 
 function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string');
@@ -212,6 +216,7 @@ function normalizeMilestones(v: unknown): RoadmapMilestone[] {
         : 'planned',
       evidence: typeof m.evidence === 'string' ? m.evidence : undefined,
       lastUpdated: typeof m.lastUpdated === 'string' ? m.lastUpdated : undefined,
+      note: typeof (m as { note?: unknown }).note === 'string' ? ((m as { note?: unknown }).note as string) : undefined,
     }));
 }
 

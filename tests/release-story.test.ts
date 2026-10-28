@@ -277,8 +277,8 @@ describe('upcoming-apps data — normalization honesty', () => {
     // The published count is derived from the production catalog set —
     // never a hardcoded number (scripts/sync-published-lab.mjs).
     expect(UPCOMING_APPS.length).toBe(40);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(18);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(12);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(19); // owner console edits 2026-10-28
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(11);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(3);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(7);
   });

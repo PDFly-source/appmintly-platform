@@ -121,7 +121,7 @@ describe('finalized project status system — Lab project cards (post-BillCraft 
     const doneOf = (id: string) => byId(id)!.milestones.filter((m) => m.status === 'done').length;
     expect(doneOf('cartora')).toBe(2);   // distinct from NutriLens
     expect(doneOf('nutrilens')).toBe(1); // NOT Cartora's progress
-    expect(doneOf('register')).toBe(1);
+    expect(doneOf('register')).toBe(2); // owner console edit 2026-10-28 marked a second milestone done
   });
 });
 
@@ -261,12 +261,12 @@ describe('status-consistency audit — canonical labels and honest verification'
     expect(register.verification!.checks.every((c) => c.result !== 'passed')).toBe(true);
   });
 
-  it('overview counts derive from the records: 40 / 18 / 12 / 3 / 7 (catalog-synced)', () => {
+  it('overview counts derive from the records: 40 / 19 / 11 / 3 / 7 (catalog-synced)', () => {
     const count = (s?: string) =>
       s ? UPCOMING_APPS.filter((a) => a.roadmapStatus === s).length : UPCOMING_APPS.length;
     expect(count()).toBe(40); // 33 curated + 7 catalog-synced published records
-    expect(count('planned')).toBe(18); // register + 17 imported
-    expect(count('in-development')).toBe(12); // cartora + nutrilens + 10 imported
+    expect(count('planned')).toBe(19); // register + 18 imported (owner console edits 2026-10-28)
+    expect(count('in-development')).toBe(11); // cartora + nutrilens + 9 imported
     expect(count('early-testing')).toBe(3); // 3 imported
     // Published count MUST equal the catalog's published set — derived, never hardcoded.
     const catalog = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8'));
