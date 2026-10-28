@@ -174,5 +174,13 @@
     "target": "1 records",
     "summary": "merge import: 1 new, 0 updated; validated server-side, single commit",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:44:58.250Z",
+    "actor": "console",
+    "action": "milestone-update",
+    "target": "QA Probe (temporary)",
+    "summary": "milestone \"qa-m1\" on \"QA Probe (temporary)\" (qa-probe-temp): Planned -> In Progress; note: probe in-progress",
+    "commitSha": null
   }
 ]

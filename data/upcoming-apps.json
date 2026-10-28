@@ -4213,7 +4213,9 @@
         "id": "qa-m1",
         "title": "Probe milestone",
         "description": "Disposable QA milestone for live verification.",
-        "status": "planned"
+        "status": "in-progress",
+        "note": "probe in-progress",
+        "lastUpdated": "2026-10-28T07:44:58.250Z"
       }
     ]
   }
