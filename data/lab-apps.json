@@ -3,60 +3,6 @@
   "generated_from": "data/upcoming-apps.json (public Lab records incl. Phase 3.1 verification evidence) + retired records recovered from repository history at commit 58fbf67 (publisher-console, pdfly)",
   "apps": [
     {
-      "id": "cartora",
-      "name": "Cartora",
-      "status": "in-development",
-      "hidden": false,
-      "verification": [
-        {
-          "id": "V-CART-IDENTITY",
-          "category": "identity",
-          "result": "pending"
-        },
-        {
-          "id": "V-CART-BUILD",
-          "category": "build",
-          "result": "pending"
-        },
-        {
-          "id": "V-CART-CORE-FLOW",
-          "category": "core-flow",
-          "result": "pending"
-        },
-        {
-          "id": "V-CART-DEVICE",
-          "category": "device",
-          "result": "pending"
-        },
-        {
-          "id": "V-CART-RELEASE",
-          "category": "release",
-          "result": "pending"
-        }
-      ],
-      "milestones": [
-        {
-          "id": "ct-m1",
-          "title": "Premium UI/UX design and core shopping workflow prototype",
-          "description": "The premium interface direction and the core list-to-basket shopping workflow were designed and prototyped.",
-          "status": "done"
-        },
-        {
-          "id": "ct-m2",
-          "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
-          "description": "Shopping lists, basket totals, unit-price comparison, and the Budget Guard were implemented and refined.",
-          "status": "done"
-        },
-        {
-          "id": "ct-m3",
-          "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
-          "description": "Final quality assurance, responsive behaviour, and release checks remain open; not yet verified.",
-          "status": "planned"
-        }
-      ],
-      "progress_percent": 67
-    },
-    {
       "id": "nutrilens",
       "name": "NutriLens",
       "status": "in-development",
@@ -109,6 +55,60 @@
         }
       ],
       "progress_percent": 33
+    },
+    {
+      "id": "cartora",
+      "name": "Cartora",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-CART-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-CART-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "ct-m1",
+          "title": "Premium UI/UX design and core shopping workflow prototype",
+          "description": "The premium interface direction and the core list-to-basket shopping workflow were designed and prototyped.",
+          "status": "done"
+        },
+        {
+          "id": "ct-m2",
+          "title": "Functional shopping lists, basket calculations, and Budget Guard refinement",
+          "description": "Shopping lists, basket totals, unit-price comparison, and the Budget Guard were implemented and refined.",
+          "status": "done"
+        },
+        {
+          "id": "ct-m3",
+          "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
+          "description": "Final quality assurance, responsive behaviour, and release checks remain open; not yet verified.",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 67
     },
     {
       "id": "register",
@@ -1979,22 +1979,6 @@
         }
       ],
       "progress_percent": 100
-    },
-    {
-      "id": "lab-premium-e2e",
-      "name": "Premium E2E Probe",
-      "status": "planned",
-      "hidden": false,
-      "verification": [],
-      "milestones": [
-        {
-          "id": "e2e-m1",
-          "title": "Probe",
-          "description": "E2E",
-          "status": "planned"
-        }
-      ],
-      "progress_percent": 0
     },
     {
       "id": "publisher-console",
