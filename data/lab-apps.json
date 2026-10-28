@@ -1983,7 +1983,7 @@
     {
       "id": "qa-probe-phase1d",
       "name": "QA Probe (temporary)",
-      "status": "planned",
+      "status": "early-testing",
       "hidden": false,
       "verification": [],
       "milestones": [
@@ -1991,7 +1991,9 @@
           "id": "qa-m1",
           "title": "Probe milestone",
           "description": "Disposable QA milestone for live verification.",
-          "status": "planned"
+          "status": "in-progress",
+          "evidence": "https://example.com/probe-evidence",
+          "evidence_class": "team-reported"
         }
       ],
       "progress_percent": 0
