@@ -398,5 +398,13 @@
     "target": "BillScan",
     "summary": "update record \"BillScan\" (billscan), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:37:24.159Z",
+    "actor": "console",
+    "action": "update",
+    "target": "SoundMeter",
+    "summary": "update record \"SoundMeter\" (soundmeter), status planned; changed: no material change",
+    "commitSha": null
   }
 ]
