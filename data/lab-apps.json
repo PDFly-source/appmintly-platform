@@ -1981,6 +1981,22 @@
       "progress_percent": 100
     },
     {
+      "id": "lab-premium-e2e",
+      "name": "Premium E2E Probe",
+      "status": "planned",
+      "hidden": false,
+      "verification": [],
+      "milestones": [
+        {
+          "id": "e2e-m1",
+          "title": "Probe",
+          "description": "E2E",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 0
+    },
+    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",
