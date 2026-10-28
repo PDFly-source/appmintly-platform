@@ -374,5 +374,13 @@
     "target": "LightLux",
     "summary": "update record \"LightLux\" (lightlux), status planned; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:30:55.632Z",
+    "actor": "console",
+    "action": "update",
+    "target": "SignLab",
+    "summary": "update record \"SignLab\" (signlab), status early-testing; changed: no material change",
+    "commitSha": null
   }
 ]
