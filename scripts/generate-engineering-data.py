@@ -34,7 +34,12 @@ def vchecks(rec):
             ck['build_id'] = c['buildId']
         # Provenance class — separates automated test evidence from
         # repository inspection. Pending checks carry no class.
-        if c.get('result') == 'passed':
+        # A record may carry its own explicit provenance class (e.g. the
+        # catalog-synced published records use repository-inspection for
+        # their release check); that explicit value wins.
+        if c.get('evidence_class'):
+            ck['evidence_class'] = c['evidence_class']
+        elif c.get('result') == 'passed':
             ck['evidence_class'] = 'automated-test-evidence'
         elif c.get('result') == 'unable-to-verify':
             ck['evidence_class'] = 'repository-inspection'

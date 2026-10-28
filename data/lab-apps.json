@@ -1799,6 +1799,188 @@
       "progress_percent": 0
     },
     {
+      "id": "catalog-appmintly",
+      "name": "AppMintly",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-APPM-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.10.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-appmintly-m1",
+          "title": "Publicly released on the AppMintly marketplace (v1.0.10)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/appmintly/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-studyria",
+      "name": "Studyria",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-STUD-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.0.2.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-09-27"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-studyria-m1",
+          "title": "Publicly released on the AppMintly marketplace (v2.0.2)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/studyria/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-pdfminifly",
+      "name": "PDFMiniFly",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-PDFM-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.2.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-15"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-pdfminifly-m1",
+          "title": "Publicly released on the AppMintly marketplace (v2.1.2)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/pdfminifly/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-niramay",
+      "name": "Niramay",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-NIRA-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.1.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-niramay-m1",
+          "title": "Publicly released on the AppMintly marketplace (v2.1.1)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/niramay/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-nexdrop",
+      "name": "NexDrop",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-NEXD-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.4.6.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-16"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-nexdrop-m1",
+          "title": "Publicly released on the AppMintly marketplace (v1.4.6)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/nexdrop/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-billcraft",
+      "name": "BillCraft",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-BILL-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-17"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-billcraft-m1",
+          "title": "Publicly released on the AppMintly marketplace (v0.1.0)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/billcraft/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
+      "id": "catalog-cineflow",
+      "name": "CineFlow",
+      "status": "published",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-CINE-RELEASE",
+          "category": "release",
+          "result": "passed",
+          "evidence_class": "repository-inspection",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
+          "source": "AppMintly production catalog (data/apps.json)",
+          "date": "2026-10-27"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "pub-cineflow-m1",
+          "title": "Publicly released on the AppMintly marketplace (v0.1.0)",
+          "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/cineflow/.",
+          "status": "done"
+        }
+      ],
+      "progress_percent": 100
+    },
+    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",

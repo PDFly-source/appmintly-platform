@@ -76,18 +76,26 @@ describe('BillCraft official publication — catalog record', () => {
     expect(bc.releaseNotes[0]).toContain('sixth published application');
   });
 
-  test('no duplicate: billcraft is not an upcoming app', () => {
+  test('no duplicate: billcraft appears exactly once, as the catalog-synced published record', () => {
     const up = JSON.parse(readFileSync(join(REPO, 'data', 'upcoming-apps.json'), 'utf8'));
-    expect(up.some((a: any) => a.slug === 'billcraft' || a.id === 'billcraft')).toBe(false);
+    // Post Phase-2 sync semantics: live catalog apps are represented in the
+    // Lab by ONE sync-managed published record each — never a curated
+    // duplicate with the raw slug/id 'billcraft'.
+    const matches = up.filter((a: any) => a.slug === 'billcraft' || a.id === 'billcraft' || a.id === 'catalog-billcraft' || a.catalogSlug === 'billcraft');
+    expect(matches).toHaveLength(1);
+    expect(matches[0].id).toBe('catalog-billcraft');
+    expect(matches[0].syncManaged).toBe(true);
+    expect(matches[0].roadmapStatus).toBe('published');
+    expect(matches[0].publicUrl).toMatch(/^https:\/\/appmintly\.pages\.dev\/app\/billcraft\/$/);
   });
 
-  test('Lab graduation: billcraft left the Lab and upcoming registries when published', () => {
+  test('Lab mirror stays consistent: 40 public records (33 curated + 7 catalog-synced published) + 2 hidden', () => {
     const lab = JSON.parse(readFileSync(join(REPO, 'data', 'lab-apps.json'), 'utf8'));
-    expect((lab.apps as any[]).some((a) => a.id === 'billcraft')).toBe(false); // graduated, like NexDrop
-    // Lab stays internally consistent: 33 public (3 showcase + 30 imported
-    // roadmap apps, 2026-10-27) + 2 hidden.
+    // Phase-2 sync semantics: the raw 'billcraft' graduated pre-sync; its
+    // live representation is the sync-managed catalog-billcraft record.
+    expect((lab.apps as any[]).some((a) => a.id === 'billcraft')).toBe(false);
     expect((lab.apps as any[]).filter((a) => !a.hidden).map((a) => a.id)).toEqual(
-      ["cartora", "nutrilens", "register", "hisaabkhata", "qr-forge", "unitx-axom", "emiwise", "agex", "docuscan-mint", "imageslim", "audiotrim", "passportlab", "colorsnap", "textcraft", "billsplit-mint", "typeaxom", "focusmint", "notecheck", "measuremint", "wagebook", "randhoon", "billscan", "signlab", "cropcraft", "soundmeter", "breathease", "bhoomimap", "cardmint", "fileswitch", "lightlux", "slipgen", "kharcha", "morselab"] as string[]
+      ["cartora", "nutrilens", "register", "hisaabkhata", "qr-forge", "unitx-axom", "emiwise", "agex", "docuscan-mint", "imageslim", "audiotrim", "passportlab", "colorsnap", "textcraft", "billsplit-mint", "typeaxom", "focusmint", "notecheck", "measuremint", "wagebook", "randhoon", "billscan", "signlab", "cropcraft", "soundmeter", "breathease", "bhoomimap", "cardmint", "fileswitch", "lightlux", "slipgen", "kharcha", "morselab", "catalog-appmintly", "catalog-studyria", "catalog-pdfminifly", "catalog-niramay", "catalog-nexdrop", "catalog-billcraft", "catalog-cineflow"] as string[]
     );
   });
 
