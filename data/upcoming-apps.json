@@ -1,84 +1,5 @@
 [
   {
-    "id": "nutrilens",
-    "slug": "nutrilens",
-    "name": "NutriLens",
-    "developer": "AppMintly Lab",
-    "category": "Health & Nutrition",
-    "type": "Web App",
-    "logo": "/brand/nutrilens-logo.png",
-    "purpose": "NutriLens is a privacy-first food intelligence product concept intended to help users understand packaged-food labels, ingredients, and nutrition information.",
-    "problem": "Nutrition labels and ingredient lists can be difficult for everyday shoppers to interpret.",
-    "benefits": [
-      "Understand packaged-food labels and ingredients more easily",
-      "More informed food choices with transparent label information",
-      "Privacy-first processing — no account, no cloud storage"
-    ],
-    "intendedUsers": [
-      "Everyday grocery shoppers",
-      "People who want to make informed food choices"
-    ],
-    "proposedFeatures": [
-      "Food Label Scanner — Planned photo-based label scanning and text extraction.",
-      "Nutrition Insights — Intended to explain nutrition facts and ingredients.",
-      "Privacy-First Processing — Prioritize local processing wherever technically supported."
-    ],
-    "plannedCapabilities": [
-      "Food-package photo analysis for visible label information",
-      "Local-first workflow with no account or cloud storage",
-      "Transparent nutrition, ingredient, and allergen review"
-    ],
-    "roadmapStatus": "in-development",
-    "roadmapStatusLabel": "Building Now",
-    "milestones": [
-      {
-        "id": "nl-m1",
-        "title": "Brand Identity & Scanner Prototype",
-        "description": "The NutriLens brand identity and an early scanner prototype were created.",
-        "status": "done"
-      },
-      {
-        "id": "nl-m2",
-        "title": "Core Food Intelligence Engine",
-        "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
-        "status": "planned"
-      },
-      {
-        "id": "nl-m3",
-        "title": "Testing & Release Readiness",
-        "description": "Final testing and release checks have not started; no release readiness is claimed.",
-        "status": "planned"
-      }
-    ],
-    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
-    "verification": {
-      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
-      "checks": [
-        {
-          "category": "identity",
-          "result": "pending"
-        },
-        {
-          "category": "build",
-          "result": "pending"
-        },
-        {
-          "category": "core-flow",
-          "result": "pending"
-        },
-        {
-          "category": "device",
-          "result": "pending"
-        },
-        {
-          "category": "release",
-          "result": "pending"
-        }
-      ]
-    },
-    "accessMessage": "Currently being built — public release not available."
-  },
-  {
     "id": "cartora",
     "slug": "cartora",
     "name": "Cartora",
@@ -127,6 +48,85 @@
         "id": "ct-m3",
         "title": "Final QA, mobile responsiveness, privacy verification, and production release readiness",
         "description": "Final quality assurance, responsive behaviour, and release checks remain open; not yet verified.",
+        "status": "planned"
+      }
+    ],
+    "draftNote": "Draft roadmap entry — content is maintained by the AppMintly team and may change before launch.",
+    "verification": {
+      "source": "Locally recorded by the AppMintly team in this repository. This is not an independent audit; checks turn 'passed' only when real evidence is recorded.",
+      "checks": [
+        {
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "category": "release",
+          "result": "pending"
+        }
+      ]
+    },
+    "accessMessage": "Currently being built — public release not available."
+  },
+  {
+    "id": "nutrilens",
+    "slug": "nutrilens",
+    "name": "NutriLens",
+    "developer": "AppMintly Lab",
+    "category": "Health & Nutrition",
+    "type": "Web App",
+    "logo": "/brand/nutrilens-logo.png",
+    "purpose": "NutriLens is a privacy-first food intelligence product concept intended to help users understand packaged-food labels, ingredients, and nutrition information.",
+    "problem": "Nutrition labels and ingredient lists can be difficult for everyday shoppers to interpret.",
+    "benefits": [
+      "Understand packaged-food labels and ingredients more easily",
+      "More informed food choices with transparent label information",
+      "Privacy-first processing — no account, no cloud storage"
+    ],
+    "intendedUsers": [
+      "Everyday grocery shoppers",
+      "People who want to make informed food choices"
+    ],
+    "proposedFeatures": [
+      "Food Label Scanner — Planned photo-based label scanning and text extraction.",
+      "Nutrition Insights — Intended to explain nutrition facts and ingredients.",
+      "Privacy-First Processing — Prioritize local processing wherever technically supported."
+    ],
+    "plannedCapabilities": [
+      "Food-package photo analysis for visible label information",
+      "Local-first workflow with no account or cloud storage",
+      "Transparent nutrition, ingredient, and allergen review"
+    ],
+    "roadmapStatus": "in-development",
+    "roadmapStatusLabel": "Building Now",
+    "milestones": [
+      {
+        "id": "nl-m1",
+        "title": "Brand Identity & Scanner Prototype",
+        "description": "The NutriLens brand identity and an early scanner prototype were created.",
+        "status": "done"
+      },
+      {
+        "id": "nl-m2",
+        "title": "Core Food Intelligence Engine",
+        "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
+        "status": "planned"
+      },
+      {
+        "id": "nl-m3",
+        "title": "Testing & Release Readiness",
+        "description": "Final testing and release checks have not started; no release readiness is claimed.",
         "status": "planned"
       }
     ],

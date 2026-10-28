@@ -54,5 +54,13 @@
     "target": "Premium E2E Probe",
     "summary": "archived record \"Premium E2E Probe\" (lab-premium-e2e)",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:19:41.970Z",
+    "actor": "console",
+    "action": "reorder",
+    "target": "40 projects",
+    "summary": "new public display order saved",
+    "commitSha": null
   }
 ]
