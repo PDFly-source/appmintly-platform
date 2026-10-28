@@ -462,5 +462,13 @@
     "target": "Randhoon",
     "summary": "update record \"Randhoon\" (randhoon), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T15:01:01.554Z",
+    "actor": "console",
+    "action": "update",
+    "target": "Kharcha",
+    "summary": "update record \"Kharcha\" (kharcha), status in-development; changed: no material change",
+    "commitSha": null
   }
 ]
