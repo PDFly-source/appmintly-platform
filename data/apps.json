@@ -975,7 +975,7 @@
     "version": "0.1.0",
     "previousVersion": "",
     "releaseDate": "2026-10-27",
-    "lastUpdated": "2026-10-27",
+    "lastUpdated": "2026-10-28",
     "publishedAt": "2026-10-27T14:00:00.000Z",
     "themeColor": "#0A0D14",
     "backgroundColor": "#0A0D14",
@@ -1006,8 +1006,8 @@
       "Local-First Storage — History, playlists, favorites, subtitles and settings stay in your browser's IndexedDB; video files never leave your device."
     ],
     "tags": [
-      "video player",
-      "local video",
+      "video-player",
+      "local-video",
       "subtitles",
       "srt",
       "vtt",
@@ -1043,20 +1043,20 @@
       "buildMode": "webview",
       "packageId": "com.appforge.cineflow",
       "authorized": true,
+      "sha256": "a98a80b526bb1c90ce74645e1ac5cd42b3035d2191a9e95dcb00dd1bd2bdf594",
       "versionName": "0.1.0",
-      "buildStatus": "released",
-      "verified": true,
-      "downloadAvailable": true,
-      "platform": "android",
       "versionCode": 100,
       "fileName": "CineFlow-0.1.0.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.1.0/CineFlow-0.1.0.apk",
       "fileSizeBytes": 276334,
-      "sha256": "a98a80b526bb1c90ce74645e1ac5cd42b3035d2191a9e95dcb00dd1bd2bdf594",
       "releaseTag": "cineflow-v0.1.0",
-      "releaseDate": "2026-10-27",
       "generatedAt": "2026-10-27T15:43:50.629Z",
+      "buildStatus": "released",
+      "verified": true,
+      "downloadAvailable": true,
       "architecture": "universal",
+      "platform": "android",
+      "releaseDate": "2026-10-27",
       "minSdk": 21,
       "targetSdk": 36,
       "certificateSubject": "AppMintly",
@@ -1091,6 +1091,6 @@
       ],
       "notes": "Verified 2026-10-27: web audit (PDFly-source/cineflow @ dec873b — real H.264/VP9 playback, SRT+VTT subtitles, offline shell with network emulation, same-origin-only interception) AND signed APK inspection of CineFlow-0.1.0 (SHA-256 a98a80b5...df594): package com.appforge.cineflow, versionCode 100, minSdk 21 / targetSdk 36, exactly three permissions (INTERNET to load the app, ACCESS_NETWORK_STATE for connectivity detection, DOWNLOAD_WITHOUT_NOTIFICATION for update delivery), no storage/media permissions, cleartext traffic disabled, v1+v2+v3 signatures under the AppMintly release certificate (fingerprint dbafc6d3...f61368) — the same key as BillCraft and the rest of the AppMintly APK family."
     },
-    "updatedAt": "2026-10-27T15:43:50.629Z"
+    "updatedAt": "2026-10-28T09:50:52.907Z"
   }
 ]
