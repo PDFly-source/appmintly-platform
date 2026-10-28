@@ -3867,7 +3867,7 @@
           "evidence_class": "repository-inspection",
           "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.10.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-16"
+          "date": "2026-10-28"
         }
       ]
     },
@@ -4185,7 +4185,7 @@
           "evidence_class": "repository-inspection",
           "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-27"
+          "date": "2026-10-28"
         }
       ]
     },
