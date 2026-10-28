@@ -3983,5 +3983,35 @@
     },
     "logo": "/brand/cineflow-icon-384.png",
     "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "lab-premium-e2e",
+    "slug": "lab-premium-e2e",
+    "name": "Premium E2E Probe",
+    "developer": "PKD pkd",
+    "category": "Tools",
+    "type": "Web App",
+    "purpose": "E2E probe for the premium console features.",
+    "problem": "",
+    "intendedUsers": [
+      "qa"
+    ],
+    "benefits": [],
+    "proposedFeatures": [
+      "probe"
+    ],
+    "plannedCapabilities": [
+      "probe"
+    ],
+    "roadmapStatus": "planned",
+    "milestones": [
+      {
+        "id": "e2e-m1",
+        "title": "Probe",
+        "description": "E2E",
+        "status": "planned"
+      }
+    ],
+    "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim."
   }
 ]
