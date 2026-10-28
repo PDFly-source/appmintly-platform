@@ -1981,30 +1981,6 @@
       "progress_percent": 100
     },
     {
-      "id": "qa-ms-probe",
-      "name": "QA Milestone Probe (temp)",
-      "status": "planned",
-      "hidden": false,
-      "verification": [],
-      "milestones": [
-        {
-          "id": "qmp-a",
-          "title": "Probe Alpha",
-          "description": "First disposable milestone.",
-          "status": "done",
-          "evidence": "https://example.com/qa-evidence-1793179839191",
-          "evidence_class": "team-reported"
-        },
-        {
-          "id": "qmp-b",
-          "title": "Probe Beta",
-          "description": "Second disposable milestone.",
-          "status": "planned"
-        }
-      ],
-      "progress_percent": 50
-    },
-    {
       "id": "publisher-console",
       "name": "AppMintly Publisher Console",
       "status": "in-development",
