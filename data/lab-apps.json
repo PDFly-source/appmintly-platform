@@ -3,60 +3,6 @@
   "generated_from": "data/upcoming-apps.json (public Lab records incl. Phase 3.1 verification evidence) + retired records recovered from repository history at commit 58fbf67 (publisher-console, pdfly)",
   "apps": [
     {
-      "id": "nutrilens",
-      "name": "NutriLens",
-      "status": "in-development",
-      "hidden": false,
-      "verification": [
-        {
-          "id": "V-NUTR-IDENTITY",
-          "category": "identity",
-          "result": "pending"
-        },
-        {
-          "id": "V-NUTR-BUILD",
-          "category": "build",
-          "result": "pending"
-        },
-        {
-          "id": "V-NUTR-CORE-FLOW",
-          "category": "core-flow",
-          "result": "pending"
-        },
-        {
-          "id": "V-NUTR-DEVICE",
-          "category": "device",
-          "result": "pending"
-        },
-        {
-          "id": "V-NUTR-RELEASE",
-          "category": "release",
-          "result": "pending"
-        }
-      ],
-      "milestones": [
-        {
-          "id": "nl-m1",
-          "title": "Brand Identity & Scanner Prototype",
-          "description": "The NutriLens brand identity and an early scanner prototype were created.",
-          "status": "done"
-        },
-        {
-          "id": "nl-m2",
-          "title": "Core Food Intelligence Engine",
-          "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
-          "status": "planned"
-        },
-        {
-          "id": "nl-m3",
-          "title": "Testing & Release Readiness",
-          "description": "Final testing and release checks have not started; no release readiness is claimed.",
-          "status": "planned"
-        }
-      ],
-      "progress_percent": 33
-    },
-    {
       "id": "cartora",
       "name": "Cartora",
       "status": "in-development",
@@ -109,6 +55,60 @@
         }
       ],
       "progress_percent": 67
+    },
+    {
+      "id": "nutrilens",
+      "name": "NutriLens",
+      "status": "in-development",
+      "hidden": false,
+      "verification": [
+        {
+          "id": "V-NUTR-IDENTITY",
+          "category": "identity",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-BUILD",
+          "category": "build",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-CORE-FLOW",
+          "category": "core-flow",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-DEVICE",
+          "category": "device",
+          "result": "pending"
+        },
+        {
+          "id": "V-NUTR-RELEASE",
+          "category": "release",
+          "result": "pending"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "nl-m1",
+          "title": "Brand Identity & Scanner Prototype",
+          "description": "The NutriLens brand identity and an early scanner prototype were created.",
+          "status": "done"
+        },
+        {
+          "id": "nl-m2",
+          "title": "Core Food Intelligence Engine",
+          "description": "The label-analysis engine that extracts nutrition and ingredient information is still being built.",
+          "status": "planned"
+        },
+        {
+          "id": "nl-m3",
+          "title": "Testing & Release Readiness",
+          "description": "Final testing and release checks have not started; no release readiness is claimed.",
+          "status": "planned"
+        }
+      ],
+      "progress_percent": 33
     },
     {
       "id": "register",
