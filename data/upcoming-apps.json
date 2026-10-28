@@ -4012,6 +4012,7 @@
         "status": "planned"
       }
     ],
-    "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim."
+    "draftNote": "Draft roadmap entry — descriptive text is team-maintained draft content, not a shipping claim.",
+    "archived": false
   }
 ]
