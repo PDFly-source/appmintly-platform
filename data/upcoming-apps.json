@@ -3980,34 +3980,5 @@
     },
     "logo": "/brand/cineflow-icon-384.png",
     "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
-  },
-  {
-    "id": "lab-cms-smoke-test",
-    "slug": "lab-cms-smoke-test",
-    "name": "Lab CMS Smoke Test (edited)",
-    "developer": "PKD",
-    "category": "Productivity",
-    "type": "Web App",
-    "purpose": "Edited purpose line — verifying update persistence.",
-    "intendedUsers": [
-      "AppMintly QA"
-    ],
-    "problem": "Smoke-test record for verifying console CRUD persistence. Not a real product.",
-    "proposedFeatures": [
-      "Temporary verification feature"
-    ],
-    "plannedCapabilities": [
-      "Temporary verification capability"
-    ],
-    "milestones": [
-      {
-        "id": "smoke-m1",
-        "title": "Created via console smoke test",
-        "description": "Temporary milestone created by the Publisher Console CRUD verification on 2026-10-28.",
-        "status": "in-progress"
-      }
-    ],
-    "roadmapStatus": "planned",
-    "draftNote": "Draft roadmap entry (temporary smoke test)."
   }
 ]
