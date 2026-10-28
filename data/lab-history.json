@@ -246,5 +246,13 @@
     "target": "WageBook",
     "summary": "update record \"WageBook\" (wagebook), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:51:27.923Z",
+    "actor": "console",
+    "action": "update",
+    "target": "Kharcha",
+    "summary": "update record \"Kharcha\" (kharcha), status planned; changed: no material change",
+    "commitSha": null
   }
 ]
