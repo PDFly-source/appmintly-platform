@@ -38,5 +38,13 @@
     "target": "Premium E2E Probe",
     "summary": "deleted record \"Premium E2E Probe\" (lab-premium-e2e); prior state preserved in Git history",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T06:19:33.866Z",
+    "actor": "console",
+    "action": "create",
+    "target": "Premium E2E Probe",
+    "summary": "create record \"Premium E2E Probe\" (lab-premium-e2e), status planned",
+    "commitSha": null
   }
 ]
