@@ -115,7 +115,7 @@
     "version": "1.0.10",
     "previousVersion": "",
     "releaseDate": "2026-03-23",
-    "lastUpdated": "2026-10-16",
+    "lastUpdated": "2026-10-28",
     "size": "Installable Web App",
     "status": "published",
     "published": true,
@@ -147,7 +147,14 @@
       "Verified Publisher Information",
       "Direct Access to Published Apps"
     ],
-    "tags": [],
+    "tags": [
+      "app-store",
+      "marketplace",
+      "android",
+      "web-apps",
+      "pwa",
+      "discovery"
+    ],
     "releaseNotes": [
       "Adds automatic update notifications: the app checks the marketplace catalog in the background about every six hours and can alert you about new releases and updates to apps you track.",
       "Adds an in-app Notifications settings page with per-category preferences, tracked apps, and a manual catalog check.",
@@ -156,7 +163,7 @@
     "changelog": [],
     "featured": true,
     "original": true,
-    "updatedAt": "2026-10-16T06:25:05.317Z",
+    "updatedAt": "2026-10-28T09:50:47.520Z",
     "isDemo": false,
     "launchUrl": "https://appmintly.pages.dev/",
     "publishedAt": "2026-09-25T09:34:37.601Z",
