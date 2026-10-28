@@ -200,7 +200,7 @@
         "id": "rg-m2",
         "title": "Identity and claim flow",
         "description": "The publisher identity registration and claim flow is not yet implemented.",
-        "status": "planned"
+        "status": "done"
       },
       {
         "id": "rg-m3",
