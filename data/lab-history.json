@@ -198,5 +198,13 @@
     "target": "QA Probe (temporary)",
     "summary": "milestone \"qa-m1\" on \"QA Probe (temporary)\" (qa-probe-temp): Planned -> Pending; note: probe pending",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:45:14.193Z",
+    "actor": "console",
+    "action": "milestone-update",
+    "target": "QA Probe (temporary)",
+    "summary": "milestone \"qa-m1\" on \"QA Probe (temporary)\" (qa-probe-temp): Pending -> Blocked; note: probe blocked",
+    "commitSha": null
   }
 ]
