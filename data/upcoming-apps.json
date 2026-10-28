@@ -4191,5 +4191,41 @@
     },
     "logo": "/brand/cineflow-icon-384.png",
     "draftNote": "Published release record auto-synced from the production AppMintly catalog (data/apps.json). Managed by the catalog synchronization — do not hand-edit; use the Publisher Console Lab section or the sync workflow."
+  },
+  {
+    "id": "qa-ms-probe",
+    "slug": "qa-ms-probe",
+    "name": "QA Milestone Probe (temp)",
+    "developer": "QA",
+    "category": "Tools",
+    "type": "Web App",
+    "roadmapStatus": "planned",
+    "purpose": "Disposable record for milestone persistence verification.",
+    "problem": "Disposable QA record; deleted after the test.",
+    "intendedUsers": [
+      "QA"
+    ],
+    "benefits": [
+      "Will verify milestone persistence",
+      "Will verify note and evidence storage",
+      "Will verify progress rules",
+      "Will verify milestone ordering",
+      "Will be deleted after the test"
+    ],
+    "milestones": [
+      {
+        "id": "qmp-a",
+        "title": "Probe Alpha",
+        "description": "First disposable milestone.",
+        "status": "planned"
+      },
+      {
+        "id": "qmp-b",
+        "title": "Probe Beta",
+        "description": "Second disposable milestone.",
+        "status": "planned"
+      }
+    ],
+    "logo": ""
   }
 ]

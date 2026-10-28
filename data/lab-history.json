@@ -406,5 +406,13 @@
     "target": "SoundMeter",
     "summary": "update record \"SoundMeter\" (soundmeter), status planned; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T09:28:51.240Z",
+    "actor": "console",
+    "action": "import",
+    "target": "1 records",
+    "summary": "merge import: 1 new, 0 updated; validated server-side, single commit",
+    "commitSha": null
   }
 ]
