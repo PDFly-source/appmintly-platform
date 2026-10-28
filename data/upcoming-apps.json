@@ -362,7 +362,13 @@
     },
     "logo": "/brand/lab/hisaabkhata-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will turn daily kirana sales and payments into an always-current khata without manual totals",
+      "Will calculate running profit per item so owners can see which stock actually earns its keep",
+      "Will accept Assamese voice entries as well as typing, so a sale can be recorded mid-queue",
+      "Will export a printable PDF bill or khata for a customer or auditor straight from the phone",
+      "Will keep the whole ledger on the device, working through power cuts and no-signal days"
+    ]
   },
   {
     "id": "qr-forge",
@@ -475,7 +481,13 @@
     },
     "logo": "/brand/lab/qr-forge-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will generate UPI, WiFi, vCard and URL codes offline, without creating any app account",
+      "Will export 4K PNG and SVG files ready for a local print shop to make standees and stickers",
+      "Will let a shop reprint or replace a QR code whenever a counter or WiFi password changes",
+      "Will produce no tracking pixels or server calls, keeping customer scan activity private",
+      "Will keep a saved library of codes on the device for fast reprinting at a second counter"
+    ]
   },
   {
     "id": "unitx-axom",
@@ -588,7 +600,13 @@
     },
     "logo": "/brand/lab/unitx-axom-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will convert Bigha, Katha and Lessa into square feet, acres and hectares for Assam land records",
+      "Will apply Lower Assam, Upper Assam and Jorhat conversion factors so figures match the deed",
+      "Will work entirely offline with large Assamese numerals readable in the field",
+      "Will give farmers a quick second opinion before signing or negotiating a land agreement",
+      "Will keep every entered measurement on the phone, with no land record sent to a server"
+    ]
   },
   {
     "id": "emiwise",
@@ -701,7 +719,13 @@
     },
     "logo": "/brand/lab/emiwise-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will show how an extra prepayment shortens a loan and cuts total interest before committing",
+      "Will compare EMI schedules across loan amounts and tenures in plain, first-borrower language",
+      "Will project SIP, FD and PPF growth with inflation-adjusted real returns instead of headlines",
+      "Will present results with Assamese-language graphs and explanations for local borrowers",
+      "Will perform every calculation locally, with no bank API call or credit check ping"
+    ]
   },
   {
     "id": "agex",
@@ -814,7 +838,13 @@
     },
     "logo": "/brand/lab/agex-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will compute exact age in years, months, days, hours and seconds rather than a rounded figure",
+      "Will check age against published cutoffs such as APDCL, Assam Police, SSC and UPSC recruitment",
+      "Will show how much eligibility window remains before an age-limit date for a chosen exam",
+      "Will count down to birthdays with local reminders that need no contacts upload",
+      "Will keep all personal dates on the device, with nothing shared to a server"
+    ]
   },
   {
     "id": "docuscan-mint",
@@ -926,7 +956,14 @@
       ]
     },
     "logo": "/brand/lab/docuscan-mint-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will detect document edges and correct perspective automatically, without manual cropping",
+      "Will run OCR on the device so PAN, Aadhaar and other sensitive papers stay off any cloud",
+      "Will build multi-page PDFs with page reordering and export in a couple of taps",
+      "Will keep a lightweight local library of scans for quick re-sharing when an office asks",
+      "Will improve readability of faded photocopies with automatic contrast clean-up"
+    ]
   },
   {
     "id": "imageslim",
@@ -1038,7 +1075,14 @@
       ]
     },
     "logo": "/brand/lab/imageslim-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will compress photos to an exact target such as 100 KB or 200 KB for government form uploads",
+      "Will strip or preserve EXIF metadata with a single privacy toggle before sharing",
+      "Will batch-compress up to 50 images to the same size limit for portal submissions",
+      "Will preview the quality of a compressed photo before saving so there are no surprises",
+      "Will run the whole compression pipeline offline, with personal photos never leaving the phone"
+    ]
   },
   {
     "id": "audiotrim",
@@ -1150,7 +1194,14 @@
       ]
     },
     "logo": "/brand/lab/audiotrim-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will trim audio on a waveform with 10-millisecond precision for accurate ringtone cuts",
+      "Will merge clips and apply fade in and fade out for clean ringtone-style results",
+      "Will export in MP3, M4A and WAV so a clip fits the target app or device",
+      "Will let users audition a trimmed selection before saving it",
+      "Will keep all audio processing on the device, with no sound uploaded to a server"
+    ]
   },
   {
     "id": "passportlab",
@@ -1262,7 +1313,14 @@
       ]
     },
     "logo": "/brand/lab/passportlab-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will produce exact India 35x45 mm and US 51x51 mm passport photo sizes without a studio visit",
+      "Will replace the photo background with plain white automatically, on the device",
+      "Will lay out an A4 print sheet with 8 or 12 photos and cut lines for home or shop printing",
+      "Will guide framing for face position and head size so photos meet common submission rules",
+      "Will keep every identity photo on the phone, with no upload of personal images"
+    ]
   },
   {
     "id": "colorsnap",
@@ -1375,7 +1433,13 @@
     },
     "logo": "/brand/lab/colorsnap-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will pick a colour from the live camera and lock it as a HEX value in one tap",
+      "Will match a shade to Asian Paints and Berger paint names using an offline database",
+      "Will extract a five-colour palette from an existing image for design and decor planning",
+      "Will compare nearby shades so a repaint decision does not depend on lighting memory",
+      "Will store palettes locally, with no images or colour history uploaded"
+    ]
   },
   {
     "id": "textcraft",
@@ -1487,7 +1551,14 @@
       ]
     },
     "logo": "/brand/lab/textcraft-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will convert Bijoy and Avro text to Unicode Assamese without uploading a font or document",
+      "Will clean casing, spacing and line breaks and count words instantly for submission checks",
+      "Will handle long documents locally so writers can work without an internet connection",
+      "Will preserve Assamese characters correctly when text is copied between apps",
+      "Will keep all writing on the device, with no text sent to a server"
+    ]
   },
   {
     "id": "billsplit-mint",
@@ -1599,7 +1670,14 @@
       ]
     },
     "logo": "/brand/lab/billsplit-mint-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will add shared expenses in seconds without requiring anyone in the group to sign up",
+      "Will compute who owes whom with the fewest possible transfers",
+      "Will generate a UPI settle link offline so friends can pay without a payment SDK",
+      "Will keep participant names and amounts on the device, visible only to the group",
+      "Will support reusable groups for recurring trips, shared flats and office lunches"
+    ]
   },
   {
     "id": "typeaxom",
@@ -1712,7 +1790,13 @@
     },
     "logo": "/brand/lab/typeaxom-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will offer an Assamese typing test covering both Bijoy Bayanno and Unicode layouts",
+      "Will report WPM, accuracy and backspace count in a pattern familiar from government exams",
+      "Will provide offline practice paragraphs that work without internet or ads",
+      "Will track progress across attempts so aspirants can measure improvement over weeks",
+      "Will let candidates practise the exact layout their exam centre will use"
+    ]
   },
   {
     "id": "focusmint",
@@ -1824,7 +1908,14 @@
       ]
     },
     "logo": "/brand/lab/focusmint-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will run Pomodoro sessions with custom 25/5 and 50/10 intervals and no account required",
+      "Will play white noise and rain sounds offline, continuing after the app is closed",
+      "Will report focus streaks and session totals locally, without a cloud leaderboard",
+      "Will help students and deep workers protect long stretches of uninterrupted time",
+      "Will keep all session history on the device, private by default"
+    ]
   },
   {
     "id": "notecheck",
@@ -1936,7 +2027,14 @@
       ]
     },
     "logo": "/brand/lab/notecheck-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will walk through RBI security features such as see-through register, latent image and microtext",
+      "Will show a side-by-side real versus fake visual guide, fully offline",
+      "Will help shopkeepers and cash handlers check notes calmly instead of relying on memory",
+      "Will state plainly that it is an education tool, not a camera-based authenticity scanner",
+      "Will work without collecting or uploading any photos of currency"
+    ]
   },
   {
     "id": "measuremint",
@@ -2048,7 +2146,14 @@
       ]
     },
     "logo": "/brand/lab/measuremint-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will use a 1, 2 or 5 rupee coin as an on-device scale reference for quick measurements",
+      "Will estimate length, width and area from a single photo without AR hardware",
+      "Will give sellers and students a fast approximate measurement when a tape is not at hand",
+      "Will show confidence guidance so users know when to re-shoot for a better reading",
+      "Will keep every measurement and photo on the device"
+    ]
   },
   {
     "id": "wagebook",
@@ -2160,7 +2265,14 @@
       ]
     },
     "logo": "/brand/lab/wagebook-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will record daily hazira with Present, Absent and Half-Day marks in one tap, offline",
+      "Will calculate wages from daily rate, attendance and overtime, deducting advances automatically",
+      "Will generate wage slips as PDFs in Assamese or English without internet",
+      "Will keep a per-worker ledger so contractors can settle disputes with a clear record",
+      "Will let a supervisor mark an entire crew quickly at the end of a shift"
+    ]
   },
   {
     "id": "randhoon",
@@ -2273,7 +2385,13 @@
     },
     "logo": "/brand/lab/randhoon-logo.png",
     "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
-    "benefits": []
+    "benefits": [
+      "Will suggest Assamese recipes based on ingredients already in the kitchen",
+      "Will tell cooks what can be made now and which one or two missing items would unlock more",
+      "Will accept ingredients typed in Assamese or English, including everyday names like aloo and bilahi",
+      "Will keep the full recipe collection offline, without YouTube or data usage",
+      "Will help home cooks and bachelors plan meals without searching the internet"
+    ]
   },
   {
     "id": "billscan",
@@ -2385,7 +2503,14 @@
       ]
     },
     "logo": "/brand/lab/billscan-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will extract line items and totals from a bill photo using on-device OCR",
+      "Will assign expense categories automatically and roll them into a monthly total",
+      "Will remove manual data entry for shopkeepers who now copy bills into a notebook",
+      "Will keep every bill photo and extracted text on the phone",
+      "Will flag totals that do not reconcile so a bookkeeper can recheck the paper bill"
+    ]
   },
   {
     "id": "signlab",
@@ -2497,7 +2622,14 @@
       ]
     },
     "logo": "/brand/lab/signlab-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will let users draw a signature with smoothing so strokes look natural rather than jagged",
+      "Will export transparent PNG signatures plus a white-background option for documents",
+      "Will support repeated use across forms, letters and digital paperwork",
+      "Will let users re-crop and rescale a saved signature for different document sizes",
+      "Will keep every drawn signature local, never uploaded to a server"
+    ]
   },
   {
     "id": "cropcraft",
@@ -2609,7 +2741,14 @@
       ]
     },
     "logo": "/brand/lab/cropcraft-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will crop to exact ratios such as 1:1, 4:5, 9:16 and 16:9 for social posts and thumbnails",
+      "Will batch-crop up to 50 photos to the same ratio in one pass",
+      "Will preserve original resolution so crops stay sharp when posted or printed",
+      "Will preview framing before committing a crop, avoiding repeated rework",
+      "Will process everything on the device with no image uploads"
+    ]
   },
   {
     "id": "soundmeter",
@@ -2721,7 +2860,14 @@
       ]
     },
     "logo": "/brand/lab/soundmeter-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will show real-time sound levels in decibels, calibrated and available offline",
+      "Will track maximum, minimum and average levels with a local history graph",
+      "Will help students, renters and workers judge whether a space is uncomfortably loud",
+      "Will keep microphone input unrecorded, preserving privacy while measuring",
+      "Will let users compare readings across times of day for a noise complaint"
+    ]
   },
   {
     "id": "breathease",
@@ -2833,7 +2979,14 @@
       ]
     },
     "logo": "/brand/lab/breathease-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will guide box breathing, 4-7-8 and Anulom Vilom patterns fully offline",
+      "Will use haptic and visual cues so a session can continue without watching the screen",
+      "Will keep session history on the device, with no health data uploaded",
+      "Will help stressed workers and students take short, structured breathing breaks",
+      "Will let users choose a pattern and duration that fit a two-minute or ten-minute pause"
+    ]
   },
   {
     "id": "bhoomimap",
@@ -2945,7 +3098,14 @@
       ]
     },
     "logo": "/brand/lab/bhoomimap-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will let a farmer tap a map to draw a field polygon and read area in Bigha, Katha and square feet",
+      "Will track a walk around a field boundary with GPS to measure area on the device",
+      "Will support local land units so results match how farmers already describe their plots",
+      "Will let a buyer independently check a claimed plot size before agreeing to a deal",
+      "Will keep every polygon on the phone, with no land data uploaded"
+    ]
   },
   {
     "id": "cardmint",
@@ -3057,7 +3217,14 @@
       ]
     },
     "logo": "/brand/lab/cardmint-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will offer around twenty card templates suited to local businesses and Assamese text",
+      "Will embed UPI, phone and location QR codes generated offline",
+      "Will export print-ready PDF and 300 DPI PNG files with bleed for a print shop",
+      "Will let a shop change its number or address and reprint without hiring a designer",
+      "Will keep business details on the device, with no card data uploaded"
+    ]
   },
   {
     "id": "fileswitch",
@@ -3169,7 +3336,14 @@
       ]
     },
     "logo": "/brand/lab/fileswitch-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will convert between CSV, JSON and TXT entirely on the device",
+      "Will deduplicate, sort and filter table rows instantly for quick clean-ups",
+      "Will handle files with ten thousand rows offline without a server timeout",
+      "Will let students and office staff prepare data for a portal without desktop software",
+      "Will keep file contents private, never uploading the data"
+    ]
   },
   {
     "id": "lightlux",
@@ -3281,7 +3455,14 @@
       ]
     },
     "logo": "/brand/lab/lightlux-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will measure real-time light levels in lux using the camera, calibrated for guidance",
+      "Will indicate whether a study or work spot meets a recommended brightness such as 300 lux",
+      "Will help students and renters judge lighting before renting or rearranging a room",
+      "Will avoid saving any photos, keeping sensor use private",
+      "Will let users compare readings across desks, rooms and times of day"
+    ]
   },
   {
     "id": "slipgen",
@@ -3393,7 +3574,14 @@
       ]
     },
     "logo": "/brand/lab/slipgen-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will generate salary slips with earnings, deductions and net pay as a PDF in two taps",
+      "Will create rent receipts with a revenue stamp layout in Assamese or English",
+      "Will place a business logo, signature and seal on documents locally",
+      "Will let small businesses and landlords issue paperwork without a computer or accountant visit",
+      "Will keep every document on the device, with no cloud upload"
+    ]
   },
   {
     "id": "kharcha",
@@ -3505,7 +3693,14 @@
       ]
     },
     "logo": "/brand/lab/kharcha-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will record today expenses and deliberately keep no history, resetting automatically at midnight",
+      "Will add an expense in about two seconds with just an amount and a tag",
+      "Will offer true privacy for spenders who do not want a permanent financial trail",
+      "Will help students watch daily spending without building a database of habits",
+      "Will keep all data in memory only, with nothing written to disk or cloud"
+    ]
   },
   {
     "id": "morselab",
@@ -3617,7 +3812,14 @@
       ]
     },
     "logo": "/brand/lab/morselab-logo.png",
-    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet."
+    "draftNote": "Draft roadmap entry imported from the AppMintly Labs roadmap source (2026-10-27). Team-maintained planning content — statuses, milestones and copy reflect the source record; no verification evidence has been recorded yet.",
+    "benefits": [
+      "Will convert text to Morse and back instantly without a server",
+      "Will send Morse by flashlight and sound so learners can practise both ways",
+      "Will include a practice quiz and speed test with local WPM tracking",
+      "Will help students and scouts learn signalling at their own pace",
+      "Will work fully offline for practice in the field"
+    ]
   },
   {
     "id": "catalog-appmintly",
