@@ -42,6 +42,14 @@ export interface RoadmapMilestone {
   lastUpdated?: string;
 }
 
+/**
+ * Console-managed lifecycle flag: an archived roadmap record is kept in
+ * the dataset (Git history + restore) but hidden from the public Lab.
+ * The Publisher Console's archive/restore actions set it; it never
+ * affects the marketplace catalog (data/apps.json).
+ */
+export const ARCHIVED_FIELD = 'archived';
+
 export interface UpcomingApp {
   id: string;
   slug: string;
@@ -248,6 +256,9 @@ function normalizeUpcoming(raw: unknown): UpcomingApp | null {
   if (typeof r.id !== 'string' || typeof r.name !== 'string' || typeof r.slug !== 'string') return null;
   const status = r.roadmapStatus as RoadmapStatus;
   if (!VALID_STATUSES.includes(status)) return null;
+  // Archived records stay in the dataset but are hidden from the public
+  // Lab (console-managed lifecycle; restore brings them back).
+  if (r.archived === true) return null;
   const httpsUrl = (v: unknown) =>
     typeof v === 'string' && /^https:\/\//.test(v) && !/\s/.test(v) ? (v as string) : undefined;
   const publicUrl = httpsUrl(r.publicUrl);
