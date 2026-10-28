@@ -438,5 +438,13 @@
     "target": "QA Milestone Probe (temp)",
     "summary": "milestone \"qmp-a\" on \"QA Milestone Probe (temp)\" (qa-ms-probe): Done -> Done; note: QA persistence note 1793179866538",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T09:31:31.084Z",
+    "actor": "console",
+    "action": "delete",
+    "target": "QA Milestone Probe (temp)",
+    "summary": "deleted record \"QA Milestone Probe (temp)\" (qa-ms-probe); prior state preserved in Git history",
+    "commitSha": null
   }
 ]
