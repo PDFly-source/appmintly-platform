@@ -166,5 +166,13 @@
     "target": "30 records",
     "summary": "merge import: 0 new, 30 updated; validated server-side, single commit",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T07:43:49.955Z",
+    "actor": "console",
+    "action": "import",
+    "target": "1 records",
+    "summary": "merge import: 1 new, 0 updated; validated server-side, single commit",
+    "commitSha": null
   }
 ]
