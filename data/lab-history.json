@@ -358,5 +358,13 @@
     "target": "MeasureMint",
     "summary": "update record \"MeasureMint\" (measuremint), status planned; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:25:09.737Z",
+    "actor": "console",
+    "action": "update",
+    "target": "TextCraft",
+    "summary": "update record \"TextCraft\" (textcraft), status in-development; changed: no material change",
+    "commitSha": null
   }
 ]
