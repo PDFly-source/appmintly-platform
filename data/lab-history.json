@@ -342,5 +342,13 @@
     "target": "SlipGen",
     "summary": "update record \"SlipGen\" (slipgen), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-10-28T08:18:26.715Z",
+    "actor": "console",
+    "action": "update",
+    "target": "BillSplit Mint",
+    "summary": "update record \"BillSplit Mint\" (billsplit-mint), status planned; changed: no material change",
+    "commitSha": null
   }
 ]
