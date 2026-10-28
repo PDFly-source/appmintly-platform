@@ -136,8 +136,9 @@ describe('problem statements and benefits — honest, complete, claim-free', () 
         continue;
       }
       expect(app.problem, `${app.id} problem`).toBeTruthy();
-      // Benefits: only the original showcase records carry them — the 30
-      // imported roadmap apps have no benefits field in their source.
+      // Benefits: the three original showcase records carry three each; the
+      // 30 Phase-1D roadmap records carry five app-specific benefits each
+      // (imported through the validated /lab/projects/import route).
       if (['cartora', 'nutrilens', 'register'].includes(app.id)) {
         expect(app.benefits, `${app.id} benefits`).toBeTruthy();
         expect(app.benefits!.length).toBeGreaterThanOrEqual(3);
@@ -292,5 +293,78 @@ describe('lab archived lifecycle', () => {
     expect(upcoming.every((u) => (u as unknown as { archived?: unknown }).archived !== true)).toBe(true);
     expect(upcoming.length).toBeLessThanOrEqual(raw.length);
     expect(upcoming.length).toBeGreaterThanOrEqual(expectVisible - 0);
+  });
+});
+
+/* Phase-1D benefits import (P0) — every one of the 30 roadmap records must
+   carry at least five distinct, app-specific, future-oriented benefits. */
+const LAB_BENEFIT_FLOOR_SLUGS = [
+  'hisaabkhata', 'qr-forge', 'unitx-axom', 'emiwise', 'agex', 'docuscan-mint',
+  'imageslim', 'audiotrim', 'passportlab', 'colorsnap', 'textcraft', 'billsplit-mint',
+  'typeaxom', 'focusmint', 'notecheck', 'measuremint', 'wagebook', 'randhoon',
+  'billscan', 'signlab', 'cropcraft', 'soundmeter', 'breathease', 'bhoomimap',
+  'cardmint', 'fileswitch', 'lightlux', 'slipgen', 'kharcha', 'morselab',
+];
+
+describe('Phase-1D benefits — 30 apps, five+ distinct each, app-specific', () => {
+  it('every floor record exists exactly once with at least five benefits', () => {
+    for (const slug of LAB_BENEFIT_FLOOR_SLUGS) {
+      const matches = UPCOMING_APPS.filter((a) => a.slug === slug);
+      expect(matches.length, `${slug} appears once`).toBe(1);
+      const b = matches[0].benefits ?? [];
+      expect(b.length, `${slug} benefit count`).toBeGreaterThanOrEqual(5);
+      const distinct = new Set(b.map((x) => x.trim().toLowerCase()));
+      expect(distinct.size, `${slug} distinct benefits`).toBe(b.length);
+      for (const text of b) {
+        expect(text.trim().length, `${slug} non-empty benefit`).toBeGreaterThan(10);
+        expect(text.length, `${slug} benefit length`).toBeLessThanOrEqual(140);
+      }
+    }
+  });
+
+  it('totals at least 150 benefits and no generic list is shared between apps', () => {
+    const sets = LAB_BENEFIT_FLOOR_SLUGS.map((slug) => {
+      const app = UPCOMING_APPS.find((a) => a.slug === slug)!;
+      return (app.benefits ?? []).join('|');
+    });
+    const total = LAB_BENEFIT_FLOOR_SLUGS.reduce((n, slug) => {
+      const app = UPCOMING_APPS.find((a) => a.slug === slug)!;
+      return n + (app.benefits?.length ?? 0);
+    }, 0);
+    expect(total).toBeGreaterThanOrEqual(150);
+    expect(new Set(sets).size, 'each app has its own benefit list').toBe(sets.length);
+  });
+
+  it('planned benefits are future-oriented, never shipped-claim wording', () => {
+    for (const slug of LAB_BENEFIT_FLOOR_SLUGS) {
+      const app = UPCOMING_APPS.find((a) => a.slug === slug)!;
+      for (const text of app.benefits ?? []) {
+        expect(text, `${slug}: "${text}" must be future-oriented`).toMatch(/\bWill\b/);
+      }
+    }
+  });
+});
+
+describe('milestone statuses and progress (P3)', () => {
+  const ALL = ['done', 'in-progress', 'planned', 'pending', 'blocked'];
+  it('all five statuses are used by shipped data and no unknown status exists', () => {
+    const seen = new Set<string>();
+    for (const app of UPCOMING_APPS) {
+      for (const m of app.milestones ?? []) {
+        expect(ALL, `${app.id}/${m.id} status`).toContain(m.status);
+        seen.add(m.status);
+      }
+    }
+    expect(seen.size).toBeGreaterThanOrEqual(3);
+  });
+  it('progress counts only done and is zero-safe', () => {
+    for (const app of UPCOMING_APPS) {
+      const ms = app.milestones ?? [];
+      const done = ms.filter((m) => m.status === 'done').length;
+      const pct = ms.length ? Math.round((done / ms.length) * 100) : 0;
+      expect(pct, `${app.id} progress`).toBe(ms.length ? Math.round((done / ms.length) * 100) : 0);
+      if (ms.length === 0) expect(pct).toBe(0);
+      if (pct === 100) expect(done).toBe(ms.length);
+    }
   });
 });
