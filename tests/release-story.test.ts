@@ -176,7 +176,7 @@ describe('upcoming-apps data — normalization honesty', () => {
 
     // Cartora and NutriLens stay in development under the finalized system.
     expect(getUpcomingAppBySlug('cartora')?.roadmapStatus).toBe('in-development');
-    expect(getUpcomingAppBySlug('nutrilens')?.roadmapStatus).toBe('in-development');
+    expect(getUpcomingAppBySlug('nutrilens')?.roadmapStatus).toBe('early-testing'); // authorized CMS edit 2026-10-28
   });
 
   // ===== Lab 3.0: roadmap engine + verification system =====
@@ -272,14 +272,14 @@ describe('upcoming-apps data — normalization honesty', () => {
     expect(UPCOMING_APPS.some((u) => u.screenshots !== undefined)).toBe(false);
   });
 
-  it('filter counts derive from real records: 40 / 18 / 12 / 3 / 7 (catalog-synced)', () => {
+  it('filter counts derive from real records: 40 / 18 / 11 / 4 / 7 (catalog-synced)', () => {
     // 33 curated roadmap records + 7 catalog-synced published records.
     // The published count is derived from the production catalog set —
     // never a hardcoded number (scripts/sync-published-lab.mjs).
     expect(UPCOMING_APPS.length).toBe(40);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(19); // owner console edits 2026-10-28
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(11);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(3);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(10);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(4);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(7);
   });
 });

@@ -565,7 +565,8 @@ export default function LabClient() {
 
         {/* Pagination dots — 44px touch targets with a small visual dot */}
         {slides > 0 && (
-          <div className="mt-3 flex items-center justify-center" role="tablist" aria-label="Go to showcase slide">
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-y-1 max-w-full" role="tablist" aria-label="Go to showcase slide">
+            {/* Wraps on narrow screens: one 40x44 dot per slide would otherwise widen the page. */}
             {Array.from({ length: slides }).map((_, i) => (
               <button
                 key={i}
@@ -573,7 +574,7 @@ export default function LabClient() {
                 onClick={() => goToSlide(i)}
                 aria-label={`Go to slide ${i + 1}`}
                 aria-current={slideIndex === i ? 'true' : undefined}
-                className="h-11 w-9 inline-flex items-center justify-center cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded-md"
+                className="h-11 w-10 inline-flex items-center justify-center cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 rounded-md"
               >
                 <span
                   aria-hidden
