@@ -4218,6 +4218,8 @@
         "lastUpdated": "2026-10-28T07:45:19.790Z",
         "evidence": "https://example.com/probe-evidence"
       }
-    ]
+    ],
+    "archived": true,
+    "archivedDate": "2026-10-28T07:45:42.567Z"
   }
 ]
