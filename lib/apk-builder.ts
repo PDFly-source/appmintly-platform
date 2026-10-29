@@ -123,8 +123,11 @@ const GENERIC_NATIVE_BRIDGE_JAVA = `
             if (orientation == null) return false;
             String o = orientation.trim().toLowerCase(java.util.Locale.US);
             final int requested;
-            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            // Sensor variants, not the fixed-side constants: a fixed
+            // LANDSCAPE forces one specific side, so a phone held the other
+            // way round shows an upside-down video.
+            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
             else if (o.equals("auto")) requested = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
             else return false;
             runOnUiThread(new Runnable() {
@@ -276,6 +279,33 @@ export function isWebViewOwnedUrl(url: string, launchUrl: string): boolean {
 /**
  * Checks eligibility of an application for APK generation
  */
+/**
+ * Launcher-icon policy (CineFlow v0.2.1 "generic C icon" fail-closed fix).
+ *
+ * Root cause of the shipped generic letter tile: the release APK was built
+ * with an `iconUrl` that 404'd. The builder silently fell back to a generated
+ * letter tile, so every mipmap density contained a flat "#0B0E15 + grey C"
+ * placeholder and nothing in the pipeline complained.
+ *
+ * A release build must never ship a placeholder as the app's identity, so the
+ * fallback is now refused for every release-signed APK (not just the
+ * marketplace package), and debug builds keep the convenience fallback.
+ */
+export function iconFallbackRefusal(input: {
+  packageId?: string;
+  signingMode?: string;
+  hasIcon: boolean;
+}): string | null {
+  if (input.hasIcon) return null;
+  if (input.packageId === 'com.appmintly.appmintly') {
+    return 'AppMintly APK build refused: the marketplace app (com.appmintly.appmintly) requires the official launcher icon (iconUrl); the letter-tile fallback is not allowed for this package.';
+  }
+  if ((input.signingMode || '').toLowerCase() === 'release') {
+    return `APK build refused: a release build for ${input.packageId || 'this app'} requires a resolvable launcher icon (iconUrl returned no usable image); shipping the generated letter-tile placeholder as the app icon is not allowed.`;
+  }
+  return null;
+}
+
 export function checkApkEligibility(options: ApkBuildOptions): { eligible: boolean; reason?: string } {
   if (!options.authorized) {
     return {
@@ -585,16 +615,15 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
         }
       }
 
-      if (!iconBuffer && packageId === 'com.appmintly.appmintly') {
-        // Phase 12.17 fail-closed guard: the marketplace's own APK must
-        // ship the official launcher icon. Root cause of the v1.0.5
-        // "generic A" launcher icon: the release was dispatched without
-        // an icon URL, so the letter-tile fallback shipped. The fallback
-        // stays available for other apps, but is refused here.
-        throw new Error(
-          'AppMintly APK build refused: the marketplace app (com.appmintly.appmintly) requires the official launcher icon (iconUrl); the letter-tile fallback is not allowed for this package.'
-        );
-      }
+      // Fail closed on a placeholder launcher icon (see iconFallbackRefusal):
+      // the marketplace package always refuses it, and now every release
+      // build does too - that is what let CineFlow v0.2.0 ship a "C" tile.
+      const iconRefusal = iconFallbackRefusal({
+        packageId,
+        signingMode: (options as unknown as { signingMode?: string }).signingMode || process.env.SIGNING_MODE,
+        hasIcon: !!iconBuffer,
+      });
+      if (iconRefusal) throw new Error(iconRefusal);
 
       const rawIconPath = path.join(buildDir, `source_icon.${ext}`);
       if (iconBuffer) {
@@ -1375,8 +1404,11 @@ ${
             if (orientation == null) return false;
             String o = orientation.trim().toLowerCase(java.util.Locale.US);
             final int requested;
-            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
-            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            // Sensor variants, not the fixed-side constants: a fixed
+            // LANDSCAPE forces one specific side, so a phone held the other
+            // way round shows an upside-down video.
+            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
             else if (o.equals("auto")) requested = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
             else return false;
             final Activity activity = MainActivity.this;

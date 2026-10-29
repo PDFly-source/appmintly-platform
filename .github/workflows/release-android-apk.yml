@@ -179,6 +179,14 @@ jobs:
           set -euo pipefail
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
 
+      - name: Launcher-icon gate (fail-closed on placeholder icons)
+        # CineFlow v0.2.0 shipped a generic "C" tile because the dispatched
+        # icon URL 404'd and the letter-tile fallback was silently accepted.
+        # This gate refuses a release build without real icon artwork.
+        run: |
+          set -euo pipefail
+          npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-apk-icons.ts
+
       - name: Premium launch experience anti-regression gate (splash + welcome)
         shell: bash
         run: |
