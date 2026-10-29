@@ -986,6 +986,7 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -1298,6 +1299,35 @@ ${
             } catch (Throwable t) {
                 return "";
             }
+        }
+
+        // Player orientation (CineFlow fix 2): Android WebView does not
+        // implement screen.orientation.lock(), so the page's landscape action
+        // cannot work inside the APK without native support. The page calls
+        // this FIRST via lib/player/screen-orientation.ts and only falls back
+        // to the web API when it is absent. '"auto"' releases the override.
+        @JavascriptInterface
+        public boolean lockOrientation(String orientation) {
+            if (orientation == null) return false;
+            String o = orientation.trim().toLowerCase(java.util.Locale.US);
+            final int requested;
+            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            else if (o.equals("auto")) requested = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+            else return false;
+            final Activity activity = MainActivity.this;
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        activity.setRequestedOrientation(requested);
+                    } catch (Throwable ignored) {
+                        // Some OEM launchers refuse the request; the page then
+                        // shows its truthful rotate-manually fallback.
+                    }
+                }
+            });
+            return true;
         }
 
         // P0 fix (AppMintly v1.0.7): native Android share sheet. Android
