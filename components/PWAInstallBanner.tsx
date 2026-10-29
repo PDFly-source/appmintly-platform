@@ -59,7 +59,7 @@ export const PWAInstallBanner: React.FC = () => {
 
             <button
               onClick={() => setDismissed(true)}
-              className="p-1 text-white/50 hover:text-white rounded-full transition"
+              className="tap-44 inline-flex items-center justify-center p-1 text-white/50 hover:text-white rounded-full transition"
               aria-label="Dismiss banner"
             >
               <X className="w-4 h-4" />
