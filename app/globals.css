@@ -250,6 +250,7 @@ body {
    border, soft hover glow, slight lift, press feedback.
    ============================================================ */
 .btn-cta {
+  min-height: 44px;
   background: var(--c-cta);
   color: #ffffff;
   border: 1px solid color-mix(in srgb, #ffffff 22%, var(--c-cta));
@@ -607,3 +608,6 @@ summary {
 /* Phase 1B - system UI insets: only fixed chrome is offset, never twice. */
 .safe-top { padding-top: env(safe-area-inset-top, 0px); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Accessible discrete control target (44x44). Inline text links are exempt. */
+.tap-44 { min-height: 44px; min-width: 44px; }
