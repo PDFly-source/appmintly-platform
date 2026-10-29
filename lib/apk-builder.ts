@@ -91,6 +91,59 @@ if (!globalForBuilds.__appforge_build_jobs) {
 const buildJobs = globalForBuilds.__appforge_build_jobs;
 
 /**
+ * Generic AppMintly app bridge (non-marketplace wrappers only).
+ *
+ * Deliberately minimal: identity, installed version, and screen orientation.
+ * Marketplace-only capabilities (native share sheet, update engine, push)
+ * are NOT emitted for third-party app wrappers.
+ */
+const GENERIC_NATIVE_BRIDGE_JAVA = `
+    private class NativeBridge {
+
+        @JavascriptInterface
+        public boolean isNativeApp() {
+            return true;
+        }
+
+        @JavascriptInterface
+        public String getAppVersion() {
+            try {
+                return getPackageManager()
+                        .getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Throwable t) {
+                return "";
+            }
+        }
+
+        // Real device rotation for app players: the Android WebView does not
+        // implement screen.orientation.lock(), so pages call this instead.
+        // Returns true when the request was accepted.
+        @JavascriptInterface
+        public boolean lockOrientation(String orientation) {
+            if (orientation == null) return false;
+            String o = orientation.trim().toLowerCase(java.util.Locale.US);
+            final int requested;
+            if (o.equals("landscape")) requested = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            else if (o.equals("portrait")) requested = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            else if (o.equals("auto")) requested = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+            else return false;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setRequestedOrientation(requested);
+                    } catch (Throwable ignored) {
+                        // Some launchers refuse the request; the page then
+                        // shows its truthful rotate-manually fallback.
+                    }
+                }
+            });
+            return true;
+        }
+    }
+`;
+
+/**
  * Validates Android package ID syntax
  */
 export function validatePackageId(pkg: string): { valid: boolean; error?: string } {
@@ -1000,7 +1053,8 @@ import android.provider.Settings;${
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.webkit.JavascriptInterface;`
-            : ''
+            : `
+import android.webkit.JavascriptInterface;`
         }
 import android.graphics.drawable.GradientDrawable;
 import android.os.Environment;
@@ -1033,6 +1087,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -1187,6 +1242,15 @@ ${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout 
             }
         });
 
+${
+          isNativeUpdatesBuild
+            ? ''
+            : `// Generic AppMintly app bridge: lets an app's own owned page ask the
+        // wrapper for capabilities the WebView cannot provide (native screen
+        // orientation, installed version). Only @JavascriptInterface methods
+        // are reachable and only pages inside the ownership prefix load here.
+        webView.addJavascriptInterface(new NativeBridge(), "AppMintlyNative");`
+        }
 ${
           isNativeUpdatesBuild
             ? `// AppMintly native update checker: expose the JS bridge to the
@@ -1425,7 +1489,7 @@ ${
         }
     }
 `
-            : ''
+            : GENERIC_NATIVE_BRIDGE_JAVA
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
