@@ -1043,14 +1043,14 @@
       "buildMode": "webview",
       "packageId": "com.appforge.cineflow",
       "authorized": true,
-      "sha256": "9218574bfbffd0092cf4a854b9d32824b3b17908eef9488cdea1d139d6c27d76",
+      "sha256": "3bc4945774930833f358c4468e1e57c78a100d3baaa15d92fe93fd842f8dbdff",
       "versionName": "0.2.0",
       "versionCode": 200,
       "fileName": "CineFlow-0.2.0.apk",
       "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.2.0/CineFlow-0.2.0.apk",
       "fileSizeBytes": 79726,
       "releaseTag": "cineflow-v0.2.0",
-      "generatedAt": "2026-10-29T09:00:36.035Z",
+      "generatedAt": "2026-10-29T09:03:43.437Z",
       "buildStatus": "released",
       "verified": true,
       "downloadAvailable": true,
@@ -1067,10 +1067,10 @@
         "v3": true
       },
       "securityCheckStatus": "passed",
-      "securityCheckTimestamp": "2026-10-29T09:00:30.491Z",
+      "securityCheckTimestamp": "2026-10-29T09:03:36.632Z",
       "validatorVersion": "11.6.0",
       "releaseId": 427641067,
-      "assetId": 687951807
+      "assetId": 687959578
     },
     "privacyTech": {
       "permissions": [
@@ -1091,6 +1091,6 @@
       ],
       "notes": "Verified 2026-10-27: web audit (PDFly-source/cineflow @ dec873b — real H.264/VP9 playback, SRT+VTT subtitles, offline shell with network emulation, same-origin-only interception) AND signed APK inspection of CineFlow-0.1.0 (SHA-256 a98a80b5...df594): package com.appforge.cineflow, versionCode 100, minSdk 21 / targetSdk 36, exactly three permissions (INTERNET to load the app, ACCESS_NETWORK_STATE for connectivity detection, DOWNLOAD_WITHOUT_NOTIFICATION for update delivery), no storage/media permissions, cleartext traffic disabled, v1+v2+v3 signatures under the AppMintly release certificate (fingerprint dbafc6d3...f61368) — the same key as BillCraft and the rest of the AppMintly APK family."
     },
-    "updatedAt": "2026-10-29T09:00:36.035Z"
+    "updatedAt": "2026-10-29T09:03:43.437Z"
   }
 ]
