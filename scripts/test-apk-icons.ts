@@ -11,7 +11,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { iconFallbackRefusal } from '../lib/apk-builder.ts';
+import { iconFallbackRefusal } from '../lib/apk-builder';
 
 const root = process.cwd();
 const builder = readFileSync(join(root, 'lib/apk-builder.ts'), 'utf8');
@@ -39,7 +39,6 @@ for (const ext of ["ext = 'png'", "ext = 'ico'", "ext = 'jpg'", "ext = 'webp'"])
 ok('icon format sniffing intact');
 
 // Fail-closed policy
-import { iconFallbackRefusal } from '../lib/apk-builder.ts';
 
 assert.equal(iconFallbackRefusal({ packageId: 'com.appforge.cineflow', signingMode: 'release', hasIcon: true }), null);
 assert.match(
