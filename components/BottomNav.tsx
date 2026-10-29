@@ -25,7 +25,7 @@ export const BottomNav: React.FC = () => {
     <nav
       id="mobile-bottom-navigation"
       aria-label="Mobile navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-line px-2 py-1.5 shadow-lg"
+      className="safe-bottom md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-line px-2 py-1.5 shadow-lg"
     >
       <div className="flex items-center justify-around">
         {navItems.map((item) => {

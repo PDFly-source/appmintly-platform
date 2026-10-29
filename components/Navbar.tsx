@@ -271,7 +271,7 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 glass transition-colors motion-reduce:transition-none">
+    <header className="safe-top sticky top-0 z-40 glass transition-colors motion-reduce:transition-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 group focus:outline-hidden focus:ring-2 focus:ring-forge-blue rounded-lg min-h-[44px]">

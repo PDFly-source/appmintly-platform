@@ -277,8 +277,8 @@ describe('upcoming-apps data — normalization honesty', () => {
     // The published count is derived from the production catalog set —
     // never a hardcoded number (scripts/sync-published-lab.mjs).
     expect(UPCOMING_APPS.length).toBe(40);
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(19); // owner console edits 2026-10-28
-    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(10);
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'planned').length).toBe(18); // AgeX advanced to in-development (4e44560)
+    expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'in-development').length).toBe(11); // 10 imported + AgeX advanced from planned (4e44560)
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'early-testing').length).toBe(4);
     expect(UPCOMING_APPS.filter((u) => u.roadmapStatus === 'published').length).toBe(7);
   });

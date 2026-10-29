@@ -262,12 +262,12 @@ describe('status-consistency audit — canonical labels and honest verification'
     expect(register.verification!.checks.every((c) => c.result !== 'passed')).toBe(true);
   });
 
-  it('overview counts derive from the records: 40 / 19 / 10 / 4 / 7 (catalog-synced)', () => {
+  it('overview counts derive from the records: 40 / 18 / 11 / 4 / 7 (catalog-synced)', () => {
     const count = (s?: string) =>
       s ? UPCOMING_APPS.filter((a) => a.roadmapStatus === s).length : UPCOMING_APPS.length;
     expect(count()).toBe(40); // 33 curated + 7 catalog-synced published records
-    expect(count('planned')).toBe(19); // register + 18 imported (owner console edits 2026-10-28)
-    expect(count('in-development')).toBe(10); // cartora + 9 imported (nutrilens moved to early testing)
+    expect(count('planned')).toBe(18); // register + 17 imported; AgeX advanced to in-development (4e44560)
+    expect(count('in-development')).toBe(11); // 10 imported + AgeX advanced from planned (4e44560)
     expect(count('early-testing')).toBe(4); // 3 imported + nutrilens
     // Published count MUST equal the catalog's published set — derived, never hardcoded.
     const catalog = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8'));

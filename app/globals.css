@@ -603,3 +603,7 @@ summary {
 @media (prefers-reduced-motion: reduce) {
   .lab-orb-tile { animation: none; }
 }
+
+/* Phase 1B - system UI insets: only fixed chrome is offset, never twice. */
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
