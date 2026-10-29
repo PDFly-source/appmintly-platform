@@ -25,6 +25,9 @@ concurrency:
   group: 'pages'
   cancel-in-progress: false
 
+env:
+  GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
+
 jobs:
   build:
     runs-on: ubuntu-latest

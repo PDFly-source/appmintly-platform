@@ -18,6 +18,9 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // Google Search Console ownership (Phase: SEO). Read at build time from the
+  // CI secret; the value is public by design (it is emitted into the HTML head).
+  verification: { google: process.env.GOOGLE_SITE_VERIFICATION_TOKEN },
   title: 'AppMintly - Discover. Install. Experience.',
   description: 'AppMintly is a digital marketplace for Apps, Web Apps, Games, Tools, and Websites. Your digital world, one place.',
   manifest: `${BASE_PATH}/manifest.webmanifest`,
