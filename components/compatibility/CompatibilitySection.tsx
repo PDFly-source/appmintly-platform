@@ -33,10 +33,14 @@ const SOURCE_STYLE: Record<CompatibilityField['source'], string> = {
 
 function Row({ item }: { item: CompatibilityField }) {
   return (
-    <div className="flex flex-col gap-1 border-b border-line py-3 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+    <div className="flex min-w-0 flex-col gap-1 border-b border-line py-3 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <dt className="shrink-0 text-[12px] font-semibold text-mut sm:w-52">{item.label}</dt>
       <dd className="min-w-0 flex flex-col gap-1 sm:items-end sm:text-right">
-        <span className={`min-w-0 break-words [overflow-wrap:anywhere] text-[13px] font-bold ${item.value === 'Not specified' ? 'font-semibold italic text-mut' : 'text-ink'}`}>
+        <span
+          className={`min-w-0 text-[13px] font-bold ${
+            item.label === 'SHA-256 checksum' ? 'break-all font-mono text-[11px] leading-relaxed' : 'break-words'
+          } ${item.value === 'Not specified' ? 'font-semibold italic text-mut' : 'text-ink'}`}
+        >
           {item.value}
         </span>
         <span className={`inline-flex w-fit items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${SOURCE_STYLE[item.source]}`}>
@@ -61,7 +65,7 @@ function Group({
 }) {
   if (items.length === 0) return null;
   return (
-    <section className="rounded-xl border border-line bg-white p-4">
+    <section className="min-w-0 rounded-xl border border-line bg-white p-4">
       <h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-ink">
         {icon}
         {title}

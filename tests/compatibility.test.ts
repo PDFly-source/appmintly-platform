@@ -189,7 +189,10 @@ describe('long checksums cannot widen a mobile layout', () => {
     // wider than a 390px viewport. This asserts the layout contract documented in
     // CompatibilitySection (min-w-0 + overflow-wrap:anywhere), not CSS itself.
     const css = require('fs').readFileSync('components/compatibility/CompatibilitySection.tsx', 'utf8');
-    expect(css).toContain('[overflow-wrap:anywhere]');
+    // `break-all` is a generated Tailwind class; the earlier arbitrary-property
+    // form silently emitted nothing, so the hash still forced a 470px min-content
+    // width at a 390px viewport. Lock the class that actually ships.
+    expect(css).toContain("item.label === 'SHA-256 checksum' ? 'break-all");
     expect(css).toContain('min-w-0');
   });
 });
