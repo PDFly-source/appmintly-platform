@@ -31,6 +31,7 @@ import {
   Star
 } from 'lucide-react';
 import { useCatalog } from '@/lib/CatalogContext';
+import { RecommendedForYou } from '@/components/RecommendedForYou';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { FeaturedHeroCarousel } from '@/components/FeaturedHeroCarousel';
@@ -484,6 +485,9 @@ export default function HomePage() {
         </div>
       </section>
       </Reveal>
+
+      {/* 6b. ITEM 10 — personalized picks, rendered only with a real signal */}
+      <RecommendedForYou />
 
       {/* 7. EDUCATION & LEARNING HIGHLIGHT (STUDYRIA FOCUS) */}
       {educationApps.length > 0 && (

@@ -39,6 +39,7 @@ import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { similarApps } from '@/lib/catalog/similar';
+import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
 import { QrCodeDialog } from '@/components/QrCodeDialog';
 import { PrivacyTechCard } from '@/components/PrivacyTechCard';
 import { ApkHashVerifier } from '@/components/ApkHashVerifier';
@@ -608,6 +609,10 @@ export default function AppDetailPage() {
                 </ul>
               </div>
             )}
+
+            {/* Item 10 — personalized picks for THIS browser, distinct from
+                catalog similarity below and never more than three. */}
+            <PersonalizedRecommendations slug={app.slug} />
 
             {/* AppMintly 2.0 — Similar apps: category, format and shared tags only */}
             {(() => {

@@ -16,7 +16,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import {
   Bookmark, Clock, Download, Search, X, Trash2, ArrowRight, ExternalLink,
-  ShieldCheck, Settings2, Check, Loader2,
+  ShieldCheck, Settings2, Check, Loader2, SlidersHorizontal,
 } from 'lucide-react';
 import { AppItem } from '@/data/apps';
 import { resolveDeveloper } from '@/data/publishers';
@@ -267,7 +267,7 @@ export default function LibraryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* ---------------- header ---------------- */}
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight leading-none">
             MY LIBRARY
@@ -280,6 +280,14 @@ export default function LibraryPage() {
             Private • On-device
           </p>
         </div>
+
+        <Link
+          href="/library/settings/"
+          className="min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full border border-line bg-card text-xs font-bold text-mut hover:text-ink transition"
+        >
+          <SlidersHorizontal aria-hidden="true" className="w-3.5 h-3.5" />
+          <span>Personalization</span>
+        </Link>
 
         <button
           type="button"
