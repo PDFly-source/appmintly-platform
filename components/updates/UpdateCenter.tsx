@@ -16,7 +16,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
+  ArrowLeft,
   ArrowRight,
   BadgeCheck,
   Bell,
@@ -71,8 +73,37 @@ export function UpdateCenter() {
   const buckets = useMemo(() => buildUpdateCenter(PUBLISHED as never[], localVersions), [localVersions]);
   const recent = useMemo(() => recentlyUpdated(PUBLISHED as never[], 4), []);
 
+  const router = useRouter();
+
+  function goBack() {
+    if (typeof window === 'undefined') {
+      router.push('/');
+      return;
+    }
+    let cameFromApp = false;
+    try {
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      const here = window.location.pathname.replace(/\/$/, '') || '/';
+      const from = ref && ref.origin === window.location.origin ? ref.pathname.replace(/\/$/, '') || '/' : '';
+      cameFromApp = Boolean(from) && from !== here && !from.endsWith('/updates');
+    } catch {
+      cameFromApp = false;
+    }
+    if (cameFromApp && window.history.length > 1) router.back();
+    else router.push('/');
+  }
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-24 pt-6 sm:px-6">
+      <button
+        type="button"
+        onClick={goBack}
+        className="mb-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-card px-3 text-xs font-bold text-mut transition hover:border-ink/30 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+        aria-label="Go back to the previous page"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        <span>Back</span>
+      </button>
       <header>
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-mut">Update center</p>
         <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">

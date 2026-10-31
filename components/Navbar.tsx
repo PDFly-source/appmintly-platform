@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bookmark, Menu, X, Bell, Sparkles, ArrowRight, Sun, Moon, MoonStar, MonitorSmartphone, FlaskConical, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
+import { Search, Bookmark, Menu, X, Bell, History, Sparkles, ArrowRight, Sun, Moon, MoonStar, MonitorSmartphone, FlaskConical, LayoutGrid, Clock, Star, Wrench, Smartphone, Globe, Gamepad2, ExternalLink, Info, Mail, ShieldCheck, Package, PackagePlus, Lightbulb, Bug, MessageCircle } from 'lucide-react';
 import { CommandPaletteTrigger } from '@/components/CommandPalette';
 import { useTheme } from '@/lib/theme-context';
 import { AppMintlyLogo, AppMintlyWordmarkText } from './AppMintlyLogo';
@@ -428,6 +428,9 @@ export const Navbar: React.FC = () => {
               </li>
               <li>
                 <MenuRow href="/explore?sort=latest" label="Latest Apps" icon={Clock} onNavigate={() => setMobileMenuOpen(false)} />
+              </li>
+              <li>
+                <MenuRow href="/updates" label="Update Center" icon={History} onNavigate={() => setMobileMenuOpen(false)} />
               </li>
               <li>
                 <MenuRow href="/lab" label="AppMintly Lab — Upcoming Apps" icon={FlaskConical} onNavigate={() => setMobileMenuOpen(false)} />
