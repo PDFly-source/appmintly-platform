@@ -489,11 +489,13 @@ summary {
   --p3d-bg: #0b0e15;
   --p3d-glass: rgba(22, 27, 40, 0.62);
   --p3d-line: rgba(255, 255, 255, 0.1);
-  --p3d-fg: #eef2fa;
-  --p3d-mute: #9aa4b8;
+  --p3d-fg: var(--c-ink);
+  --p3d-mute: var(--c-mut);
   --p3d-blue: #4c8dff;
   --p3d-cyan: #7dd3fc;
-  --p3d-gold: #f5b50a;
+  --p3d-gold: var(--c-warning-text);
+  --p3d-grad-a: var(--p3d-blue);
+  --p3d-grad-b: var(--p3d-cyan);
   position: relative;
   isolation: isolate;
   border-radius: 28px;
@@ -520,6 +522,19 @@ summary {
   mask: radial-gradient(ellipse at 50% 30%, #000 25%, transparent 80%);
 }
 .p3d-mute { color: var(--p3d-mute); }
+
+/*
+ * The 3D stage glass sits on the theme page, so in light mode its composited
+ * surface is light (the blue glow over #F6F8FB reads ~#DBE8FF). Its text must
+ * therefore follow the theme, not stay near-white. These overrides give the
+ * light theme a deep blue headline gradient and a dark gold eyebrow so both
+ * clear AA on that pale surface, while dark and AMOLED keep the brand hues.
+ */
+:root:not(.dark):not(.amoled) .p3d-stage {
+  --p3d-grad-a: #0B3E8F;
+  --p3d-grad-b: #0E7490;
+  --p3d-gold: #6B4A00;
+}
 .p3d-eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 14px; border-radius: 999px;
@@ -550,7 +565,7 @@ summary {
 .p3d-glass:focus-visible { outline: 2px solid var(--p3d-cyan); outline-offset: 3px; }
 /* gradient headline (reference .sub b / h2 em) */
 .p3d-grad {
-  background: linear-gradient(120deg, var(--p3d-blue), var(--p3d-cyan));
+  background: linear-gradient(120deg, var(--p3d-grad-a), var(--p3d-grad-b));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .p3d-stat-num { font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }

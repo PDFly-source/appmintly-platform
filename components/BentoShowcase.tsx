@@ -104,22 +104,22 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
               aria-hidden
             />
             <div className="absolute inset-0 bg-gradient-to-t from-inkbg via-inkbg/60 to-transparent" aria-hidden />
-            <div className="relative h-full flex flex-col justify-end p-4 sm:p-5 text-white">
+            <div className="on-dark relative h-full flex flex-col justify-end p-4 sm:p-5 text-on-ink">
               <div className="flex items-center gap-1.5 flex-wrap mb-2">
                 {tiles.spotlight.original && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-forge-yellow/25 border border-forge-yellow/50 text-warning-text text-[10px] font-extrabold">
                     <Sparkles className="w-3 h-3" aria-hidden /> AppMintly Original
                   </span>
                 )}
-                <span className="px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-xs text-[10px] font-bold">
+                <span className="px-2 py-0.5 rounded-md bg-inkbg text-on-ink text-[10px] font-bold">
                   {tiles.spotlight.category}
                 </span>
               </div>
-              <h3 className="text-lg sm:text-2xl font-semibold tracking-tight">{tiles.spotlight.name}</h3>
-              <p className="text-xs sm:text-sm text-white/80 line-clamp-2 mt-1">
+              <h3 className="text-lg sm:text-2xl font-semibold tracking-tight text-on-ink">{tiles.spotlight.name}</h3>
+              <p className="text-xs sm:text-sm text-mut line-clamp-2 mt-1">
                 {tiles.spotlight.shortDescription || tiles.spotlight.description}
               </p>
-              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold">
+              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-on-ink">
                 View app <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform motion-reduce:transition-none" aria-hidden />
               </span>
             </div>

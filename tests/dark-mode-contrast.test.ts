@@ -71,7 +71,8 @@ describe('no hardcoded white surfaces leak into a theme', () => {
     const offenders: string[] = [];
     for (const file of FILES) {
       const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
-      if (/text-\[#(?:fff|ffffff|000|000000)\]/i.test(source)) offenders.push(file);
+      // near-white / pale text literals that cannot follow the theme
+      if (/text-\[#(?:fff|ffffff|000|000000|eef2fa|b6c0d4|9aa4b8)\]/i.test(source)) offenders.push(file);
     }
     expect(offenders).toEqual([]);
   });

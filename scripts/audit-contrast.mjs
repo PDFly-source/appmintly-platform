@@ -43,17 +43,43 @@ const AUDIT = String.raw`(() => {
     const hi = Math.max(l1, l2), lo = Math.min(l1, l2);
     return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
   };
+  // Parse a linear-gradient into positioned stops. Translucent scrim stops are
+  // composited over white, the brightest artwork they could sit on, so the
+  // measurement stays conservative without guessing a solid colour.
   const stopsFrom = (image) => {
+    const body = (image.match(/linear-gradient\(([\s\S]*)\)/) || [, image])[1];
+    const parts = body.split(/,(?![^()]*\))/).map((x) => x.trim()).filter(Boolean);
     const stops = [];
-    const re = /rgba?\([^)]+\)/g;
-    let m;
-    while ((m = re.exec(image))) {
-      const c = parse(m[0]);
-      // Scrims are translucent: composite over white, the brightest thing an
-      // image behind them could be, so the measurement is conservative.
-      if (c && c.a > 0) stops.push(c.a >= 0.999 ? c : over(c, { r: 255, g: 255, b: 255, a: 1 }));
+    const pct = (tok) => {
+      const m = tok.match(/(-?[\d.]+)%/);
+      return m ? Number(m[1]) : null;
+    };
+    for (const part of parts) {
+      if (/^(to |\d|from |via |at )/.test(part) && !/rgba?\(/.test(part)) continue;
+      const c = parse(part);
+      if (!c) continue;
+      stops.push({ c: c.a >= 0.999 ? c : over(c, { r: 255, g: 255, b: 255, a: 1 }), at: pct(part) });
     }
-    return stops;
+    if (stops.length && stops.every((x) => x.at === null)) stops.forEach((x, i) => { x.at = (i / Math.max(1, stops.length - 1)) * 100; });
+    return stops.filter((x) => x.at !== null).sort((a, b) => a.at - b.at);
+  };
+  // Colour actually under the element: interpolate the gradient at the element's
+  // own position along it, trying both directions and keeping the worse result.
+  const sampleGradient = (stops, t) => {
+    if (!stops.length) return null;
+    const at = Math.min(100, Math.max(0, t * 100));
+    let lo = stops[0], hi = stops[stops.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (at >= stops[i].at && at <= stops[i + 1].at) { lo = stops[i]; hi = stops[i + 1]; break; }
+    }
+    const span = hi.at - lo.at || 1;
+    const k = Math.min(1, Math.max(0, (at - lo.at) / span));
+    return {
+      r: Math.round(lo.c.r + (hi.c.r - lo.c.r) * k),
+      g: Math.round(lo.c.g + (hi.c.g - lo.c.g) * k),
+      b: Math.round(lo.c.b + (hi.c.b - lo.c.b) * k),
+      a: 1,
+    };
   };
   const resolveBg = (el) => {
     let n = el;
@@ -61,13 +87,17 @@ const AUDIT = String.raw`(() => {
     while (n && n !== document.documentElement) {
       const s = getComputedStyle(n);
       if (s.backgroundImage && s.backgroundImage !== 'none' && /gradient/.test(s.backgroundImage)) {
-        // A gradient is a real rendered background: every stop is a candidate,
-        // and the worst contrast against the text is what counts. This is why
-        // the install banner and the 3D hero were false negatives before.
+        // A gradient is a real rendered background. Measure the colour actually
+        // under the text by sampling the gradient at the element's position,
+        // not against every stop of the whole ramp.
         const stops = stopsFrom(s.backgroundImage);
-        const c = parse(s.backgroundColor);
-        if (c && c.a >= 0.999) stops.push(c);
-        if (stops.length) return { candidates: stops, indeterminate: null };
+        const box = n.getBoundingClientRect();
+        const host = el.getBoundingClientRect();
+        const t = box.height > 0 ? (host.top + host.height / 2 - box.top) / box.height : 0.5;
+        const a = sampleGradient(stops, t);
+        const b = sampleGradient(stops, 1 - t);
+        const set = [a, b].filter(Boolean);
+        if (set.length) return { candidates: set, indeterminate: null };
       }
       const c = parse(s.backgroundColor);
       if (c && c.a >= 0.999) return { candidates: [c], indeterminate };

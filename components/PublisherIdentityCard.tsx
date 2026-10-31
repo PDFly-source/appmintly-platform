@@ -100,7 +100,7 @@ export function PublisherIdentityCard({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#eef2fa] leading-none">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink leading-none">
                 {name}
               </h2>
               {verified && (
@@ -109,15 +109,15 @@ export function PublisherIdentityCard({
                 </span>
               )}
             </div>
-            {subtitle && <p className="text-sm mt-2 text-[#b6c0d4]">{subtitle}</p>}
+            {subtitle && <p className="text-sm mt-2 text-mut">{subtitle}</p>}
           </div>
         </div>
         {footer && footer.length > 0 && (
-          <dl className="flex justify-between gap-4 mt-6 pt-4 border-t border-white/10 text-[0.72rem] tracking-wide text-[#b6c0d4] relative">
+          <dl className="flex justify-between gap-4 mt-6 pt-4 border-t border-white/10 text-[0.72rem] tracking-wide text-mut relative">
             {footer.map((f) => (
               <div key={f.label}>
                 <dt className="uppercase opacity-80">{f.label}</dt>
-                <dd className="font-bold text-[#eef2fa] text-sm mt-0.5">{f.value}</dd>
+                <dd className="font-bold text-ink text-sm mt-0.5">{f.value}</dd>
               </div>
             ))}
           </dl>
