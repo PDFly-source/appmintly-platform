@@ -1,169 +1,92 @@
 #!/usr/bin/env node
 /**
- * Computed-style contrast audit (Batch 2 repair, hotfix).
+ * Computed-style contrast audit.
  *
- * Methodology, deliberately different from the class-name matcher that caused
- * the regression:
- *   - Reads computed foreground via getComputedStyle(el).color.
- *   - Reads the rendered background by walking ancestors for the first opaque
- *     background-color, and records gradient/backdrop parents as indeterminate
- *     instead of guessing.
- *   - Composites text alpha over the resolved background before measuring, so
- *     opacity-driven muting cannot hide a failure.
- *   - Reports route, theme, viewport, tag, class list and both colours.
- *   - Never writes to the DOM and never edits source. It only reports.
+ * The browser only collects facts: computed colour strings, the ancestor
+ * background chain with geometry, and flags for backdrop filters. Every
+ * calculation happens in lib/audit/contrast.mjs, which is unit tested against
+ * known compositing fixtures. Unresolvable surfaces are reported as UNRESOLVED
+ * and are never counted as passes.
  *
  * Usage: node scripts/audit-contrast.mjs [baseUrl] [routes] [themes] [viewports]
  */
+import { spawn } from 'node:child_process';
+import { resolveSurface, evaluateText, parseColor, gradientStops, gradientLayers, UNRESOLVED } from '../lib/audit/contrast.mjs';
 
 const BASE = process.argv[2] || 'https://appmintly.pages.dev';
-const ROUTES = (process.argv[3] || '/updates/,/trust/,/library/,/collections/,/explore/,/app/cineflow/,/').split(',');
+const ROUTES = (process.argv[3] || '/,/updates/,/trust/,/library/,/collections/,/explore/,/app/cineflow/').split(',');
 const THEMES = (process.argv[4] || 'dark,light,amoled').split(',');
 const VIEWPORTS = (process.argv[5] || '390x844').split(',').map((v) => v.split('x').map(Number));
 
-const AUDIT = String.raw`(() => {
-  const parse = (c) => {
-    const m = c && c.match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const q = m[1].split(',').map(Number);
-    return { r: q[0], g: q[1], b: q[2], a: q.length > 3 ? q[3] : 1 };
-  };
-  const over = (fg, bg) => ({
-    r: Math.round(fg.r * fg.a + bg.r * (1 - fg.a)),
-    g: Math.round(fg.g * fg.a + bg.g * (1 - fg.a)),
-    b: Math.round(fg.b * fg.a + bg.b * (1 - fg.a)),
-    a: 1,
-  });
-  const lum = ({ r, g, b }) => {
-    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-  };
-  const ratio = (a, b) => {
-    const l1 = lum(a), l2 = lum(b);
-    const hi = Math.max(l1, l2), lo = Math.min(l1, l2);
-    return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
-  };
-  // Parse a linear-gradient into positioned stops. Translucent scrim stops are
-  // composited over white, the brightest artwork they could sit on, so the
-  // measurement stays conservative without guessing a solid colour.
-  const stopsFrom = (image) => {
-    const body = (image.match(/linear-gradient\(([\s\S]*)\)/) || [, image])[1];
-    const parts = body.split(/,(?![^()]*\))/).map((x) => x.trim()).filter(Boolean);
-    const stops = [];
-    const pct = (tok) => {
-      const m = tok.match(/(-?[\d.]+)%/);
-      return m ? Number(m[1]) : null;
-    };
-    for (const part of parts) {
-      if (/^(to |\d|from |via |at )/.test(part) && !/rgba?\(/.test(part)) continue;
-      const c = parse(part);
-      if (!c) continue;
-      stops.push({ c: c.a >= 0.999 ? c : over(c, { r: 255, g: 255, b: 255, a: 1 }), at: pct(part) });
-    }
-    if (stops.length && stops.every((x) => x.at === null)) stops.forEach((x, i) => { x.at = (i / Math.max(1, stops.length - 1)) * 100; });
-    return stops.filter((x) => x.at !== null).sort((a, b) => a.at - b.at);
-  };
-  // Colour actually under the element: interpolate the gradient at the element's
-  // own position along it, trying both directions and keeping the worse result.
-  const sampleGradient = (stops, t) => {
-    if (!stops.length) return null;
-    const at = Math.min(100, Math.max(0, t * 100));
-    let lo = stops[0], hi = stops[stops.length - 1];
-    for (let i = 0; i < stops.length - 1; i++) {
-      if (at >= stops[i].at && at <= stops[i + 1].at) { lo = stops[i]; hi = stops[i + 1]; break; }
-    }
-    const span = hi.at - lo.at || 1;
-    const k = Math.min(1, Math.max(0, (at - lo.at) / span));
-    return {
-      r: Math.round(lo.c.r + (hi.c.r - lo.c.r) * k),
-      g: Math.round(lo.c.g + (hi.c.g - lo.c.g) * k),
-      b: Math.round(lo.c.b + (hi.c.b - lo.c.b) * k),
-      a: 1,
-    };
-  };
-  const resolveBg = (el) => {
-    let n = el;
-    let indeterminate = null;
-    while (n && n !== document.documentElement) {
-      const s = getComputedStyle(n);
-      if (s.backgroundImage && s.backgroundImage !== 'none' && /gradient/.test(s.backgroundImage)) {
-        // A gradient is a real rendered background. Measure the colour actually
-        // under the text by sampling the gradient at the element's position,
-        // not against every stop of the whole ramp.
-        const stops = stopsFrom(s.backgroundImage);
-        const box = n.getBoundingClientRect();
-        const host = el.getBoundingClientRect();
-        const t = box.height > 0 ? (host.top + host.height / 2 - box.top) / box.height : 0.5;
-        const a = sampleGradient(stops, t);
-        const b = sampleGradient(stops, 1 - t);
-        const set = [a, b].filter(Boolean);
-        if (set.length) return { candidates: set, indeterminate: null };
-      }
-      const c = parse(s.backgroundColor);
-      if (c && c.a >= 0.999) return { candidates: [c], indeterminate };
-      if (c && c.a > 0) { const parent = parse(getComputedStyle(n.parentElement).backgroundColor); if (parent && parent.a === 1) return { candidates: [over(c, parent)], indeterminate }; }
-      n = n.parentElement;
-    }
-    const body = parse(getComputedStyle(document.body).backgroundColor);
-    return { candidates: [body && body.a === 1 ? body : { r: 255, g: 255, b: 255, a: 1 }], indeterminate };
-  };
-  const out = [];
+const COLLECT = String.raw`(() => {
+  const samples = [];
   const seen = new Set();
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   while (walk.nextNode()) {
     const text = (walk.currentNode.nodeValue || '').trim();
-    if (!text || text.length < 2) continue;
+    if (text.length < 2) continue;
     const el = walk.currentNode.parentElement;
-    if (!el) continue;
-    if (el.closest('[aria-hidden="true"],.sr-only,script,style,svg,option')) continue;
+    if (!el || el.closest('[aria-hidden="true"],.sr-only,script,style,svg,option,noscript')) continue;
     const s = getComputedStyle(el);
     if (s.visibility === 'hidden' || s.display === 'none' || Number(s.opacity) === 0) continue;
     const rect = el.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) continue;
-    const rawFg = parse(s.color);
-    if (!rawFg) continue;
-    const clipTest = /text/.test(s.webkitBackgroundClip || '') || /text/.test(s.backgroundClip || '');
-    const { candidates, indeterminate } = resolveBg(clipTest ? el.parentElement || el : el);
-    const bg = candidates[0];
-    const clipped = clipTest;
-    const clipStops = clipped && s.backgroundImage !== 'none' ? stopsFrom(s.backgroundImage) : [];
-    const fgs = clipStops.length ? clipStops : [rawFg.a < 1 ? over(rawFg, bg) : rawFg];
-    const worst = fgs.map((f) => Math.min(...candidates.map((b) => ratio(f, b))))
-      .reduce((a, b) => Math.min(a, b), Infinity);
-    const fg = fgs[0];
-    const size = parseFloat(s.fontSize) || 16;
-    const weight = parseInt(s.fontWeight, 10) || 400;
-    const need = (size >= 24 || (size >= 18.66 && weight >= 700)) ? 3 : 4.5;
-    const r = Math.round(worst * 100) / 100;
-    const cls = typeof el.className === 'string' ? el.className : '';
-    const key = cls + '|' + Math.round(r * 10);
-    if (r >= need || seen.has(key)) continue;
+    const key = (typeof el.className === 'string' ? el.className : '') + '|' + s.color + '|' + Math.round(rect.top);
+    if (seen.has(key)) continue;
     seen.add(key);
-    out.push({
+    const clip = /text/.test(s.webkitBackgroundClip || '') || /text/.test(s.backgroundClip || '');
+    // absolute/fixed siblings that paint over this element (scrims, hero images)
+    let occluded = null;
+    let anc = el.parentElement;
+    for (let d = 0; d < 3 && anc; d++, anc = anc.parentElement) {
+      for (const sib of anc.querySelectorAll('img, [data-scrim], [aria-hidden="true"]')) {
+        const cs = getComputedStyle(sib);
+        if (cs.position !== 'absolute' && cs.position !== 'fixed') continue;
+        const sr = sib.getBoundingClientRect();
+        const sy = rect.top + rect.height / 2;
+        if (sr.top <= sy && sr.bottom >= sy && sr.left <= rect.left + rect.width / 2 && sr.right >= rect.left + rect.width / 2) {
+          occluded = (typeof sib.className === 'string' ? sib.className : sib.tagName).slice(0, 40);
+          break;
+        }
+      }
+      if (occluded) break;
+    }
+    const chain = [];
+    let n = clip ? el.parentElement : el;
+    while (n && n !== document.documentElement.parentElement && chain.length < 8) {
+      const cs = getComputedStyle(n);
+      const r = n.getBoundingClientRect();
+      chain.push({
+        backgroundColor: cs.backgroundColor,
+        backgroundImage: cs.backgroundImage,
+        top: r.top + window.scrollY,
+        height: r.height,
+        backdrop: /blur|saturate/.test(cs.backdropFilter || cs.webkitBackdropFilter || ''),
+      });
+      n = n.parentElement;
+    }
+    samples.push({
       text: text.slice(0, 40),
       tag: el.tagName.toLowerCase(),
-      cls: cls.slice(0, 90),
-      fg: 'rgb(' + fg.r + ',' + fg.g + ',' + fg.b + ')',
-      bg: 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')',
-      ratio: r,
-      need,
-      gradientClipped: clipStops.length > 0,
-      gradientParent: indeterminate,
+      cls: (typeof el.className === 'string' ? el.className : '').slice(0, 90),
+      color: s.color,
+      fontSize: parseFloat(s.fontSize) || 16,
+      fontWeight: parseInt(s.fontWeight, 10) || 400,
+      sampleY: rect.top + window.scrollY + rect.height / 2,
+      clipImage: clip ? s.backgroundImage : null,
+      occluded,
+      chain,
     });
   }
-  return { fails: out.slice(0, 20), total: out.length, overflow: document.documentElement.scrollWidth };
+  return { samples, overflow: document.documentElement.scrollWidth };
 })()`;
 
-const { spawn } = await import('node:child_process');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const chrome = spawn('google-chrome', [
-  '--headless=new', '--remote-debugging-port=9781', '--no-sandbox', '--disable-gpu',
-  '--user-data-dir=/tmp/audit-contrast-profile', 'about:blank',
-]);
+const chrome = spawn('google-chrome', ['--headless=new', '--remote-debugging-port=9801', '--no-sandbox', '--disable-gpu', '--user-data-dir=/tmp/audit-resolver-profile', 'about:blank']);
 let target = null;
 for (let i = 0; i < 40 && !target; i++) {
   await sleep(400);
-  try { target = (await (await fetch('http://127.0.0.1:9781/json/list')).json()).find((t) => t.type === 'page'); } catch {}
+  try { target = (await (await fetch('http://127.0.0.1:9801/json/list')).json()).find((t) => t.type === 'page'); } catch {}
 }
 const ws = new WebSocket(target.webSocketDebuggerUrl);
 await new Promise((r) => ws.addEventListener('open', r));
@@ -178,31 +101,50 @@ const evaluate = async (expr) => (await send('Runtime.evaluate', { expression: e
 await send('Runtime.enable');
 await send('Page.enable');
 
-const report = {};
-let failures = 0;
+const totals = { PASS: 0, FAIL: 0, UNRESOLVED: 0 };
+const failures = [];
+const unresolved = [];
 for (const [w, h] of VIEWPORTS) {
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: w < 900 });
   for (const theme of THEMES) {
     for (const route of ROUTES) {
       await send('Page.navigate', { url: `${BASE}/` });
-      await sleep(900);
+      await sleep(800);
       await evaluate(`localStorage.setItem('appmintly-theme','${theme}');1`);
       await send('Page.navigate', { url: BASE + route });
       await sleep(2600);
-      const result = await evaluate(AUDIT);
-      const key = `${w}x${h} ${theme} ${route}`;
-      report[key] = result;
-      failures += result.total;
-      if (result.total) {
-        console.log(`FAIL ${key}: ${result.total}`);
-        for (const f of result.fails) console.log(`   ${f.ratio} < ${f.need} | ${f.text} | ${f.tag}.${f.cls} | fg ${f.fg} bg ${f.bg}`);
-      } else {
-        console.log(`ok   ${key} (overflow ${result.overflow}/${w})`);
+      const collected = await evaluate(COLLECT);
+      const counts = { PASS: 0, FAIL: 0, UNRESOLVED: 0 };
+      for (const sample of collected.samples) {
+        const surface = sample.occluded
+          ? { status: 'unresolved', color: null, reason: `sibling overlay layer covers the sample (${sample.occluded})` }
+          : resolveSurface(sample.chain, sample.sampleY);
+        let gradientTextStops = null;
+        if (sample.clipImage) {
+          gradientTextStops = gradientLayers(sample.clipImage).flatMap((l) => gradientStops(l).map((s) => s.color));
+          if (!gradientTextStops.length) gradientTextStops = null;
+        }
+        const verdict = evaluateText({ ...sample, surface, gradientTextStops });
+        counts[verdict.status]++;
+        totals[verdict.status]++;
+        if (verdict.status === 'FAIL') {
+          failures.push({ route, theme, viewport: `${w}x${h}`, text: sample.text, cls: sample.cls, tag: sample.tag, ratio: verdict.ratio, required: verdict.required, fg: sample.color, bg: surface.color });
+        } else if (verdict.status === UNRESOLVED) {
+          unresolved.push({ route, theme, viewport: `${w}x${h}`, text: sample.text, cls: sample.cls, reason: verdict.reason });
+        }
       }
+      console.log(`${counts.FAIL === 0 ? 'CLEAN ' : 'FAILS '} ${w}x${h} ${theme.padEnd(6)} ${route.padEnd(16)} pass=${counts.PASS} fail=${counts.FAIL} unresolved=${counts.UNRESOLVED} overflow=${collected.overflow}/${w}`);
     }
   }
 }
-console.log(JSON.stringify({ failures, report }));
+console.log('\n--- FAILURES ---');
+for (const f of failures) console.log(`${f.ratio} < ${f.required} | ${f.theme} ${f.viewport} ${f.route} | ${f.text} | ${f.tag}.${f.cls} | fg ${f.fg} bg rgb(${f.bg.r},${f.bg.g},${f.bg.b})`);
+console.log('\n--- UNRESOLVED (not counted as pass) ---');
+const byReason = new Map();
+for (const u of unresolved) byReason.set(u.reason, (byReason.get(u.reason) || 0) + 1);
+for (const [reason, count] of byReason) console.log(`${count}x ${reason}`);
+for (const u of unresolved.slice(0, 10)) console.log(`  UNRESOLVED | ${u.theme} ${u.route} | ${u.text} | ${u.cls.slice(0, 60)} | ${u.reason}`);
+console.log(`\nTOTALS pass=${totals.PASS} fail=${totals.FAIL} unresolved=${totals.UNRESOLVED}`);
 ws.close();
 chrome.kill();
-process.exit(failures ? 1 : 0);
+process.exit(failures.length ? 1 : 0);
