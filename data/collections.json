@@ -1,30 +1,40 @@
 [
-  {
-    "id": "editor-spotlight",
-    "title": "Editor's Spotlight",
-    "description": "Hand-picked independent software and PWAs verified for performance, privacy, and design.",
-    "categorySlug": "all",
-    "appIds": ["pdfminifly", "lifesync", "pixelforge-studio", "vaultguard-apk", "retroblast-84"]
-  },
-  {
-    "id": "pwa-powerhouses",
-    "title": "Offline-First PWAs",
-    "description": "Progressive Web Apps that install directly into your system launcher and work seamlessly offline.",
-    "categorySlug": "tools",
-    "appIds": ["pdfminifly", "pixelforge-studio", "codenova-ide"]
-  },
-  {
-    "id": "privacy-sovereignty",
-    "title": "Private & Local-First",
-    "description": "Zero-telemetry tools that never upload personal documents or sensitive records to third-party clouds.",
-    "categorySlug": "utilities",
-    "appIds": ["pdfminifly", "vaultguard-apk", "zenith-finance", "mindflow-notes"]
-  },
-  {
-    "id": "android-essentials",
-    "title": "Direct Android APKs",
-    "description": "Clean, unbloated standalone Android packages available for verified direct download.",
-    "categorySlug": "utilities",
-    "appIds": ["vaultguard-apk", "chronopulse-apk"]
-  }
+ {
+  "id": "local-first",
+  "title": "Private & Local-First",
+  "description": "On-device storage and offline capability, as recorded in each app's catalogued privacy entry.",
+  "categorySlug": "all",
+  "appIds": [
+   "appmintly",
+   "cineflow",
+   "billcraft",
+   "nexdrop",
+   "pdfminifly",
+   "niramay",
+   "studyria"
+  ]
+ },
+ {
+  "id": "android-releases",
+  "title": "Verified Android Releases",
+  "description": "Apps distributed as signed APKs with a published release record and checksum.",
+  "categorySlug": "all",
+  "appIds": [
+   "cineflow",
+   "nexdrop",
+   "billcraft"
+  ]
+ },
+ {
+  "id": "installable-pwas",
+  "title": "Installable Apps (PWA)",
+  "description": "Verified-installable web apps that open from your launcher.",
+  "categorySlug": "all",
+  "appIds": [
+   "appmintly",
+   "cineflow",
+   "pdfminifly",
+   "studyria"
+  ]
+ }
 ]

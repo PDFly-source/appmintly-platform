@@ -79,8 +79,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolved, setResolved] = useState<'light' | 'dark' | 'amoled'>('light');
 
   // Hydrate from the DOM state applied by the pre-paint script, then sync.
+  // The update must happen after mount: reading localStorage during render
+  // would desync server-rendered markup. One deliberate post-mount write is
+  // correct here, so the cascading-render heuristic is disabled explicitly.
   useEffect(() => {
     const initial = resolveInitialMode();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setModeState(initial);
     setResolved(applyMode(initial));
   }, []);

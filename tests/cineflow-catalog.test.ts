@@ -2,7 +2,7 @@
  * CineFlow catalog classification regression test.
  *
  * CineFlow is distributed primarily as a verified, signed Android APK
- * (release cineflow-v0.1.0), so its canonical record uses the
+ * (release tag tracked per version), so its canonical record uses the
  * marketplace's established "Android APK" type — the same convention as
  * NexDrop. This locks the classification against accidental reverts to
  * "Web App", which previously surfaced as the primary product type on
@@ -34,14 +34,21 @@ describe('CineFlow Android APK classification', () => {
     expect(cineflow.apk.verified).toBe(true);
     expect(cineflow.apk.securityCheckStatus).toBe('passed');
     expect(cineflow.apk.packageId).toBe('com.appforge.cineflow');
-    expect(cineflow.apk.versionName).toBe('0.1.0');
-    expect(cineflow.apk.versionCode).toBe(100);
+    // Assert self-consistency rather than one historical version: every CineFlow
+    // release (0.2.0 onwards) must keep the record internally truthful, so a
+    // version bump cannot silently leave a stale file name, tag or checksum.
+    expect(cineflow.apk.versionName).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(cineflow.apk.versionCode).toBeGreaterThanOrEqual(100);
+    expect(cineflow.apk.fileName).toContain(cineflow.apk.versionName);
+    expect(cineflow.apk.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(cineflow.apk.fileSizeBytes).toBeGreaterThan(0);
   });
 
   it('retains the working web version alongside the APK', () => {
     expect(cineflow.url).toBe('https://pdfly-source.github.io/cineflow/');
     expect(cineflow.launchUrl).toBe('https://pdfly-source.github.io/cineflow/');
-    expect(cineflow.apkUrl).toContain('releases/download/cineflow-v0.1.0/');
+    // The download URL must point at the release tag for the catalogued version.
+    expect(cineflow.apkUrl).toContain(`releases/download/cineflow-v${cineflow.apk.versionName}/`);
   });
 
   it('does not alter the classification of other apps', () => {

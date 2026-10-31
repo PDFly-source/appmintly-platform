@@ -14,7 +14,7 @@
  *   are prevented while a request is in flight.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Send } from 'lucide-react';
 import { SERVICE_SUBMISSION_ENDPOINT } from '@/lib/service-submissions';
 
@@ -67,7 +67,12 @@ export default function SubmissionForm({
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
-  const formTs = useRef(Date.now());
+  // Timestamp is captured on mount (not during render) so the anti-bot
+  // elapsed-time check stays accurate without an impure render call.
+  const formTs = useRef<number>(0);
+  useEffect(() => {
+    if (!formTs.current) formTs.current = Date.now();
+  }, []);
 
   const setField = (name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));

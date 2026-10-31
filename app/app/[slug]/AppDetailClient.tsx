@@ -38,6 +38,7 @@ import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { similarApps } from '@/lib/catalog/similar';
 import { QrCodeDialog } from '@/components/QrCodeDialog';
 import { PrivacyTechCard } from '@/components/PrivacyTechCard';
 import { ApkHashVerifier } from '@/components/ApkHashVerifier';
@@ -589,6 +590,34 @@ export default function AppDetailPage() {
                 </ul>
               </div>
             )}
+
+            {/* AppMintly 2.0 — Similar apps: category, format and shared tags only */}
+            {(() => {
+              const similar = similarApps(APPS, app as never, { limit: 4 });
+              if (similar.length === 0) return null;
+              return (
+                <div className="border-t border-line pt-6" data-testid="similar-apps">
+                  <h3 className="text-base font-semibold text-ink mb-3">Similar apps</h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {similar.map((s) => (
+                      <Link
+                        key={s.id}
+                        href={`/app/${s.slug}`}
+                        className="flex items-center gap-3 rounded-xl border border-line/60 bg-page p-3 transition-colors hover:border-ink/25"
+                      >
+                        <AppIcon src={s.icon} name={s.name} size="sm" category={s.category} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-ink">{s.name}</span>
+                          <span className="block truncate text-xs text-mut">
+                            {s.category} · {s.type}
+                          </span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Phase 1B — Release Story: metadata-only narrative timeline */}
             <ReleaseStory app={app} />

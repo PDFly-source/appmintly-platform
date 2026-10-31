@@ -1,0 +1,41 @@
+name: Refresh Engineering Data
+
+# Phase 3.2 engineering status is derived from the repository itself, and the
+# freshness guard in tests/engineering-data.test.ts requires scan_time to be a
+# real timestamp from the last day. Without a scheduled regeneration that guard
+# rots into a red build a day after every manual refresh, so the data is
+# re-derived daily from the repository (no invented values, no network calls).
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the generator reads real git history
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Regenerate engineering data from the repository
+        run: python3 scripts/generate-engineering-data.py
+
+      - name: Commit only when the derived data actually changed
+        run: |
+          git config user.name "AppMintly Automation"
+          git config user.email "automation@appmintly.invalid"
+          git add data/engineering-status.json data/engineering-events.json data/lab-apps.json
+          if git diff --cached --quiet; then
+            echo "No derived changes; nothing to commit."
+          else
+            git commit -m "chore(engineering): refresh derived status data"
+            git push
+          fi
