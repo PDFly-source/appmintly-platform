@@ -41,3 +41,40 @@ export function hasAuthoritativeApkRelease(app: AppLike | undefined | null): boo
       Boolean(apk.apkUrl || app.apkUrl)
   );
 }
+
+
+/**
+ * Tracked download endpoint (AppMintly 2.0, Item 5).
+ *
+ * The publisher Worker's /dl/<slug> route answers with the release asset that
+ * the PUBLISHED catalog record declares — it is not an open redirect, and it
+ * re-checks the authoritative release evidence (enabled + verified + checksum)
+ * on every request. Routing the download action through it is what makes
+ * download *requests* observable server-side. It records a request and a
+ * redirect; it never claims an installation.
+ */
+export const TRACKED_DOWNLOAD_BASE = 'https://appmintly-publisher-api.sbn50088.workers.dev';
+
+export function trackedDownloadUrl(slug: string | undefined | null): string | null {
+  if (typeof slug !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/i.test(slug)) return null;
+  return `${TRACKED_DOWNLOAD_BASE}/dl/${slug}`;
+}
+
+/**
+ * The URL a "Get App" APK action should navigate to.
+ *
+ * Order of preference:
+ *   1. tracked endpoint — same official GitHub asset as its 302 destination,
+ *      and the only path that can be counted;
+ *   2. the direct official release asset — unchanged behaviour whenever the
+ *      listing lacks authoritative release evidence or the slug is unusable.
+ * Never returns a caller-supplied arbitrary URL.
+ */
+export function apkDownloadUrl(
+  app: (AppLike & { slug?: string }) | undefined | null
+): string | null {
+  if (!hasAuthoritativeApkRelease(app)) return null;
+  const direct = (app?.apk?.apkUrl || app?.apkUrl) as string;
+  const tracked = trackedDownloadUrl(app?.slug);
+  return tracked || direct || null;
+}
