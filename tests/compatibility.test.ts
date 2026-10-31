@@ -103,6 +103,24 @@ describe('sizes and dates are formatted from real values only', () => {
   });
 });
 
+describe('placeholder strings are not mistaken for published facts', () => {
+  it('treats "Not specified" text from the catalog as unknown', () => {
+    const model = buildCompatibility(
+      makeApp({ privacyTech: { ...realApk.privacyTech, offlineSupport: 'Not specified', notes: 'Unknown' } })
+    )!;
+    const offline = model.offline.find((f) => f.label === 'Offline capability')!;
+    const networkNote = model.network.find((f) => f.label === 'Documented network behaviour')!;
+    expect(offline.value).toBe(UNKNOWN);
+    expect(offline.source).toBe('unknown');
+    expect(networkNote.value).toBe(UNKNOWN);
+    expect(networkNote.source).toBe('unknown');
+    // every rendered "Not specified" row is counted in the unknown total
+    const shown = [...model.android, ...model.apkInfo, ...model.storage, ...model.network, ...model.offline, ...model.browser, ...model.platforms]
+      .filter((f) => f.value === UNKNOWN).map((f) => f.label).sort();
+    expect(model.unknownFields.slice().sort()).toEqual(shown);
+  });
+});
+
 describe('verified and publisher fields are visibly distinguished', () => {
   it('tags APK metadata as verified and publisher notes as not verified', () => {
     const model = buildCompatibility(realApk)!;
@@ -159,5 +177,19 @@ describe('installation copy stays inside what is known', () => {
   it('lists a web path for apps with a web target', () => {
     const steps = installationSteps(buildCompatibility(realApk)!).join(' ');
     expect(steps).toMatch(/web link/);
+  });
+});
+
+describe('long checksums cannot widen a mobile layout', () => {
+  it('keeps the checksum inside a wrapping element contract', () => {
+    const model = buildCompatibility(realApk)!;
+    const sha = row(model, 'SHA-256 checksum');
+    expect(sha.value).toHaveLength(64);
+    // The renderer must wrap anywhere: a 64-char hash is 500px+ unbroken, which is
+    // wider than a 390px viewport. This asserts the layout contract documented in
+    // CompatibilitySection (min-w-0 + overflow-wrap:anywhere), not CSS itself.
+    const css = require('fs').readFileSync('components/compatibility/CompatibilitySection.tsx', 'utf8');
+    expect(css).toContain('[overflow-wrap:anywhere]');
+    expect(css).toContain('min-w-0');
   });
 });

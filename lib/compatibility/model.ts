@@ -113,10 +113,16 @@ const field = (label: string, value: string | null, source: FieldSource): Compat
   verified: Boolean(value && value.trim()) && source === 'apk-metadata',
 });
 
+/**
+ * Placeholder strings that appear in the catalog as if they were data. They are
+ * treated as absent so a field is reported unknown instead of published.
+ */
+const PLACEHOLDER = /^(not specified|not listed|unknown|n\/a|none|tbd)$/i;
+
 const short = (value: unknown, max = 160): string | null => {
   if (typeof value !== 'string') return null;
   const text = value.replace(/\s+/g, ' ').trim();
-  if (!text) return null;
+  if (!text || PLACEHOLDER.test(text)) return null;
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 };
 
