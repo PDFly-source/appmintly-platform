@@ -465,7 +465,7 @@ export default function LibraryPage() {
             </div>
             <Link
               href={`/app/${recent[0].app.slug}`}
-              className="min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full bg-inkbg text-on-ink hover:text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               Open
               <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
@@ -580,7 +580,7 @@ function SavedRow({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackAppOpened(app.id)}
-              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-inkbg text-on-ink hover:text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
               Open
@@ -588,7 +588,7 @@ function SavedRow({
           ) : (
             <Link
               href={`/app/${app.slug}`}
-              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center bg-inkbg text-on-ink hover:text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               View
             </Link>

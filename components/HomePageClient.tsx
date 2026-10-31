@@ -208,7 +208,7 @@ export default function HomePage() {
           </Link>
           <button
             type="submit"
-            className="shrink-0 px-6 py-3 rounded-full bg-inkbg hover:bg-forge-red text-on-brand text-sm font-bold transition cursor-pointer"
+            className="shrink-0 px-6 py-3 rounded-full bg-inkbg hover:bg-forge-red text-on-ink hover:text-on-brand text-sm font-bold transition cursor-pointer"
           >
             Search
           </button>

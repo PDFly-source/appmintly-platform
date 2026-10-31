@@ -21,6 +21,7 @@
   /* Accent foregrounds (Batch 2). Fills stay brand-exact; only the text
      colour on or of an accent changes per theme so every pairing clears
      WCAG AA. Measured, not guessed. */
+  --c-on-ink: #FFFFFF;     /* 18.2:1 on the #0E1526 ink chip, all themes */
   --c-on-brand: #0E1526;   /* 4.89:1 on #E8503D (white was 3.72) */
   --c-on-cta: #FFFFFF;     /* 5.47:1 on #0F766E */
   --c-on-success: #0E1526;
@@ -38,6 +39,7 @@
   --c-line: #212B3D;
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
+  --c-on-ink: #FFFFFF;      /* 15.57:1 on the #1B2434 ink chip */
   --c-on-brand: #0E1526;    /* 4.89:1 on #E8503D */
   --c-on-cta: #0E1526;      /* 7.31:1 on #14B8A6 (white was 2.49) */
   --c-on-success: #0E1526;  /* 7.31:1 on #14B8A6 */
@@ -62,6 +64,7 @@
   --c-line: #161B24;
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
+  --c-on-ink: #FFFFFF;      /* 18.44:1 on the #10141C ink chip */
   --c-on-brand: #0E1526;
   --c-on-cta: #0E1526;
   --c-on-success: #0E1526;
@@ -79,6 +82,7 @@
   --color-line: var(--c-line);
   --color-cta: var(--c-cta);
   --color-cta-hover: var(--c-cta-hover);
+  --color-on-ink: var(--c-on-ink);
   --color-on-brand: var(--c-on-brand);
   --color-on-cta: var(--c-on-cta);
   --color-on-success: var(--c-on-success);

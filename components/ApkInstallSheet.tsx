@@ -312,7 +312,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
               </label>
               <button
                 onClick={handleDownload}
-                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-forge-green text-on-success font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
+                className="w-full py-4 px-6 rounded-2xl bg-inkbg hover:bg-forge-green text-on-ink hover:text-on-success font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
               >
                 <Download className="w-5 h-5" />
                 <span>Download APK</span>
@@ -379,7 +379,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
               <button
                 onClick={handleDownload}
-                className="w-full py-3 px-4 rounded-xl bg-inkbg text-on-success font-bold text-xs hover:bg-forge-green transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 rounded-xl bg-inkbg text-on-ink hover:text-on-success font-bold text-xs hover:bg-forge-green transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry Download</span>

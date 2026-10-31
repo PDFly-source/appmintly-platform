@@ -81,7 +81,7 @@ export function SystemStatus() {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer"
           >
             <RefreshCw className="w-3 h-3" aria-hidden />
             Refresh

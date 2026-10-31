@@ -141,7 +141,7 @@ export default function AppDetailPage() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-5 py-2.5 rounded-full bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition"
+            className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition"
           >
             Explore Apps
           </Link>
@@ -723,7 +723,7 @@ export default function AppDetailPage() {
                           toast('SHA-256 checksum copied', 'success');
                         }}
                         aria-label="Copy SHA-256 checksum"
-                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-on-brand text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-on-ink hover:text-on-brand text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
                       >
                         Copy
                       </button>
@@ -1014,7 +1014,7 @@ export default function AppDetailPage() {
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="px-5 py-2.5 rounded-full bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition cursor-pointer"
               >
                 Understood
               </button>

@@ -271,7 +271,7 @@ export default function SubmissionForm({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full min-h-[48px] rounded-xl bg-inkbg hover:bg-forge-green text-on-success font-black text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/50 disabled:opacity-60 disabled:cursor-not-allowed motion-safe:hover:-translate-y-0.5"
+        className="w-full min-h-[48px] rounded-xl bg-inkbg hover:bg-forge-green text-on-ink hover:text-on-success font-black text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forge-blue/50 disabled:opacity-60 disabled:cursor-not-allowed motion-safe:hover:-translate-y-0.5"
       >
         <Send className="w-4 h-4" aria-hidden="true" />
         {submitting ? 'Submitting...' : submitLabel}

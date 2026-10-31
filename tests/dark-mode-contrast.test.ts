@@ -154,6 +154,33 @@ describe('semantic token contrast in each theme', () => {
     }
   });
 
+  it('ink chip surfaces use the on-ink foreground, not an accent foreground', () => {
+    // The regression this guards: a brand fill only appears on :hover, so the
+    // resting text sits on the ink chip and needs --c-on-ink. Matching on the
+    // hover fill name painted dark accent text on a dark chip at 1.17:1.
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      for (const match of source.matchAll(/className=(?:"([^"]*)"|\{([^}]*)\})/g)) {
+        const cls = `${match[1] ?? ''} ${match[2] ?? ''}`;
+        if (!/(?<![\w-])bg-inkbg?(?![\w-])/.test(cls)) continue;
+        const bare = cls.match(/(?<!hover:)(?<![\w:-])(text-on-(?:brand|cta|success))(?![\w-])/);
+        if (bare) offenders.push(`${file}: ${cls.trim().slice(0, 80)}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('--c-on-ink clears AA on the ink chip in every theme', () => {
+    const chips: Record<string, string> = { light: '#0E1526', dark: '#1B2434', amoled: '#10141C' };
+    const selectors: Record<string, string> = { light: ':root', dark: '.dark', amoled: '.amoled' };
+    for (const [theme, chip] of Object.entries(chips)) {
+      const value = tokensFor(selectors[theme])['on-ink'];
+      expect(value, `${theme} --c-on-ink must exist`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(contrast(value, chip), `${theme} on-ink on ${chip}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it('never puts white text on a brand accent fill', () => {
     const offenders: string[] = [];
     for (const file of FILES) {

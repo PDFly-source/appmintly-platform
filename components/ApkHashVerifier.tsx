@@ -330,7 +330,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               busy
                 ? 'bg-page text-mut border border-line pointer-events-none'
-                : 'bg-inkbg text-on-brand hover:bg-forge-red'
+                : 'bg-inkbg text-on-ink hover:text-on-brand hover:bg-forge-red'
             }`}
           >
             <FileSearch className="w-4 h-4" aria-hidden />

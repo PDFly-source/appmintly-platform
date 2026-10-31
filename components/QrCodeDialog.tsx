@@ -268,7 +268,7 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
             type="button"
             onClick={handleDownload}
             disabled={disabled}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer disabled:opacity-40"
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer disabled:opacity-40"
           >
             <Download className="w-3.5 h-3.5" aria-hidden />
             Save
