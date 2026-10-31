@@ -51,6 +51,8 @@ import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import { UpdateIndicator } from '@/components/updates/UpdateCenter';
 import { ReviewSection } from '@/components/reviews/ReviewSection';
 import { CompatibilitySection } from '@/components/compatibility/CompatibilitySection';
+import { ReleaseIntegrity } from '@/components/trust/ReleaseIntegrity';
+import { ReportAppDialog } from '@/components/trust/ReportAppDialog';
 import {
   useLocalFavorite,
   useIsStandalone,
@@ -80,6 +82,7 @@ export default function AppDetailPage() {
   const [selectedScreenshotIndex, setSelectedScreenshotIndex] = useState<number | null>(null);
   const [showPwaInstallGuide, setShowPwaInstallGuide] = useState(false);
   const [showApkInstallSheet, setShowApkInstallSheet] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [showQrDialog, setShowQrDialog] = useState(false);
   const [isAppInstalledEvent, setIsAppInstalledEvent] = useState(false);
   const isStandaloneInstalled = isStandalone || isAppInstalledEvent;
@@ -1003,6 +1006,25 @@ export default function AppDetailPage() {
 
       {/* 7a. COMPATIBILITY & REQUIREMENTS (Item 8) — verified metadata only */}
       <CompatibilitySection app={app} />
+      <ReleaseIntegrity app={app} />
+
+      {/* Item 9: private safety reporting. Reports are never public. */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-white p-4">
+        <p className="text-[12px] text-mut">
+          Something wrong with this listing or the download? Report it privately. Reports are reviewed by the owner and are
+          never published.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowReportDialog(true)}
+          className="rounded-xl border border-line bg-canvas px-3 py-1.5 text-[12px] font-bold text-ink"
+        >
+          Report a problem
+        </button>
+      </div>
+      {showReportDialog ? (
+        <ReportAppDialog slug={app.slug} appName={app.name} onClose={() => setShowReportDialog(false)} />
+      ) : null}
 
       {/* 7b. USER REVIEWS (Item 7) — approved reviews only, moderated by the owner */}
       <div className="mt-8">

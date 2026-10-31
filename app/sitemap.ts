@@ -59,6 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}lab${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${SITE_URL}updates${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'weekly', priority: 0.5 },
     { url: `${SITE_URL}about${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${SITE_URL}trust${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}privacy${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}terms${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}cookies${CANONICAL_TRAILING_SLASH}`, lastModified: datasetDate, changeFrequency: 'yearly', priority: 0.2 },

@@ -200,6 +200,7 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
               <li>
+                <Link href="/trust" className={linkClass}>Trust &amp; Safety</Link>
                 <Link href="/privacy" className={linkClass}>Privacy Policy</Link>
               </li>
               <li>
