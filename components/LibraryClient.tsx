@@ -38,6 +38,14 @@ import {
   LocalHistoryItem,
 } from '@/lib/localLibrary';
 import { recordDownloadedVersion } from '@/lib/app-installs';
+import { isSaved as isLabSaved, localWishlistIds, toggleWishlist } from '@/lib/upcoming-wishlist';
+import { getUpcomingApps } from '@/data/upcoming-apps';
+import {
+  mergeWishlist,
+  searchWishlist,
+  removalTargets,
+  type WishlistEntry,
+} from '@/lib/wishlist';
 
 type LibraryView = 'saved' | 'recent' | 'downloads';
 
@@ -80,9 +88,13 @@ export default function LibraryPage() {
     const timer = setTimeout(() => setMountedTime(Date.now()), 0);
     const handleUpdate = () => setMountedTime(Date.now());
     window.addEventListener('appmintly_local_updated', handleUpdate);
+    // Lab wishlist writes live in their own store with their own event; the
+    // unified list must react to both or a Lab save would not appear here.
+    window.addEventListener('appmintly_upcoming_wishlist_updated', handleUpdate);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('appmintly_local_updated', handleUpdate);
+      window.removeEventListener('appmintly_upcoming_wishlist_updated', handleUpdate);
     };
   }, []);
 
@@ -98,9 +110,14 @@ export default function LibraryPage() {
     // SSR/hydration guard: only read localStorage after mount so the first
     // client render matches the server HTML (no React #418 text mismatch).
     if (!mountedTime) return { saved: [], recent: [], downloads: [] };
-    const savedApps = getLocalFavorites()
-      .map(resolveApp)
-      .filter((a): a is AppItem => Boolean(a));
+    // Unified wishlist: catalog favourites + Lab saves, merged on the
+    // published app id so an app saved in both stores appears exactly once.
+    const { entries: savedApps } = mergeWishlist<AppItem>({
+      catalogIds: getLocalFavorites(),
+      labIds: localWishlistIds(),
+      apps: catalog,
+      roadmap: getUpcomingApps(),
+    });
     const recentApps: LibraryEntry[] = getRecentlyOpened()
       .map((item: LocalHistoryItem) => {
         const app = resolveApp(item.appId);
@@ -114,30 +131,42 @@ export default function LibraryPage() {
       })
       .filter((e): e is LibraryEntry => Boolean(e));
     return { saved: savedApps, recent: recentApps, downloads: downloadApps };
-  }, [resolveApp, mountedTime]);
+  }, [resolveApp, mountedTime, catalog]);
 
   const counts = useMemo(
     () => ({ saved: saved.length, recent: recent.length, downloads: downloads.length }),
     [saved, recent, downloads]
   );
 
-  const current = view === 'saved' ? saved : view === 'recent' ? recent : downloads;
+  const current: (WishlistEntry | LibraryEntry)[] =
+    view === 'saved' ? saved : view === 'recent' ? recent : downloads;
 
   const query = search.trim().toLowerCase();
   const visible = useMemo(() => {
+    if (view === 'saved') return searchWishlist(saved, search);
     if (!query) return current;
-    return (current as (LibraryEntry | AppItem)[]).filter((entry) => {
-      const app = 'app' in entry ? entry.app : (entry as AppItem);
+    return (current as LibraryEntry[]).filter((entry) => {
+      const app = entry.app;
       const dev = resolveDeveloper(app);
       const hay = `${app.name} ${app.category} ${app.type} ${dev.name}`.toLowerCase();
       return hay.includes(query);
     });
-  }, [current, query]);
+  }, [current, query, saved, search, view]);
 
   const announce = `${visible.length} ${visible.length === 1 ? 'app' : 'apps'} in ${VIEW_META[view].label}${query ? ' matching your search' : ''}.`;
 
   const unsave = (app: AppItem) => {
-    toggleLocalFavorite(app.id);
+    const entry = saved.find((e) => e.app.id === app.id);
+    const targets = removalTargets(entry);
+    // Remove from every store that actually holds it, and only those, so the
+    // library list cannot keep showing an app the user just removed while
+    // untouched stores keep their data.
+    if (targets.catalog && getLocalFavorites().includes(app.id)) {
+      toggleLocalFavorite(app.id);
+    }
+    for (const labId of targets.labIds) {
+      if (isLabSaved(labId)) toggleWishlist(labId);
+    }
     toast(`Removed "${app.name}" from saved apps.`, 'info');
   };
 
@@ -267,8 +296,8 @@ export default function LibraryPage() {
         )
       ) : view === 'saved' ? (
         <ul className="space-y-3">
-          {(visible as AppItem[]).map((app) => (
-            <SavedRow key={app.id} app={app} onUnsave={unsave} />
+          {(visible as WishlistEntry<AppItem>[]).map((entry) => (
+            <SavedRow key={entry.app.id} app={entry.app} entry={entry} onUnsave={unsave} />
           ))}
         </ul>
       ) : (
@@ -325,7 +354,7 @@ export default function LibraryPage() {
       {/* ---------------- manage dialog ---------------- */}
       {manageOpen && (
         <ManageDialog
-          savedApps={saved}
+          savedApps={saved.map((entry) => entry.app)}
           onClose={() => setManageOpen(false)}
           toast={toast}
         />
@@ -372,7 +401,15 @@ function EmptyState({
 
 /* ----------------------------- saved row ----------------------------- */
 
-function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) => void }) {
+function SavedRow({
+  app,
+  entry,
+  onUnsave,
+}: {
+  app: AppItem;
+  entry: WishlistEntry;
+  onUnsave: (app: AppItem) => void;
+}) {
   const dev = resolveDeveloper(app);
   const launchUrl = app.launchUrl || app.webUrl || app.pwaUrl || app.url;
   return (
@@ -393,10 +430,23 @@ function SavedRow({ app, onUnsave }: { app: AppItem; onUnsave: (app: AppItem) =>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">v{app.version}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.type}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.category}</span>
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-green/30 bg-forge-green/10 text-forge-green">
-              <Bookmark aria-hidden="true" className="w-2.5 h-2.5 fill-current" />
-              Saved
+            <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">
+              {entry.platform}
             </span>
+            {entry.sources.saved && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-green/30 bg-forge-green/10 text-forge-green">
+                <Bookmark aria-hidden="true" className="w-2.5 h-2.5 fill-current" />
+                Saved
+              </span>
+            )}
+            {entry.sources.lab && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-blue/30 bg-forge-blue/10 text-forge-blue"
+                title="Also saved on the AppMintly Lab roadmap"
+              >
+                Lab
+              </span>
+            )}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">

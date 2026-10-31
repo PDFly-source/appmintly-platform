@@ -18,7 +18,12 @@ function safeGet(key: string): any[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    // Backward-compatible recovery: a corrupted or foreign value (object,
+    // string, number) is treated as an empty list instead of crashing every
+    // caller that assumes an array. The stored key itself is left alone.
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     console.error(`Error reading ${key} from localStorage`, err);
     return [];
@@ -36,8 +41,14 @@ function safeSet(key: string, value: any[]) {
 }
 
 // Favorites / Wishlist
+// Normalised read: only real, non-empty string ids, de-duplicated. Malformed
+// entries are ignored rather than persisted again, and the legacy array
+// schema (no version field) keeps working exactly as before.
 export function getLocalFavorites(): string[] {
-  return safeGet(WISHLIST_KEY);
+  const ids = safeGet(WISHLIST_KEY).filter(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0
+  );
+  return Array.from(new Set(ids));
 }
 
 export function isLocalFavorite(appId: string): boolean {
