@@ -49,6 +49,7 @@ import { useNotifications } from '@/components/NotificationsProvider';
 import { releaseVersionOf } from '@/lib/notifications/engine';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import { UpdateIndicator } from '@/components/updates/UpdateCenter';
+import { ReviewSection } from '@/components/reviews/ReviewSection';
 import {
   useLocalFavorite,
   useIsStandalone,
@@ -998,6 +999,11 @@ export default function AppDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 7b. USER REVIEWS (Item 7) — approved reviews only, moderated by the owner */}
+      <div className="mt-8">
+        <ReviewSection app={app} />
+      </div>
 
       {/* 8. AUTHENTIC ANDROID APK INSTALL SHEET */}
       <ApkInstallSheet
