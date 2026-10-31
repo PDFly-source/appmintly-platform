@@ -4,7 +4,7 @@ import { SITE_URL } from '@/lib/site-url';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { APPS } from '@/data/apps';
 import curated from '@/data/collections.json';
-import { buildCollections } from '@/lib/catalog/collections';
+import { buildCollections, collectionSlug } from '@/lib/catalog/collections';
 import { AppIcon } from '@/components/AppIcon';
 
 /* Collections hub (AppMintly 2.0, Phase 2).
@@ -62,13 +62,25 @@ export default function CollectionsPage() {
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 id={`collection-${collection.id}`} className="text-lg font-bold text-ink">
-                  {collection.title}
+                  <Link
+                    href={`/collections/${collectionSlug(collection.id)}`}
+                    className="hover:underline underline-offset-4 transition-colors"
+                  >
+                    {collection.title}
+                  </Link>
                 </h2>
                 <span className="text-xs font-medium text-ink/50">
                   {collection.apps.length} {collection.apps.length === 1 ? 'app' : 'apps'}
                 </span>
               </div>
               <p className="mt-1 text-sm leading-relaxed text-ink/70">{collection.description}</p>
+
+              <Link
+                href={`/collections/${collectionSlug(collection.id)}`}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-ink/70 underline underline-offset-2 hover:text-ink"
+              >
+                View collection
+              </Link>
 
               <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {collection.apps.map((app) => (

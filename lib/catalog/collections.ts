@@ -111,7 +111,7 @@ export function buildCollections(
         id: c.id,
         title: c.title,
         description: c.description,
-        apps: real.map((id) => byId.get(id)!) as AppItem[],
+        apps: Array.from(new Set(real)).map((id) => byId.get(id)!) as AppItem[],
         source: 'curated' as const,
       };
     })
@@ -122,4 +122,70 @@ export function buildCollections(
   );
 
   return { collections: [...curatedCollections, ...derived], droppedIds };
+}
+
+/* ---------------------------------------------------------------------------
+ * Route helpers (Item 4 — individual collection pages).
+ *
+ * Slugs are derived from the existing collection ids, so no route is
+ * hardcoded and no second source of truth is introduced.
+ * ------------------------------------------------------------------------- */
+
+/** Stable, URL-safe slug for a collection id. */
+export function collectionSlug(id: string): string {
+  return String(id)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function findCollectionBySlug(
+  collections: Collection[],
+  slug: string
+): Collection | undefined {
+  const target = collectionSlug(slug);
+  return collections.find((c) => collectionSlug(c.id) === target);
+}
+
+/**
+ * Real content date for a collection: the newest member app date. Never the
+ * build clock — a collection did not change just because the site rebuilt.
+ */
+export function collectionContentDate(collection: Collection): Date | undefined {
+  const times = collection.apps
+    .map((app) => {
+      const loose = app as unknown as { updatedAt?: string; lastUpdated?: string; publishedAt?: string };
+      const raw = loose.updatedAt || loose.lastUpdated || loose.publishedAt;
+      if (!raw) return NaN;
+      return new Date(raw).getTime();
+    })
+    .filter((t) => Number.isFinite(t));
+  return times.length ? new Date(Math.max(...times)) : undefined;
+}
+
+/** Platform split for the collection hero, from authoritative evidence only. */
+export function collectionPlatformSplit(collection: Collection): { android: number; web: number; both: number } {
+  let android = 0;
+  let web = 0;
+  let both = 0;
+  for (const app of collection.apps) {
+    const loose = app as unknown as {
+      apk?: { enabled?: boolean; verified?: boolean; sha256?: string; apkUrl?: string };
+      apkUrl?: string;
+      launchUrl?: string;
+      pwaUrl?: string;
+      url?: string;
+    };
+    const apk = loose.apk;
+    const hasApk = Boolean(
+      apk && apk.enabled === true && apk.verified === true && (apk.sha256 || '').length > 0 && (apk.apkUrl || loose.apkUrl)
+    );
+    const webTarget = loose.launchUrl || loose.pwaUrl || loose.url;
+    const hasWeb = typeof webTarget === 'string' && /^https?:\/\//.test(webTarget);
+    if (hasApk) android += 1;
+    if (hasWeb) web += 1;
+    if (hasApk && hasWeb) both += 1;
+  }
+  return { android, web, both };
 }

@@ -8,6 +8,12 @@ import { APPS } from '@/data/apps';
 import { PUBLISHERS } from '@/data/publishers';
 import { CATEGORIES } from '@/data/categories';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
+import curatedCollections from '@/data/collections.json';
+import {
+  buildCollections,
+  collectionContentDate,
+  collectionSlug,
+} from '@/lib/catalog/collections';
 
 /**
  * sitemap.xml — static catalog routes only (truthful content):
@@ -30,6 +36,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const datasetDate = appDates.length
     ? new Date(Math.max(...appDates.map((d) => d.getTime())))
     : undefined;
+
+  // Individual collection pages (Item 4). Built from the same function the
+  // route uses, so the sitemap cannot list a slug that has no page, and each
+  // entry carries the newest member app date instead of the build clock.
+  const collectionRoutes: MetadataRoute.Sitemap = buildCollections(
+    APPS,
+    curatedCollections as never
+  ).collections.map((collection) => ({
+    url: `${SITE_URL}collections/${collectionSlug(collection.id)}${CANONICAL_TRAILING_SLASH}`,
+    lastModified: collectionContentDate(collection) ?? datasetDate,
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}`, lastModified: datasetDate, changeFrequency: 'daily', priority: 1.0 },
@@ -91,5 +110,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...appRoutes, ...categoryRoutes, ...publisherRoutes];
+  return [
+    ...staticRoutes,
+    ...collectionRoutes,
+    ...appRoutes,
+    ...categoryRoutes,
+    ...publisherRoutes,
+  ];
 }
