@@ -390,6 +390,17 @@ export function clearRecentHistory(state: PersonalizationState): Personalization
   return { ...state, recent: [] };
 }
 
+/** Explicit user action: forget a single visit (Library row removal). */
+export function removeRecentView(
+  state: PersonalizationState,
+  slug: unknown
+): PersonalizationState {
+  const target = normalizeSlug(slug);
+  if (!target) return state;
+  const recent = state.recent.filter((entry) => entry.slug !== target);
+  return recent.length === state.recent.length ? state : { ...state, recent };
+}
+
 /** Explicit user action: forget recommendation memory as well. */
 export function clearSeen(state: PersonalizationState): PersonalizationState {
   return { ...state, seen: [] };

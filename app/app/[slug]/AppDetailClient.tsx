@@ -61,6 +61,7 @@ import {
   trackAppDownloaded
 } from '@/lib/localLibrary';
 import { recordDownloadedVersion } from '@/lib/app-installs';
+import { recordPublishedVisit } from '@/lib/personalization/visits';
 import { UpdateNotice } from '@/components/UpdateNotice';
 import { ReleaseStory } from '@/components/ReleaseStory';
 import { QuickReactions } from '@/components/QuickReactions';
@@ -91,6 +92,16 @@ export default function AppDetailPage() {
   // Monitor standalone install state & capture beforeinstallprompt
   // Notification provider hook (unconditional, AppMintly update alerts)
   const notifications = useNotifications();
+
+  // Item 10 — Recently Viewed. Opening this page IS the visit, so it is
+  // recorded here rather than on a CTA click. Only the published catalog
+  // record being rendered can be recorded, and the reducer honours the
+  // visitor's recording opt-out. Declared with the other hooks so hook order
+  // never changes between renders.
+  useEffect(() => {
+    if (!app) return;
+    recordPublishedVisit(app.slug, app.published === true);
+  }, [app]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

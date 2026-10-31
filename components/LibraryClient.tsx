@@ -26,10 +26,8 @@ import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { AppIcon } from '@/components/AppIcon';
 import {
   getLocalFavorites,
-  getRecentlyOpened,
   getRecentlyDownloaded,
   toggleLocalFavorite,
-  removeRecentlyOpenedItem,
   clearRecentlyOpened,
   clearRecentlyDownloaded,
   clearAllLocalData,
@@ -37,6 +35,8 @@ import {
   trackAppOpened,
   LocalHistoryItem,
 } from '@/lib/localLibrary';
+import { AppCard } from '@/components/AppCard';
+import { useRecentlyViewed } from '@/lib/personalization/useRecentlyViewed';
 import { recordDownloadedVersion } from '@/lib/app-installs';
 import { isSaved as isLabSaved, localWishlistIds, toggleWishlist } from '@/lib/upcoming-wishlist';
 import { getUpcomingApps } from '@/data/upcoming-apps';
@@ -82,6 +82,12 @@ export default function LibraryPage() {
   const [mountedTime, setMountedTime] = useState(0);
   const [search, setSearch] = useState('');
   const [manageOpen, setManageOpen] = useState(false);
+  const [confirmClearRecent, setConfirmClearRecent] = useState(false);
+
+  // Recently viewed now comes from the Item 10 personalization store
+  // (appmintly.personalization.v1), resolved against published catalog records
+  // so an unpublished or removed app can never render a phantom row.
+  const recentViewed = useRecentlyViewed(catalog);
 
   // Re-read local stores after mount and on every local update event.
   useEffect(() => {
@@ -118,20 +124,18 @@ export default function LibraryPage() {
       apps: catalog,
       roadmap: getUpcomingApps(),
     });
-    const recentApps: LibraryEntry[] = getRecentlyOpened()
-      .map((item: LocalHistoryItem) => {
-        const app = resolveApp(item.appId);
-        return app ? { app, timestamp: item.timestamp } : null;
-      })
-      .filter((e): e is LibraryEntry => Boolean(e));
     const downloadApps: LibraryEntry[] = getRecentlyDownloaded()
       .map((item: LocalHistoryItem) => {
         const app = resolveApp(item.appId);
         return app ? { app, timestamp: item.timestamp } : null;
       })
       .filter((e): e is LibraryEntry => Boolean(e));
+    const recentApps: LibraryEntry[] = recentViewed.items.map((entry) => ({
+      app: entry.app as AppItem,
+      timestamp: entry.at,
+    }));
     return { saved: savedApps, recent: recentApps, downloads: downloadApps };
-  }, [resolveApp, mountedTime, catalog]);
+  }, [resolveApp, mountedTime, catalog, recentViewed.items]);
 
   const counts = useMemo(
     () => ({ saved: saved.length, recent: recent.length, downloads: downloads.length }),
@@ -171,9 +175,94 @@ export default function LibraryPage() {
   };
 
   const removeRecent = (app: AppItem) => {
-    removeRecentlyOpenedItem(app.id);
-    toast(`Removed "${app.name}" from recent history.`, 'info');
+    recentViewed.remove(app.slug);
+    toast(`Removed "${app.name}" from recently viewed.`, 'info');
   };
+
+  const clearRecentHistory = () => {
+    recentViewed.clear();
+    // The legacy "recently opened" store is no longer rendered, but it still
+    // receives writes from app cards, so clearing it keeps storage honest.
+    clearRecentlyOpened();
+    setConfirmClearRecent(false);
+    toast('Recently viewed history cleared.', 'info');
+  };
+
+  const toggleRecentRecording = () => {
+    const next = !recentViewed.enabled;
+    recentViewed.setEnabled(next);
+    toast(
+      next
+        ? 'Recently viewed recording on. Visits will be saved on this device.'
+        : 'Recently viewed recording off. Your existing history is kept.',
+      'info'
+    );
+  };
+
+  const recentControls = (
+    <div className="rounded-2xl border border-line bg-card p-3 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-ink">Recently viewed</p>
+          <p className="text-[11px] text-mut mt-0.5">
+            {recentViewed.enabled
+              ? 'Visits to published apps are saved on this device only.'
+              : 'Recording is off. Your existing history is kept.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-pressed={recentViewed.enabled}
+          onClick={toggleRecentRecording}
+          className={`min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full border text-xs font-bold transition ${
+            recentViewed.enabled
+              ? 'border-forge-green/40 bg-forge-green/10 text-forge-green'
+              : 'border-line bg-page text-mut hover:text-ink'
+          }`}
+        >
+          <Clock aria-hidden="true" className="w-3.5 h-3.5" />
+          {recentViewed.enabled ? 'Recording on' : 'Recording off'}
+        </button>
+      </div>
+
+      {confirmClearRecent ? (
+        <div className="rounded-xl border border-forge-red/30 bg-forge-red/10 p-3 space-y-2.5">
+          <p className="text-xs font-bold text-ink">Clear recently viewed history?</p>
+          <p className="text-[11px] text-mut">
+            This removes your view history from this device. Saved apps and Lab wishlist
+            saves are not affected.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmClearRecent(false)}
+              className="min-h-[44px] flex-1 rounded-xl border border-line bg-card text-xs font-bold text-ink hover:border-mut/40 transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={clearRecentHistory}
+              className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 hover:opacity-90 transition"
+            >
+              <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+              Clear history
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={recentViewed.storedCount === 0}
+          onClick={() => setConfirmClearRecent(true)}
+          className="min-h-[44px] w-full rounded-xl border border-line bg-page px-4 text-xs font-bold text-mut hover:text-ink hover:border-mut/40 disabled:opacity-45 disabled:hover:text-mut transition text-left flex items-center justify-between"
+        >
+          <span>Clear history</span>
+          <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
@@ -280,12 +369,21 @@ export default function LibraryPage() {
             action={{ label: 'Explore Apps', href: '/explore' }}
           />
         ) : view === 'recent' ? (
-          <EmptyState
-            icon={Clock}
-            title="Nothing opened yet"
-            body="Apps you open from AppMintly will appear here."
-            action={{ label: 'Explore Apps', href: '/explore' }}
-          />
+          <div className="space-y-3">
+            {recentControls}
+            <EmptyState
+              icon={Clock}
+              title={recentViewed.hidden > 0 ? 'No available apps yet' : 'Nothing opened yet'}
+              body={
+                recentViewed.hidden > 0
+                  ? 'The apps you viewed are no longer published. They stay saved on this device in case they return.'
+                  : recentViewed.enabled
+                    ? 'Open a published app from AppMintly and it will appear here.'
+                    : 'Recently viewed recording is off. Turn it on above to collect history.'
+              }
+              action={{ label: 'Explore Apps', href: '/explore' }}
+            />
+          </div>
         ) : (
           <EmptyState
             icon={Download}
@@ -300,20 +398,33 @@ export default function LibraryPage() {
             <SavedRow key={entry.app.id} app={entry.app} entry={entry} onUnsave={unsave} />
           ))}
         </ul>
+      ) : view === 'recent' ? (
+        <div className="space-y-3">
+          {recentControls}
+          <ul className="space-y-2.5">
+            {(visible as LibraryEntry[]).map(({ app, timestamp }) => (
+              <li key={app.id} className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <AppCard app={app} variant="compact" />
+                </div>
+                <span className="sr-only">Viewed {timeLabel(timestamp, mountedTime)}</span>
+                <button
+                  type="button"
+                  onClick={() => removeRecent(app)}
+                  aria-label={`Remove ${app.name} from recently viewed`}
+                  className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-forge-red hover:border-forge-red/30 transition"
+                >
+                  <X aria-hidden="true" className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <ul className="space-y-3">
           {(visible as LibraryEntry[]).map(({ app, timestamp }) => (
             <li key={`${app.id}-${timestamp}`}>
-              {view === 'recent' ? (
-                <HistoryRow
-                  app={app}
-                  meta={`Opened ${timeLabel(timestamp, mountedTime)}`}
-                  onRemove={() => removeRecent(app)}
-                  removeLabel="Remove from recent history"
-                />
-              ) : (
-                <DownloadRow app={app} timestamp={timestamp} now={mountedTime} />
-              )}
+              <DownloadRow app={app} timestamp={timestamp} now={mountedTime} />
             </li>
           ))}
         </ul>
@@ -356,6 +467,7 @@ export default function LibraryPage() {
         <ManageDialog
           savedApps={saved.map((entry) => entry.app)}
           onClose={() => setManageOpen(false)}
+          onClearRecent={recentViewed.clear}
           toast={toast}
         />
       )}
@@ -491,53 +603,6 @@ function SavedRow({
 
 /* ---------------------------- history row ---------------------------- */
 
-function HistoryRow({
-  app,
-  meta,
-  onRemove,
-  removeLabel,
-}: {
-  app: AppItem;
-  meta: string;
-  onRemove: () => void;
-  removeLabel: string;
-}) {
-  return (
-    <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card hover:border-mut/40 transition min-w-0">
-      <Link href={`/app/${app.slug}`} className="shrink-0" aria-hidden="true" tabIndex={-1}>
-        <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
-      </Link>
-      <div className="flex-1 min-w-0">
-        <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
-          {app.name}
-        </Link>
-        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-mut">
-          <span className="px-1.5 py-0.5 rounded-md border border-line bg-page font-bold">v{app.version}</span>
-          <span>{meta}</span>
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Link
-          href={`/app/${app.slug}`}
-          className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center bg-inkbg text-white text-xs font-bold hover:bg-cta transition"
-        >
-          Open
-        </Link>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`${removeLabel}: ${app.name}`}
-          className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-forge-red hover:bg-forge-red/10 transition"
-        >
-          <X aria-hidden="true" className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* --------------------------- download row --------------------------- */
-
 function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number; now: number }) {
   const apkUrl = app.apk?.apkUrl || app.apkUrl;
   return (
@@ -589,10 +654,12 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
 function ManageDialog({
   savedApps,
   onClose,
+  onClearRecent,
   toast,
 }: {
   savedApps: AppItem[];
   onClose: () => void;
+  onClearRecent: () => void;
   toast: (m: string, t?: 'success' | 'error' | 'info') => void;
 }) {
   const [confirmingAll, setConfirmingAll] = useState(false);
@@ -704,7 +771,12 @@ function ManageDialog({
             <div className="space-y-2">
               <button
                 type="button"
-                onClick={() => run(clearRecentlyOpened, 'Recent history cleared.')}
+                onClick={() =>
+                  run(() => {
+                    onClearRecent();
+                    clearRecentlyOpened();
+                  }, 'Recently viewed history cleared.')
+                }
                 className="min-h-[44px] w-full rounded-xl border border-line bg-card px-4 text-sm font-bold text-ink hover:border-mut/40 transition text-left flex items-center justify-between"
               >
                 <span>Clear recent history</span>
