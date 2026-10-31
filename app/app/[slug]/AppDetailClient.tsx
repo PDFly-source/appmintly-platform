@@ -48,6 +48,7 @@ import { AppCard } from '@/components/AppCard';
 import { useNotifications } from '@/components/NotificationsProvider';
 import { releaseVersionOf } from '@/lib/notifications/engine';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
+import { UpdateIndicator } from '@/components/updates/UpdateCenter';
 import {
   useLocalFavorite,
   useIsStandalone,
@@ -487,6 +488,7 @@ export default function AppDetailPage() {
                         <span className="text-forge-green font-bold">Signed &amp; Verified</span>
                       )}
                     </div>
+                    <UpdateIndicator app={app} />
                   </div>
                 </div>
               )}
