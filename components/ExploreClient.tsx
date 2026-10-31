@@ -20,7 +20,17 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
-import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import {
+  DEFAULT_EXPLORE_FILTERS,
+  availabilityCounts,
+  filterApps,
+  parseExploreParams,
+  platformCounts,
+  toExploreParams,
+  type AvailabilityFilter,
+  type ExploreSort,
+  type PlatformFilter,
+} from '@/lib/catalog/explore-filters';
 
 type SortBy = 'newest' | 'updated' | 'name' | 'type';
 
@@ -50,6 +60,28 @@ const SHEET_FORMATS = [
   { label: 'PWA', value: 'PWA' },
 ];
 
+/* Platform: where the app can actually be obtained. 'Android + Web' is a real
+   subset, not a marketing label — see lib/catalog/explore-filters.ts. */
+const PLATFORM_OPTIONS: { value: PlatformFilter; label: string }[] = [
+  { value: 'all', label: 'Any platform' },
+  { value: 'android', label: 'Android APK' },
+  { value: 'web', label: 'Web app' },
+  { value: 'both', label: 'Android + Web' },
+];
+
+/* Availability: straight from privacyTech.networkRequirement. Records without
+   that field are not offered here at all, because we do not know them. */
+const AVAILABILITY_OPTIONS: { value: AvailabilityFilter; label: string }[] = [
+  { value: 'all', label: 'Any availability' },
+  { value: 'offline', label: 'Works offline' },
+  { value: 'online', label: 'Needs internet' },
+];
+
+const platformLabel = (value: PlatformFilter) =>
+  PLATFORM_OPTIONS.find((o) => o.value === value)?.label || value;
+const availabilityLabel = (value: AvailabilityFilter) =>
+  AVAILABILITY_OPTIONS.find((o) => o.value === value)?.label || value;
+
 // Popular searches — compact, data-relevant, never more than five.
 const SUGGESTED_SEARCHES = ['Education', 'Tools', 'Study', 'PDF'];
 
@@ -64,6 +96,8 @@ function ExploreContent() {
   const initialSort = searchParams.get('sort') || 'newest';
   const initialPublisher = searchParams.get('publisher') || 'all';
   const initialFeatured = searchParams.get('featured') === 'true';
+  const initialPlatform = searchParams.get('platform') || 'all';
+  const initialAvailability = searchParams.get('availability') || 'all';
 
   const [query, setQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
@@ -71,6 +105,15 @@ function ExploreContent() {
   const [filterOriginals, setFilterOriginals] = useState(initialFilter === 'originals');
   const [featuredOnly, setFeaturedOnly] = useState(initialFeatured);
   const [selectedPublisher, setSelectedPublisher] = useState(initialPublisher);
+  /* AppMintly 2.0 — platform and availability come from catalog facts only
+     (lib/catalog/explore-filters.ts): APK release evidence + web target, and
+     privacyTech.networkRequirement. */
+  const [selectedPlatform, setSelectedPlatform] = useState<PlatformFilter>(
+    (['android', 'web', 'both'].includes(initialPlatform) ? initialPlatform : 'all') as PlatformFilter
+  );
+  const [selectedAvailability, setSelectedAvailability] = useState<AvailabilityFilter>(
+    (['offline', 'online'].includes(initialAvailability) ? initialAvailability : 'all') as AvailabilityFilter
+  );
   const [sortBy, setSortBy] = useState<SortBy>(
     initialSort === 'name' ? 'name' : initialSort === 'updated' ? 'updated' : initialSort === 'type' ? 'type' : 'newest'
   );
@@ -84,7 +127,17 @@ function ExploreContent() {
     publisher: string;
     originals: boolean;
     sort: SortBy;
-  }>({ category: 'all', type: 'all', publisher: 'all', originals: false, sort: 'newest' });
+    platform: PlatformFilter;
+    availability: AvailabilityFilter;
+  }>({
+    category: 'all',
+    type: 'all',
+    publisher: 'all',
+    originals: false,
+    sort: 'newest',
+    platform: 'all',
+    availability: 'all',
+  });
 
   const searchRef = useRef<HTMLInputElement>(null);
   const sheetApplyRef = useRef<HTMLButtonElement>(null);
@@ -119,117 +172,89 @@ function ExploreContent() {
     };
   }, [sheetOpen]);
 
-  // Keep the address bar in sync so filtered views are shareable.
+  /* URL is the single source of truth for filter state.
+     `lastWrittenQs` stops the two effects from echoing each other, and lets
+     browser back/forward restore a previous filter state instead of being
+     overwritten by the stale in-component state. */
+  const lastWrittenQs = useRef<string>(searchParams.toString());
+
   React.useEffect(() => {
-    const params = new URLSearchParams();
-    if (query.trim()) params.set('q', query.trim());
-    if (selectedCategory !== 'all') params.set('category', selectedCategory);
-    if (selectedType !== 'all') params.set('type', selectedType);
-    if (filterOriginals) params.set('filter', 'originals');
-    if (featuredOnly) params.set('featured', 'true');
-    if (selectedPublisher !== 'all') params.set('publisher', selectedPublisher);
-    if (sortBy !== 'newest') params.set('sort', sortBy);
-    const qs = params.toString();
+    const incoming = searchParams.toString();
+    if (incoming === lastWrittenQs.current) return;
+    lastWrittenQs.current = incoming;
+    const parsed = parseExploreParams(searchParams);
+    setQuery(parsed.query);
+    setSelectedCategory(parsed.category);
+    setSelectedType(parsed.type);
+    setSelectedPublisher(parsed.publisher);
+    setFilterOriginals(parsed.originals);
+    setFeaturedOnly(parsed.featured);
+    setSelectedPlatform(parsed.platform);
+    setSelectedAvailability(parsed.availability);
+    setSortBy(parsed.sort);
+  }, [searchParams]);
+
+  React.useEffect(() => {
+    const qs = toExploreParams({
+      query,
+      category: selectedCategory,
+      type: selectedType,
+      publisher: selectedPublisher,
+      originals: filterOriginals,
+      featured: featuredOnly,
+      platform: selectedPlatform,
+      availability: selectedAvailability,
+      sort: sortBy as ExploreSort,
+    }).toString();
+    if (qs === lastWrittenQs.current) return;
+    lastWrittenQs.current = qs;
     router.replace(qs ? `/explore?${qs}` : '/explore', { scroll: false });
-  }, [query, selectedCategory, selectedType, filterOriginals, featuredOnly, selectedPublisher, sortBy, router]);
+  }, [
+    query,
+    selectedCategory,
+    selectedType,
+    filterOriginals,
+    featuredOnly,
+    selectedPublisher,
+    selectedPlatform,
+    selectedAvailability,
+    sortBy,
+    router,
+  ]);
 
-  // Filtering & Search strictly across canonical publishedApps.
-  const filteredApps = useMemo(() => {
-    const q = query.trim().toLowerCase();
-
-    return publishedApps.filter((app) => {
-      // Featured filter (data-driven from the canonical record)
-      if (featuredOnly && !app.featured) return false;
-
-      // Originals filter
-      if (filterOriginals && !app.original) return false;
-
-      // Publisher filter
-      if (selectedPublisher !== 'all' && (app.developerSlug || '').toLowerCase() !== selectedPublisher.toLowerCase()) return false;
-
-      // Category filter
-      if (selectedCategory !== 'all') {
-        const catObj = CATEGORIES.find(
-          (c) =>
-            c.slug.toLowerCase() === selectedCategory.toLowerCase() ||
-            c.name.toLowerCase() === selectedCategory.toLowerCase()
-        );
-        const catNameLower = catObj ? catObj.name.toLowerCase() : selectedCategory.toLowerCase();
-        const appCatLower = (app.category || '').toLowerCase();
-
-        const match =
-          appCatLower === selectedCategory.toLowerCase() ||
-          appCatLower === catNameLower ||
-          appCatLower.replace(/\s+/g, '-') === selectedCategory.toLowerCase();
-
-        if (!match) return false;
-      }
-
-      // Type filter
-      if (selectedType !== 'all') {
-        const appTypeLower = (app.type || '').toLowerCase().trim();
-        const selTypeLower = selectedType.toLowerCase().trim();
-
-        if (appTypeLower !== selTypeLower) {
-          if (
-            selTypeLower === 'web app' &&
-            (appTypeLower === 'web app' || appTypeLower === 'pwa' || appTypeLower === 'web_app')
-          ) {
-            // matches web app family
-          } else if (selTypeLower === 'game' && (appTypeLower === 'web game' || appTypeLower === 'game')) {
-            // matches game family
-          } else if (
-            selTypeLower === 'android apk' &&
-            hasAuthoritativeApkRelease(app) &&
-            typeof app.apk?.fileSizeBytes === 'number' &&
-            app.apk.fileSizeBytes > 0
-          ) {
-            // Format filter matches canonical authoritative APK release
-            // evidence (enabled + verified + sha256 + real size + downloadable
-            // release asset), independent of the record's web-app type.
-            // Generic for any future app; never matches fabricated listings.
-          } else {
-            return false;
-          }
-        }
-      }
-
-      // Search query filter (matches name, shortName, description, shortDescription, developer, category, tags, features, type)
-      if (q) {
-        const inName = app.name.toLowerCase().includes(q);
-        const inShortName = app.shortName ? app.shortName.toLowerCase().includes(q) : false;
-        const inDesc = app.description ? app.description.toLowerCase().includes(q) : false;
-        const inShort = app.shortDescription ? app.shortDescription.toLowerCase().includes(q) : false;
-        const inDev = app.developer ? app.developer.toLowerCase().includes(q) : false;
-        const inCat = app.category ? app.category.toLowerCase().includes(q) : false;
-        const inType = app.type ? app.type.toLowerCase().includes(q) : false;
-        const inTags = Array.isArray(app.tags) && app.tags.some((t) => t.toLowerCase().includes(q));
-        const inFeatures = Array.isArray(app.features) && app.features.some((f) => f.toLowerCase().includes(q));
-
-        if (!inName && !inShortName && !inDesc && !inShort && !inDev && !inCat && !inType && !inTags && !inFeatures) {
-          return false;
-        }
-      }
-
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'updated') {
-        const dateA = new Date(a.lastUpdated || a.updatedAt || 0).getTime();
-        const dateB = new Date(b.lastUpdated || b.updatedAt || 0).getTime();
-        return dateB - dateA;
-      }
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      if (sortBy === 'type') {
-        return a.type.localeCompare(b.type);
-      }
-      // Default: newest
-      const dateA = new Date(a.lastUpdated || a.updatedAt || a.releaseDate || 0).getTime();
-      const dateB = new Date(b.lastUpdated || b.updatedAt || b.releaseDate || 0).getTime();
-      return dateB - dateA;
-    });
-  }, [publishedApps, query, selectedCategory, selectedType, filterOriginals, featuredOnly, selectedPublisher, sortBy]);
+  // Filtering & Search strictly across canonical publishedApps. The predicate
+  // lives in lib/catalog/explore-filters.ts so every filter combination is
+  // unit-tested without a browser.
+  const filteredApps = useMemo(
+    () =>
+      filterApps(
+        publishedApps,
+        {
+          query,
+          category: selectedCategory,
+          type: selectedType,
+          publisher: selectedPublisher,
+          originals: filterOriginals,
+          featured: featuredOnly,
+          platform: selectedPlatform,
+          availability: selectedAvailability,
+          sort: sortBy as ExploreSort,
+        },
+        CATEGORIES
+      ),
+    [
+      publishedApps,
+      query,
+      selectedCategory,
+      selectedType,
+      filterOriginals,
+      featuredOnly,
+      selectedPublisher,
+      selectedPlatform,
+      selectedAvailability,
+      sortBy,
+    ]
+  );
 
   const hasQuery = query.trim() !== '';
   const hasActiveFilters =
@@ -238,7 +263,9 @@ function ExploreContent() {
     selectedType !== 'all' ||
     filterOriginals ||
     featuredOnly ||
-    selectedPublisher !== 'all';
+    selectedPublisher !== 'all' ||
+    selectedPlatform !== 'all' ||
+    selectedAvailability !== 'all';
 
   /* Categories that actually have published apps — used to turn an empty
      filter result into a guided next step instead of a dead end. Computed
@@ -261,11 +288,28 @@ const clearAllFilters = () => {
     setFilterOriginals(false);
     setFeaturedOnly(false);
     setSelectedPublisher('all');
+    setSelectedPlatform('all');
+    setSelectedAvailability('all');
     setSortBy('newest');
+    // Write the clean state to the URL immediately (defaults are omitted, so
+    // the address bar returns to the canonical /explore).
+    router.replace('/explore', { scroll: false });
   };
 
+  // Real option counts, derived from the published catalog.
+  const platCounts = useMemo(() => platformCounts(publishedApps), [publishedApps]);
+  const availCounts = useMemo(() => availabilityCounts(publishedApps), [publishedApps]);
+
   const clearSheetDraft = () =>
-    setDraft({ category: 'all', type: 'all', publisher: 'all', originals: false, sort: 'newest' });
+    setDraft({
+      category: 'all',
+      type: 'all',
+      publisher: 'all',
+      originals: false,
+      sort: 'newest',
+      platform: 'all',
+      availability: 'all',
+    });
 
   const openSheet = () => {
     setDraft({
@@ -274,6 +318,8 @@ const clearAllFilters = () => {
       publisher: selectedPublisher,
       originals: filterOriginals,
       sort: sortBy,
+      platform: selectedPlatform,
+      availability: selectedAvailability,
     });
     setSheetOpen(true);
   };
@@ -284,6 +330,8 @@ const clearAllFilters = () => {
     setSelectedPublisher(draft.publisher);
     setFilterOriginals(draft.originals);
     setSortBy(draft.sort);
+    setSelectedPlatform(draft.platform);
+    setSelectedAvailability(draft.availability);
     setSheetOpen(false);
   };
 
@@ -314,6 +362,20 @@ const clearAllFilters = () => {
       key: 'publisher',
       label: pub ? pub.name : selectedPublisher,
       onRemove: () => setSelectedPublisher('all'),
+    });
+  }
+  if (selectedPlatform !== 'all') {
+    activeChips.push({
+      key: 'platform',
+      label: platformLabel(selectedPlatform),
+      onRemove: () => setSelectedPlatform('all'),
+    });
+  }
+  if (selectedAvailability !== 'all') {
+    activeChips.push({
+      key: 'availability',
+      label: availabilityLabel(selectedAvailability),
+      onRemove: () => setSelectedAvailability('all'),
     });
   }
   if (filterOriginals) activeChips.push({ key: 'originals', label: 'Original', onRemove: () => setFilterOriginals(false) });
@@ -414,6 +476,48 @@ const clearAllFilters = () => {
           <Flame className="w-3.5 h-3.5" aria-hidden="true" />
           New
         </button>
+        <div className="relative">
+          <select
+            aria-label="Filter by platform"
+            value={selectedPlatform}
+            onChange={(e) => setSelectedPlatform(e.target.value as PlatformFilter)}
+            className={desktopSelectClasses}
+            data-testid="filter-platform"
+          >
+            {PLATFORM_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.value === 'all'
+                  ? o.label
+                  : o.value === 'android'
+                    ? `${o.label} (${platCounts.android})`
+                    : o.value === 'web'
+                      ? `${o.label} (${platCounts.web})`
+                      : `${o.label} (${platCounts.both})`}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+        </div>
+        <div className="relative">
+          <select
+            aria-label="Filter by availability"
+            value={selectedAvailability}
+            onChange={(e) => setSelectedAvailability(e.target.value as AvailabilityFilter)}
+            className={desktopSelectClasses}
+            data-testid="filter-availability"
+          >
+            {AVAILABILITY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.value === 'all'
+                  ? o.label
+                  : o.value === 'offline'
+                    ? `${o.label} (${availCounts.offline})`
+                    : `${o.label} (${availCounts.online})`}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+        </div>
         <button
           onClick={() => setFilterOriginals((v) => !v)}
           aria-pressed={filterOriginals}
@@ -725,7 +829,9 @@ const clearAllFilters = () => {
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-ink tracking-tight">No matching apps</h2>
           <p className="text-xs sm:text-sm text-mut mt-1.5 max-w-sm mx-auto">
-            Try removing a filter{categoriesWithResults.length > 0 ? ' or browse a category with apps.' : '.'}
+            {activeChips.length > 0
+              ? `Nothing matches ${activeChips.map((c) => c.label).join(' + ')}. Remove a filter to widen the results.`
+              : `Try removing a filter${categoriesWithResults.length > 0 ? ' or browse a category with apps.' : '.'}`}
           </p>
           <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
             <button
@@ -840,6 +946,60 @@ const clearAllFilters = () => {
                   {PUBLISHERS.map((p) => (
                     <option key={p.slug} value={p.slug}>
                       {p.name}{p.verified ? ' ✓' : ''}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+              </div>
+            </div>
+
+            {/* PLATFORM (catalog facts only) */}
+            <div className="mb-5">
+              <label htmlFor="sheet-platform" className="block text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">
+                Platform
+              </label>
+              <div className="relative">
+                <select
+                  id="sheet-platform"
+                  value={draft.platform}
+                  onChange={(e) => setDraft((d) => ({ ...d, platform: e.target.value as PlatformFilter }))}
+                  className={`${selectClasses} w-full`}
+                >
+                  {PLATFORM_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.value === 'all'
+                        ? o.label
+                        : o.value === 'android'
+                          ? `${o.label} (${platCounts.android})`
+                          : o.value === 'web'
+                            ? `${o.label} (${platCounts.web})`
+                            : `${o.label} (${platCounts.both})`}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+              </div>
+            </div>
+
+            {/* AVAILABILITY (privacyTech.networkRequirement) */}
+            <div className="mb-5">
+              <label htmlFor="sheet-availability" className="block text-[11px] font-bold uppercase tracking-wider text-mut mb-2.5">
+                Availability
+              </label>
+              <div className="relative">
+                <select
+                  id="sheet-availability"
+                  value={draft.availability}
+                  onChange={(e) => setDraft((d) => ({ ...d, availability: e.target.value as AvailabilityFilter }))}
+                  className={`${selectClasses} w-full`}
+                >
+                  {AVAILABILITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.value === 'all'
+                        ? o.label
+                        : o.value === 'offline'
+                          ? `${o.label} (${availCounts.offline})`
+                          : `${o.label} (${availCounts.online})`}
                     </option>
                   ))}
                 </select>
