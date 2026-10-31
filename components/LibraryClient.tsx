@@ -431,7 +431,7 @@ export default function LibraryPage() {
       )}
 
       {/* ---------------- continue exploring ---------------- */}
-      {recent.length > 0 && (
+      {recent.length > 0 && view !== 'recent' && (
         <section className="pt-2" aria-labelledby="continue-exploring-label">
           <h2 id="continue-exploring-label" className="text-[10px] font-bold uppercase tracking-widest text-mut">
             Continue exploring
