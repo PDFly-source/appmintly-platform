@@ -36,6 +36,7 @@ import {
   LocalHistoryItem,
 } from '@/lib/localLibrary';
 import { AppCard } from '@/components/AppCard';
+import { YourCollections } from '@/components/YourCollections';
 import { useRecentlyViewed } from '@/lib/personalization/useRecentlyViewed';
 import { recordDownloadedVersion } from '@/lib/app-installs';
 import { isSaved as isLabSaved, localWishlistIds, toggleWishlist } from '@/lib/upcoming-wishlist';
@@ -298,6 +299,9 @@ export default function LibraryPage() {
           <span>Manage</span>
         </button>
       </header>
+
+      {/* Item 10 / Batch 4 — private, on-device collections */}
+      <YourCollections surface="library" />
 
       {/* ---------------- local search ---------------- */}
       <div className="relative">

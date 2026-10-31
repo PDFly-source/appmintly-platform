@@ -32,6 +32,9 @@ export const PERSONALIZATION_LIMITS = {
   recent: 24,
   seen: 200,
   categories: 12,
+  /** Personal collections (Item 10 / Batch 4). */
+  collections: 20,
+  collectionApps: 50,
 } as const;
 
 /** Scoring weights, exported so tests assert the real contract. */
@@ -72,11 +75,26 @@ export interface RecentEntry {
   at: number;
 }
 
+/**
+ * A visitor's own collection (Item 10 / Batch 4). Purely local: no id from the
+ * server, no sharing, no publish flag. `apps` holds catalog slugs only.
+ */
+export interface PersonalizationCollection {
+  id: string;
+  name: string;
+  description: string;
+  apps: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface PersonalizationState {
   version: typeof PERSONALIZATION_SCHEMA_VERSION;
   recent: RecentEntry[];
   /** Slugs already shown as recommendations, so they are not repeated. */
   seen: string[];
+  /** Visitor-created collections. Added in Batch 4 as an optional field. */
+  collections: PersonalizationCollection[];
   preferences: PersonalizationPreferences;
   lastVisit: number | null;
 }
@@ -109,6 +127,7 @@ export function emptyPersonalization(): PersonalizationState {
   return {
     version: PERSONALIZATION_SCHEMA_VERSION,
     recent: [],
+    collections: [],
     seen: [],
     preferences: { categories: [], recommendations: true, recentEnabled: true },
     lastVisit: null,
@@ -257,6 +276,68 @@ function sanitizePreferences(raw: unknown, droppedRef: { n: number }): Personali
  */
 const MIGRATIONS: Record<number, (input: Record<string, unknown>) => Record<string, unknown>> = {};
 
+const COLLECTION_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,39}$/;
+const MAX_COLLECTION_NAME = 40;
+const MAX_COLLECTION_DESCRIPTION = 160;
+
+/**
+ * Sanitize the collections array. A v1 payload written before Batch 4 simply
+ * has no `collections` key, which reads as an empty list; nothing about the
+ * existing fields changes, so no migration is needed and no stored history is
+ * touched.
+ */
+function sanitizeCollections(
+  raw: unknown,
+  droppedRef: { n: number }
+): PersonalizationCollection[] {
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw)) {
+    droppedRef.n += 1;
+    return [];
+  }
+  const out: PersonalizationCollection[] = [];
+  const ids = new Set<string>();
+  for (const entry of raw) {
+    if (out.length >= PERSONALIZATION_LIMITS.collections) {
+      droppedRef.n += 1;
+      continue;
+    }
+    if (!isRecord(entry)) {
+      droppedRef.n += 1;
+      continue;
+    }
+    const id = typeof entry.id === 'string' ? entry.id.trim().toLowerCase() : '';
+    if (!COLLECTION_ID_PATTERN.test(id) || ids.has(id)) {
+      droppedRef.n += 1;
+      continue;
+    }
+    const name =
+      typeof entry.name === 'string'
+        ? entry.name.trim().replace(/\s+/g, ' ').slice(0, MAX_COLLECTION_NAME)
+        : '';
+    if (name === '') {
+      droppedRef.n += 1;
+      continue;
+    }
+    const description =
+      typeof entry.description === 'string'
+        ? entry.description.trim().slice(0, MAX_COLLECTION_DESCRIPTION)
+        : '';
+    const apps = sanitizeSlugList(entry.apps, PERSONALIZATION_LIMITS.collectionApps, droppedRef);
+    const createdAt =
+      typeof entry.createdAt === 'number' && Number.isFinite(entry.createdAt) && entry.createdAt > 0
+        ? Math.round(entry.createdAt)
+        : 0;
+    const updatedAt =
+      typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt) && entry.updatedAt > 0
+        ? Math.round(entry.updatedAt)
+        : createdAt;
+    ids.add(id);
+    out.push({ id, name, description, apps, createdAt, updatedAt });
+  }
+  return out;
+}
+
 /**
  * Validate an already-parsed payload. Never throws. Anything that is not a
  * recognisable versioned object yields a clean empty state with `reset: true`
@@ -291,6 +372,7 @@ export function sanitizePersonalization(raw: unknown, now: number = Date.now()):
     version: PERSONALIZATION_SCHEMA_VERSION,
     recent: sanitizeRecent(payload.recent, now, droppedRef),
     seen: sanitizeSlugList(payload.seen, PERSONALIZATION_LIMITS.seen, droppedRef),
+    collections: sanitizeCollections(payload.collections, droppedRef),
     preferences: sanitizePreferences(payload.preferences, droppedRef),
     lastVisit:
       typeof payload.lastVisit === 'number' &&

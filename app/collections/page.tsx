@@ -6,6 +6,7 @@ import { APPS } from '@/data/apps';
 import curated from '@/data/collections.json';
 import { buildCollections, collectionSlug } from '@/lib/catalog/collections';
 import { AppIcon } from '@/components/AppIcon';
+import { YourCollections } from '@/components/YourCollections';
 
 /* Collections hub (AppMintly 2.0, Phase 2).
    Every card lists real published catalog apps only — buildCollections drops
@@ -38,6 +39,14 @@ export default function CollectionsPage() {
           published listing; a collection with fewer than two real members is never shown.
         </p>
       </header>
+
+      {/* Item 10 / Batch 4 — the visitor's own collections, kept clearly apart
+          from the public catalog-derived collections below. */}
+      <div className="mb-10">
+        <YourCollections surface="hub" />
+      </div>
+
+      <h2 className="mb-4 text-lg font-bold text-ink">Curated by AppMintly</h2>
 
       {collections.length === 0 ? (
         <div className="rounded-2xl border border-line bg-card p-8 text-center">

@@ -40,6 +40,7 @@ import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { similarApps } from '@/lib/catalog/similar';
 import { PersonalizedRecommendations } from '@/components/PersonalizedRecommendations';
+import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { QrCodeDialog } from '@/components/QrCodeDialog';
 import { PrivacyTechCard } from '@/components/PrivacyTechCard';
 import { ApkHashVerifier } from '@/components/ApkHashVerifier';
@@ -393,7 +394,9 @@ export default function AppDetailPage() {
                   </a>
                 )}
 
-                <button
+                <AddToCollectionButton slug={app.slug} name={app.name} variant="full" />
+
+                  <button
                   onClick={handleFavoriteClick}
                   className="p-3.5 rounded-full bg-page hover:bg-line text-ink border border-line transition cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
                   title={favorite ? 'Remove from Library' : 'Save to Library'}

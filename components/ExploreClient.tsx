@@ -20,6 +20,7 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
+import { AddToCollectionButton } from '@/components/AddToCollectionButton';
 import { CompareTray } from '@/components/CompareTray';
 import {
   DEFAULT_EXPLORE_FILTERS,
@@ -794,7 +795,12 @@ const clearAllFilters = () => {
       ) : filteredApps.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
           {filteredApps.map((app) => (
-            <AppCard key={app.id} app={app} variant="explore" />
+            <div key={app.id} className="flex flex-col">
+              <AppCard app={app} variant="explore" />
+              <div className="mt-2 flex justify-end">
+                <AddToCollectionButton slug={app.slug} name={app.name} variant="icon" />
+              </div>
+            </div>
           ))}
         </div>
       ) : hasQuery ? (

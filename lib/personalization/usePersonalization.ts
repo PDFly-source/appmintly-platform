@@ -30,6 +30,8 @@ import {
 export interface UsePersonalizationResult {
   ready: boolean;
   state: PersonalizationState;
+  /** Apply any pure reducer to the store (used by the collections engine). */
+  update: (fn: (state: PersonalizationState) => PersonalizationState) => void;
   savedSlugs: string[];
   signal: boolean;
   signals: { views: number; saved: number; categories: number };
@@ -65,6 +67,9 @@ export function usePersonalization(): UsePersonalizationResult {
     };
   }, []);
 
+  const update = useCallback((fn: (state: PersonalizationState) => PersonalizationState) => {
+    setState(updatePersonalization(fn));
+  }, []);
   const setCategories = useCallback((catalog: CatalogAppLike[], categories: unknown[]) => {
     setState(updatePersonalization((s) => setCategoriesFromCatalog(s, catalog, categories)));
   }, []);
@@ -93,6 +98,7 @@ export function usePersonalization(): UsePersonalizationResult {
   return {
     ready,
     state,
+    update,
     savedSlugs,
     signal,
     signals,

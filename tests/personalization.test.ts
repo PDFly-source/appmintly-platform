@@ -309,9 +309,13 @@ describe('personalization model — sanitization', () => {
       { version: 1, recent: [], seen: [], admin: true, downloads: 999 },
       NOW
     );
+    // Batch 4 added `collections` to the contract; the test still proves that
+    // arbitrary keys from storage are dropped rather than copied through.
     expect(Object.keys(parsed.state).sort()).toEqual(
-      ['lastVisit', 'preferences', 'recent', 'seen', 'version'].sort()
+      ['collections', 'lastVisit', 'preferences', 'recent', 'seen', 'version'].sort()
     );
+    expect(parsed.state).not.toHaveProperty('admin');
+    expect(parsed.state).not.toHaveProperty('downloads');
   });
 });
 
