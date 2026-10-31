@@ -221,6 +221,9 @@ describe('semantic token contrast in each theme', () => {
       expect(contrast(t['link-on-dark'], '#0B0F16'), `${theme} link-on-dark on hero`).toBeGreaterThanOrEqual(4.5);
       // solid blue pill keeps white text
       expect(contrast(t['on-blue'], t['blue-solid']), `${theme} on-blue on blue-solid`).toBeGreaterThanOrEqual(4.5);
+      // muted text on the always-dark footer
+      expect(contrast(t['on-ink-mute'], '#1B2434'), `${theme} on-ink-mute on dark footer`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t['on-ink-mute'], '#0E1526'), `${theme} on-ink-mute on light footer`).toBeGreaterThanOrEqual(4.5);
       // accent text must stay readable on both ordinary surfaces
       expect(contrast(t['accent-text'], table.card), `${theme} accent-text on card`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t['accent-text'], table.page), `${theme} accent-text on page`).toBeGreaterThanOrEqual(4.5);

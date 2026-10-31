@@ -64,7 +64,7 @@ export function OriginalsRail({ apps }: { apps: AppItem[] }) {
         {railBadge(
           <Award className="w-3.5 h-3.5" aria-hidden="true" />,
           'Made on AppMintly',
-          'text-forge-gold bg-forge-gold/10 border-forge-gold/25'
+          'text-warning-text bg-forge-gold/10 border-forge-gold/25'
         )}
         <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
           AppMintly Originals

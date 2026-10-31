@@ -237,7 +237,7 @@ export const Footer: React.FC = () => {
               PKD
             </Link>
           </p>
-          <p className="text-[11px] text-[#FAF5ED]/45 pb-1">
+          <p className="text-[11px] text-on-ink-mute pb-1">
             © {new Date().getFullYear()} AppMintly. All rights reserved.
           </p>
         </div>

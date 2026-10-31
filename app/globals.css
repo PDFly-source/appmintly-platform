@@ -22,6 +22,7 @@
      colour on or of an accent changes per theme so every pairing clears
      WCAG AA. Measured, not guessed. */
   --c-on-ink: #FFFFFF;     /* 18.2:1 on the #0E1526 ink chip, all themes */
+  --c-on-ink-mute: #C3CBD8; /* 11.1:1 on #0E1526, 9.5:1 on #1B2434 */
   --c-warning-text: #4A3300;  /* text on light surfaces / yellow tints */
   --c-on-warning: #3D2A00;    /* text on the solid #E5B84B fill, 7.38:1 */
   --c-warning-on-dark: #F5C451; /* 9.4:1 on #0E1526; for dark panels only */
@@ -46,6 +47,7 @@
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
   --c-on-ink: #FFFFFF;      /* 15.57:1 on the #1B2434 ink chip */
+  --c-on-ink-mute: #C3CBD8;
   --c-on-warning: #3D2A00;
   --c-warning-text: #F5C451;
   --c-link-on-dark: #9EC5FF;
@@ -76,6 +78,7 @@
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
   --c-on-ink: #FFFFFF;      /* 18.44:1 on the #10141C ink chip */
+  --c-on-ink-mute: #C3CBD8;
   --c-on-warning: #3D2A00;
   --c-warning-text: #F5C451;
   --c-link-on-dark: #9EC5FF;
@@ -99,6 +102,7 @@
   --color-cta: var(--c-cta);
   --color-cta-hover: var(--c-cta-hover);
   --color-on-ink: var(--c-on-ink);
+  --color-on-ink-mute: var(--c-on-ink-mute);
   --color-warning-text: var(--c-warning-text);
   --color-on-warning: var(--c-on-warning);
   --color-warning-on-dark: var(--c-warning-on-dark);
@@ -489,11 +493,11 @@ summary {
   --p3d-bg: #0b0e15;
   --p3d-glass: rgba(22, 27, 40, 0.62);
   --p3d-line: rgba(255, 255, 255, 0.1);
-  --p3d-fg: var(--c-ink);
-  --p3d-mute: var(--c-mut);
+  --p3d-fg: #EEF2FA;
+  --p3d-mute: #AEB9CA;
   --p3d-blue: #4c8dff;
   --p3d-cyan: #7dd3fc;
-  --p3d-gold: var(--c-warning-text);
+  --p3d-gold: #F5C451;
   --p3d-grad-a: var(--p3d-blue);
   --p3d-grad-b: var(--p3d-cyan);
   position: relative;
@@ -524,17 +528,12 @@ summary {
 .p3d-mute { color: var(--p3d-mute); }
 
 /*
- * The 3D stage glass sits on the theme page, so in light mode its composited
- * surface is light (the blue glow over #F6F8FB reads ~#DBE8FF). Its text must
- * therefore follow the theme, not stay near-white. These overrides give the
- * light theme a deep blue headline gradient and a dark gold eyebrow so both
- * clear AA on that pale surface, while dark and AMOLED keep the brand hues.
+ * .p3d-stage is #0B0E15 in every theme, so its foregrounds are fixed
+ * dark-surface values rather than theme tokens. Measured on the glass
+ * composite (62% rgb(22,27,40) over #0B0E15 = ~#121621):
+ * body #EEF2FA 16.1:1, mute #AEB9CA 9.1:1, gold #F5C451 11.1:1,
+ * headline stops #4C8DFF 5.6:1 and #7DD3FC 10.8:1.
  */
-:root:not(.dark):not(.amoled) .p3d-stage {
-  --p3d-grad-a: #0B3E8F;
-  --p3d-grad-b: #0E7490;
-  --p3d-gold: #6B4A00;
-}
 .p3d-eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 14px; border-radius: 999px;
