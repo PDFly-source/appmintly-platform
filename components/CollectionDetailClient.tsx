@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { ArrowLeft, FolderOpen, Pencil, Trash2, X } from 'lucide-react';
 import { AppCard } from '@/components/AppCard';
 import { YourCollections } from '@/components/YourCollections';
+import { ShareCollectionButton } from '@/components/ShareCollectionButton';
 import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import {
@@ -208,6 +209,18 @@ export default function CollectionDetailClient() {
           </div>
         )}
       </header>
+
+      <div className="rounded-2xl border border-line bg-card p-4">
+        <h2 className="text-sm font-bold text-ink mb-1">Share this collection</h2>
+        <p className="text-[11px] text-mut mb-3">
+          Sharing does not change your collection, and it stays in this browser either way.
+        </p>
+        <ShareCollectionButton
+          name={collection.name}
+          description={collection.description}
+          apps={collection.apps.map((entry) => entry.slug)}
+        />
+      </div>
 
       {confirmDelete && (
         <div className="rounded-xl border border-forge-red/30 bg-forge-red/10 p-3 space-y-2">
