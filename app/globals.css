@@ -60,6 +60,7 @@
   --c-link-text: #7FB2FF;   /* 8.22 on card, 8.88 on page */
   --c-success-text: #2DD4BF; /* 9.54 on card, 10.31 on page */
   --c-accent-text: #FF9C8F;
+  --c-cta-text: #14B8A6;    /* 6.3:1 on the cta tint over a dark card */
 }
 
 /*
@@ -91,6 +92,7 @@
   --c-link-text: #8FC0FF;
   --c-success-text: #2DD4BF;
   --c-accent-text: #FF9C8F;
+  --c-cta-text: #2DD4BF;
 }
 
 @theme inline {
