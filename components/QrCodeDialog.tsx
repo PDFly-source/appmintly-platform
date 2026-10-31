@@ -183,7 +183,7 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm" aria-hidden />
+      <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm on-dark" aria-hidden />
       <div className="relative w-full max-w-sm rounded-2xl bg-card border border-line shadow-2xl p-5 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
         <div className="flex items-center justify-between mb-4">
           <h3 className="flex items-center gap-2 text-ink font-bold">
@@ -268,7 +268,7 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
             type="button"
             onClick={handleDownload}
             disabled={disabled}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer disabled:opacity-40"
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer disabled:opacity-40 on-dark"
           >
             <Download className="w-3.5 h-3.5" aria-hidden />
             Save

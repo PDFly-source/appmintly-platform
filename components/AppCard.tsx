@@ -178,7 +178,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     }
     if (app.type === 'Tool') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/35">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-yellow/20 text-warning-text border border-forge-yellow/35">
           <Wrench className="w-3 h-3" /> TOOL
         </span>
       );
@@ -298,7 +298,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       exploreBadges.push(
         <span
           key="original"
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-forge-yellow/15 text-[#8C6000] dark:text-warning-text border border-forge-yellow/30"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-forge-yellow/15 text-warning-text border border-forge-yellow/30"
         >
           <Sparkles className="w-3 h-3 text-warning-text" aria-hidden="true" />
           Original
@@ -428,7 +428,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               NEW
             </span>
           ) : app.original ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/40">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-forge-yellow/20 text-warning-text border border-forge-yellow/40">
               <Sparkles className="w-3 h-3 text-warning-text" /> Original
             </span>
           ) : app.featured ? (

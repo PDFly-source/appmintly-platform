@@ -69,7 +69,7 @@ export function UpdateNotice({ app }: { app: AppItem }) {
           aria-live="polite"
           className="flex items-start gap-3 rounded-xl border border-forge-yellow/45 bg-forge-yellow/10 p-3.5"
         >
-          <Bell className="mt-0.5 w-4 h-4 text-[#8C6000]" aria-hidden />
+          <Bell className="mt-0.5 w-4 h-4 text-warning-text" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-ink">
               Update available — {app.name} v{info.latestVersion}
@@ -109,7 +109,7 @@ export function UpdateNotice({ app }: { app: AppItem }) {
             if (e.target === e.currentTarget) setShowDetails(false);
           }}
         >
-          <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm" aria-hidden />
+          <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm on-dark" aria-hidden />
           <div
             ref={detailsRef}
             tabIndex={-1}

@@ -500,7 +500,7 @@ export default function LabClient() {
                 className="snap-start shrink-0 self-start w-[90%] sm:w-[400px] lg:w-[440px] flex"
               >
                 <article
-                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col p-5 sm:p-6"
+                  className="relative overflow-hidden h-full w-full rounded-2xl border border-line bg-inkbg text-white flex flex-col p-5 sm:p-6 on-dark"
                   aria-label="More apps coming soon — promotional card"
                 >
                   {/* Ambient gradient + abstract app tiles (decorative) */}

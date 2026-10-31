@@ -64,7 +64,7 @@ export function SystemStatus() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-4 py-2 rounded-full bg-inkbg text-white text-xs font-bold shadow-lg"
+          className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[80] flex items-center gap-2 px-4 py-2 rounded-full bg-inkbg text-white text-xs font-bold shadow-lg on-dark"
         >
           <WifiOff className="w-3.5 h-3.5" aria-hidden />
           You&apos;re offline — browsing the cached marketplace
@@ -81,7 +81,7 @@ export function SystemStatus() {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition-colors cursor-pointer on-dark"
           >
             <RefreshCw className="w-3 h-3" aria-hidden />
             Refresh

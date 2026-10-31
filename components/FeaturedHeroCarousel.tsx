@@ -70,7 +70,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
   };
 
   return (
-    <div className="group/hero relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_20px_60px_-30px_rgba(23,25,28,0.26)] border border-ink/10 transition-shadow duration-300 hover:shadow-[0_28px_70px_-32px_rgba(23,25,28,0.34)]">
+    <div className="group/hero relative overflow-hidden rounded-3xl bg-inkbg text-white shadow-[0_20px_60px_-30px_rgba(23,25,28,0.26)] border border-ink/10 transition-shadow duration-300 hover:shadow-[0_28px_70px_-32px_rgba(23,25,28,0.34)] on-dark">
         <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none z-0" />
         <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none z-0" />
       {/* Background Banner Image with Gradient Overlay */}
@@ -82,7 +82,8 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           decoding="async"
           fetchPriority={currentIndex === 0 ? 'high' : 'low'}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-inkbg via-inkbg/85 to-transparent" />
+        <div className="carousel-scrim pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/25" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-r from-inkbg via-inkbg/85 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-inkbg via-transparent to-black/30" />
       </div>
 

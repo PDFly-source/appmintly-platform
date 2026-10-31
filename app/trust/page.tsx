@@ -131,7 +131,7 @@ export default function TrustPage() {
       </section>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Link href="/explore/" className="inline-flex items-center gap-1.5 rounded-xl bg-inkbg px-3 py-2 text-[12px] font-bold text-on-ink">
+        <Link href="/explore/" className="inline-flex items-center gap-1.5 rounded-xl bg-inkbg px-3 py-2 text-[12px] font-bold text-on-ink on-dark">
           Browse the catalog <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
         <Link href="/contact/" className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-[12px] font-bold text-ink">

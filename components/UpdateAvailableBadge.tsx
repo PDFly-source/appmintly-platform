@@ -25,7 +25,7 @@ export function UpdateAvailableBadge({ app }: { app: AppItem }) {
   if (!info.available) return null;
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-forge-yellow/15 border border-forge-yellow/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-[#8C6000]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-forge-yellow/15 border border-forge-yellow/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-warning-text">
       <ArrowUpCircle className="w-3 h-3" aria-hidden />
       Update Available
     </span>

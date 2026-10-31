@@ -342,7 +342,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-inkbg px-5 text-xs font-bold text-on-ink disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-inkbg px-5 text-xs font-bold text-on-ink disabled:opacity-60 on-dark"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             Submit for review
@@ -388,7 +388,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-xs font-bold text-on-ink"
+                className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-xs font-bold text-on-ink on-dark"
               >
                 <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" /> Write the first review
               </button>
@@ -450,7 +450,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
                     <button
                       type="button"
                       onClick={() => void report(review.id)}
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-[11px] font-bold text-on-ink"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-[11px] font-bold text-on-ink on-dark"
                     >
                       <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> Send report
                     </button>

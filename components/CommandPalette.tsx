@@ -240,7 +240,7 @@ export function CommandPalette() {
       }}
     >
       {/* Backdrop with subtle blur (glass language, avoids heavy neon) */}
-      <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm" aria-hidden />
+      <div className="absolute inset-0 bg-inkbg/45 backdrop-blur-sm on-dark" aria-hidden />
       <div
         ref={dialogRef}
         className="relative w-full max-w-lg rounded-2xl bg-card border border-line shadow-2xl overflow-hidden motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95"

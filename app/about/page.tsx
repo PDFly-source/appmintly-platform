@@ -113,7 +113,7 @@ export default function AboutPage() {
       </div>
 
       {/* CTA Box */}
-      <div className="rounded-3xl bg-inkbg text-white p-8 sm:p-10 text-center space-y-4">
+      <div className="rounded-3xl bg-inkbg text-white p-8 sm:p-10 text-center space-y-4 on-dark">
         <h3 className="text-2xl font-bold">Ready to Discover?</h3>
         <p className="text-xs sm:text-sm text-white/70 max-w-md mx-auto">
           Explore our complete catalog of verified Android APKs, Web Apps, games, and tools.

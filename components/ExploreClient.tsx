@@ -459,7 +459,7 @@ const clearAllFilters = () => {
           aria-pressed={featuredOnly}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             featuredOnly
-              ? 'bg-forge-yellow/15 border-forge-yellow/40 text-[#8C6000] dark:text-warning-text'
+              ? 'bg-forge-yellow/15 border-forge-yellow/40 text-warning-text'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -875,7 +875,7 @@ const clearAllFilters = () => {
           <button
             aria-label="Close filters"
             onClick={() => setSheetOpen(false)}
-            className="absolute inset-0 bg-inkbg/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 cursor-default"
+            className="absolute inset-0 bg-inkbg/60 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 cursor-default on-dark"
           />
           <div className="absolute inset-x-0 bottom-0 bg-card border-t border-line rounded-t-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] max-h-[85vh] overflow-y-auto shadow-2xl motion-safe:animate-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-300">
             {/* Sheet header */}

@@ -47,7 +47,12 @@ const AUDIT = String.raw`(() => {
     const stops = [];
     const re = /rgba?\([^)]+\)/g;
     let m;
-    while ((m = re.exec(image))) { const c = parse(m[0]); if (c && c.a > 0.5) stops.push(c); }
+    while ((m = re.exec(image))) {
+      const c = parse(m[0]);
+      // Scrims are translucent: composite over white, the brightest thing an
+      // image behind them could be, so the measurement is conservative.
+      if (c && c.a > 0) stops.push(c.a >= 0.999 ? c : over(c, { r: 255, g: 255, b: 255, a: 1 }));
+    }
     return stops;
   };
   const resolveBg = (el) => {
@@ -87,9 +92,10 @@ const AUDIT = String.raw`(() => {
     if (rect.width < 1 || rect.height < 1) continue;
     const rawFg = parse(s.color);
     if (!rawFg) continue;
-    const { candidates, indeterminate } = resolveBg(el);
+    const clipTest = /text/.test(s.webkitBackgroundClip || '') || /text/.test(s.backgroundClip || '');
+    const { candidates, indeterminate } = resolveBg(clipTest ? el.parentElement || el : el);
     const bg = candidates[0];
-    const clipped = /text/.test(s.webkitBackgroundClip || '') || /text/.test(s.backgroundClip || '');
+    const clipped = clipTest;
     const clipStops = clipped && s.backgroundImage !== 'none' ? stopsFrom(s.backgroundImage) : [];
     const fgs = clipStops.length ? clipStops : [rawFg.a < 1 ? over(rawFg, bg) : rawFg];
     const worst = fgs.map((f) => Math.min(...candidates.map((b) => ratio(f, b))))

@@ -153,7 +153,7 @@ export function ReportAppDialog({ slug, appName, onClose }: Props) {
               type="button"
               onClick={() => void submit()}
               disabled={!validation.ok || state === 'sending'}
-              className="mt-3 w-full rounded-xl bg-inkbg px-3 py-2 text-[12px] font-bold text-on-ink disabled:opacity-40"
+              className="mt-3 w-full rounded-xl bg-inkbg px-3 py-2 text-[12px] font-bold text-on-ink disabled:opacity-40 on-dark"
             >
               {state === 'sending' ? 'Sending…' : 'Send report'}
             </button>

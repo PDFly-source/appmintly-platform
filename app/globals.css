@@ -24,6 +24,7 @@
   --c-on-ink: #FFFFFF;     /* 18.2:1 on the #0E1526 ink chip, all themes */
   --c-warning-text: #4A3300;  /* text on light surfaces / yellow tints */
   --c-on-warning: #3D2A00;    /* text on the solid #E5B84B fill, 7.38:1 */
+  --c-warning-on-dark: #F5C451; /* 9.4:1 on #0E1526; for dark panels only */
   --c-link-on-dark: #9EC5FF;  /* 10.86:1 on the #0B0F16 hero */
   --c-blue-solid: #1560D8;    /* brand blue fill, one step down for AA */
   --c-on-blue: #FFFFFF;       /* 5.68:1 on #1560D8 */
@@ -100,6 +101,7 @@
   --color-on-ink: var(--c-on-ink);
   --color-warning-text: var(--c-warning-text);
   --color-on-warning: var(--c-on-warning);
+  --color-warning-on-dark: var(--c-warning-on-dark);
   --color-link-on-dark: var(--c-link-on-dark);
   --color-blue-solid: var(--c-blue-solid);
   --color-on-blue: var(--c-on-blue);
@@ -292,6 +294,25 @@ body {
   .btn-cta:active {
     transform: none !important;
   }
+}
+
+/* ============================================================
+   Dark-surface context (.on-dark).
+   Some surfaces are dark in every theme: the ink panels, the 3D hero stage
+   and the image-backed carousel. Text inside them must be chosen for a dark
+   backdrop no matter which theme is active, otherwise a light-theme token
+   (dark ink, dark link blue, dark amber) lands on a dark panel. This remaps
+   the semantic tokens locally so ordinary utilities inherit the right values;
+   it is a cascade scope, not an override, and needs no per-component colour.
+   ============================================================ */
+.on-dark {
+  --c-ink: #E9EDF5;
+  --c-mut: #AEB9CA;
+  --c-line: #2B3547;
+  --c-link-text: var(--c-link-on-dark);
+  --c-warning-text: var(--c-warning-on-dark);
+  --c-accent-text: #FF9C8F;
+  color-scheme: dark;
 }
 
 /* ============================================================

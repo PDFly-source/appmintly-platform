@@ -103,7 +103,7 @@ export function AppMediaPreview({ app }: { app: AppItem }) {
         />
       ) : null}
       {!failed && (
-        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-inkbg/70 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none">
+        <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-inkbg/70 text-white text-[10px] font-bold backdrop-blur-xs pointer-events-none on-dark">
           <PlayCircle className="w-3 h-3" aria-hidden />
           Preview
         </span>

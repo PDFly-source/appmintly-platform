@@ -141,7 +141,7 @@ export default function AppDetailPage() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition"
+            className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition on-dark"
           >
             Explore Apps
           </Link>
@@ -282,7 +282,7 @@ export default function AppDetailPage() {
     }
     if (app.type === 'Tool') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/35">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-yellow/20 text-warning-text border border-forge-yellow/35">
           <Wrench className="w-3.5 h-3.5" /> TOOL
         </span>
       );
@@ -465,7 +465,7 @@ export default function AppDetailPage() {
                   {app.category}
                 </span>
                 {app.original && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/40">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-forge-yellow/20 text-warning-text border border-forge-yellow/40">
                     <Sparkles className="w-3.5 h-3.5 text-warning-text" /> Original
                   </span>
                 )}
@@ -540,7 +540,7 @@ export default function AppDetailPage() {
                 <div
                   key={idx}
                   onClick={() => setSelectedScreenshotIndex(idx)}
-                  className="shrink-0 snap-start rounded-2xl overflow-hidden border border-line bg-inkbg shadow-2xs hover:shadow-md hover:border-ink/40 transition-all cursor-pointer group relative max-w-[320px] sm:max-w-[420px]"
+                  className="shrink-0 snap-start rounded-2xl overflow-hidden border border-line bg-inkbg shadow-2xs hover:shadow-md hover:border-ink/40 transition-all cursor-pointer group relative max-w-[320px] sm:max-w-[420px] on-dark"
                 >
                   <img
                     src={url}
@@ -723,7 +723,7 @@ export default function AppDetailPage() {
                           toast('SHA-256 checksum copied', 'success');
                         }}
                         aria-label="Copy SHA-256 checksum"
-                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-on-ink hover:text-on-brand text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-on-ink hover:text-on-brand text-[10px] font-bold hover:bg-forge-red transition cursor-pointer on-dark"
                       >
                         Copy
                       </button>
@@ -801,7 +801,7 @@ export default function AppDetailPage() {
             aria-label={`Discover more official apps by ${resolveDeveloper(app).name}`}
             className="max-w-3xl mx-auto"
           >
-            <div className="relative overflow-hidden rounded-[20px] bg-inkbg border border-white/10 p-5 sm:p-6 shadow-xs">
+            <div className="relative overflow-hidden rounded-[20px] bg-inkbg border border-white/10 p-5 sm:p-6 shadow-xs on-dark">
               {/* Subtle depth: faint emerald glow */}
               <div
                 aria-hidden="true"
@@ -1014,7 +1014,7 @@ export default function AppDetailPage() {
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-inkbg text-on-ink hover:text-on-brand text-xs font-bold hover:bg-forge-red transition cursor-pointer on-dark"
               >
                 Understood
               </button>

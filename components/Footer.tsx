@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
   }
 
   return (
-    <footer className="bg-inkbg text-[#FAF5ED] pt-10 mt-16 border-t border-ink/10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-14">
+    <footer className="bg-inkbg text-[#FAF5ED] pt-10 mt-16 border-t border-ink/10 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-14 on-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* ---- Top: brand column + link sections ---- */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-x-8 gap-y-8">

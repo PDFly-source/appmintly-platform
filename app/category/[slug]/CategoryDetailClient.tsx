@@ -105,7 +105,7 @@ export default function CategoryDetailPage() {
 
         <Link
           href={`/explore?category=${encodeURIComponent(category?.slug || slug)}`}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-on-ink hover:text-on-brand text-xs font-bold transition shadow-xs self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-on-ink hover:text-on-brand text-xs font-bold transition shadow-xs self-start md:self-auto on-dark"
         >
           <Search className="w-3.5 h-3.5" />
           <span>Search in {categoryName}</span>
@@ -133,7 +133,7 @@ export default function CategoryDetailPage() {
           <div className="mt-5 flex items-center justify-center gap-3">
             <Link
               href="/explore"
-              className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold transition"
+              className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold transition on-dark"
             >
               Explore All Apps
             </Link>

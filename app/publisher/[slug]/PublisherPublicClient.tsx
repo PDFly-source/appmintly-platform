@@ -52,7 +52,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
           </p>
           <Link
             href="/explore"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-on-ink hover:text-on-brand text-sm font-bold transition"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-on-ink hover:text-on-brand text-sm font-bold transition on-dark"
           >
             <ArrowLeft className="w-4 h-4" /> Browse Apps
           </Link>

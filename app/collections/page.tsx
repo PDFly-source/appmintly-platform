@@ -56,7 +56,7 @@ export default function CollectionsPage() {
           </p>
           <Link
             href="/explore"
-            className="mt-4 inline-flex rounded-xl bg-inkbg px-4 py-2 text-sm font-semibold text-on-ink"
+            className="mt-4 inline-flex rounded-xl bg-inkbg px-4 py-2 text-sm font-semibold text-on-ink on-dark"
           >
             Browse all apps
           </Link>
