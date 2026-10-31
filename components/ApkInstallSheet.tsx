@@ -343,7 +343,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
                 <span>APK download started</span>
               </div>
 
-              <div className="p-3 bg-white border border-line rounded-xl text-left flex items-start gap-3">
+              <div className="p-3 bg-card border border-line rounded-xl text-left flex items-start gap-3">
                 <FolderOpen className="w-5 h-5 text-forge-blue shrink-0 mt-0.5" />
                 <div className="text-xs">
                   <p className="font-bold text-ink">Next step to install</p>
@@ -395,7 +395,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div className="p-3 rounded-xl bg-white border border-line flex items-start gap-2.5">
+            <div className="p-3 rounded-xl bg-card border border-line flex items-start gap-2.5">
               <span className="w-5 h-5 rounded-full bg-inkbg text-white flex items-center justify-center text-[10px] font-black shrink-0">
                 1
               </span>
@@ -405,7 +405,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-white border border-line flex items-start gap-2.5">
+            <div className="p-3 rounded-xl bg-card border border-line flex items-start gap-2.5">
               <span className="w-5 h-5 rounded-full bg-inkbg text-white flex items-center justify-center text-[10px] font-black shrink-0">
                 2
               </span>
@@ -415,7 +415,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-white border border-line flex items-start gap-2.5">
+            <div className="p-3 rounded-xl bg-card border border-line flex items-start gap-2.5">
               <span className="w-5 h-5 rounded-full bg-inkbg text-white flex items-center justify-center text-[10px] font-black shrink-0">
                 3
               </span>
@@ -425,7 +425,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-white border border-line flex items-start gap-2.5">
+            <div className="p-3 rounded-xl bg-card border border-line flex items-start gap-2.5">
               <span className="w-5 h-5 rounded-full bg-inkbg text-white flex items-center justify-center text-[10px] font-black shrink-0">
                 4
               </span>

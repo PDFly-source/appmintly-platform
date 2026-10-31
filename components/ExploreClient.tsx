@@ -1033,7 +1033,7 @@ const clearAllFilters = () => {
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-2xs transition-all duration-200 ${
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-card shadow-2xs transition-all duration-200 ${
                       draft.originals ? 'left-[1.375rem]' : 'left-0.5'
                     }`}
                   />

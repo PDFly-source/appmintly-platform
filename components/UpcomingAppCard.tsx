@@ -381,7 +381,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
       >
         {app.logo && !logoFailed ? (
           <span
-            className={`block bg-white rounded-xl px-4 py-2.5 shadow-sm transition-opacity duration-200 ${
+            className={`block bg-card rounded-xl px-4 py-2.5 shadow-sm transition-opacity duration-200 ${
               logoLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             aria-hidden={!logoLoaded}

@@ -41,7 +41,7 @@ export default function TrustPage() {
         </p>
       </header>
 
-      <section className="mt-6 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-6 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
           <FileCheck2 className="h-4 w-4" aria-hidden="true" /> How release metadata is verified
         </h2>
@@ -53,7 +53,7 @@ export default function TrustPage() {
         </ul>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-4 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="text-sm font-bold text-ink">How SHA-256 checksums are used</h2>
         <p className="mt-1 text-[12px] text-mut">
           Every verified APK has a SHA-256 checksum recorded when it was published. The checksum is displayed on the app
@@ -79,7 +79,7 @@ export default function TrustPage() {
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-4 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="text-sm font-bold text-ink">How official download links work</h2>
         <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12px] text-ink">
           <li>Download actions on published Android apps go through AppMintly&apos;s own tracked endpoint, which redirects to the official release asset recorded in the published catalog.</li>
@@ -89,7 +89,7 @@ export default function TrustPage() {
         </ul>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-4 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
           <Flag className="h-4 w-4" aria-hidden="true" /> How to report a problem
         </h2>
@@ -107,7 +107,7 @@ export default function TrustPage() {
         </ul>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-4 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="text-sm font-bold text-ink">How reports are reviewed</h2>
         <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12px] text-ink">
           <li>Each report goes into a private queue. The owner can mark it under review, resolve it with a reason, or reject it.</li>
@@ -117,7 +117,7 @@ export default function TrustPage() {
         </ul>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+      <section className="mt-4 rounded-2xl border border-line bg-card p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold text-ink">
           <AlertTriangle className="h-4 w-4" aria-hidden="true" /> Known security limitations
         </h2>
@@ -134,10 +134,10 @@ export default function TrustPage() {
         <Link href="/explore/" className="inline-flex items-center gap-1.5 rounded-xl bg-ink px-3 py-2 text-[12px] font-bold text-white">
           Browse the catalog <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
-        <Link href="/contact/" className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-[12px] font-bold text-ink">
+        <Link href="/contact/" className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-[12px] font-bold text-ink">
           Contact the owner
         </Link>
-        <Link href="/services/report-issue/" className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-white px-3 py-2 text-[12px] font-bold text-ink">
+        <Link href="/services/report-issue/" className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-card px-3 py-2 text-[12px] font-bold text-ink">
           Service issue report
         </Link>
       </div>

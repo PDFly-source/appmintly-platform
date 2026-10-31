@@ -240,7 +240,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
   const countLabel = reviewCountLabel(summary);
 
   return (
-    <section aria-labelledby="reviews-heading" className="mt-8 rounded-2xl border border-line bg-white p-4 sm:p-5">
+    <section aria-labelledby="reviews-heading" className="mt-8 rounded-2xl border border-line bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="reviews-heading" className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-mut">
@@ -356,7 +356,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
           <ul className="mt-2 space-y-2">
             {mine.map((entry) => (
               <li key={entry.id} className="flex flex-wrap items-center gap-2 text-[11px]">
-                <span className="rounded-md bg-white px-2 py-0.5 font-bold text-ink">
+                <span className="rounded-md bg-card px-2 py-0.5 font-bold text-ink">
                   {describeStatus(mineStatus[entry.id] || 'pending')}
                 </span>
                 <span className="font-mono text-mut">{entry.id}</span>

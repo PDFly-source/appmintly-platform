@@ -23,7 +23,7 @@ export function ReleaseIntegrity({ app }: { app: AppItem }) {
   const size = formatIntegrityBytes(facts.sizeBytes);
 
   return (
-    <section aria-labelledby="release-integrity-heading" className="mt-8 rounded-2xl border border-line bg-white p-4 sm:p-5">
+    <section aria-labelledby="release-integrity-heading" className="mt-8 rounded-2xl border border-line bg-card p-4 sm:p-5">
       <h2 id="release-integrity-heading" className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-mut">
         <FileCheck2 className="h-4 w-4" aria-hidden="true" /> Release integrity
       </h2>

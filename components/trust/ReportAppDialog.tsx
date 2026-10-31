@@ -70,7 +70,7 @@ export function ReportAppDialog({ slug, appName, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="report-heading">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-line bg-white p-4 sm:rounded-2xl">
+      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-line bg-card p-4 sm:rounded-2xl">
         <div className="flex items-start justify-between gap-3">
           <h2 id="report-heading" className="flex items-center gap-2 text-sm font-bold text-ink">
             <ShieldQuestion className="h-4 w-4" aria-hidden="true" /> Report a problem with {appName}

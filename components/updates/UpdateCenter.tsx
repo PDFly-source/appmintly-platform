@@ -86,17 +86,17 @@ export function UpdateCenter() {
       </header>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-mut">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-mut">
           <BadgeCheck className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" />
           {buckets.totalPublished} published apps checked
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-mut">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-mut">
           <History className="h-3.5 w-3.5" aria-hidden="true" />
           {watched.length} watched in this browser
         </span>
         <Link
           href="/notifications"
-          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-ink hover:border-ink/30"
+          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink hover:border-ink/30"
         >
           {notifyOn ? <Bell className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
           Update notifications {notifyOn ? 'on' : 'off'} · manage
@@ -108,9 +108,9 @@ export function UpdateCenter() {
           Updates for apps you downloaded
         </h2>
         {!ready ? (
-          <div className="mt-3 h-24 animate-pulse rounded-2xl border border-line bg-white" />
+          <div className="mt-3 h-24 animate-pulse rounded-2xl border border-line bg-card" />
         ) : buckets.available.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-line bg-white p-5 text-sm text-mut">
+          <p className="mt-3 rounded-2xl border border-line bg-card p-5 text-sm text-mut">
             No updates found for the versions recorded in this browser. This list stays empty until the catalog
             publishes a newer verified release than the one you downloaded here.
           </p>
@@ -135,7 +135,7 @@ export function UpdateCenter() {
           Up to date
         </h2>
         {ready && buckets.upToDate.length === 0 ? (
-          <p className="mt-3 rounded-2xl border border-line bg-white p-5 text-sm text-mut">
+          <p className="mt-3 rounded-2xl border border-line bg-card p-5 text-sm text-mut">
             Nothing to show yet. Download an app from its page and it will appear here with the version this browser
             recorded.
           </p>
@@ -165,7 +165,7 @@ export function UpdateCenter() {
         {buckets.unknown.length > 0 ? (
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {buckets.unknown.map(({ app, knowledge }) => (
-              <li key={app.id} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3">
+              <li key={app.id} className="flex items-center gap-3 rounded-2xl border border-line bg-card p-3">
                 <AppIcon src={(app as AppItem).icon} name={app.name || "App"} category={(app as AppItem).category} themeColor={(app as AppItem).themeColor} size="sm" />
                 <div className="min-w-0 flex-1">
                   <Link href={`/app/${app.slug}/`} className="truncate text-sm font-bold text-ink hover:underline">
@@ -195,7 +195,7 @@ export function UpdateCenter() {
         <p className="mt-1 text-[11px] text-mut">Ordered by the release dates recorded in the catalog, not by build time.</p>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {recent.map(({ app, date, dateField }) => (
-            <li key={app.id} className="rounded-2xl border border-line bg-white p-4">
+            <li key={app.id} className="rounded-2xl border border-line bg-card p-4">
               <div className="flex items-start gap-3">
                 <AppIcon src={(app as AppItem).icon} name={app.name || "App"} category={(app as AppItem).category} themeColor={(app as AppItem).themeColor} size="md" />
                 <div className="min-w-0 flex-1">
@@ -224,7 +224,7 @@ export function UpdateCenter() {
         </ul>
       </section>
 
-      <p className="mt-10 rounded-2xl border border-line bg-white p-4 text-[11px] leading-relaxed text-mut">
+      <p className="mt-10 rounded-2xl border border-line bg-card p-4 text-[11px] leading-relaxed text-mut">
         <strong className="text-ink">What this page can and cannot know.</strong> It reads the published catalog and
         this browser&rsquo;s own download records. It never reports installs, ratings, download counts or popularity,
         and it never marks an unpublished or unverified release as available. A &ldquo;download&rdquo; is a request
@@ -254,7 +254,7 @@ function UpdateRow({
 
   return (
     <li
-      className={`rounded-2xl border bg-white p-4 ${
+      className={`rounded-2xl border bg-card p-4 ${
         highlight ? 'border-forge-green/40 shadow-[0_1px_0_0_rgba(0,0,0,0.02)]' : 'border-line'
       }`}
     >

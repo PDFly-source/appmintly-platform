@@ -86,7 +86,7 @@ export const PWAInstallBanner: React.FC = () => {
             </div>
 
             <div className="mt-4 space-y-3 text-sm text-ink/80">
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
+              <div className="flex items-start gap-3 bg-card p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-blue text-xs font-bold text-white">
                   1
                 </span>
@@ -95,7 +95,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
+              <div className="flex items-start gap-3 bg-card p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-green text-xs font-bold text-white">
                   2
                 </span>
@@ -104,7 +104,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-start gap-3 bg-white p-3 rounded-xl border border-line">
+              <div className="flex items-start gap-3 bg-card p-3 rounded-xl border border-line">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-forge-red text-xs font-bold text-white">
                   3
                 </span>

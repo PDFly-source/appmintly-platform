@@ -147,7 +147,7 @@ export default function AppDetailPage() {
           </Link>
           <Link
             href="/"
-            className="px-5 py-2.5 rounded-full bg-card border border-line text-ink text-xs font-bold hover:bg-white transition"
+            className="px-5 py-2.5 rounded-full bg-card border border-line text-ink text-xs font-bold hover:bg-card transition"
           >
             Back to Home
           </Link>
@@ -494,7 +494,7 @@ export default function AppDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-mut">
-                      <span className="px-2 py-0.5 rounded-md bg-white border border-forge-green/30 text-forge-green">
+                      <span className="px-2 py-0.5 rounded-md bg-card border border-forge-green/30 text-forge-green">
                         v{app.version}{app.apk?.versionCode ? ` (${app.apk.versionCode})` : ''}
                       </span>
                       <span>•</span>
@@ -771,7 +771,7 @@ export default function AppDetailPage() {
             {app.type === 'PWA' && (
               <button
                 onClick={() => setShowPwaInstallGuide(true)}
-                className="w-full p-4 rounded-2xl bg-card hover:bg-white border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
+                className="w-full p-4 rounded-2xl bg-card hover:bg-card border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
               >
                 <div>
                   <h4 className="text-xs font-semibold text-ink group-hover:text-forge-blue transition-colors">
@@ -1028,7 +1028,7 @@ export default function AppDetailPage() {
       <ReleaseIntegrity app={app} />
 
       {/* Item 9: private safety reporting. Reports are never public. */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-white p-4">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-card p-4">
         <p className="text-[12px] text-mut">
           Something wrong with this listing or the download? Report it privately. Reports are reviewed by the owner and are
           never published.

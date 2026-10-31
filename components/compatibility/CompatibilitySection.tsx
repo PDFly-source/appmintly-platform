@@ -65,7 +65,7 @@ function Group({
 }) {
   if (items.length === 0) return null;
   return (
-    <section className="min-w-0 rounded-xl border border-line bg-white p-4">
+    <section className="min-w-0 rounded-xl border border-line bg-card p-4">
       <h3 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-ink">
         {icon}
         {title}
@@ -87,7 +87,7 @@ export function CompatibilitySection({ app }: { app: AppItem }) {
   const unknownCount = model.unknownFields.length;
 
   return (
-    <section aria-labelledby="compatibility-heading" className="mt-8 rounded-2xl border border-line bg-white p-4 sm:p-5">
+    <section aria-labelledby="compatibility-heading" className="mt-8 rounded-2xl border border-line bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="compatibility-heading" className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-mut">
