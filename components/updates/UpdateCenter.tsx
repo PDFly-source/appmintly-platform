@@ -317,7 +317,7 @@ function UpdateRow({
               <button
                 type="button"
                 onClick={() => setSheetOpen(true)}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-ink px-4 text-xs font-bold text-white hover:opacity-90"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-xs font-bold text-on-ink hover:opacity-90"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 {knowledge.state === 'update-available' ? `Get v${knowledge.latestVersion}` : 'Download APK'}

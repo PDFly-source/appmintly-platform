@@ -175,7 +175,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
           </p>
           <Link
             href="/explore"
-            className="mt-4 inline-flex rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white"
+            className="mt-4 inline-flex rounded-xl bg-inkbg px-4 py-2 text-sm font-semibold text-on-ink"
           >
             Browse all apps
           </Link>

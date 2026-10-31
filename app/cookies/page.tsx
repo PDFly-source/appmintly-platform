@@ -17,7 +17,7 @@ export default function CookiePolicyPage() {
     <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <Cookie className="w-6 h-6 text-forge-yellow" aria-hidden="true" />
+          <Cookie className="w-6 h-6 text-warning-text" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Cookie Policy</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 26, 2026</p>

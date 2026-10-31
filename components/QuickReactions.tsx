@@ -50,7 +50,7 @@ export function QuickReactions({ appId, appName }: QuickReactionsProps) {
       aria-label={`Quick reactions for ${appName}`}
     >
       <h3 className="flex items-center gap-2 text-ink font-bold mb-1">
-        <PartyPopper className="w-4 h-4 text-forge-red" aria-hidden />
+        <PartyPopper className="w-4 h-4 text-accent-text" aria-hidden />
         Quick Reactions
       </h3>
       <p className="text-xs text-mut mb-4">

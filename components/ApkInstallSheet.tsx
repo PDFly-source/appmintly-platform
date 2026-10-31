@@ -367,7 +367,7 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
 
           {downloadState === 'error' && (
             <div className="space-y-3 text-left">
-              <div className="p-3.5 rounded-xl bg-forge-red/10 border border-forge-red/30 flex items-start gap-2.5 text-xs text-forge-red">
+              <div className="p-3.5 rounded-xl bg-forge-red/10 border border-forge-red/30 flex items-start gap-2.5 text-xs text-accent-text">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold">APK download unavailable</p>

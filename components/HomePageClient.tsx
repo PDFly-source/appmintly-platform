@@ -156,7 +156,7 @@ export default function HomePage() {
               <div className="pt-1">
                 <Link
                   href="/explore"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-white text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-forge-dark text-sm font-bold shadow-md transition-all duration-200 transform hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/50"
                   style={{ backgroundColor: '#16A765' }}
                 >
                   <Compass className="w-4 h-4" />
@@ -351,8 +351,8 @@ export default function HomePage() {
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14 rounded-3xl gradient-wash py-2" aria-label="Featured applications">
         <div className="flex items-end justify-between mb-5">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-forge-red bg-forge-red/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-red/25">
-              <Sparkles className="w-3.5 h-3.5 text-forge-red" />
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-accent-text bg-forge-red/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-red/25">
+              <Sparkles className="w-3.5 h-3.5 text-accent-text" />
               <span>Featured App Spotlight</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -393,8 +393,8 @@ export default function HomePage() {
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Recently updated curated picks">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-forge-red bg-forge-red/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-red/25">
-                <Clock className="w-3.5 h-3.5 text-forge-red" />
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-accent-text bg-forge-red/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-red/25">
+                <Clock className="w-3.5 h-3.5 text-accent-text" />
                 <span>Curated Selection</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -773,7 +773,7 @@ export default function HomePage() {
           <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none" />
           <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none" />
           <div className="space-y-3 max-w-xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-blue text-on-cta text-xs font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-solid text-on-blue text-xs font-bold uppercase tracking-wider">
               <Rocket className="w-3.5 h-3.5" /> APPMINTLY PLATFORM
             </span>
             <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">

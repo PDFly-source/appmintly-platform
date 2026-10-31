@@ -26,7 +26,7 @@ export function ReleaseStory({ app }: { app: AppItem }) {
       aria-label={`Release story for ${app.name}`}
     >
       <h3 className="flex items-center gap-2 text-ink font-bold mb-1">
-        <BookOpen className="w-4 h-4 text-forge-red" aria-hidden />
+        <BookOpen className="w-4 h-4 text-accent-text" aria-hidden />
         Release Story
       </h3>
       <p className="text-xs text-mut mb-5">

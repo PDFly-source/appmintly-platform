@@ -111,7 +111,7 @@ function ResultPill({ result }: { result: CheckResult }) {
     result === 'passed'
       ? 'bg-cta/10 text-cta border-cta/40'
       : result === 'failed' || result === 'unable-to-verify'
-        ? 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40'
+        ? 'bg-forge-yellow/10 text-warning-text border-forge-yellow/40'
         : 'bg-page text-mut border-line';
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${cls}`}>
@@ -195,7 +195,7 @@ export default function EngineeringDashboardClient() {
       {/* Header + scan clock + refresh */}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-forge-red">
+          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-accent-text">
             <Wrench className="w-3.5 h-3.5" aria-hidden /> AppMintly Engineering
           </p>
           <h1 className="mt-1 text-xl sm:text-2xl font-black">Engineering Dashboard</h1>
@@ -222,7 +222,7 @@ export default function EngineeringDashboardClient() {
       </header>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-forge-red/40 bg-forge-red/10 text-forge-red text-xs font-semibold px-3 py-2">
+        <p role="alert" className="mt-4 rounded-xl border border-forge-red/40 bg-forge-red/10 text-accent-text text-xs font-semibold px-3 py-2">
           {error}
         </p>
       )}
@@ -278,11 +278,11 @@ export default function EngineeringDashboardClient() {
             <ul className="grid sm:grid-cols-2 gap-2">
               <li className="rounded-xl border border-line bg-card px-3.5 py-2.5 flex items-center justify-between gap-2">
                 <span className="text-xs font-bold">Testing QA</span>
-                <span className="text-[10px] font-bold text-forge-yellow">PENDING (progress 0%)</span>
+                <span className="text-[10px] font-bold text-warning-text">PENDING (progress 0%)</span>
               </li>
               <li className="rounded-xl border border-line bg-card px-3.5 py-2.5 flex items-center justify-between gap-2">
                 <span className="text-xs font-bold">Release Readiness</span>
-                <span className="text-[10px] font-bold text-forge-yellow">PENDING (progress 0%)</span>
+                <span className="text-[10px] font-bold text-warning-text">PENDING (progress 0%)</span>
               </li>
             </ul>
             <p className="mt-2 text-[10px] text-mut/80 leading-snug">
@@ -397,7 +397,7 @@ export default function EngineeringDashboardClient() {
                         </p>
                         {c.summary && <p>{c.summary}</p>}
                         {c.source && <p className="text-mut/80">Source: {c.source}</p>}
-                        {c.limitations && <p className="text-forge-yellow/90">Limitations: {c.limitations}</p>}
+                        {c.limitations && <p className="text-warning-text/90">Limitations: {c.limitations}</p>}
                       </li>
                     ))}
                   </ul>
@@ -417,7 +417,7 @@ export default function EngineeringDashboardClient() {
           <ol className="grid gap-2">
             {builds.map((b) => (
               <li key={b.id} className="rounded-xl border border-line bg-card px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.outcome === 'success' ? 'bg-cta/10 text-cta border-cta/40' : 'bg-forge-red/10 text-forge-red border-forge-red/40'}`}>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.outcome === 'success' ? 'bg-cta/10 text-cta border-cta/40' : 'bg-forge-red/10 text-accent-text border-forge-red/40'}`}>
                   {b.outcome === 'success' ? <CheckCircle2 className="w-3 h-3" aria-hidden /> : <AlertCircle className="w-3 h-3" aria-hidden />}
                   {b.outcome}
                 </span>
@@ -466,7 +466,7 @@ export default function EngineeringDashboardClient() {
                 </div>
                 {r.summary && <p className="mt-1.5 text-[10px] text-ink/85 leading-snug">{r.summary}</p>}
                 {r.source && <p className="mt-1 text-[10px] text-mut/85 leading-snug">Source: {r.source}{r.build_id ? ` · ${r.build_id}` : ''}{r.date ? ` · ${r.date}` : ''}</p>}
-                {r.limitations && <p className="mt-1 text-[10px] text-forge-yellow/90 leading-snug">Limitations: {r.limitations}</p>}
+                {r.limitations && <p className="mt-1 text-[10px] text-warning-text/90 leading-snug">Limitations: {r.limitations}</p>}
               </article>
             ))}
           </div>
@@ -491,7 +491,7 @@ export default function EngineeringDashboardClient() {
               <li key={b.id} className="rounded-xl border border-line bg-card px-4 py-3">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="text-xs font-black">{b.app}</span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.status === 'open' ? 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40' : 'bg-cta/10 text-cta border-cta/40'}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.status === 'open' ? 'bg-forge-yellow/10 text-warning-text border-forge-yellow/40' : 'bg-cta/10 text-cta border-cta/40'}`}>
                     {b.status === 'open' ? <Clock className="w-3 h-3" aria-hidden /> : <CheckCircle2 className="w-3 h-3" aria-hidden />}
                     {b.status}
                   </span>

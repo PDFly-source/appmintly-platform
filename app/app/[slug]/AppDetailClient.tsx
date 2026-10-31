@@ -131,7 +131,7 @@ export default function AppDetailPage() {
   if (!app) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-forge-red flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-accent-text flex items-center justify-center mx-auto mb-4">
           <Info className="w-8 h-8" />
         </div>
         <h1 className="text-2xl font-extrabold text-ink">Application Not Found</h1>
@@ -275,7 +275,7 @@ export default function AppDetailPage() {
   const getPublicTypeBadge = () => {
     if (app.type === 'Web Game') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-red/10 text-forge-red border border-forge-red/25">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-red/10 text-accent-text border border-forge-red/25">
           <Gamepad2 className="w-3.5 h-3.5" /> GAME
         </span>
       );
@@ -405,7 +405,7 @@ export default function AppDetailPage() {
                 >
                   <Bookmark
                     key={`fav-${favorite}`}
-                    className={`w-4 h-4 ${favorite ? 'fill-forge-red text-forge-red' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
+                    className={`w-4 h-4 ${favorite ? 'fill-forge-red text-accent-text' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
                   />
                 </button>
 
@@ -435,7 +435,7 @@ export default function AppDetailPage() {
                   aria-pressed={updateAlertsOn}
                 >
                   {updateAlertsOn ? (
-                    <Bell className="w-4 h-4 text-forge-red" />
+                    <Bell className="w-4 h-4 text-accent-text" />
                   ) : (
                     <BellOff className="w-4 h-4" />
                   )}
@@ -466,7 +466,7 @@ export default function AppDetailPage() {
                 </span>
                 {app.original && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-forge-yellow/20 text-[#8C6000] border border-forge-yellow/40">
-                    <Sparkles className="w-3.5 h-3.5 text-forge-yellow" /> Original
+                    <Sparkles className="w-3.5 h-3.5 text-warning-text" /> Original
                   </span>
                 )}
                 {isStandaloneInstalled && (
@@ -809,7 +809,7 @@ export default function AppDetailPage() {
               />
               <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
                 <div className="flex-1 text-center sm:text-left">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-forge-yellow">
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-warning-text">
                     <span aria-hidden="true">✦ </span>Discover more from {resolveDeveloper(app).name}
                   </p>
                   <p className="mt-1.5 text-xs sm:text-[13px] text-white/70 font-semibold leading-relaxed">
@@ -998,7 +998,7 @@ export default function AppDetailPage() {
               </div>
 
               <div className="p-3.5 rounded-2xl bg-forge-red/10 border border-forge-red/25 space-y-1">
-                <p className="font-bold text-forge-red flex items-center gap-1.5">
+                <p className="font-bold text-accent-text flex items-center gap-1.5">
                   <Smartphone className="w-4 h-4" /> Safari (iPhone &amp; iPad)
                 </p>
                 <p className="text-ink/80 leading-relaxed">

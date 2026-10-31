@@ -108,7 +108,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
     return (
       <section aria-labelledby="apk-verify-heading" className="rounded-2xl bg-card border border-line overflow-hidden shadow-sm">
         <div className="flex items-center gap-2 px-4 py-3.5 bg-page border-b border-line">
-          <ShieldAlert className="w-4 h-4 text-forge-red" aria-hidden />
+          <ShieldAlert className="w-4 h-4 text-accent-text" aria-hidden />
           <h3 id="apk-verify-heading" className="text-sm font-bold text-ink">Verify APK integrity</h3>
         </div>
         <div className="p-4">
@@ -288,13 +288,13 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             </>
           ) : result.state === 'mismatch' ? (
             <>
-              <ShieldX className="w-3.5 h-3.5 text-forge-red" aria-hidden />
-              <span className="text-forge-red">{stateLabel}</span>
+              <ShieldX className="w-3.5 h-3.5 text-accent-text" aria-hidden />
+              <span className="text-accent-text">{stateLabel}</span>
             </>
           ) : result.state === 'failed' ? (
             <>
-              <ShieldAlert className="w-3.5 h-3.5 text-forge-red" aria-hidden />
-              <span className="text-forge-red">{stateLabel}</span>
+              <ShieldAlert className="w-3.5 h-3.5 text-accent-text" aria-hidden />
+              <span className="text-accent-text">{stateLabel}</span>
             </>
           ) : result.state === 'verifying' ? (
             <>
@@ -353,7 +353,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             <button
               type="button"
               onClick={cancel}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-forge-red/40 text-forge-red hover:bg-forge-red/10 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border border-forge-red/40 text-accent-text hover:bg-forge-red/10 transition-colors cursor-pointer"
             >
               <XCircle className="w-4 h-4" aria-hidden />
               Cancel
@@ -425,7 +425,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         {/* Hash mismatch: prominent warning, never labelled verified */}
         {result.state === 'mismatch' && (
           <div role="alert" className="mt-3 rounded-xl border p-3.5 bg-forge-red/10 border-forge-red/60">
-            <p className="flex items-center gap-2 text-sm font-bold text-forge-red">
+            <p className="flex items-center gap-2 text-sm font-bold text-accent-text">
               <ShieldX className="w-4.5 h-4.5" aria-hidden />
               Hash mismatch — do not install this file
             </p>
@@ -443,7 +443,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         {result.state === 'failed' && (
           <div role="alert" className="mt-3 rounded-xl border p-3.5 bg-page border-forge-red/40">
             <p className="flex items-center gap-2 text-sm font-bold text-ink">
-              <ShieldAlert className="w-4.5 h-4.5 text-forge-red" aria-hidden />
+              <ShieldAlert className="w-4.5 h-4.5 text-accent-text" aria-hidden />
               Verification failed
             </p>
             <p className="mt-1.5 text-[11px] text-mut leading-relaxed">{result.message}</p>
@@ -451,7 +451,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
               <button
                 type="button"
                 onClick={() => setResult({ state: 'not-verified' })}
-                className="mt-2 text-[11px] font-bold text-forge-red hover:underline cursor-pointer"
+                className="mt-2 text-[11px] font-bold text-accent-text hover:underline cursor-pointer"
               >
                 Try again
               </button>

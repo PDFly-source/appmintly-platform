@@ -228,7 +228,7 @@ export default function LabClient() {
         <div className="lab-orb-coral absolute -bottom-20 right-4 w-48 h-48 rounded-full opacity-50" aria-hidden />
 
         <div className="relative px-5 sm:px-10 py-10 sm:py-14">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-red/10 text-forge-red border border-forge-red/25 text-[10px] font-black uppercase tracking-[0.14em]">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-red/10 text-accent-text border border-forge-red/25 text-[10px] font-black uppercase tracking-[0.14em]">
             <FlaskConical className="w-3 h-3" aria-hidden />
             AppMintly Lab
           </span>
@@ -451,7 +451,7 @@ export default function LabClient() {
             <button
               type="button"
               onClick={() => setCompareIds([])}
-              className="inline-flex items-center min-h-[44px] px-3.5 py-2 rounded-xl border border-line bg-card text-xs font-bold text-ink cursor-pointer hover:border-forge-red/40 hover:text-forge-red transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
+              className="inline-flex items-center min-h-[44px] px-3.5 py-2 rounded-xl border border-line bg-card text-xs font-bold text-ink cursor-pointer hover:border-forge-red/40 hover:text-accent-text transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 motion-reduce:transition-none"
             >
               Clear
             </button>
@@ -681,7 +681,7 @@ function CompareDialog({ apps, onClose }: { apps: UpcomingApp[]; onClose: () => 
             type="button"
             onClick={onClose}
             aria-label="Close app comparison"
-            className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-page text-ink hover:text-forge-red cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
+            className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-line bg-page text-ink hover:text-accent-text cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60"
           >
             <X className="w-5 h-5" aria-hidden />
           </button>

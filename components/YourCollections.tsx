@@ -273,7 +273,7 @@ export function YourCollections({ surface = 'library' }: Props) {
                         type="button"
                         onClick={() => setConfirmDelete(collection.id)}
                         aria-label={`Delete ${collection.name}`}
-                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-line bg-card text-mut hover:text-forge-red transition"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-line bg-card text-mut hover:text-accent-text transition"
                       >
                         <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                       </button>

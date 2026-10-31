@@ -271,7 +271,7 @@ export default function LibrarySettingsClient() {
           <button
             type="button"
             onClick={() => setConfirmAll(true)}
-            className="min-h-[44px] w-full rounded-xl border border-forge-red/30 bg-forge-red/10 px-4 text-xs font-bold text-forge-red hover:bg-forge-red/20 transition flex items-center justify-between"
+            className="min-h-[44px] w-full rounded-xl border border-forge-red/30 bg-forge-red/10 px-4 text-xs font-bold text-accent-text hover:bg-forge-red/20 transition flex items-center justify-between"
           >
             <span>Remove all personalization data</span>
             <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />

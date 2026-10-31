@@ -187,7 +187,7 @@ export function QrCodeDialog({ app, onClose, toast }: QrCodeDialogProps) {
       <div className="relative w-full max-w-sm rounded-2xl bg-card border border-line shadow-2xl p-5 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
         <div className="flex items-center justify-between mb-4">
           <h3 className="flex items-center gap-2 text-ink font-bold">
-            <QrCode className="w-4.5 h-4.5 text-forge-red" aria-hidden />
+            <QrCode className="w-4.5 h-4.5 text-accent-text" aria-hidden />
             Share via QR code
           </h3>
           <button

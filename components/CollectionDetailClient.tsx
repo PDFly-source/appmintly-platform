@@ -201,7 +201,7 @@ export default function CollectionDetailClient() {
                 type="button"
                 onClick={() => setConfirmDelete(true)}
                 aria-label="Delete collection"
-                className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-forge-red"
+                className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-accent-text"
               >
                 <Trash2 aria-hidden="true" className="w-4 h-4" />
               </button>
@@ -277,7 +277,7 @@ export default function CollectionDetailClient() {
                   type="button"
                   onClick={() => removeApp(entry.slug, record.name)}
                   aria-label={`Remove ${record.name} from ${collection.name}`}
-                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-forge-red"
+                  className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-accent-text"
                 >
                   <X aria-hidden="true" className="w-4 h-4" />
                 </button>

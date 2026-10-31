@@ -97,7 +97,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
               <span>Featured App</span>
             </span>
             {current.original && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-forge-yellow/20 border border-forge-yellow/40 text-forge-yellow text-xs font-bold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-forge-yellow/20 border border-forge-yellow/40 text-warning-text text-xs font-bold">
                 AppMintly Original
               </span>
             )}

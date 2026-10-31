@@ -22,6 +22,11 @@
      colour on or of an accent changes per theme so every pairing clears
      WCAG AA. Measured, not guessed. */
   --c-on-ink: #FFFFFF;     /* 18.2:1 on the #0E1526 ink chip, all themes */
+  --c-warning-text: #4A3300;  /* text on light surfaces / yellow tints */
+  --c-on-warning: #3D2A00;    /* text on the solid #E5B84B fill, 7.38:1 */
+  --c-link-on-dark: #9EC5FF;  /* 10.86:1 on the #0B0F16 hero */
+  --c-blue-solid: #1560D8;    /* brand blue fill, one step down for AA */
+  --c-on-blue: #FFFFFF;       /* 5.68:1 on #1560D8 */
   --c-on-brand: #0E1526;   /* 4.89:1 on #E8503D (white was 3.72) */
   --c-on-cta: #FFFFFF;     /* 5.47:1 on #0F766E */
   --c-on-success: #0E1526;
@@ -40,6 +45,11 @@
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
   --c-on-ink: #FFFFFF;      /* 15.57:1 on the #1B2434 ink chip */
+  --c-on-warning: #3D2A00;
+  --c-warning-text: #F5C451;
+  --c-link-on-dark: #9EC5FF;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
   --c-on-brand: #0E1526;    /* 4.89:1 on #E8503D */
   --c-on-cta: #0E1526;      /* 7.31:1 on #14B8A6 (white was 2.49) */
   --c-on-success: #0E1526;  /* 7.31:1 on #14B8A6 */
@@ -65,6 +75,11 @@
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
   --c-on-ink: #FFFFFF;      /* 18.44:1 on the #10141C ink chip */
+  --c-on-warning: #3D2A00;
+  --c-warning-text: #F5C451;
+  --c-link-on-dark: #9EC5FF;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
   --c-on-brand: #0E1526;
   --c-on-cta: #0E1526;
   --c-on-success: #0E1526;
@@ -83,6 +98,11 @@
   --color-cta: var(--c-cta);
   --color-cta-hover: var(--c-cta-hover);
   --color-on-ink: var(--c-on-ink);
+  --color-warning-text: var(--c-warning-text);
+  --color-on-warning: var(--c-on-warning);
+  --color-link-on-dark: var(--c-link-on-dark);
+  --color-blue-solid: var(--c-blue-solid);
+  --color-on-blue: var(--c-on-blue);
   --color-on-brand: var(--c-on-brand);
   --color-on-cta: var(--c-on-cta);
   --color-on-success: var(--c-on-success);

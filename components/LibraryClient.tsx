@@ -424,7 +424,7 @@ export default function LibraryPage() {
                   type="button"
                   onClick={() => removeRecent(app)}
                   aria-label={`Remove ${app.name} from recently viewed`}
-                  className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-forge-red hover:border-forge-red/30 transition"
+                  className="min-h-[44px] min-w-[44px] shrink-0 inline-flex items-center justify-center rounded-xl border border-line bg-card text-mut hover:text-accent-text hover:border-forge-red/30 transition"
                 >
                   <X aria-hidden="true" className="w-4 h-4" />
                 </button>
@@ -603,7 +603,7 @@ function SavedRow({
             type="button"
             onClick={() => onUnsave(app)}
             aria-label={`Remove ${app.name} from saved apps`}
-            className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-forge-red hover:bg-forge-red/10 transition"
+            className="w-11 h-11 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-mut hover:text-accent-text hover:bg-forge-red/10 transition"
           >
             <X aria-hidden="true" className="w-4 h-4" />
           </button>
@@ -770,7 +770,7 @@ function ManageDialog({
                           toggleLocalFavorite(app.id);
                           toast(`Removed "${app.name}" from saved apps.`, 'info');
                         }}
-                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-full text-[11px] font-bold text-mut hover:text-forge-red hover:bg-forge-red/10 transition shrink-0"
+                        className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-full text-[11px] font-bold text-mut hover:text-accent-text hover:bg-forge-red/10 transition shrink-0"
                       >
                         Remove
                       </button>
@@ -805,7 +805,7 @@ function ManageDialog({
               <button
                 type="button"
                 onClick={() => setConfirmingAll(true)}
-                className="min-h-[44px] w-full rounded-xl border border-forge-red/30 bg-forge-red/10 px-4 text-sm font-bold text-forge-red hover:bg-forge-red/20 transition text-left flex items-center justify-between"
+                className="min-h-[44px] w-full rounded-xl border border-forge-red/30 bg-forge-red/10 px-4 text-sm font-bold text-accent-text hover:bg-forge-red/20 transition text-left flex items-center justify-between"
               >
                 <span>Clear all local data</span>
                 <Trash2 aria-hidden="true" className="w-4 h-4" />

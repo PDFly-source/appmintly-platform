@@ -77,7 +77,7 @@ const MenuRow: React.FC<MenuRowProps> = ({ href, label, icon: Icon, iconSrc, des
 
 /** Section label — same gold accent family as the footer headings. */
 const MenuSectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[11px] font-black uppercase tracking-wider text-forge-yellow mb-1.5">{children}</p>
+  <p className="text-[11px] font-black uppercase tracking-wider text-warning-text mb-1.5">{children}</p>
 );
 
 /**
@@ -358,7 +358,7 @@ export const Navbar: React.FC = () => {
             className="hidden sm:flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] rounded-full bg-page hover:bg-line text-ink text-xs font-semibold transition border border-line"
             title="Local Library & Saved Apps"
           >
-            <Bookmark className="w-4 h-4 text-forge-red" />
+            <Bookmark className="w-4 h-4 text-accent-text" />
             <span className="hidden sm:inline">Library</span>
             {favCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-forge-red text-on-brand text-[10px] font-black flex items-center justify-center">

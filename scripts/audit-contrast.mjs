@@ -43,21 +43,34 @@ const AUDIT = String.raw`(() => {
     const hi = Math.max(l1, l2), lo = Math.min(l1, l2);
     return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
   };
+  const stopsFrom = (image) => {
+    const stops = [];
+    const re = /rgba?\([^)]+\)/g;
+    let m;
+    while ((m = re.exec(image))) { const c = parse(m[0]); if (c && c.a > 0.5) stops.push(c); }
+    return stops;
+  };
   const resolveBg = (el) => {
     let n = el;
     let indeterminate = null;
     while (n && n !== document.documentElement) {
       const s = getComputedStyle(n);
-      if ((s.backgroundImage && s.backgroundImage !== 'none') || /blend|backdrop/.test(s.backdropFilter || '')) {
-        indeterminate = indeterminate || n.tagName.toLowerCase();
+      if (s.backgroundImage && s.backgroundImage !== 'none' && /gradient/.test(s.backgroundImage)) {
+        // A gradient is a real rendered background: every stop is a candidate,
+        // and the worst contrast against the text is what counts. This is why
+        // the install banner and the 3D hero were false negatives before.
+        const stops = stopsFrom(s.backgroundImage);
+        const c = parse(s.backgroundColor);
+        if (c && c.a >= 0.999) stops.push(c);
+        if (stops.length) return { candidates: stops, indeterminate: null };
       }
       const c = parse(s.backgroundColor);
-      if (c && c.a >= 0.999) return { bg: c, indeterminate };
-      if (c && c.a > 0) { const parent = parse(getComputedStyle(n.parentElement).backgroundColor); if (parent && parent.a === 1) return { bg: over(c, parent), indeterminate }; }
+      if (c && c.a >= 0.999) return { candidates: [c], indeterminate };
+      if (c && c.a > 0) { const parent = parse(getComputedStyle(n.parentElement).backgroundColor); if (parent && parent.a === 1) return { candidates: [over(c, parent)], indeterminate }; }
       n = n.parentElement;
     }
     const body = parse(getComputedStyle(document.body).backgroundColor);
-    return { bg: body && body.a === 1 ? body : { r: 255, g: 255, b: 255, a: 1 }, indeterminate };
+    return { candidates: [body && body.a === 1 ? body : { r: 255, g: 255, b: 255, a: 1 }], indeterminate };
   };
   const out = [];
   const seen = new Set();
@@ -74,12 +87,18 @@ const AUDIT = String.raw`(() => {
     if (rect.width < 1 || rect.height < 1) continue;
     const rawFg = parse(s.color);
     if (!rawFg) continue;
-    const { bg, indeterminate } = resolveBg(el);
-    const fg = rawFg.a < 1 ? over(rawFg, bg) : rawFg;
+    const { candidates, indeterminate } = resolveBg(el);
+    const bg = candidates[0];
+    const clipped = /text/.test(s.webkitBackgroundClip || '') || /text/.test(s.backgroundClip || '');
+    const clipStops = clipped && s.backgroundImage !== 'none' ? stopsFrom(s.backgroundImage) : [];
+    const fgs = clipStops.length ? clipStops : [rawFg.a < 1 ? over(rawFg, bg) : rawFg];
+    const worst = fgs.map((f) => Math.min(...candidates.map((b) => ratio(f, b))))
+      .reduce((a, b) => Math.min(a, b), Infinity);
+    const fg = fgs[0];
     const size = parseFloat(s.fontSize) || 16;
     const weight = parseInt(s.fontWeight, 10) || 400;
     const need = (size >= 24 || (size >= 18.66 && weight >= 700)) ? 3 : 4.5;
-    const r = ratio(fg, bg);
+    const r = Math.round(worst * 100) / 100;
     const cls = typeof el.className === 'string' ? el.className : '';
     const key = cls + '|' + Math.round(r * 10);
     if (r >= need || seen.has(key)) continue;
@@ -92,6 +111,7 @@ const AUDIT = String.raw`(() => {
       bg: 'rgb(' + bg.r + ',' + bg.g + ',' + bg.b + ')',
       ratio: r,
       need,
+      gradientClipped: clipStops.length > 0,
       gradientParent: indeterminate,
     });
   }

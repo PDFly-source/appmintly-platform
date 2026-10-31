@@ -117,7 +117,7 @@ export function UpdateNotice({ app }: { app: AppItem }) {
           >
             <div className="flex items-center justify-between mb-3">
               <h3 id="update-details-title" className="flex items-center gap-2 text-ink font-bold">
-                <ArrowUpCircle className="w-4.5 h-4.5 text-forge-yellow" aria-hidden />
+                <ArrowUpCircle className="w-4.5 h-4.5 text-warning-text" aria-hidden />
                 Update details
               </h3>
               <button

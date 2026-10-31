@@ -64,7 +64,7 @@ export default function AboutPage() {
         </div>
 
         <div className="p-6 rounded-3xl bg-card border border-line shadow-2xs">
-          <div className="w-10 h-10 rounded-xl bg-forge-red/10 text-forge-red flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-xl bg-forge-red/10 text-accent-text flex items-center justify-center mb-3">
             <Smartphone className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-base text-ink">Direct APK Downloads</h3>

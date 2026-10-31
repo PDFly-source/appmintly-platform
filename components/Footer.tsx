@@ -89,7 +89,7 @@ export const Footer: React.FC = () => {
               (no Games content exists in the catalog); the catalog schema still
               supports games for the future. */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Platforms and types">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-warning-text">
               Platforms &amp; Types
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
@@ -107,13 +107,13 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link href="/explore?type=Tool" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Wrench className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
+                  <Wrench className="w-3.5 h-3.5 text-warning-text" aria-hidden="true" />
                   <span>Tools &amp; Utilities</span>
                 </Link>
               </li>
               <li>
                 <Link href="/explore?filter=originals" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Sparkles className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
+                  <Sparkles className="w-3.5 h-3.5 text-warning-text" aria-hidden="true" />
                   <span>AppMintly Originals</span>
                 </Link>
               </li>
@@ -124,7 +124,7 @@ export const Footer: React.FC = () => {
               catalog-backed product sites; icons are the existing public/brand
               assets already shipped by the marketplace. */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="The suite">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-warning-text">
               The Suite
             </h4>
             <ul className="space-y-2.5 text-xs text-[#FAF5ED]/75">
@@ -173,7 +173,7 @@ export const Footer: React.FC = () => {
 
           {/* Marketplace */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Marketplace">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-warning-text">
               Marketplace
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
@@ -195,7 +195,7 @@ export const Footer: React.FC = () => {
           {/* Legal — properly separated links (Phase 16.6 fixed the previous
               merged "About AppMintlyPrivacy PolicyTerms of Service" run-on). */}
           <nav className="md:col-span-1 lg:col-span-2 space-y-2" aria-label="Legal">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-forge-yellow">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-warning-text">
               Legal
             </h4>
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
@@ -224,7 +224,7 @@ export const Footer: React.FC = () => {
           <p className="text-[28px] lg:text-[44px] font-black tracking-tight leading-none select-none">
             <AppMintlyWordmarkText />
           </p>
-          <p className="text-[11px] font-semibold tracking-[0.25em] text-forge-yellow/90 select-none">
+          <p className="text-[11px] font-semibold tracking-[0.25em] text-warning-text/90 select-none">
             DISCOVER <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> INSTALL{' '}
             <span className="text-[#FAF5ED]/40" aria-hidden="true">•</span> EXPERIENCE
           </p>
@@ -232,7 +232,7 @@ export const Footer: React.FC = () => {
             Crafted &amp; Developed by{' '}
             <Link
               href="/publisher/pkd"
-              className="font-black text-[#FAF5ED] transition-colors hover:text-forge-yellow focus-ring rounded-sm"
+              className="font-black text-[#FAF5ED] transition-colors hover:text-warning-text focus-ring rounded-sm"
             >
               PKD
             </Link>

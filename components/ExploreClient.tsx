@@ -459,7 +459,7 @@ const clearAllFilters = () => {
           aria-pressed={featuredOnly}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             featuredOnly
-              ? 'bg-forge-yellow/15 border-forge-yellow/40 text-[#8C6000] dark:text-forge-yellow'
+              ? 'bg-forge-yellow/15 border-forge-yellow/40 text-[#8C6000] dark:text-warning-text'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -708,7 +708,7 @@ const clearAllFilters = () => {
               : 'bg-page border-line text-ink hover:border-ink/25'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-forge-yellow" aria-hidden="true" />
+          <Sparkles className="w-3.5 h-3.5 text-warning-text" aria-hidden="true" />
           Originals
         </button>
         <div className="relative ml-auto">
@@ -1023,7 +1023,7 @@ const clearAllFilters = () => {
                 className="w-full flex items-center justify-between gap-3 min-h-11 px-1 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 rounded-xl"
               >
                 <span className="flex items-center gap-2 text-sm font-bold text-ink">
-                  <Sparkles className="w-4 h-4 text-forge-yellow" aria-hidden="true" />
+                  <Sparkles className="w-4 h-4 text-warning-text" aria-hidden="true" />
                   Originals Only
                 </span>
                 <span

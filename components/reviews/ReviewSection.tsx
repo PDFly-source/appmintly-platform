@@ -248,7 +248,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
           </h2>
           {average ? (
             <p className="mt-1 flex items-center gap-1.5 text-sm font-bold text-ink">
-              <Star className="h-4 w-4 fill-forge-yellow text-forge-yellow" aria-hidden="true" />
+              <Star className="h-4 w-4 fill-forge-yellow text-warning-text" aria-hidden="true" />
               {average}
             </p>
           ) : (
@@ -272,7 +272,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
         </p>
       ) : null}
       {errors.length > 0 ? (
-        <ul role="alert" className="mt-3 space-y-1 rounded-xl border border-forge-red/30 bg-forge-red/10 p-3 text-[12px] font-semibold text-forge-red">
+        <ul role="alert" className="mt-3 space-y-1 rounded-xl border border-forge-red/30 bg-forge-red/10 p-3 text-[12px] font-semibold text-accent-text">
           {errors.map((e) => (
             <li key={e}>{e}</li>
           ))}
@@ -294,7 +294,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
                   onClick={() => setRating(rating === value ? null : value)}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-line"
                 >
-                  <Star className={`h-5 w-5 ${rating !== null && value <= rating ? 'fill-forge-yellow text-forge-yellow' : 'text-mut'}`} aria-hidden="true" />
+                  <Star className={`h-5 w-5 ${rating !== null && value <= rating ? 'fill-forge-yellow text-warning-text' : 'text-mut'}`} aria-hidden="true" />
                 </button>
               ))}
             </div>
@@ -342,7 +342,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-ink px-5 text-xs font-bold text-white disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-inkbg px-5 text-xs font-bold text-on-ink disabled:opacity-60"
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             Submit for review
@@ -363,7 +363,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
                 <button type="button" onClick={() => void editMine(entry)} className="min-h-11 rounded-lg border border-line px-3 font-bold text-ink">
                   Edit
                 </button>
-                <button type="button" onClick={() => void deleteMine(entry)} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-forge-red/30 px-3 font-bold text-forge-red">
+                <button type="button" onClick={() => void deleteMine(entry)} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-forge-red/30 px-3 font-bold text-accent-text">
                   <Trash2 className="h-3 w-3" aria-hidden="true" /> Delete
                 </button>
               </li>
@@ -388,7 +388,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-ink px-4 text-xs font-bold text-white"
+                className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-xs font-bold text-on-ink"
               >
                 <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" /> Write the first review
               </button>
@@ -403,7 +403,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
                   <span className="rounded-md bg-canvas px-1.5 py-0.5">anonymous submission</span>
                   {review.rating ? (
                     <span className="inline-flex items-center gap-0.5 font-bold text-ink">
-                      <Star className="h-3 w-3 fill-forge-yellow text-forge-yellow" aria-hidden="true" />
+                      <Star className="h-3 w-3 fill-forge-yellow text-warning-text" aria-hidden="true" />
                       {review.rating}/5
                     </span>
                   ) : null}
@@ -450,7 +450,7 @@ export function ReviewSection({ app }: { app: AppItem }) {
                     <button
                       type="button"
                       onClick={() => void report(review.id)}
-                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-ink px-4 text-[11px] font-bold text-white"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-inkbg px-4 text-[11px] font-bold text-on-ink"
                     >
                       <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" /> Send report
                     </button>

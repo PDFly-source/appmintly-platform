@@ -121,7 +121,7 @@ export default function CategoryDetailPage() {
         </div>
       ) : (
         <div className="text-center py-16 sm:py-24 px-4 bg-card rounded-3xl border border-line">
-          <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-forge-red flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-forge-red/10 text-accent-text flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8" />
           </div>
           <h3 className="text-lg sm:text-xl font-bold text-ink tracking-tight">

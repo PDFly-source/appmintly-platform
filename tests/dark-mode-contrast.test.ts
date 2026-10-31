@@ -206,6 +206,49 @@ describe('semantic token contrast in each theme', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('accent text tokens clear AA on every real surface they are used on', () => {
+    const selectors: Record<string, string> = { light: ':root', dark: '.dark', amoled: '.amoled' };
+    const surfaces = { card: '#FFFFFF', page: '#F6F8FB', inkChip: '#0E1526', hero: '#0B0F16' };
+    const darkSurfaces = { card: '#111826', page: '#0B0F16', inkChip: '#1B2434', hero: '#0B0F16' };
+    for (const [theme, selector] of Object.entries(selectors)) {
+      const t = tokensFor(selector);
+      const table = theme === 'light' ? surfaces : darkSurfaces;
+      // warning text sits on the yellow fill and on its tint over a surface
+      expect(contrast(t['on-warning'], '#E5B84B'), `${theme} on-warning on the solid yellow fill`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t['warning-text'], table.card), `${theme} warning-text on card`).toBeGreaterThanOrEqual(4.5);
+      // hero links always sit on the dark 3D stage
+      expect(contrast(t['link-on-dark'], '#0B0F16'), `${theme} link-on-dark on hero`).toBeGreaterThanOrEqual(4.5);
+      // solid blue pill keeps white text
+      expect(contrast(t['on-blue'], t['blue-solid']), `${theme} on-blue on blue-solid`).toBeGreaterThanOrEqual(4.5);
+      // accent text must stay readable on both ordinary surfaces
+      expect(contrast(t['accent-text'], table.card), `${theme} accent-text on card`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(t['accent-text'], table.page), `${theme} accent-text on page`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('no element paints white text on a bg-ink surface that flips with the theme', () => {
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      for (const match of source.matchAll(/className=(?:"([^"]*)"|\{([^}]*)\})/g)) {
+        const cls = `${match[1] ?? ''} ${match[2] ?? ''}`;
+        if (!/(?<![\w-])bg-ink(?![\w-])/.test(cls)) continue;
+        if (/(?<![\w-])text-white(?![\w-])/.test(cls) || /text-on-ink/.test(cls)) offenders.push(`${file}: ${cls.trim().slice(0, 70)}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps brand accents out of the text role', () => {
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      const m = source.match(/(?<![\w-])text-forge-(red|yellow|blue|green)(?![\w-])/g);
+      if (m) offenders.push(`${file}: ${[...new Set(m)].join(', ')}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('dark and light are genuinely different surfaces', () => {
     const light = tokensFor(':root');
     const dark = tokensFor('.dark');
