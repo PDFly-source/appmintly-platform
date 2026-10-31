@@ -422,7 +422,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
               {app.category} · by {app.developer}
             </p>
             {app.roadmapStatus === 'published' && (app.releaseVersion || app.releaseDate) ? (
-              <p className="text-[10px] text-mut/90 mt-0.5 leading-snug">
+              <p className="text-[10px] text-mut mt-0.5 leading-snug">
                 {app.releaseVersion ? `v${app.releaseVersion}` : ''}
                 {app.releaseVersion && app.releaseDate ? ' · ' : ''}
                 {app.releaseDate
@@ -789,7 +789,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
                         <p className="text-[10px] text-cta/90 leading-snug mt-0.5">Evidence: {m.evidence}</p>
                       )}
                       {m.lastUpdated && (
-                        <p className="text-[10px] text-mut/80 leading-snug mt-0.5">Last updated: {m.lastUpdated}</p>
+                        <p className="text-[10px] text-mut leading-snug mt-0.5">Last updated: {m.lastUpdated}</p>
                       )}
                     </div>
                   </li>
@@ -830,7 +830,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[10px] text-mut/80 leading-snug">
+              <p className="mt-2 text-[10px] text-mut leading-snug">
                 Source: {app.verification?.source ?? 'No verification record available.'} A checksum, where
                 one exists, confirms artifact integrity against a reference — never that an app is secure.
               </p>
@@ -877,7 +877,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
               </div>
             )}
             {app.draftNote && (
-              <p className="sm:col-span-2 text-[10px] text-mut/80 border-t border-line pt-2.5">
+              <p className="sm:col-span-2 text-[10px] text-mut border-t border-line pt-2.5">
                 {app.draftNote}
               </p>
             )}

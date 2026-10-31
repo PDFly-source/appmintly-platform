@@ -55,7 +55,7 @@ export function ReleaseStory({ app }: { app: AppItem }) {
             </div>
             <p className="mt-1 text-xs text-mut leading-relaxed">{entry.detail}</p>
             <details className="mt-1 group">
-              <summary className="cursor-pointer text-[10px] text-mut/80 hover:text-mut transition-colors inline-flex items-center gap-1 list-none">
+              <summary className="cursor-pointer text-[10px] text-mut hover:text-mut transition-colors inline-flex items-center gap-1 list-none">
                 <Tag className="w-2.5 h-2.5" aria-hidden />
                 Evidence: {entry.source}
               </summary>

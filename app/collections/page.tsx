@@ -32,7 +32,7 @@ export default function CollectionsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
       <header className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/50">Collections</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mut">Collections</p>
         <h1 className="mt-2 text-2xl font-bold text-ink sm:text-3xl">Curated app collections</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
           Groups built from catalogued facts, not marketing copy. Every app below is a live,
@@ -78,7 +78,7 @@ export default function CollectionsPage() {
                     {collection.title}
                   </Link>
                 </h2>
-                <span className="text-xs font-medium text-ink/50">
+                <span className="text-xs font-medium text-mut">
                   {collection.apps.length} {collection.apps.length === 1 ? 'app' : 'apps'}
                 </span>
               </div>

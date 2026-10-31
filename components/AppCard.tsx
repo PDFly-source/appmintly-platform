@@ -288,7 +288,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       exploreBadges.push(
         <span
           key="new"
-          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-cta/12 text-cta border border-cta/25"
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-cta/12 text-cta-text border border-cta/25"
         >
           New
         </span>
@@ -363,7 +363,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               <span className="truncate">{dev.name}</span>
               {dev.verified && <VerifiedBadge size="xs" />}
             </p>
-            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-mut/90 uppercase tracking-wide">
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-mut uppercase tracking-wide">
               <span>{app.category}</span>
               <span aria-hidden="true" className="w-1 h-1 rounded-full bg-cta/70 shrink-0" />
               <span>{app.type}</span>

@@ -23,6 +23,7 @@
      WCAG AA. Measured, not guessed. */
   --c-on-ink: #FFFFFF;     /* 18.2:1 on the #0E1526 ink chip, all themes */
   --c-on-ink-mute: #C3CBD8; /* 11.1:1 on #0E1526, 9.5:1 on #1B2434 */
+  --c-cta-text: #0B5F58;    /* 5.99:1 on the cta/10 tint, 5.47:1 on #FFFFFF */
   --c-warning-text: #4A3300;  /* text on light surfaces / yellow tints */
   --c-on-warning: #3D2A00;    /* text on the solid #E5B84B fill, 7.38:1 */
   --c-warning-on-dark: #F5C451; /* 9.4:1 on #0E1526; for dark panels only */
@@ -103,6 +104,7 @@
   --color-cta-hover: var(--c-cta-hover);
   --color-on-ink: var(--c-on-ink);
   --color-on-ink-mute: var(--c-on-ink-mute);
+  --color-cta-text: var(--c-cta-text);
   --color-warning-text: var(--c-warning-text);
   --color-on-warning: var(--c-on-warning);
   --color-warning-on-dark: var(--c-warning-on-dark);

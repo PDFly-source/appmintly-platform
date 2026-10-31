@@ -109,7 +109,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 function ResultPill({ result }: { result: CheckResult }) {
   const cls =
     result === 'passed'
-      ? 'bg-cta/10 text-cta border-cta/40'
+      ? 'bg-cta/10 text-cta-text border-cta/40'
       : result === 'failed' || result === 'unable-to-verify'
         ? 'bg-forge-yellow/10 text-warning-text border-forge-yellow/40'
         : 'bg-page text-mut border-line';
@@ -245,7 +245,7 @@ export default function EngineeringDashboardClient() {
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-[10px] text-mut/80 leading-snug">{status.generated_from}</p>
+            <p className="mt-2 text-[10px] text-mut leading-snug">{status.generated_from}</p>
           </section>
 
           {/* Catalog diff */}
@@ -267,7 +267,7 @@ export default function EngineeringDashboardClient() {
                 <p className="text-[10px] font-bold uppercase text-mut tracking-wider">Removals</p>
               </div>
             </div>
-            <p className="mt-2 text-[10px] text-mut/80 leading-snug">{status.catalog_diff.generated_from}</p>
+            <p className="mt-2 text-[10px] text-mut leading-snug">{status.catalog_diff.generated_from}</p>
           </section>
 
           {/* Explicit pending engineering gates — never claim completion. */}
@@ -285,7 +285,7 @@ export default function EngineeringDashboardClient() {
                 <span className="text-[10px] font-bold text-warning-text">PENDING (progress 0%)</span>
               </li>
             </ul>
-            <p className="mt-2 text-[10px] text-mut/80 leading-snug">
+            <p className="mt-2 text-[10px] text-mut leading-snug">
               No testing-QA or release-readiness evidence has been recorded yet — these gates stay
               pending until real checks exist.
             </p>
@@ -396,7 +396,7 @@ export default function EngineeringDashboardClient() {
                           {c.date && <span className="ml-1 text-mut">({c.date})</span>}
                         </p>
                         {c.summary && <p>{c.summary}</p>}
-                        {c.source && <p className="text-mut/80">Source: {c.source}</p>}
+                        {c.source && <p className="text-mut">Source: {c.source}</p>}
                         {c.limitations && <p className="text-warning-text/90">Limitations: {c.limitations}</p>}
                       </li>
                     ))}
@@ -417,7 +417,7 @@ export default function EngineeringDashboardClient() {
           <ol className="grid gap-2">
             {builds.map((b) => (
               <li key={b.id} className="rounded-xl border border-line bg-card px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.outcome === 'success' ? 'bg-cta/10 text-cta border-cta/40' : 'bg-forge-red/10 text-accent-text border-forge-red/40'}`}>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.outcome === 'success' ? 'bg-cta/10 text-cta-text border-cta/40' : 'bg-forge-red/10 text-accent-text border-forge-red/40'}`}>
                   {b.outcome === 'success' ? <CheckCircle2 className="w-3 h-3" aria-hidden /> : <AlertCircle className="w-3 h-3" aria-hidden />}
                   {b.outcome}
                 </span>
@@ -432,11 +432,11 @@ export default function EngineeringDashboardClient() {
                   run {b.workflow_run_id}
                 </a>
                 <span className="ml-auto text-[10px] text-mut tabular-nums">{b.timestamp}</span>
-                <p className="w-full text-[10px] text-mut/80 leading-snug">{b.scope} — {b.source}</p>
+                <p className="w-full text-[10px] text-mut leading-snug">{b.scope} — {b.source}</p>
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-[10px] text-mut/80 leading-snug">
+          <p className="mt-2 text-[10px] text-mut leading-snug">
             Records are verbatim GitHub Actions facts (ids, commits, outcomes, timestamps). A successful deploy
             is not proof of device testing or release readiness.
           </p>
@@ -471,7 +471,7 @@ export default function EngineeringDashboardClient() {
             ))}
           </div>
         )}
-        <p className="mt-2 text-[10px] text-mut/80 leading-snug">
+        <p className="mt-2 text-[10px] text-mut leading-snug">
           Provenance classes are kept separate: repository facts, team-reported progress, automated test
           evidence, and independently verified production/device evidence are never interchangeable.
           No independently verified production/device evidence has been recorded yet.
@@ -491,11 +491,11 @@ export default function EngineeringDashboardClient() {
               <li key={b.id} className="rounded-xl border border-line bg-card px-4 py-3">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="text-xs font-black">{b.app}</span>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.status === 'open' ? 'bg-forge-yellow/10 text-warning-text border-forge-yellow/40' : 'bg-cta/10 text-cta border-cta/40'}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${b.status === 'open' ? 'bg-forge-yellow/10 text-warning-text border-forge-yellow/40' : 'bg-cta/10 text-cta-text border-cta/40'}`}>
                     {b.status === 'open' ? <Clock className="w-3 h-3" aria-hidden /> : <CheckCircle2 className="w-3 h-3" aria-hidden />}
                     {b.status}
                   </span>
-                  <span className="ml-auto text-[9px] font-mono text-mut/80">recorded {b.recorded_at}</span>
+                  <span className="ml-auto text-[9px] font-mono text-mut">recorded {b.recorded_at}</span>
                 </div>
                 <p className="mt-1 text-[10px] text-ink/85 leading-snug">{b.reason}</p>
                 {b.note && <p className="mt-1 text-[10px] text-mut/85 leading-snug">{b.note}</p>}
@@ -526,7 +526,7 @@ export default function EngineeringDashboardClient() {
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-[10px] text-mut/80 leading-snug flex items-center gap-1">
+          <p className="mt-2 text-[10px] text-mut leading-snug flex items-center gap-1">
             <ShieldCheck className="w-3 h-3 shrink-0" aria-hidden />
             Checksums confirm artifact integrity only when compared against a trusted reference — never security or release-readiness proof.
           </p>

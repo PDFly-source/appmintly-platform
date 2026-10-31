@@ -471,7 +471,7 @@ const clearAllFilters = () => {
           aria-pressed={sortBy === 'newest'}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             sortBy === 'newest'
-              ? 'bg-cta/12 border-cta/40 text-cta'
+              ? 'bg-cta/12 border-cta/40 text-cta-text-text'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -525,7 +525,7 @@ const clearAllFilters = () => {
           aria-pressed={filterOriginals}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             filterOriginals
-              ? 'bg-cta/12 border-cta/40 text-cta'
+              ? 'bg-cta/12 border-cta/40 text-cta-text-text'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -537,7 +537,7 @@ const clearAllFilters = () => {
           aria-pressed={selectedCategory === 'tools'}
           className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             selectedCategory === 'tools'
-              ? 'bg-cta/12 border-cta/40 text-cta'
+              ? 'bg-cta/12 border-cta/40 text-cta-text-text'
               : 'bg-card border-line text-mut hover:text-ink hover:border-ink/25'
           }`}
         >
@@ -576,7 +576,7 @@ const clearAllFilters = () => {
           </select>
           <ChevronDown className="w-3.5 h-3.5 text-mut absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
         </div>
-        <span className="h-11 px-3 inline-flex items-center rounded-xl bg-cta/10 text-cta text-sm font-bold shrink-0" aria-live="polite">
+        <span className="h-11 px-3 inline-flex items-center rounded-xl bg-cta/10 text-cta-text text-sm font-bold shrink-0" aria-live="polite">
           {filteredApps.length} {filteredApps.length === 1 ? 'app' : 'apps'}
         </span>
       </div>
@@ -704,7 +704,7 @@ const clearAllFilters = () => {
           aria-pressed={filterOriginals}
           className={`inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl border text-xs font-bold transition-colors duration-150 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50 ${
             filterOriginals
-              ? 'bg-cta/12 border-cta/40 text-cta'
+              ? 'bg-cta/12 border-cta/40 text-cta-text-text'
               : 'bg-page border-line text-ink hover:border-ink/25'
           }`}
         >

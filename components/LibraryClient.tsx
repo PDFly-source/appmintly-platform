@@ -550,7 +550,7 @@ function SavedRow({
             <span className="truncate">{dev.name}</span>
             {dev.verified && <VerifiedBadge size="xs" />}
           </p>
-          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-mut/90">
+          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-bold text-mut">
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">v{app.version}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.type}</span>
             <span className="px-1.5 py-0.5 rounded-md border border-line bg-page">{app.category}</span>
@@ -631,7 +631,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
           <span className="font-semibold">{app.type}</span>
           {app.size && <span>• {app.size}</span>}
         </p>
-        <p className="mt-0.5 text-[10px] text-mut/80 font-semibold">
+        <p className="mt-0.5 text-[10px] text-mut font-semibold">
           Downloaded {timeLabel(timestamp, now)} — download history, not installed status.
         </p>
       </div>
