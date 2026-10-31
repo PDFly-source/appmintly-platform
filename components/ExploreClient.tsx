@@ -556,7 +556,7 @@ const clearAllFilters = () => {
           <SlidersHorizontal className="w-4 h-4 text-cta" aria-hidden="true" />
           Filters
           {activeChips.length > 0 && (
-            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-cta text-[10px] font-bold text-white">
+            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-cta text-[10px] font-bold text-on-cta">
               {activeChips.length}
             </span>
           )}
@@ -641,7 +641,7 @@ const clearAllFilters = () => {
               aria-pressed={c.active}
               onClick={c.on}
               className={`shrink-0 inline-flex items-center min-h-[40px] px-3.5 rounded-full text-xs font-semibold border transition ${
-                c.active ? 'bg-cta text-white border-cta' : 'bg-card text-ink border-line hover:border-cta/60'
+                c.active ? 'bg-cta text-on-cta border-cta' : 'bg-card text-ink border-line hover:border-cta/60'
               }`}
             >
               {c.label}

@@ -52,7 +52,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
           </p>
           <Link
             href="/explore"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-white text-sm font-bold transition"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-inkbg hover:bg-forge-red text-on-brand text-sm font-bold transition"
           >
             <ArrowLeft className="w-4 h-4" /> Browse Apps
           </Link>
@@ -67,7 +67,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
       <section className="px-4 sm:px-6 pt-8 sm:pt-12 max-w-7xl mx-auto">
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-bold text-forge-blue hover:text-forge-blue/80 transition mb-3"
+          className="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-bold text-link-text hover:text-link-text/80 transition mb-3"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Explore</span>

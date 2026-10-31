@@ -92,7 +92,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           {/* Top badge row + bookmark control (Phase 18) */}
           <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-red text-white text-xs font-black tracking-wide uppercase shadow-sm">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-red text-on-brand text-xs font-black tracking-wide uppercase shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Featured App</span>
             </span>
@@ -154,7 +154,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
         <div className="flex items-center gap-3 pt-7 flex-wrap">
           <Link
             href={`/app/${current.slug}`}
-            className="relative z-20 btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-xs sm:text-sm cursor-pointer"
+            className="relative z-20 btn-cta inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-on-cta font-bold text-xs sm:text-sm cursor-pointer"
           >
             {hasApkRelease ? (
               <>

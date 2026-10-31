@@ -95,13 +95,13 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-xs text-[#FAF5ED]/75">
               <li>
                 <Link href="/explore?type=Android+APK" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Smartphone className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
+                  <Smartphone className="w-3.5 h-3.5 text-success-text" aria-hidden="true" />
                   <span>Android APKs</span>
                 </Link>
               </li>
               <li>
                 <Link href="/explore?type=Web+App" className={`flex items-center gap-1.5 ${linkClass}`}>
-                  <Globe className="w-3.5 h-3.5 text-forge-blue" aria-hidden="true" />
+                  <Globe className="w-3.5 h-3.5 text-link-text" aria-hidden="true" />
                   <span>Web Apps &amp; PWAs</span>
                 </Link>
               </li>

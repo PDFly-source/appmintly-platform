@@ -160,7 +160,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             href={`/app/${tiles.newestRelease.slug}`}
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
-            <Star className="w-5 h-5 text-forge-green" aria-hidden />
+            <Star className="w-5 h-5 text-success-text" aria-hidden />
             <p className="mt-2 text-sm sm:text-base font-bold text-ink line-clamp-1">
               {tiles.newestRelease.name}
             </p>
@@ -183,7 +183,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             href={`/category/${c.label.toLowerCase()}`}
             className="group col-span-2 lg:col-span-1 rounded-2xl border border-line bg-card p-4 shadow-sm hover:shadow-md hover:border-ink/30 transition-all motion-reduce:transition-none card-lift flex flex-col"
           >
-            <AppWindow className="w-5 h-5 text-forge-blue" aria-hidden />
+            <AppWindow className="w-5 h-5 text-link-text" aria-hidden />
             <p className="mt-2 text-sm sm:text-base font-bold text-ink">{c.label}</p>
             <p className="text-xs font-semibold text-mut">
               {c.apps.length} published app{c.apps.length === 1 ? '' : 's'}
@@ -191,7 +191,7 @@ export function BentoShowcase({ featuredApps, publishedApps, latestApps }: Bento
             <p className="mt-1 text-[11px] text-mut leading-snug line-clamp-2">
               {c.apps[0]?.shortDescription || c.apps[0]?.description}
             </p>
-            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-forge-blue transition-colors">
+            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-[11px] font-bold text-ink group-hover:text-link-text transition-colors">
               Browse {c.label.toLowerCase()} <ArrowRight className="w-3 h-3" aria-hidden />
             </span>
           </Link>

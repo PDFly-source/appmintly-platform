@@ -71,23 +71,23 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const STATUS_STYLES: Record<UpcomingApp['roadmapStatus'], string> = {
   planned: 'bg-forge-purple/10 text-forge-purple border-forge-purple/30',
   'in-development': 'bg-forge-yellow/10 text-forge-yellow border-forge-yellow/40',
-  'early-testing': 'bg-forge-blue/10 text-forge-blue border-forge-blue/30',
-  published: 'bg-forge-green/10 text-forge-green border-forge-green/30',
+  'early-testing': 'bg-forge-blue/10 text-link-text border-forge-blue/30',
+  published: 'bg-forge-green/10 text-success-text border-forge-green/30',
 };
 
 /** Text-only status colors — used for the status subtitle under the badge. */
 const STATUS_TEXT: Record<UpcomingApp['roadmapStatus'], string> = {
   planned: 'text-forge-purple',
   'in-development': 'text-forge-yellow',
-  'early-testing': 'text-forge-blue',
-  published: 'text-forge-green',
+  'early-testing': 'text-link-text',
+  published: 'text-success-text',
 };
 
 const STATUS_MONOGRAM: Record<UpcomingApp['roadmapStatus'], string> = {
   planned: 'bg-forge-purple/12 text-forge-purple border-forge-purple/25',
   'in-development': 'bg-forge-yellow/12 text-forge-yellow border-forge-yellow/30',
-  'early-testing': 'bg-forge-blue/12 text-forge-blue border-forge-blue/30',
-  published: 'bg-forge-green/12 text-forge-green border-forge-green/25',
+  'early-testing': 'bg-forge-blue/12 text-link-text border-forge-blue/30',
+  published: 'bg-forge-green/12 text-success-text border-forge-green/25',
 };
 
 /** Status-specific availability banner (record copy wins over the default). */
@@ -101,11 +101,11 @@ const STATUS_BANNER: Record<UpcomingApp['roadmapStatus'], { className: string; m
     message: 'Currently being built — public release not available.',
   },
   'early-testing': {
-    className: 'bg-forge-blue/10 border-forge-blue/30 text-forge-blue',
+    className: 'bg-forge-blue/10 border-forge-blue/30 text-link-text',
     message: 'Internal builds are in testing. Developer-only — not publicly accessible.',
   },
   published: {
-    className: 'bg-forge-green/10 border-forge-green/30 text-forge-green',
+    className: 'bg-forge-green/10 border-forge-green/30 text-success-text',
     message: 'Public Release — genuinely available to the public.',
   },
 };
@@ -151,7 +151,7 @@ const BRAND_HEADER: Record<string, string> = {
 function MilestoneIcon({ status }: { status: MilestoneStatus }) {
   if (status === 'done') return <CheckCircle2 className="w-3.5 h-3.5 text-cta" aria-hidden />;
   if (status === 'in-progress') return <CircleDot className="w-3.5 h-3.5 text-forge-yellow" aria-hidden />;
-  if (status === 'pending') return <Clock className="w-3.5 h-3.5 text-forge-blue" aria-hidden />;
+  if (status === 'pending') return <Clock className="w-3.5 h-3.5 text-link-text" aria-hidden />;
   if (status === 'blocked') return <AlertCircle className="w-3.5 h-3.5 text-forge-red" aria-hidden />;
   return <Circle className="w-3.5 h-3.5 text-mut" aria-hidden />;
 }
@@ -465,7 +465,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
             href={app.publicUrl}
             target="_blank"
             rel="noreferrer noopener"
-            className="mt-2 inline-flex items-center justify-center gap-1.5 min-h-[40px] w-full rounded-xl bg-forge-green text-white text-xs font-bold shadow-sm transition-all duration-200 hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-forge-green/60"
+            className="mt-2 inline-flex items-center justify-center gap-1.5 min-h-[40px] w-full rounded-xl bg-forge-green text-on-success text-xs font-bold shadow-sm transition-all duration-200 hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-forge-green/60"
           >
             <ArrowRight className="w-4 h-4" aria-hidden />
             {STATUS_CTA_LABEL.published}
@@ -713,7 +713,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
             aria-label={saved ? `Remove ${app.name} from wishlist` : `Save ${app.name} to wishlist`}
             className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/60 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 ${
               saved
-                ? 'bg-forge-red text-white border border-forge-red'
+                ? 'bg-forge-red text-on-brand border border-forge-red'
                 : 'bg-card border border-line text-ink hover:border-forge-red/50 hover:text-forge-red'
             }`}
           >

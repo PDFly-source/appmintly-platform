@@ -63,7 +63,7 @@ export default function CookiePolicyPage() {
             <h2 id="cookies-privacy" className="text-base font-bold mb-2">Related Policy</h2>
             <p>
               For the full details of how AppMintly handles data, see the{' '}
-              <Link href="/privacy" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
+              <Link href="/privacy" className="font-bold text-link-text hover:text-link-text/80 transition">
                 Privacy Policy
               </Link>
               .
@@ -73,7 +73,7 @@ export default function CookiePolicyPage() {
           <div className="pt-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-forge-blue hover:text-forge-blue/80 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-link-text hover:text-link-text/80 transition"
             >
               ← Back to AppMintly
             </Link>

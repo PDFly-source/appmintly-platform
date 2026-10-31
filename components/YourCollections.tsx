@@ -90,7 +90,7 @@ export function YourCollections({ surface = 'library' }: Props) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id="your-collections" className="text-sm font-bold text-ink flex items-center gap-1.5">
-            <FolderPlus aria-hidden="true" className="w-4 h-4 text-forge-blue" />
+            <FolderPlus aria-hidden="true" className="w-4 h-4 text-link-text" />
             Your collections
           </h2>
           <p className="text-[11px] text-mut mt-0.5">
@@ -250,7 +250,7 @@ export function YourCollections({ surface = 'library' }: Props) {
                         <button
                           type="button"
                           onClick={() => remove(collection.id)}
-                          className="min-h-[44px] flex-1 rounded-lg bg-forge-red text-white text-[11px] font-bold"
+                          className="min-h-[44px] flex-1 rounded-lg bg-forge-red text-on-brand text-[11px] font-bold"
                         >
                           Delete
                         </button>
@@ -295,7 +295,7 @@ export function YourCollections({ surface = 'library' }: Props) {
 
       <p className="text-[10px] text-mut">
         Removing all personalization in{' '}
-        <Link href="/library/settings/" className="font-semibold text-forge-blue hover:underline">
+        <Link href="/library/settings/" className="font-semibold text-link-text hover:underline">
           Library settings
         </Link>{' '}
         also deletes your collections. Saved apps are unaffected.

@@ -17,7 +17,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <FileCheck2 className="w-6 h-6 text-forge-blue" aria-hidden="true" />
+          <FileCheck2 className="w-6 h-6 text-link-text" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Terms of Service</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 24, 2026</p>
@@ -80,7 +80,7 @@ export default function TermsPage() {
           <div className="pt-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-forge-blue hover:text-forge-blue/80 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-link-text hover:text-link-text/80 transition"
             >
               ← Back to AppMintly
             </Link>

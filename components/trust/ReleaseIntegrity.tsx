@@ -40,7 +40,7 @@ export function ReleaseIntegrity({ app }: { app: AppItem }) {
         <div className="min-w-0 rounded-xl border border-line bg-canvas p-3">
           <dt className="text-[11px] font-semibold text-mut">Verification status</dt>
           <dd className="flex items-center gap-1.5 text-[13px] font-bold text-ink">
-            <ShieldCheck className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" /> Release record verified by the pipeline
+            <ShieldCheck className="h-3.5 w-3.5 text-success-text" aria-hidden="true" /> Release record verified by the pipeline
           </dd>
         </div>
         <div className="min-w-0 rounded-xl border border-line bg-canvas p-3">

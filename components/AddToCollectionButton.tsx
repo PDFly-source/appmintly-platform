@@ -158,7 +158,7 @@ export function AddToCollectionButton({ slug, name, variant = 'icon' }: Props) {
                           </span>
                         </span>
                         {already ? (
-                          <Check aria-hidden="true" className="w-4 h-4 shrink-0 text-forge-green" />
+                          <Check aria-hidden="true" className="w-4 h-4 shrink-0 text-success-text" />
                         ) : (
                           <Plus aria-hidden="true" className="w-4 h-4 shrink-0 text-mut" />
                         )}

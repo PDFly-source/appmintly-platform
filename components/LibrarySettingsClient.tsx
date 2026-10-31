@@ -94,7 +94,7 @@ export default function LibrarySettingsClient() {
                 onClick={() => toggleCategory(publishedApps, category)}
                 className={`min-h-[40px] inline-flex items-center gap-1.5 px-3.5 rounded-full border text-xs font-bold transition disabled:opacity-45 ${
                   active
-                    ? 'border-forge-blue/40 bg-forge-blue/10 text-forge-blue'
+                    ? 'border-forge-blue/40 bg-forge-blue/10 text-link-text'
                     : 'border-line bg-page text-mut hover:text-ink hover:border-mut/40'
                 }`}
               >
@@ -121,7 +121,7 @@ export default function LibrarySettingsClient() {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold text-ink flex items-center gap-1.5">
-              <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-forge-blue" />
+              <Sparkles aria-hidden="true" className="w-3.5 h-3.5 text-link-text" />
               Recommendations
             </p>
             <p className="text-[11px] text-mut mt-0.5">
@@ -138,7 +138,7 @@ export default function LibrarySettingsClient() {
             }}
             className={`min-h-[44px] shrink-0 px-4 rounded-full border text-xs font-bold transition ${
               state.preferences.recommendations
-                ? 'border-forge-green/40 bg-forge-green/10 text-forge-green'
+                ? 'border-forge-green/40 bg-forge-green/10 text-success-text'
                 : 'border-line bg-page text-mut'
             }`}
           >
@@ -169,7 +169,7 @@ export default function LibrarySettingsClient() {
             }}
             className={`min-h-[44px] shrink-0 px-4 rounded-full border text-xs font-bold transition ${
               state.preferences.recentEnabled
-                ? 'border-forge-green/40 bg-forge-green/10 text-forge-green'
+                ? 'border-forge-green/40 bg-forge-green/10 text-success-text'
                 : 'border-line bg-page text-mut'
             }`}
           >
@@ -220,7 +220,7 @@ export default function LibrarySettingsClient() {
                   setConfirmRecent(false);
                   toast('Recently viewed history cleared.', 'info');
                 }}
-                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-xs font-bold"
+                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-on-brand text-xs font-bold"
               >
                 Clear history
               </button>
@@ -261,7 +261,7 @@ export default function LibrarySettingsClient() {
                   setConfirmAll(false);
                   toast('All personalization data removed.', 'info');
                 }}
-                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-xs font-bold"
+                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-on-brand text-xs font-bold"
               >
                 Remove all
               </button>

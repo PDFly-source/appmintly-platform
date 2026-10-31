@@ -41,7 +41,7 @@ export function RecommendedForYou() {
             id="for-you-label"
             className="text-xl sm:text-2xl font-bold text-ink tracking-tight flex items-center gap-2"
           >
-            <Sparkles aria-hidden="true" className="w-5 h-5 text-forge-blue" />
+            <Sparkles aria-hidden="true" className="w-5 h-5 text-link-text" />
             Recommended for You
           </h2>
           <p className="text-xs sm:text-sm text-mut mt-1">
@@ -50,7 +50,7 @@ export function RecommendedForYou() {
         </div>
         <Link
           href="/library/settings/"
-          className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+          className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
         >
           <span>Edit preferences</span>
           <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
@@ -72,7 +72,7 @@ export function RecommendedForYou() {
       <p className="mt-4 text-[11px] text-mut">
         Personal suggestions only. AppMintly uses no popularity, rating or download counts, and
         nothing here leaves this browser.{' '}
-        <Link href="/library/settings/" className="font-semibold text-forge-blue hover:underline">
+        <Link href="/library/settings/" className="font-semibold text-link-text hover:underline">
           Manage personalization
         </Link>
       </p>

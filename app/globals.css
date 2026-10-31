@@ -18,6 +18,15 @@
   --c-line: #E3E9F2;
   --c-cta: #0F766E;
   --c-cta-hover: #115E59;
+  /* Accent foregrounds (Batch 2). Fills stay brand-exact; only the text
+     colour on or of an accent changes per theme so every pairing clears
+     WCAG AA. Measured, not guessed. */
+  --c-on-brand: #0E1526;   /* 4.89:1 on #E8503D (white was 3.72) */
+  --c-on-cta: #FFFFFF;     /* 5.47:1 on #0F766E */
+  --c-on-success: #0E1526;
+  --c-link-text: #1259C7;  /* 6.40 on card, 6.02 on page */
+  --c-success-text: #0F766E; /* 5.47 on card, 5.14 on page */
+  --c-accent-text: #B3261A;
 }
 
 .dark {
@@ -29,6 +38,12 @@
   --c-line: #212B3D;
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
+  --c-on-brand: #0E1526;    /* 4.89:1 on #E8503D */
+  --c-on-cta: #0E1526;      /* 7.31:1 on #14B8A6 (white was 2.49) */
+  --c-on-success: #0E1526;  /* 7.31:1 on #14B8A6 */
+  --c-link-text: #7FB2FF;   /* 8.22 on card, 8.88 on page */
+  --c-success-text: #2DD4BF; /* 9.54 on card, 10.31 on page */
+  --c-accent-text: #FF9C8F;
 }
 
 /*
@@ -47,6 +62,12 @@
   --c-line: #161B24;
   --c-cta: #14B8A6;
   --c-cta-hover: #2DD4BF;
+  --c-on-brand: #0E1526;
+  --c-on-cta: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #8FC0FF;
+  --c-success-text: #2DD4BF;
+  --c-accent-text: #FF9C8F;
 }
 
 @theme inline {
@@ -58,6 +79,12 @@
   --color-line: var(--c-line);
   --color-cta: var(--c-cta);
   --color-cta-hover: var(--c-cta-hover);
+  --color-on-brand: var(--c-on-brand);
+  --color-on-cta: var(--c-on-cta);
+  --color-on-success: var(--c-on-success);
+  --color-link-text: var(--c-link-text);
+  --color-success-text: var(--c-success-text);
+  --color-accent-text: var(--c-accent-text);
 }
 
 @theme {
@@ -252,7 +279,7 @@ body {
 .btn-cta {
   min-height: 44px;
   background: var(--c-cta);
-  color: #ffffff;
+  color: var(--c-on-cta);
   border: 1px solid color-mix(in srgb, #ffffff 22%, var(--c-cta));
   box-shadow:
     0 1px 2px rgba(23, 25, 28, 0.12),

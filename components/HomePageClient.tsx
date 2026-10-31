@@ -208,7 +208,7 @@ export default function HomePage() {
           </Link>
           <button
             type="submit"
-            className="shrink-0 px-6 py-3 rounded-full bg-inkbg hover:bg-forge-red text-white text-sm font-bold transition cursor-pointer"
+            className="shrink-0 px-6 py-3 rounded-full bg-inkbg hover:bg-forge-red text-on-brand text-sm font-bold transition cursor-pointer"
           >
             Search
           </button>
@@ -272,21 +272,21 @@ export default function HomePage() {
             href="/explore?type=Android+APK"
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
           >
-            <Smartphone className="w-3.5 h-3.5 text-forge-green" />
+            <Smartphone className="w-3.5 h-3.5 text-success-text" />
             Android Apps
           </Link>
           <Link
             href="/explore?category=utilities"
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
           >
-            <Layers className="w-3.5 h-3.5 text-forge-blue" />
+            <Layers className="w-3.5 h-3.5 text-link-text" />
             Utilities
           </Link>
           <Link
             href="/explore?category=education"
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-card border border-line hover:border-ink/40 text-ink text-xs font-bold transition"
           >
-            <GraduationCap className="w-3.5 h-3.5 text-forge-green" />
+            <GraduationCap className="w-3.5 h-3.5 text-success-text" />
             Education
           </Link>
         </div>
@@ -294,19 +294,19 @@ export default function HomePage() {
         {/* Trust strip (truthful, evidence-backed capabilities only) */}
         <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-2xl border border-line bg-card/70 px-4 py-3 shadow-xs">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
-            <ShieldCheck className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
+            <ShieldCheck className="w-3.5 h-3.5 text-success-text" aria-hidden="true" />
             Verified Releases
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
-            <Fingerprint className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
+            <Fingerprint className="w-3.5 h-3.5 text-success-text" aria-hidden="true" />
             SHA-256 Available
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
-            <Link2 className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
+            <Link2 className="w-3.5 h-3.5 text-success-text" aria-hidden="true" />
             Official Release Links
           </span>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/80">
-            <FileCheck2 className="w-3.5 h-3.5 text-forge-green" aria-hidden="true" />
+            <FileCheck2 className="w-3.5 h-3.5 text-success-text" aria-hidden="true" />
             Transparent Versions
           </span>
         </div>
@@ -321,7 +321,7 @@ export default function HomePage() {
               <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">Featured App</h2>
               <Link
                 href="/explore?featured=true"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
               >
                 See All
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -364,7 +364,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/explore"
-            className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+            className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
           >
             <span>View All Apps</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -422,8 +422,8 @@ export default function HomePage() {
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Recently added applications">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-forge-green bg-forge-green/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-green/25">
-                <Clock className="w-3.5 h-3.5 text-forge-green" />
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-success-text bg-forge-green/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-green/25">
+                <Clock className="w-3.5 h-3.5 text-success-text" />
                 <span>Fresh Arrivals</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -435,7 +435,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/explore?sort=newest"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
             >
               <span>See All</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -469,7 +469,7 @@ export default function HomePage() {
           </div>
           <Link
             href="/explore?sort=newest"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
           >
             <span>See All Latest</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -496,7 +496,7 @@ export default function HomePage() {
           <div className="p-6 sm:p-8 rounded-3xl bg-radial from-forge-green/10 via-card to-card border border-forge-green/30 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
               <div className="max-w-xl">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-forge-green/15 text-forge-green border border-forge-green/30 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-forge-green/15 text-success-text border border-forge-green/30 mb-2">
                   <GraduationCap className="w-3.5 h-3.5" /> Education &amp; Career
                 </span>
                 <h3 className="text-xl sm:text-2xl font-semibold text-ink tracking-tight">
@@ -508,7 +508,7 @@ export default function HomePage() {
               </div>
               <Link
                 href="/explore?category=education"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-forge-green hover:bg-[#128a53] text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-forge-green hover:bg-[#128a53] text-on-success text-xs font-bold transition shadow-xs self-start md:self-auto"
               >
                 <span>Browse Education</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -533,8 +533,8 @@ export default function HomePage() {
         <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-14" aria-label="Web apps and PWAs">
           <div className="flex items-end justify-between mb-5">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-forge-blue bg-forge-blue/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-blue/25">
-                <Globe className="w-3.5 h-3.5 text-forge-blue" />
+              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-link-text bg-forge-blue/10 px-2.5 py-1 rounded-md mb-1.5 border border-forge-blue/25">
+                <Globe className="w-3.5 h-3.5 text-link-text" />
                 <span>Run in Your Browser</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">
@@ -546,7 +546,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/explore?type=Web+App"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-forge-blue hover:text-forge-blue/80 transition"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-link-text hover:text-link-text/80 transition"
             >
               <span>All Web Apps</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -569,7 +569,7 @@ export default function HomePage() {
           <div className="p-6 sm:p-8 rounded-3xl bg-card border border-line shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
               <div className="max-w-xl">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-forge-green/15 text-forge-green border border-forge-green/30 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-forge-green/15 text-success-text border border-forge-green/30 mb-2">
                   <Smartphone className="w-3.5 h-3.5" /> Direct Android APKs
                 </span>
                 <h3 className="text-xl sm:text-2xl font-semibold text-ink tracking-tight">
@@ -581,7 +581,7 @@ export default function HomePage() {
               </div>
               <Link
                 href="/explore?type=Android+APK"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-forge-green hover:bg-[#128a53] text-white text-xs font-bold transition shadow-xs self-start md:self-auto"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-forge-green hover:bg-[#128a53] text-on-success text-xs font-bold transition shadow-xs self-start md:self-auto"
               >
                 <span>Browse All APKs</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -727,7 +727,7 @@ export default function HomePage() {
       <section className="px-4 sm:px-6 max-w-7xl mx-auto mb-16" aria-label="Security and trust">
         <div className="rounded-3xl bg-card border border-line shadow-xs p-6 sm:p-10">
           <div className="flex items-center gap-2.5 mb-2">
-            <ShieldCheck className="w-6 h-6 text-forge-green" aria-hidden="true" />
+            <ShieldCheck className="w-6 h-6 text-success-text" aria-hidden="true" />
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Trust &amp; Safety</h2>
           </div>
           <p className="text-xs sm:text-sm text-mut mb-6 max-w-2xl leading-relaxed">
@@ -735,28 +735,28 @@ export default function HomePage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-page border border-line">
-              <Link2 className="w-5 h-5 text-forge-green mb-2" aria-hidden="true" />
+              <Link2 className="w-5 h-5 text-success-text mb-2" aria-hidden="true" />
               <h3 className="text-xs font-semibold mb-1">Official Release Links</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 APK downloads point directly to the publisher&apos;s official GitHub release assets.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
-              <BadgeCheck className="w-5 h-5 text-forge-green mb-2" aria-hidden="true" />
+              <BadgeCheck className="w-5 h-5 text-success-text mb-2" aria-hidden="true" />
               <h3 className="text-xs font-semibold mb-1">Verified Publishers</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Publisher identities are verified at the repository level by the AppMintly team.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
-              <Fingerprint className="w-5 h-5 text-forge-green mb-2" aria-hidden="true" />
+              <Fingerprint className="w-5 h-5 text-success-text mb-2" aria-hidden="true" />
               <h3 className="text-xs font-semibold mb-1">SHA-256 Checksums</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Every published APK lists its SHA-256 checksum so you can verify integrity.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
-              <Eye className="w-5 h-5 text-forge-green mb-2" aria-hidden="true" />
+              <Eye className="w-5 h-5 text-success-text mb-2" aria-hidden="true" />
               <h3 className="text-xs font-semibold mb-1">Transparent Versions</h3>
               <p className="text-[11px] text-mut leading-relaxed">
                 Version numbers, sizes, and update dates are shown as they were released.
@@ -773,7 +773,7 @@ export default function HomePage() {
           <div aria-hidden="true" className="absolute inset-0 hero-texture pointer-events-none" />
           <div aria-hidden="true" className="absolute top-0 left-8 right-8 h-px gold-keyline pointer-events-none" />
           <div className="space-y-3 max-w-xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-blue text-white text-xs font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forge-blue text-on-cta text-xs font-bold uppercase tracking-wider">
               <Rocket className="w-3.5 h-3.5" /> APPMINTLY PLATFORM
             </span>
             <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
@@ -786,7 +786,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full md:w-auto">
             <Link
               href="/explore"
-              className="text-center px-6 py-3 rounded-full bg-forge-red hover:bg-[#b81f25] text-white text-xs sm:text-sm font-bold shadow-md transition"
+              className="text-center px-6 py-3 rounded-full bg-forge-red hover:bg-[#b81f25] text-on-brand text-xs sm:text-sm font-bold shadow-md transition"
             >
               Explore Catalog Now
             </Link>

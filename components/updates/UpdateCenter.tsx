@@ -87,7 +87,7 @@ export function UpdateCenter() {
 
       <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-mut">
-          <BadgeCheck className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" />
+          <BadgeCheck className="h-3.5 w-3.5 text-success-text" aria-hidden="true" />
           {buckets.totalPublished} published apps checked
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-mut">
@@ -98,7 +98,7 @@ export function UpdateCenter() {
           href="/notifications"
           className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-ink hover:border-ink/30"
         >
-          {notifyOn ? <Bell className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
+          {notifyOn ? <Bell className="h-3.5 w-3.5 text-success-text" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
           Update notifications {notifyOn ? 'on' : 'off'} · manage
         </Link>
       </div>
@@ -268,7 +268,7 @@ function UpdateRow({
             <span
               className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                 knowledge.state === 'update-available'
-                  ? 'bg-forge-green/15 text-forge-green'
+                  ? 'bg-forge-green/15 text-success-text'
                   : knowledge.state === 'up-to-date'
                     ? 'bg-ink/5 text-ink'
                     : 'bg-amber-500/15 text-amber-700'
@@ -334,7 +334,7 @@ function UpdateRow({
               aria-pressed={watched}
               className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-line px-3 text-[11px] font-bold text-ink hover:border-ink/30"
             >
-              {watched ? <Bell className="h-3.5 w-3.5 text-forge-green" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
+              {watched ? <Bell className="h-3.5 w-3.5 text-success-text" aria-hidden="true" /> : <BellOff className="h-3.5 w-3.5" aria-hidden="true" />}
               {watched ? 'Watching' : 'Watch'}
             </button>
           </div>
@@ -384,7 +384,7 @@ export function UpdateIndicator({ app }: { app: AppItem }) {
   return (
     <p
       className={`mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-bold ${
-        knowledge.state === 'update-available' ? 'bg-forge-green/15 text-forge-green' : 'bg-amber-500/15 text-amber-700'
+        knowledge.state === 'update-available' ? 'bg-forge-green/15 text-success-text' : 'bg-amber-500/15 text-amber-700'
       }`}
     >
       <RefreshCw className="h-3 w-3" aria-hidden="true" />

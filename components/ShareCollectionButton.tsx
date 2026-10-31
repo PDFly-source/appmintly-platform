@@ -104,7 +104,7 @@ export function ShareCollectionButton({ name, description, apps }: Props) {
           className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-full border border-line bg-card text-mut hover:text-ink disabled:opacity-50 transition"
         >
           {copied ? (
-            <Check aria-hidden="true" className="w-4 h-4 text-forge-green" />
+            <Check aria-hidden="true" className="w-4 h-4 text-success-text" />
           ) : (
             <Copy aria-hidden="true" className="w-4 h-4" />
           )}

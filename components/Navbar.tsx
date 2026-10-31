@@ -361,7 +361,7 @@ export const Navbar: React.FC = () => {
             <Bookmark className="w-4 h-4 text-forge-red" />
             <span className="hidden sm:inline">Library</span>
             {favCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-forge-red text-white text-[10px] font-black flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-forge-red text-on-brand text-[10px] font-black flex items-center justify-center">
                 {favCount}
               </span>
             )}

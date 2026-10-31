@@ -239,7 +239,7 @@ export default function CollectionDetailClient() {
             <button
               type="button"
               onClick={removeCollection}
-              className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-xs font-bold"
+              className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-on-brand text-xs font-bold"
             >
               Delete collection
             </button>

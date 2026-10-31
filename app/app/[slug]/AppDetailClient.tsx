@@ -141,7 +141,7 @@ export default function AppDetailPage() {
         <div className="mt-6 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-forge-red transition"
+            className="px-5 py-2.5 rounded-full bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition"
           >
             Explore Apps
           </Link>
@@ -288,7 +288,7 @@ export default function AppDetailPage() {
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-blue/10 text-forge-blue border border-forge-blue/25">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-forge-blue/10 text-link-text border border-forge-blue/25">
         <Layers className="w-3.5 h-3.5" /> APP
       </span>
     );
@@ -357,7 +357,7 @@ export default function AppDetailPage() {
                   {resolveDeveloper(app).slug ? (
                     <Link
                       href={`/publisher/${resolveDeveloper(app).slug}`}
-                      className="hover:text-forge-blue transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                      className="hover:text-link-text transition underline decoration-transparent hover:decoration-current underline-offset-2"
                     >
                       {resolveDeveloper(app).name}
                     </Link>
@@ -376,7 +376,7 @@ export default function AppDetailPage() {
               <div className="flex items-center justify-center md:justify-start gap-3 pt-4 flex-wrap">
                 <button
                   onClick={handleGetApp}
-                  className="btn-cta px-8 py-3.5 rounded-full text-white text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                  className="btn-cta px-8 py-3.5 rounded-full text-on-cta text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>{getPrimaryCtaText()}</span>
@@ -470,7 +470,7 @@ export default function AppDetailPage() {
                   </span>
                 )}
                 {isStandaloneInstalled && (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-forge-green/15 text-forge-green border border-forge-green/30">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-forge-green/15 text-success-text border border-forge-green/30">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Installed on device
                   </span>
                 )}
@@ -481,7 +481,7 @@ export default function AppDetailPage() {
                 <div className="pt-2">
                   <div className="p-3 rounded-2xl bg-forge-green/10 border border-forge-green/25 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-forge-green shrink-0" />
+                      <ShieldCheck className="w-4 h-4 text-success-text shrink-0" />
                       <div>
                         <span className="font-extrabold text-ink">
                           Verified Android APK Package
@@ -494,7 +494,7 @@ export default function AppDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-mut">
-                      <span className="px-2 py-0.5 rounded-md bg-card border border-forge-green/30 text-forge-green">
+                      <span className="px-2 py-0.5 rounded-md bg-card border border-forge-green/30 text-success-text">
                         v{app.version}{app.apk?.versionCode ? ` (${app.apk.versionCode})` : ''}
                       </span>
                       <span>•</span>
@@ -505,7 +505,7 @@ export default function AppDetailPage() {
                       </span>
                       <span>•</span>
                       {app.apk?.sha256 && (
-                        <span className="text-forge-green font-bold">Signed &amp; Verified</span>
+                        <span className="text-success-text font-bold">Signed &amp; Verified</span>
                       )}
                     </div>
                     <UpdateIndicator app={app} />
@@ -581,7 +581,7 @@ export default function AppDetailPage() {
                       key={idx}
                       className="flex items-start gap-2.5 p-3 rounded-2xl bg-page/70 border border-line"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-forge-green shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-4 h-4 text-success-text shrink-0 mt-0.5" />
                       <span className="text-xs sm:text-sm font-semibold text-ink">
                         {feature}
                       </span>
@@ -605,7 +605,7 @@ export default function AppDetailPage() {
                 <ul className="space-y-2 text-xs sm:text-sm text-ink/85">
                   {app.releaseNotes.map((note, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="text-forge-blue font-bold">•</span>
+                      <span className="text-link-text font-bold">•</span>
                       <span>{note}</span>
                     </li>
                   ))}
@@ -666,7 +666,7 @@ export default function AppDetailPage() {
                     {resolveDeveloper(app).slug ? (
                       <Link
                         href={`/publisher/${resolveDeveloper(app).slug}`}
-                        className="hover:text-forge-blue transition underline decoration-transparent hover:decoration-current underline-offset-2"
+                        className="hover:text-link-text transition underline decoration-transparent hover:decoration-current underline-offset-2"
                       >
                         {resolveDeveloper(app).name}
                       </Link>
@@ -696,7 +696,7 @@ export default function AppDetailPage() {
 
                 <div className="flex items-center justify-between">
                   <dt className="text-mut font-bold">Installation</dt>
-                  <dd className="font-semibold text-forge-green">
+                  <dd className="font-semibold text-success-text">
                     {app.type === 'Android APK'
                       ? 'Android Package (.apk)'
                       : app.type === 'PWA'
@@ -723,7 +723,7 @@ export default function AppDetailPage() {
                           toast('SHA-256 checksum copied', 'success');
                         }}
                         aria-label="Copy SHA-256 checksum"
-                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-white text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
+                        className="shrink-0 px-2 py-1.5 rounded-lg bg-inkbg text-on-brand text-[10px] font-bold hover:bg-forge-red transition cursor-pointer"
                       >
                         Copy
                       </button>
@@ -740,7 +740,7 @@ export default function AppDetailPage() {
 
                 <div className="flex items-center justify-between">
                   <dt className="text-mut font-bold">Privacy &amp; Data</dt>
-                  <dd className="font-semibold text-forge-green">No Cloud Tracking</dd>
+                  <dd className="font-semibold text-success-text">No Cloud Tracking</dd>
                 </div>
               </dl>
 
@@ -755,7 +755,7 @@ export default function AppDetailPage() {
             {app.apk?.enabled && (
               <div className="w-full p-4 rounded-2xl bg-card border border-line shadow-2xs">
                 <h4 className="text-xs font-semibold text-ink mb-2 flex items-center gap-1.5">
-                  <HelpCircle className="w-4 h-4 text-forge-blue" />
+                  <HelpCircle className="w-4 h-4 text-link-text" />
                   How to install this APK on Android
                 </h4>
                 <ol className="text-[11px] text-mut leading-relaxed list-decimal list-inside space-y-1">
@@ -774,14 +774,14 @@ export default function AppDetailPage() {
                 className="w-full p-4 rounded-2xl bg-card hover:bg-card border border-line text-left transition flex items-center justify-between group shadow-2xs cursor-pointer"
               >
                 <div>
-                  <h4 className="text-xs font-semibold text-ink group-hover:text-forge-blue transition-colors">
+                  <h4 className="text-xs font-semibold text-ink group-hover:text-link-text transition-colors">
                     How to install this app?
                   </h4>
                   <p className="text-[11px] text-mut">
                     Step-by-step for Chrome, Edge &amp; Safari
                   </p>
                 </div>
-                <HelpCircle className="w-5 h-5 text-mut group-hover:text-forge-blue transition-colors" />
+                <HelpCircle className="w-5 h-5 text-mut group-hover:text-link-text transition-colors" />
               </button>
             )}
 
@@ -861,7 +861,7 @@ export default function AppDetailPage() {
 
         <button
           onClick={handleGetApp}
-          className="btn-cta px-6 py-2.5 rounded-full text-white text-xs font-bold shrink-0 cursor-pointer"
+          className="btn-cta px-6 py-2.5 rounded-full text-on-cta text-xs font-bold shrink-0 cursor-pointer"
         >
           {getPrimaryCtaText()}
         </button>
@@ -989,7 +989,7 @@ export default function AppDetailPage() {
 
             <div className="space-y-4 text-xs">
               <div className="p-3.5 rounded-2xl bg-forge-blue/10 border border-forge-blue/25 space-y-1">
-                <p className="font-bold text-forge-blue flex items-center gap-1.5">
+                <p className="font-bold text-link-text flex items-center gap-1.5">
                   <Monitor className="w-4 h-4" /> Chrome / Edge (Desktop &amp; Android)
                 </p>
                 <p className="text-ink/80 leading-relaxed">
@@ -1014,7 +1014,7 @@ export default function AppDetailPage() {
             <div className="flex items-center justify-end gap-3 pt-2 border-t border-line">
               <button
                 onClick={() => setShowPwaInstallGuide(false)}
-                className="px-5 py-2.5 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-forge-red transition cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-inkbg text-on-brand text-xs font-bold hover:bg-forge-red transition cursor-pointer"
               >
                 Understood
               </button>

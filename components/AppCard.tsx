@@ -185,13 +185,13 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     }
     if (app.type === 'Android APK') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/10 text-forge-green border border-forge-green/25">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/10 text-success-text border border-forge-green/25">
           <Smartphone className="w-3 h-3" /> APK
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-blue/10 text-forge-blue border border-forge-blue/25">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-blue/10 text-link-text border border-forge-blue/25">
         <Layers className="w-3 h-3" /> APP
       </span>
     );
@@ -219,7 +219,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   const getActionIcon = () => {
     if (hasReleasedApk) {
       return downloadedState ? (
-        <Check className="w-3.5 h-3.5 text-forge-green" />
+        <Check className="w-3.5 h-3.5 text-success-text" />
       ) : (
         <Download className="w-3.5 h-3.5" />
       );
@@ -244,11 +244,11 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <h4 className="font-semibold text-sm text-ink truncate group-hover:text-forge-blue transition-colors">
+              <h4 className="font-semibold text-sm text-ink truncate group-hover:text-link-text transition-colors">
                 {app.name}
               </h4>
               {isNewApp(app) && (
-                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-bold bg-forge-green/20 text-forge-green">
+                <span className="shrink-0 px-1.5 py-0.2 rounded text-[9px] font-bold bg-forge-green/20 text-success-text">
                   NEW
                 </span>
               )}
@@ -409,7 +409,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-base text-ink group-hover:text-forge-blue transition-colors line-clamp-1">
+          <h3 className="font-semibold text-base text-ink group-hover:text-link-text transition-colors line-clamp-1">
             {app.name}
           </h3>
           <p className="text-xs text-mut truncate mt-0.5 flex items-center gap-1">
@@ -424,7 +424,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
               matches the Explore variant's cap so cards never look noisy. */}
           {getPublicBadge()}
           {(isNewApp(app) ? (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/15 text-forge-green border border-forge-green/30">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-forge-green/15 text-success-text border border-forge-green/30">
               NEW
             </span>
           ) : app.original ? (

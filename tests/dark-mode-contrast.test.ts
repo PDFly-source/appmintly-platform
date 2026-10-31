@@ -117,6 +117,68 @@ describe('semantic token contrast in each theme', () => {
     });
   }
 
+  it('accent foreground tokens clear AA against their real fills and surfaces', () => {
+    const fills: Record<string, string> = {
+      brandRed: '#E8503D',
+      tealLight: '#0F766E',
+      tealDark: '#14B8A6',
+      green: '#14B8A6',
+    };
+    const expectations: Array<[string, string, string, string]> = [
+      // [theme, token, fill key, minimum]
+      ['light', 'on-brand', 'brandRed', '4.5'],
+      ['dark', 'on-brand', 'brandRed', '4.5'],
+      ['amoled', 'on-brand', 'brandRed', '4.5'],
+      ['light', 'on-cta', 'tealLight', '4.5'],
+      ['dark', 'on-cta', 'tealDark', '4.5'],
+      ['amoled', 'on-cta', 'tealDark', '4.5'],
+      ['dark', 'on-success', 'green', '4.5'],
+    ];
+    const selectors: Record<string, string> = { light: ':root', dark: '.dark', amoled: '.amoled' };
+    for (const [theme, token, fill, min] of expectations) {
+      const value = tokensFor(selectors[theme])[token];
+      expect(value, `${theme} --c-${token} must exist`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(contrast(value, fills[fill]), `${theme} --c-${token} on ${fills[fill]}`).toBeGreaterThanOrEqual(
+        Number(min)
+      );
+    }
+    // Accent text used ON surfaces (links, success badges, error text).
+    for (const [theme, selector] of Object.entries(selectors)) {
+      const tokens = tokensFor(selector);
+      for (const token of ['link-text', 'success-text', 'accent-text']) {
+        for (const surface of ['card', 'page']) {
+          const ratio = contrast(tokens[token], tokens[surface]);
+          expect(ratio, `${theme} --c-${token} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+  });
+
+  it('never puts white text on a brand accent fill', () => {
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      for (const match of source.matchAll(/className=(?:"([^"]*)"|\{([^}]*)\})/g)) {
+        const cls = `${match[1] ?? ''} ${match[2] ?? ''}`;
+        if (!/\btext-white\b/.test(cls)) continue;
+        if (/bg-forge-red|bg-forge-green|bg-forge-gold|bg-forge-orange|btn-cta|bg-cta/.test(cls)) {
+          offenders.push(`${file}: ${cls.trim().slice(0, 90)}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('does not use raw brand accents as text colours', () => {
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const source = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      const matches = source.match(/(?<![\w-])text-forge-(blue|green)(?![\w-])/g);
+      if (matches) offenders.push(`${file}: ${matches.join(', ')}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('dark and light are genuinely different surfaces', () => {
     const light = tokensFor(':root');
     const dark = tokensFor('.dark');

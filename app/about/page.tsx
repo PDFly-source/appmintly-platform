@@ -44,7 +44,7 @@ export default function AboutPage() {
       {/* Core Principles */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="p-6 rounded-3xl bg-card border border-line shadow-2xs">
-          <div className="w-10 h-10 rounded-xl bg-forge-green/10 text-forge-green flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-xl bg-forge-green/10 text-success-text flex items-center justify-center mb-3">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-base text-ink">Zero-Telemetry</h3>
@@ -54,7 +54,7 @@ export default function AboutPage() {
         </div>
 
         <div className="p-6 rounded-3xl bg-card border border-line shadow-2xs">
-          <div className="w-10 h-10 rounded-xl bg-forge-blue/10 text-forge-blue flex items-center justify-center mb-3">
+          <div className="w-10 h-10 rounded-xl bg-forge-blue/10 text-link-text flex items-center justify-center mb-3">
             <Globe className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-base text-ink">Modern Web &amp; PWAs</h3>
@@ -77,7 +77,7 @@ export default function AboutPage() {
       {/* Frequently Asked Questions */}
       <div className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
         <h2 className="text-2xl font-bold text-ink tracking-tight flex items-center gap-2">
-          <HelpCircle className="w-6 h-6 text-forge-blue" />
+          <HelpCircle className="w-6 h-6 text-link-text" />
           <span>Frequently Asked Questions</span>
         </h2>
 
@@ -121,7 +121,7 @@ export default function AboutPage() {
         <div className="pt-2 flex justify-center gap-3">
           <Link
             href="/explore"
-            className="px-6 py-3 rounded-full bg-forge-red hover:bg-[#b81f25] text-white text-xs sm:text-sm font-bold shadow-md transition"
+            className="px-6 py-3 rounded-full bg-forge-red hover:bg-[#b81f25] text-on-brand text-xs sm:text-sm font-bold shadow-md transition"
           >
             Explore Catalog
           </Link>

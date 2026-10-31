@@ -82,13 +82,13 @@ export default function NotificationsPage() {
   const isNative = n.nativeAvailable;
   const permissionView: Record<PermissionState, { label: string; icon: React.ReactNode; tone: string; hint: string }> = isNative
     ? {
-        granted: { label: 'Allowed', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-forge-green', hint: 'Android notification permission is granted for the AppMintly app.' },
+        granted: { label: 'Allowed', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-success-text', hint: 'Android notification permission is granted for the AppMintly app.' },
         denied: { label: 'Blocked in Android settings', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-forge-red', hint: 'Notifications for the AppMintly app are turned off in Android Settings → Apps → AppMintly → Notifications.' },
         default: { label: 'Permission required', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The AppMintly app needs the Android notification permission. Enable notifications below to show the system permission dialog.' },
         unsupported: { label: 'Unavailable', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'The Android notification permission state could not be read from the app.' },
       }
     : {
-        granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-forge-green', hint: 'This browser can show AppMintly notifications.' },
+        granted: { label: 'Granted', icon: <CheckCircle2 aria-hidden className="w-4 h-4" />, tone: 'text-success-text', hint: 'This browser can show AppMintly notifications.' },
         denied: { label: 'Blocked', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-forge-red', hint: 'Notifications are blocked by your browser/site settings. AppMintly will not prompt again — re-enable them in the browser site permissions.' },
         default: { label: 'Not requested', icon: <Circle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'Enable notifications to receive update and release alerts while AppMintly is open.' },
         unsupported: { label: 'Unsupported', icon: <XCircle aria-hidden className="w-4 h-4" />, tone: 'text-mut', hint: 'This browser does not support the Notification API.' },

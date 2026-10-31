@@ -17,7 +17,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-page text-ink">
       <div className="px-4 sm:px-6 max-w-3xl mx-auto py-12">
         <div className="flex items-center gap-2.5 mb-2">
-          <MailQuestion className="w-6 h-6 text-forge-green" aria-hidden="true" />
+          <MailQuestion className="w-6 h-6 text-success-text" aria-hidden="true" />
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Contact</h1>
         </div>
         <p className="text-xs text-mut mb-8">Last updated: September 26, 2026</p>
@@ -29,7 +29,7 @@ export default function ContactPage() {
               AppMintly does not require registration and does not collect personal
               information, so there is no contact form or mailbox attached to the
               marketplace itself. See the{' '}
-              <Link href="/privacy" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
+              <Link href="/privacy" className="font-bold text-link-text hover:text-link-text/80 transition">
                 Privacy Policy
               </Link>{' '}
               for the full details.
@@ -41,7 +41,7 @@ export default function ContactPage() {
             <p>
               Each application in the catalog has a detail page with release notes and
               download options. Applications published by PKD are listed together on the{' '}
-              <Link href="/publisher/pkd" className="font-bold text-forge-blue hover:text-forge-blue/80 transition">
+              <Link href="/publisher/pkd" className="font-bold text-link-text hover:text-link-text/80 transition">
                 PKD publisher page
               </Link>
               .
@@ -59,7 +59,7 @@ export default function ContactPage() {
                 href="https://github.com/PDFly-source/appmintly-platform"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-bold text-forge-blue hover:text-forge-blue/80 transition"
+                className="inline-flex items-center gap-1.5 font-bold text-link-text hover:text-link-text/80 transition"
               >
                 github.com/PDFly-source/appmintly-platform
               </a>
@@ -69,7 +69,7 @@ export default function ContactPage() {
           <div className="pt-4">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-forge-blue hover:text-forge-blue/80 transition"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-link-text hover:text-link-text/80 transition"
             >
               ← Back to AppMintly
             </Link>

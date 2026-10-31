@@ -217,7 +217,7 @@ export default function LibraryPage() {
           onClick={toggleRecentRecording}
           className={`min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full border text-xs font-bold transition ${
             recentViewed.enabled
-              ? 'border-forge-green/40 bg-forge-green/10 text-forge-green'
+              ? 'border-forge-green/40 bg-forge-green/10 text-success-text'
               : 'border-line bg-page text-mut hover:text-ink'
           }`}
         >
@@ -244,7 +244,7 @@ export default function LibraryPage() {
             <button
               type="button"
               onClick={clearRecentHistory}
-              className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 hover:opacity-90 transition"
+              className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-on-brand text-xs font-bold inline-flex items-center justify-center gap-1.5 hover:opacity-90 transition"
             >
               <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
               Clear history
@@ -465,7 +465,7 @@ export default function LibraryPage() {
             </div>
             <Link
               href={`/app/${recent[0].app.slug}`}
-              className="min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full bg-inkbg text-white text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] shrink-0 inline-flex items-center gap-1.5 px-4 rounded-full bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               Open
               <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
@@ -558,14 +558,14 @@ function SavedRow({
               {entry.platform}
             </span>
             {entry.sources.saved && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-green/30 bg-forge-green/10 text-forge-green">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-green/30 bg-forge-green/10 text-success-text">
                 <Bookmark aria-hidden="true" className="w-2.5 h-2.5 fill-current" />
                 Saved
               </span>
             )}
             {entry.sources.lab && (
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-blue/30 bg-forge-blue/10 text-forge-blue"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-forge-blue/30 bg-forge-blue/10 text-link-text"
                 title="Also saved on the AppMintly Lab roadmap"
               >
                 Lab
@@ -580,7 +580,7 @@ function SavedRow({
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackAppOpened(app.id)}
-              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-inkbg text-white text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
               Open
@@ -588,7 +588,7 @@ function SavedRow({
           ) : (
             <Link
               href={`/app/${app.slug}`}
-              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center bg-inkbg text-white text-xs font-bold hover:bg-cta transition"
+              className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center bg-inkbg text-on-cta text-xs font-bold hover:bg-cta transition"
             >
               View
             </Link>
@@ -643,7 +643,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
               trackAppDownloaded(app.id);
               recordDownloadedVersion(app.id, app.apk?.versionName || app.version || '');
             }}
-            className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-forge-green/10 text-forge-green border border-forge-green/25 text-xs font-bold hover:bg-forge-green hover:text-white transition"
+            className="min-h-[44px] sm:min-h-0 sm:py-2 px-4 rounded-full inline-flex items-center justify-center gap-1.5 bg-forge-green/10 text-success-text border border-forge-green/25 text-xs font-bold hover:bg-forge-green hover:text-on-success transition"
           >
             <Download aria-hidden="true" className="w-3.5 h-3.5" />
             Download again
@@ -748,7 +748,7 @@ function ManageDialog({
                 type="button"
                 disabled={busy}
                 onClick={() => run(clearAllLocalData, 'Local library data cleared.')}
-                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50 transition"
+                className="min-h-[44px] flex-1 rounded-xl bg-forge-red text-on-brand text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-50 transition"
               >
                 {busy ? <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> : <Trash2 aria-hidden="true" className="w-4 h-4" />}
                 Clear data

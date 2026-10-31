@@ -41,7 +41,7 @@ export function PersonalizedRecommendations({ slug }: { slug: string }) {
     <div className="border-t border-line pt-6" data-testid="personalized-recommendations">
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <h3 className="text-base font-semibold text-ink">{heading}</h3>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-forge-blue/30 bg-forge-blue/10 text-[10px] font-bold text-forge-blue">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-forge-blue/30 bg-forge-blue/10 text-[10px] font-bold text-link-text">
           <Sparkles aria-hidden="true" className="w-3 h-3" />
           Personalized on this device
         </span>
@@ -70,7 +70,7 @@ export function PersonalizedRecommendations({ slug }: { slug: string }) {
       </ul>
       <p className="mt-3 text-[11px] text-mut">
         Personalized suggestions are computed in this browser.{' '}
-        <Link href="/library/settings/" className="font-semibold text-forge-blue hover:underline">
+        <Link href="/library/settings/" className="font-semibold text-link-text hover:underline">
           Manage preferences
         </Link>
       </p>

@@ -247,7 +247,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
   return (
     <section aria-labelledby="apk-verify-heading" className="rounded-2xl bg-card border border-line overflow-hidden shadow-sm">
       <div className="flex items-center gap-2 px-4 py-3.5 bg-page border-b border-line">
-        <ShieldCheck className="w-4 h-4 text-forge-green" aria-hidden />
+        <ShieldCheck className="w-4 h-4 text-success-text" aria-hidden />
         <h3 id="apk-verify-heading" className="text-sm font-bold text-ink">
           Verify APK integrity
         </h3>
@@ -283,8 +283,8 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
         <p className="mt-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider" aria-live="polite">
           {result.state === 'verified' ? (
             <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-forge-green" aria-hidden />
-              <span className="text-forge-green">{stateLabel}</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-success-text" aria-hidden />
+              <span className="text-success-text">{stateLabel}</span>
             </>
           ) : result.state === 'mismatch' ? (
             <>
@@ -330,7 +330,7 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               busy
                 ? 'bg-page text-mut border border-line pointer-events-none'
-                : 'bg-inkbg text-white hover:bg-forge-red'
+                : 'bg-inkbg text-on-brand hover:bg-forge-red'
             }`}
           >
             <FileSearch className="w-4 h-4" aria-hidden />
@@ -392,10 +392,10 @@ export function ApkHashVerifier({ app }: { app: AppItem }) {
             aria-live="polite"
             className="mt-3 rounded-xl border p-3.5 bg-forge-green/10 border-forge-green/40"
           >
-            <p className="flex items-center gap-2.5 text-sm font-bold text-forge-green">
+            <p className="flex items-center gap-2.5 text-sm font-bold text-success-text">
               <span className="relative inline-flex">
                 <CheckCircle2
-                  className="w-5 h-5 text-forge-green motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-50 motion-safe:duration-500"
+                  className="w-5 h-5 text-success-text motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-50 motion-safe:duration-500"
                   aria-hidden
                 />
                 <span
