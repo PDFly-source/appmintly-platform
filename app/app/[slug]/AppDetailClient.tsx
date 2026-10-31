@@ -50,6 +50,7 @@ import { releaseVersionOf } from '@/lib/notifications/engine';
 import { ApkInstallSheet } from '@/components/ApkInstallSheet';
 import { UpdateIndicator } from '@/components/updates/UpdateCenter';
 import { ReviewSection } from '@/components/reviews/ReviewSection';
+import { CompatibilitySection } from '@/components/compatibility/CompatibilitySection';
 import {
   useLocalFavorite,
   useIsStandalone,
@@ -999,6 +1000,9 @@ export default function AppDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 7a. COMPATIBILITY & REQUIREMENTS (Item 8) — verified metadata only */}
+      <CompatibilitySection app={app} />
 
       {/* 7b. USER REVIEWS (Item 7) — approved reviews only, moderated by the owner */}
       <div className="mt-8">
