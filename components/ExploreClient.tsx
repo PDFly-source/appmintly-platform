@@ -20,6 +20,7 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { CATEGORIES } from '@/data/categories';
 import { PUBLISHERS } from '@/data/publishers';
 import { AppCard } from '@/components/AppCard';
+import { CompareTray } from '@/components/CompareTray';
 import {
   DEFAULT_EXPLORE_FILTERS,
   availabilityCounts,
@@ -1077,6 +1078,7 @@ const clearAllFilters = () => {
           </div>
         </div>
       )}
+      <CompareTray />
     </div>
   );
 }

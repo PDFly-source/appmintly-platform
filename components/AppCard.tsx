@@ -19,6 +19,7 @@ import {
 import { AppItem, AppType, isNewApp } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
+import { CompareToggle } from '@/components/CompareToggle';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
@@ -322,18 +323,21 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           <div className="flex flex-wrap items-center gap-1.5">
             {exploreBadges.slice(0, 2)}
           </div>
-          <button
-            onClick={handleFavoriteClick}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-cta hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
-            title={favorite ? 'Remove from Library' : 'Save to Library'}
-            aria-label={favorite ? `Remove ${app.name} from Library` : `Save ${app.name} to Library`}
-            aria-pressed={favorite}
-          >
-            <Bookmark
-              key={`fav-${favorite}`}
-              className={`w-4 h-4 ${favorite ? 'fill-cta text-cta' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
-            />
-          </button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <CompareToggle appId={app.id} appName={app.name} />
+            <button
+              onClick={handleFavoriteClick}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-mut hover:text-cta hover:bg-page transition shrink-0 cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cta/50"
+              title={favorite ? 'Remove from Library' : 'Save to Library'}
+              aria-label={favorite ? `Remove ${app.name} from Library` : `Save ${app.name} to Library`}
+              aria-pressed={favorite}
+            >
+              <Bookmark
+                key={`fav-${favorite}`}
+                className={`w-4 h-4 ${favorite ? 'fill-cta text-cta' : ''} motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-150`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Identity: large app icon + name + publisher + category / format */}
