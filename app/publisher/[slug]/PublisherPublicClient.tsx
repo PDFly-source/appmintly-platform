@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useCatalog } from '@/lib/CatalogContext';
 import { getDeveloperIdentity } from '@/data/publishers';
+import { getPublisherVerificationCopy } from '@/lib/publisher-verification';
 import { AppCard } from '@/components/AppCard';
 import { Reveal } from '@/components/Reveal';
 import type { AppItem } from '@/data/apps';
@@ -29,6 +30,9 @@ import {
 export default function PublisherPublicClient({ slug }: { slug: string }) {
   const { publishedApps } = useCatalog();
   const identity = getDeveloperIdentity(slug);
+  // Verification wording comes only from the canonical record. Anything that
+  // is not an explicit `verified: true` gets neutral publisher wording.
+  const verificationCopy = getPublisherVerificationCopy(identity);
 
   // One shared, tested aggregation layer (lib/publisher-stats.ts). `publishedApps`
   // is already filtered by the project's public-publication rules, so drafts
@@ -78,8 +82,8 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
             <div className="p3d-rise" style={{ ['--p3d-d' as string]: '0s' }}>
               <PublisherIdentityCard
                 name={identity.name}
-                verified={identity.verified}
-                eyebrow="Verified Developer & Publisher"
+                verified={verificationCopy.showVerifiedBadge}
+                eyebrow={verificationCopy.eyebrow}
                 subtitle={
                   stats && stats.totalApps > 0
                     ? `${stats.publishedApps} published ${stats.publishedApps === 1 ? 'application' : 'applications'}`
@@ -159,7 +163,7 @@ export default function PublisherPublicClient({ slug }: { slug: string }) {
               Apps by {identity.name}
             </h2>
             <p className="text-xs sm:text-sm text-mut mt-1">
-              All published applications from this verified publisher.
+              {verificationCopy.appsIntro}
             </p>
           </div>
         </div>

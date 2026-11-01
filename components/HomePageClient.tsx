@@ -464,7 +464,7 @@ export default function HomePage() {
               Latest Applications
             </h2>
             <p className="text-xs sm:text-sm text-mut mt-1">
-              Recently added and updated software from verified publishers.
+              Recently added and updated software from publishers across the marketplace.
             </p>
           </div>
           <Link
@@ -607,17 +607,18 @@ export default function HomePage() {
 
             {/* 10. VERIFIED PUBLISHERS */}
             {publishersWithApps.length > 0 && (
-              <div aria-label="Verified publishers" className="mb-10 sm:mb-12">
+              <div aria-label="Publishers" className="mb-10 sm:mb-12">
                 <Reveal>
                   <span className="p3d-eyebrow mb-3">
                     <BadgeCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                    Trusted Developers
+                    Publisher Directory
                   </span>
                   <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-3">
-                    Verified <span className="p3d-grad">Publishers</span>
+                    <span className="p3d-grad">Publishers</span>
                   </h2>
                   <p className="text-xs sm:text-sm p3d-mute mt-1.5 mb-5">
-                    Publisher identities verified by the AppMintly team.
+                    Publisher identities in the AppMintly marketplace. Verified
+                    publishers carry a badge next to their name.
                   </p>
                 </Reveal>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -743,9 +744,10 @@ export default function HomePage() {
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">
               <BadgeCheck className="w-5 h-5 text-success-text mb-2" aria-hidden="true" />
-              <h3 className="text-xs font-semibold mb-1">Verified Publishers</h3>
+              <h3 className="text-xs font-semibold mb-1">Repository Publisher Records</h3>
               <p className="text-[11px] text-mut leading-relaxed">
-                Publisher identities are verified at the repository level by the AppMintly team.
+                Publisher identity and verification state live in the reviewed repository
+                catalog, never in browser-editable data.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-page border border-line">

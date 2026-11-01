@@ -42,8 +42,9 @@ export default function SecurityPage() {
                 behind a version bump.
               </li>
               <li>
-                <strong className="text-ink">Repository-verified publishers.</strong> Publisher
-                identities are tied to their public repositories, and each has a{' '}
+                <strong className="text-ink">Repository-controlled publisher identity.</strong>{' '}
+                Publisher records live in the reviewed repository catalog, verified
+                publishers carry a badge, and each has a{' '}
                 <Link href="/publisher/pkd" className="font-bold text-link-text hover:text-link-text/80 transition">
                   public publisher page
                 </Link>

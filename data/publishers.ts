@@ -20,6 +20,7 @@ export interface DeveloperIdentity {
   bio?: string;
 }
 
+import { isVerifiedPublisher } from '@/lib/publisher-verification';
 import rawPublishers from './publishers.json';
 
 export const PUBLISHERS: DeveloperIdentity[] = (rawPublishers as DeveloperIdentity[]) || [];
@@ -45,7 +46,9 @@ export function resolveDeveloper(app: {
     return {
       name: identity.name,
       slug: identity.slug,
-      verified: Boolean(identity.verified),
+      // Strict: only an explicit canonical `true` counts. A malformed value
+      // ("true", 1, null) must never light up a verified badge.
+      verified: isVerifiedPublisher(identity),
       avatar: identity.avatar,
       website: identity.website,
       bio: identity.bio,

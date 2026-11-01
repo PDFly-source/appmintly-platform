@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { CANONICAL_TRAILING_SLASH } from '@/lib/canonical-slash';
 import { APPS } from '@/data/apps';
 import { PUBLISHERS, getDeveloperIdentity } from '@/data/publishers';
+import { getPublisherVerificationCopy } from '@/lib/publisher-verification';
 import PublisherPublicClient from './PublisherPublicClient';
 
 const SITE_URL = 'https://appmintly.pages.dev/';
@@ -29,7 +30,7 @@ export async function generateMetadata({
   const description = `Apps by ${identity.name} on AppMintly${appCount > 0 ? ` — ${appCount} published ${appCount === 1 ? 'application' : 'applications'}` : ''}.${identity.bio ? ' ' + identity.bio : ''}`;
 
   return {
-    title: `${identity.name} — Verified Publisher | AppMintly`,
+    title: `${identity.name} — ${getPublisherVerificationCopy(identity).metaDescriptor} | AppMintly`,
     description,
     alternates: { canonical: canonicalUrl },
     openGraph: {

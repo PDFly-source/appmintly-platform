@@ -15,6 +15,7 @@
  */
 
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { getVerificationState } from '@/lib/publisher-verification';
 
 export interface StatsApp {
   slug: string;
@@ -199,13 +200,14 @@ export interface PublisherSummary {
  */
 export function summarizePublishers(
   eligibleApps: readonly StatsApp[],
-  publishers: ReadonlyArray<{ slug: string; name: string; verified: boolean }>
+  publishers: ReadonlyArray<{ slug: string; name: string; verified?: unknown }>
 ): PublisherSummary[] {
   return publishers
     .map((p) => ({
       slug: p.slug,
       name: p.name,
-      verified: Boolean(p.verified),
+      // Strict canonical state: only an explicit `true` is verified.
+      verified: getVerificationState(p) === 'verified',
       appCount: computePublisherStats(eligibleApps, p.slug).totalApps,
     }))
     .filter((p) => p.appCount > 0);
