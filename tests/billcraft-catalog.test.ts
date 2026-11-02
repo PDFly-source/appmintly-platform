@@ -143,7 +143,7 @@ describe('BillCraft official publication — isolation', () => {
     const expected: Record<string, [string, string]> = {
       appmintly: ['1.0.10', 'published'],
       studyria: ['2.0.2', 'published'],
-      pdfminifly: ['2.1.2', 'published'],
+      pdfminifly: ['2.1.3', 'published'],
       niramay: ['2.1.1', 'published'],
       nexdrop: ['1.4.6', 'published'],
       'distribution-test': ['1.0.1', 'draft'],
