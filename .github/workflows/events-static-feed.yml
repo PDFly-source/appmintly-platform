@@ -91,9 +91,9 @@ jobs:
 
           // Fields the export legitimately carries. Anything else is a contract
           // change we refuse to publish silently.
-          const EXPORT_FIELDS = new Set(['eventId', 'ts', 'appId', 'platform', 'type', 'version', 'catalogRevision', 'title', 'notes']);
+          const EXPORT_FIELDS = new Set(['eventId', 'ts', 'appId', 'platform', 'type', 'version', 'catalogRevision', 'name', 'title', 'notes']);
           // Fields the public feed may contain.
-          const PUBLIC_FIELDS = ['eventId', 'appId', 'platform', 'version', 'catalogRevision', 'ts'];
+          const PUBLIC_FIELDS = ['eventId', 'appId', 'platform', 'version', 'catalogRevision', 'ts', 'name'];
           const MAX_EVENTS = 200;
 
           let raw;
@@ -115,6 +115,7 @@ jobs:
             if (!['android', 'web', 'ios'].includes(e.platform)) fail('event ' + i + ' has an invalid platform');
             if (!/^\d+\.\d+\.\d+/.test(e.version)) fail('event ' + i + ' has an invalid version');
             if (!/^[0-9a-f]{7,40}$/.test(e.catalogRevision)) fail('event ' + i + ' has an invalid catalog revision');
+            if (e.name !== undefined && (typeof e.name !== 'string' || e.name.length > 120)) fail('event ' + i + ' has an invalid display name');
             // Defence in depth: nothing resembling an address, credential or
             // signature may ever reach a public file.
             for (const v of Object.values(e)) {
@@ -129,7 +130,7 @@ jobs:
           const events = [...seen.values()]
             .sort((a, b) => (a.ts - b.ts) || (a.eventId < b.eventId ? -1 : 1))
             .slice(-MAX_EVENTS)
-            .map((e) => Object.fromEntries(PUBLIC_FIELDS.map((k) => [k, e[k]])));
+            .map((e) => Object.fromEntries(PUBLIC_FIELDS.map((k) => [k, k === 'name' ? (e.name || '') : e[k]])));
 
           if (events.length === 0) fail('validated feed is empty; refusing to overwrite a good feed');
 
