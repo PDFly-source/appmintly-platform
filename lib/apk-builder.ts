@@ -1253,20 +1253,49 @@ ${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout 
         webView.setDownloadListener(new DownloadListener() {
             @Override
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                Uri target = Uri.parse(url);
+                String scheme = target.getScheme() == null
+                        ? ""
+                        : target.getScheme().toLowerCase(java.util.Locale.US);
+                // blob: and data: payloads only exist inside the page that
+                // created them, so DownloadManager can never fetch them and no
+                // installed app can handle those schemes. Say what is actually
+                // true instead of firing an intent nothing can resolve.
+                if (!scheme.equals("http") && !scheme.equals("https")) {
+                    Toast.makeText(MainActivity.this,
+                            "This file is generated inside the page and cannot be saved by the app. Open the same page in your browser to download it.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
                 try {
-                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                    String fileName = target.getLastPathSegment();
+                    if (fileName == null || fileName.trim().isEmpty() || fileName.contains("/")) {
+                        // Links such as /export?format=pdf carry no path
+                        // segment; a null name used to throw and bounce a
+                        // downloadable file out to the browser instead.
+                        fileName = "appmintly-download";
+                    }
+                    DownloadManager.Request request = new DownloadManager.Request(target);
                     request.setMimeType(mimetype);
                     request.allowScanningByMediaScanner();
                     request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, Uri.parse(url).getLastPathSegment());
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
                     DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-                    if (dm != null) {
-                        dm.enqueue(request);
-                        Toast.makeText(MainActivity.this, "Downloading file...", Toast.LENGTH_SHORT).show();
+                    if (dm == null) {
+                        throw new IllegalStateException("download service unavailable");
                     }
-                } catch (Exception e) {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
+                    dm.enqueue(request);
+                    Toast.makeText(MainActivity.this, "Downloading file...", Toast.LENGTH_SHORT).show();
+                } catch (Throwable failure) {
+                    // Last resort, and it must never escape: an unhandled
+                    // exception on this thread would crash the app on one tap.
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, target));
+                    } catch (Throwable unopenable) {
+                        Toast.makeText(MainActivity.this,
+                                "This download could not be opened on this device.",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });

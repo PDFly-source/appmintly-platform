@@ -198,3 +198,39 @@ if (failures > 0) {
   console.error(`[launch-template] FAILED: ${failures} regression(s) detected`);
   process.exit(1);
 }
+
+/* ---------- 8. Download path: no unhandled scheme, no null filename ----------
+ * Two real defects lived here until v2.1.3 for PDFMiniFly / any wrapper app:
+ *  a) the failure fallback called startActivity() unguarded, and WebView hands
+ *     blob:/data: URLs to onDownloadStart for files the page generated, which
+ *     no installed app can resolve -> ActivityNotFoundException on the UI thread;
+ *  b) a link with no path segment (e.g. /export?format=pdf) produced a null
+ *     filename, the request threw, and a downloadable file was bounced to the
+ *     browser instead of saved.
+ */
+ok(
+  'download listener refuses non-fetchable schemes before touching DownloadManager',
+  /if \(!scheme\.equals\("http"\) && !scheme\.equals\("https"\)\) \{/.test(builderSrc),
+);
+ok(
+  'blob/data downloads tell the user the truth instead of firing a dead intent',
+  /generated inside the page and cannot be saved by the app/.test(builderSrc),
+);
+ok(
+  'null or unsafe download filename falls back to a safe name',
+  /fileName = "appmintly-download";/.test(builderSrc),
+);
+ok(
+  'download fallback startActivity is wrapped and can never escape the listener',
+  /catch \(Throwable failure\) \{[\s\S]{0,400}try \{[\s\S]{0,200}startActivity\(new Intent\(Intent\.ACTION_VIEW, target\)\);[\s\S]{0,200}\} catch \(Throwable unopenable\) \{/.test(builderSrc),
+);
+ok(
+  'download listener catches Throwable, not just Exception',
+  /onDownloadStart\(String url[\s\S]{0,3000}catch \(Throwable failure\)/.test(builderSrc),
+);
+
+if (failures > 0) {
+  console.error(`\n${failures} of ${checks} launch-template checks FAILED`);
+  process.exit(1);
+}
+console.log(`\n${checks}/${checks} launch-template checks passed`);
