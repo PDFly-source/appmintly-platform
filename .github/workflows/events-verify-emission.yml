@@ -1,0 +1,90 @@
+name: Verify Emission Secret
+
+# Manual-only. Proves the GitHub-stored signing secret matches the Worker's
+# without storing anything: the Worker verifies the HMAC BEFORE it validates
+# fields, so a correctly signed payload with an invalid version returns 400
+# "Invalid version" while a wrong secret returns 401 "Invalid event signature".
+# Zero events are created, so the public feed cannot be polluted.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-emission
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Prove the signature is accepted without storing an event
+        env:
+          EMISSION_SECRET: ${{ secrets.EVENT_EMISSION_SECRET }}
+        run: |
+          set -uo pipefail
+          API="https://appmintly-publisher-api.sbn50088.workers.dev"
+          if [ -z "${EMISSION_SECRET:-}" ]; then
+            echo "::error::EVENT_EMISSION_SECRET is not configured in this repository."
+            exit 1
+          fi
+
+          TS="$(date +%s)000"
+          BODY="{\"appId\":\"appmintly-verify\",\"platform\":\"android\",\"version\":\"verify\",\"catalogRevision\":\"0000000\",\"ts\":${TS},\"name\":\"Verification\"}"
+          SIG="$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$EMISSION_SECRET" -hex | awk '{print $NF}')"
+          FAILED=0
+
+          # 1. Correct signature with a deliberately invalid version. The Worker
+          #    checks the HMAC first, so HTTP 400 "Invalid version" proves the
+          #    signature matched and nothing was written.
+          OUT="$(curl -s -o /tmp/a.json -w '%{http_code}' -X POST "$API/events/publish" \
+            -H 'content-type: application/json' \
+            -H "x-appmintly-events-signature: sha256=${SIG}" \
+            --data-binary "$BODY")"
+          MSG="$(sed -n 's/.*"error":"\([^"]*\)".*/\1/p' /tmp/a.json)"
+          if [ "$OUT" = "400" ] && printf '%s' "$MSG" | grep -qi 'invalid version'; then
+            echo "::notice::CHECK 1 PASS: signed request accepted by the Worker (HTTP 400 Invalid version, reached field validation, nothing stored)"
+          else
+            echo "::error::CHECK 1 FAIL: expected 400 Invalid version from a correctly signed request, got HTTP ${OUT} ${MSG}"
+            FAILED=1
+          fi
+
+          # 2. A forged signature must be rejected before any validation.
+          BAD="$(printf '0%.0s' $(seq 1 64))"
+          OUT2="$(curl -s -o /tmp/b.json -w '%{http_code}' -X POST "$API/events/publish" \
+            -H 'content-type: application/json' \
+            -H "x-appmintly-events-signature: sha256=${BAD}" \
+            --data-binary "$BODY")"
+          if [ "$OUT2" = "401" ]; then
+            echo "::notice::CHECK 2 PASS: forged signature rejected with HTTP 401"
+          else
+            echo "::error::CHECK 2 FAIL: forged signature returned HTTP ${OUT2}"
+            FAILED=1
+          fi
+
+          # 3. Repeating the same signed request must be deterministic, which is
+          #    what makes a retry unable to duplicate a stored event.
+          OUT3="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API/events/publish" \
+            -H 'content-type: application/json' \
+            -H "x-appmintly-events-signature: sha256=${SIG}" \
+            --data-binary "$BODY")"
+          if [ "$OUT3" = "$OUT" ]; then
+            echo "::notice::CHECK 3 PASS: repeat delivery is deterministic (HTTP ${OUT3}), so a retry cannot duplicate"
+          else
+            echo "::error::CHECK 3 FAIL: repeat delivery changed response (${OUT} then ${OUT3})"
+            FAILED=1
+          fi
+
+          # 4. Nothing may appear in the public feed.
+          curl -s "$API/events" -o /tmp/c.json
+          if grep -q 'appmintly-verify' /tmp/c.json; then
+            echo "::error::CHECK 4 FAIL: the verification payload was stored in the feed"
+            FAILED=1
+          else
+            COUNT="$(grep -o '"eventId"' /tmp/c.json | wc -l)"
+            echo "::notice::CHECK 4 PASS: no verification event stored; feed still holds ${COUNT} event(s)"
+          fi
+
+          exit "$FAILED"

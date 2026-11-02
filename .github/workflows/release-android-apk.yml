@@ -515,11 +515,13 @@ jobs:
       - name: Publish release event
         if: steps.catalog.outputs.committed == 'true'
         env:
-          APPMINTLY_EVENTS_EMISSION_SECRET: ${{ secrets.APPMINTLY_EVENTS_EMISSION_SECRET }}
+          # GitHub stores this as EVENT_EMISSION_SECRET (documented in worker.js:2290
+          # and wrangler.toml:45); the shell variable keeps the Worker-side name.
+          APPMINTLY_EVENTS_EMISSION_SECRET: ${{ secrets.EVENT_EMISSION_SECRET }}
         run: |
           set -euo pipefail
           if [ -z "${APPMINTLY_EVENTS_EMISSION_SECRET:-}" ]; then
-            echo "::error::The release is published in the catalog, but no release event was emitted: APPMINTLY_EVENTS_EMISSION_SECRET is not configured in this repository. Add the repository secret (same value as the Worker secret) and re-run this job."
+            echo "::error::The release is published in the catalog, but no release event was emitted: the EVENT_EMISSION_SECRET repository secret is not configured. Add it (same value as the Worker secret APPMINTLY_EVENTS_EMISSION_SECRET) and re-run this job."
             exit 1
           fi
           node scripts/publish-release-event.mjs \
