@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-02T17:30:38.809Z",
-  "serverTime": 1793640638749,
+  "generatedAt": "2026-11-02T18:54:23.738Z",
+  "serverTime": 1793645663686,
   "source": "appmintly-publisher-api/admin/events/export",
-  "count": 1,
+  "count": 2,
   "events": [
     {
       "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
@@ -12,6 +12,15 @@
       "catalogRevision": "abcdef0",
       "ts": 1793633146000,
       "name": "Admission probe"
+    },
+    {
+      "eventId": "804733e4be8cac3476e7faf43a2975a7",
+      "appId": "pdfminifly",
+      "platform": "android",
+      "version": "2.1.3",
+      "catalogRevision": "d9136b439547f6aa3442e4551d7da2937c540c3c",
+      "ts": 1793645485377,
+      "name": "PDFMiniFly"
     }
   ]
 }
