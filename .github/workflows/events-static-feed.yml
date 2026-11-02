@@ -189,7 +189,7 @@ jobs:
         if: steps.build.outputs.changed == 'true'
         run: npm ci
 
-      - name: Build static export
+      - name: Build static export (GitHub Pages scope)
         if: steps.build.outputs.changed == 'true'
         env:
           GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
@@ -201,17 +201,10 @@ jobs:
           cp data/apps.json data/publishers.json data/categories.json data/collections.json \
              data/engineering-status.json data/lab-apps.json data/engineering-events.json \
              data/engineering-builds.json out/data/
-
-      - name: Deploy to Cloudflare Pages
-        if: steps.build.outputs.changed == 'true'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -eu
-          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo 'Missing Actions secret: CLOUDFLARE_API_TOKEN'; exit 1; }
-          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo 'Missing Actions secret: CLOUDFLARE_ACCOUNT_ID'; exit 1; }
-          npx --yes wrangler@4 pages deploy out --project-name=appmintly --branch=main
+          # Fail closed: the GitHub Pages mirror is served under /appmintly-platform/,
+          # so this build MUST be base-path scoped.
+          grep -q 'appmintly-platform/_next/static/css' out/index.html || {
+            echo 'FATAL: GitHub Pages build is not base-path scoped; the mirror would 404 every asset'; exit 1; }
 
       - name: Upload Pages artifact
         if: steps.build.outputs.changed == 'true'
@@ -223,6 +216,42 @@ jobs:
         id: deploy_pages
         if: steps.build.outputs.changed == 'true'
         uses: actions/deploy-pages@v4
+
+      # Cloudflare Pages serves the project at the SITE ROOT, so it needs a
+      # root-scoped build. Reusing the base-path export here shipped HTML that
+      # asked for /appmintly-platform/_next/* while the files sat at /_next/*,
+      # which 404'd every stylesheet, chunk and image and left the public site
+      # as unstyled HTML (2026-11-02 incident). deploy.yml already builds twice
+      # for exactly this reason; this workflow now does the same.
+      - name: Build static export (Cloudflare root scope)
+        if: steps.build.outputs.changed == 'true'
+        env:
+          GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
+        run: |
+          set -eu
+          rm -rf app/api out
+          NEXT_OUTPUT=export npm run build
+          mkdir -p out/data
+          cp data/apps.json data/publishers.json data/categories.json data/collections.json \
+             data/engineering-status.json data/lab-apps.json data/engineering-events.json \
+             data/engineering-builds.json out/data/
+          # Fail closed in the other direction: no base path in this bundle.
+          if grep -q 'appmintly-platform/_next/' out/index.html; then
+            echo 'FATAL: Cloudflare build is base-path scoped; every asset would 404 at the site root'; exit 1
+          fi
+          grep -q 'href="/_next/static/css/' out/index.html || {
+            echo 'FATAL: Cloudflare build is missing root-scoped CSS'; exit 1; }
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.build.outputs.changed == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -eu
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo 'Missing Actions secret: CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo 'Missing Actions secret: CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+          npx --yes wrangler@4 pages deploy out --project-name=appmintly --branch=main
 
       - name: Summary
         run: |
