@@ -1,0 +1,232 @@
+name: Events static feed
+
+# Fetches the authenticated AppMintly events export from the Publisher Worker,
+# validates it, publishes it as /data/events.json and redeploys the site.
+#
+# Design notes:
+#  * The export key is used only in this job's headers. It is never echoed,
+#    written to the artifact, or placed in any committed or served file.
+#  * The commit carries [skip ci] so this workflow does its OWN deploy; nothing
+#    is left to a push-triggered workflow firing a second deployment.
+#  * Concurrency group matches deploy.yml ("pages") so the two never deploy at
+#    the same time, and runs do not cancel each other mid-deploy.
+#  * No new Cloudflare resource is created: it deploys the existing Pages
+#    project with the token that already exists in repo secrets.
+
+on:
+  schedule:
+    # Hourly, at :17 to stay clear of the top-of-hour cron rush.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write      # commit the refreshed feed
+  pages: write         # GitHub Pages deployment
+  id-token: write      # required by actions/deploy-pages
+  actions: read
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+env:
+  EXPORT_URL: 'https://appmintly-publisher-api.sbn50088.workers.dev/admin/events/export'
+  FEED_PATH: 'public/data/events.json'
+
+jobs:
+  refresh-feed:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy_pages.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch export
+        id: fetch
+        env:
+          EXPORT_KEY: ${{ secrets.APPMINTLY_EXPORT_KEY }}
+        run: |
+          set -eu
+          test -n "${EXPORT_KEY:-}" || { echo 'Missing Actions secret: APPMINTLY_EXPORT_KEY'; exit 1; }
+          status=$(curl --silent --show-error --fail-with-body \
+            --max-time 30 --max-redirs 0 --proto '=https' --tlsv1.2 \
+            -H "Authorization: Bearer ${EXPORT_KEY}" \
+            -H 'Accept: application/json' \
+            -o "$RUNNER_TEMP/export.json" -w '%{http_code}' \
+            "$EXPORT_URL") || true
+          echo "http_status=${status}"
+          echo "http_status=${status}" >> "$GITHUB_OUTPUT"
+          # Distinguish the failure classes so a red run is actionable, while
+          # never printing the key or the response body.
+          case "$status" in
+            200) ;;
+            401|403) echo "::error::Export rejected the credentials (HTTP ${status}). The stored key does not match the Worker secret." ; exit 1 ;;
+            429) echo "::error::Export is rate limited (HTTP 429). Keeping the last known-good feed." ; exit 1 ;;
+            5*) echo "::error::Export failed upstream (HTTP ${status}). Keeping the last known-good feed." ; exit 1 ;;
+            000) echo "::error::Export timed out or the connection failed. Keeping the last known-good feed." ; exit 1 ;;
+            *) echo "::error::Unexpected export status HTTP ${status}." ; exit 1 ;;
+          esac
+          test -s "$RUNNER_TEMP/export.json" || { echo '::error::Empty export body'; exit 1; }
+
+      - name: Validate and write feed
+        id: build
+        run: |
+          set -eu
+          node - "$RUNNER_TEMP/export.json" "$FEED_PATH" <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const [src, dest] = process.argv.slice(2);
+          const fail = (m) => { console.error('VALIDATION FAILED: ' + m); process.exit(1); };
+
+          // Fields the export legitimately carries. Anything else is a contract
+          // change we refuse to publish silently.
+          const EXPORT_FIELDS = new Set(['eventId', 'ts', 'appId', 'platform', 'type', 'version', 'catalogRevision', 'title', 'notes']);
+          // Fields the public feed may contain.
+          const PUBLIC_FIELDS = ['eventId', 'appId', 'platform', 'version', 'catalogRevision', 'ts'];
+          const MAX_EVENTS = 200;
+
+          let raw;
+          try { raw = JSON.parse(fs.readFileSync(src, 'utf8')); } catch { fail('response is not valid JSON'); }
+          if (!raw || typeof raw !== 'object' || !Array.isArray(raw.events)) fail('response has no events array');
+          if (raw.events.length > MAX_EVENTS) fail('response carries more than ' + MAX_EVENTS + ' events');
+
+          const now = Date.now();
+          const seen = new Map();
+          for (const [i, e] of raw.events.entries()) {
+            if (!e || typeof e !== 'object' || Array.isArray(e)) fail('event ' + i + ' is not an object');
+            for (const k of Object.keys(e)) if (!EXPORT_FIELDS.has(k)) fail('event ' + i + ' has unexpected field "' + k + '"');
+            for (const k of ['eventId', 'appId', 'platform', 'version', 'catalogRevision']) {
+              if (typeof e[k] !== 'string') fail('event ' + i + ' field ' + k + ' must be a string');
+            }
+            if (!/^[0-9a-f]{32}$/.test(e.eventId)) fail('event ' + i + ' has an invalid event id');
+            if (!Number.isInteger(e.ts) || e.ts < 1_600_000_000_000 || e.ts > now + 300_000) fail('event ' + i + ' has an invalid timestamp');
+            if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(e.appId)) fail('event ' + i + ' has an invalid app id');
+            if (!['android', 'web', 'ios'].includes(e.platform)) fail('event ' + i + ' has an invalid platform');
+            if (!/^\d+\.\d+\.\d+/.test(e.version)) fail('event ' + i + ' has an invalid version');
+            if (!/^[0-9a-f]{7,40}$/.test(e.catalogRevision)) fail('event ' + i + ' has an invalid catalog revision');
+            // Defence in depth: nothing resembling an address, credential or
+            // signature may ever reach a public file.
+            for (const v of Object.values(e)) {
+              if (typeof v !== 'string') continue;
+              if (/\b\d{1,3}(\.\d{1,3}){3}\b/.test(v)) fail('event ' + i + ' appears to contain an IP address');
+              if (/sha256=|bearer\s|authorization|secret|token|apikey/i.test(v)) fail('event ' + i + ' appears to contain credentials');
+            }
+            const prev = seen.get(e.eventId);
+            if (!prev || e.ts > prev.ts) seen.set(e.eventId, e);
+          }
+
+          const events = [...seen.values()]
+            .sort((a, b) => (a.ts - b.ts) || (a.eventId < b.eventId ? -1 : 1))
+            .slice(-MAX_EVENTS)
+            .map((e) => Object.fromEntries(PUBLIC_FIELDS.map((k) => [k, e[k]])));
+
+          if (events.length === 0) fail('validated feed is empty; refusing to overwrite a good feed');
+
+          const pending = {
+            generatedAt: new Date(now).toISOString(),
+            serverTime: Number.isFinite(raw.serverTime) ? raw.serverTime : now,
+            source: 'appmintly-publisher-api/admin/events/export',
+            count: events.length,
+            events,
+          };
+
+          // Output plumbing first: a missing GITHUB_OUTPUT must never be able to
+          // skip past a guard, so it is set through one no-throw helper.
+          const setOut = (v) => {
+            if (!process.env.GITHUB_OUTPUT) return;
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + v + '\n');
+          };
+          const skip = (why) => { console.log('SKIP: ' + why); setOut('false'); process.exit(0); };
+
+          // Refuse to replace a newer published feed with an older snapshot, and
+          // do not redeploy when nothing actually changed.
+          if (fs.existsSync(dest)) {
+            let prior = null;
+            try { prior = JSON.parse(fs.readFileSync(dest, 'utf8')); } catch { prior = null; }
+            if (prior && Array.isArray(prior.events) && prior.events.length) {
+              const priorMax = Math.max(0, ...prior.events.map((e) => Number(e.ts) || 0));
+              const priorIds = new Set(prior.events.map((e) => e.eventId));
+              const pendingMax = Math.max(0, ...events.map((e) => e.ts));
+              const newIds = events.filter((e) => !priorIds.has(e.eventId)).length;
+              if (pendingMax < priorMax) skip('fetched feed is older than the published feed');
+              if (newIds === 0 && events.length === prior.events.length) skip('feed is already current (' + events.length + ' events)');
+            }
+          }
+
+          fs.mkdirSync(path.dirname(dest), { recursive: true });
+          const tmp = dest + '.tmp';
+          fs.writeFileSync(tmp, JSON.stringify(pending, null, 2) + '\n');
+          fs.renameSync(tmp, dest); // atomic swap
+          console.log('feed written: ' + events.length + ' events');
+          console.log('event ids: ' + events.slice(-5).map((e) => e.eventId).join(', ') + (events.length > 5 ? ' (+' + (events.length - 5) + ' older)' : ''));
+          setOut('true');
+
+          NODE
+
+      - name: Commit refreshed feed
+        if: steps.build.outputs.changed == 'true'
+        run: |
+          set -eu
+          git config user.name 'AppMintly Events Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$FEED_PATH"
+          git commit -m 'chore(events): refresh static feed [skip ci]'
+          git push origin HEAD:main
+
+      - name: Install dependencies
+        if: steps.build.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Build static export
+        if: steps.build.outputs.changed == 'true'
+        env:
+          GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
+        run: |
+          set -eu
+          rm -rf app/api
+          NEXT_OUTPUT=export NEXT_PUBLIC_BASE_PATH=/appmintly-platform npm run build
+          mkdir -p out/data
+          cp data/apps.json data/publishers.json data/categories.json data/collections.json \
+             data/engineering-status.json data/lab-apps.json data/engineering-events.json \
+             data/engineering-builds.json out/data/
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.build.outputs.changed == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -eu
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo 'Missing Actions secret: CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo 'Missing Actions secret: CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+          npx --yes wrangler@4 pages deploy out --project-name=appmintly --branch=main
+
+      - name: Upload Pages artifact
+        if: steps.build.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+      - name: Deploy to GitHub Pages
+        id: deploy_pages
+        if: steps.build.outputs.changed == 'true'
+        uses: actions/deploy-pages@v4
+
+      - name: Summary
+        run: |
+          {
+            echo '### Events static feed'
+            echo ''
+            echo "- export HTTP status: \`${{ steps.fetch.outputs.http_status }}\`"
+            echo "- feed updated: \`${{ steps.build.outputs.changed || 'false' }}\`"
+            echo "- secrets exposed: none (key used only as a request header)"
+          } >> "$GITHUB_STEP_SUMMARY"
