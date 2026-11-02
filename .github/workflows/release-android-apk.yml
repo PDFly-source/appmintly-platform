@@ -458,6 +458,7 @@ jobs:
           echo "Anonymous public download verified: $URL ($SIZE bytes, SHA-256 $SHA256)"
 
       - name: Update marketplace catalog metadata
+        id: catalog
         shell: bash
         run: |
           set -euo pipefail
@@ -484,10 +485,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --quiet data/apps.json; then
             echo "Catalog metadata already up to date"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
           else
             git add data/apps.json
             git commit -m "release: $APP_NAME $VERSION_NAME production APK published and verified ($RELEASE_TAG)"
             git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
             # A commit pushed with the run's GITHUB_TOKEN does NOT trigger the
             # Pages deploy workflow (GitHub recursion guard). Dispatch it
             # explicitly so the live marketplace reflects the release.
@@ -503,6 +506,28 @@ jobs:
               done
             fi
           fi
+
+      # Emits the public release event for this genuinely published release.
+      # Signs with the same HMAC contract the Worker verifies; the secret is
+      # read from the environment only and is never printed or written to disk.
+      # The event id is derived from (app, platform, version, catalog revision),
+      # so a re-run of this step is idempotent and cannot duplicate the feed.
+      - name: Publish release event
+        if: steps.catalog.outputs.committed == 'true'
+        env:
+          APPMINTLY_EVENTS_EMISSION_SECRET: ${{ secrets.APPMINTLY_EVENTS_EMISSION_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APPMINTLY_EVENTS_EMISSION_SECRET:-}" ]; then
+            echo "::error::The release is published in the catalog, but no release event was emitted: APPMINTLY_EVENTS_EMISSION_SECRET is not configured in this repository. Add the repository secret (same value as the Worker secret) and re-run this job."
+            exit 1
+          fi
+          node scripts/publish-release-event.mjs \
+            --catalog data/apps.json \
+            --package-id "$PACKAGE_ID" \
+            --app-name "$APP_NAME" \
+            --version "$VERSION_NAME" \
+            --revision "$(git rev-parse HEAD)"
 
       - name: Release summary
         shell: bash
