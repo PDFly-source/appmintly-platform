@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-11-02T17:30:38.809Z",
+  "serverTime": 1793640638749,
+  "source": "appmintly-publisher-api/admin/events/export",
+  "count": 1,
+  "events": [
+    {
+      "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
+      "appId": "appmintly-probe",
+      "platform": "android",
+      "version": "0.0.1",
+      "catalogRevision": "abcdef0",
+      "ts": 1793633146000,
+      "name": "Admission probe"
+    }
+  ]
+}
