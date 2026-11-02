@@ -85,7 +85,9 @@ jobs:
           const fs = require('node:fs');
           const path = require('node:path');
           const [src, dest] = process.argv.slice(2);
-          const fail = (m) => { console.error('VALIDATION FAILED: ' + m); process.exit(1); };
+          // ::error:: surfaces the reason as a check-run annotation, so a red run
+          // is diagnosable without log access. It never contains payload data.
+          const fail = (m) => { console.log('::error::VALIDATION FAILED: ' + m); process.exit(1); };
 
           // Fields the export legitimately carries. Anything else is a contract
           // change we refuse to publish silently.
