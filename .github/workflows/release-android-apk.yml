@@ -491,21 +491,95 @@ jobs:
             git commit -m "release: $APP_NAME $VERSION_NAME production APK published and verified ($RELEASE_TAG)"
             git push
             echo "committed=true" >> "$GITHUB_OUTPUT"
-            # A commit pushed with the run's GITHUB_TOKEN does NOT trigger the
-            # Pages deploy workflow (GitHub recursion guard). Dispatch it
-            # explicitly so the live marketplace reflects the release.
-            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              for i in 1 2 3 4 5; do
-                CODE=$(curl -s -o /tmp/dep.out -w '%{http_code}' -X POST \
-                  -H "Authorization: Bearer ${{ github.token }}" \
-                  -H "Accept: application/vnd.github+json" \
-                  https://api.github.com/repos/${{ github.repository }}/actions/workflows/deploy.yml/dispatches \
-                  -d '{"ref":"main"}')
-                if [[ "$CODE" == "204" ]]; then echo "Pages deploy dispatched"; break; fi
-                echo "Deploy dispatch attempt $i returned HTTP $CODE"; sleep 5
-              done
-            fi
+            echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           fi
+
+      # The catalog commit is pushed with this run's GITHUB_TOKEN, which cannot
+      # trigger another workflow, so the production deployment must be
+      # dispatched explicitly. Unlike a fire-and-forget dispatch, this waits for
+      # the run to conclude and fails the release when the deployment does not
+      # actually happen. A cancelled run (a later Pages deployment superseding
+      # it) is retried; a failed one is reported, never swallowed.
+      - name: Verify the production deployment for this release
+        if: github.event_name == 'workflow_dispatch' && steps.catalog.outputs.committed == 'true'
+        timeout-minutes: 40
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT: ${{ steps.catalog.outputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          [ -n "${COMMIT:-}" ] || { echo "::error::catalog step reported no commit SHA"; exit 1; }
+          echo "Release catalog commit: $COMMIT"
+
+          # The deployment must cover this commit: compare(base=COMMIT, head=main).
+          on_main=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${COMMIT}...main" --jq '.status')
+          case "$on_main" in
+            ahead|identical) echo "Confirmed: $COMMIT is contained in main ($on_main)." ;;
+            *) echo "::error::$COMMIT is not contained in main (compare status: $on_main) - refusing to deploy"; exit 1 ;;
+          esac
+
+          for attempt in 1 2 3; do
+            # Idempotent: never queue a duplicate for a commit that already has a
+            # successful deployment or one still in flight.
+            done_ok=$(gh run list --workflow=deploy.yml --limit 30 \
+              --json headSha,conclusion \
+              --jq "[.[] | select(.headSha==\"${COMMIT}\" and .conclusion==\"success\")] | length")
+            if [ "${done_ok:-0}" -gt 0 ]; then
+              echo "A successful production deployment already exists for ${COMMIT}; not dispatching a duplicate."
+              exit 0
+            fi
+
+            run_id=$(gh run list --workflow=deploy.yml --limit 30 \
+              --json databaseId,headSha,status \
+              --jq "[.[] | select(.headSha==\"${COMMIT}\" and (.status==\"queued\" or .status==\"in_progress\"))][0].databaseId // empty")
+            if [ -n "${run_id}" ]; then
+              echo "Tracking in-flight deployment run ${run_id} for ${COMMIT}."
+            else
+              gh workflow run deploy.yml --ref main
+              run_id=""
+              for _ in $(seq 1 24); do
+                run_id=$(gh run list --workflow=deploy.yml --limit 30 \
+                  --json databaseId,headSha,event \
+                  --jq "[.[] | select(.headSha==\"${COMMIT}\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
+                [ -n "${run_id}" ] && break
+                sleep 5
+              done
+              [ -n "${run_id}" ] || { echo "::error::deploy.yml dispatch produced no run for ${COMMIT}"; exit 1; }
+              echo "Dispatched deploy.yml run ${run_id} for ${COMMIT}."
+            fi
+
+            set +e
+            gh run watch "${run_id}" --exit-status --interval 15
+            watch_rc=$?
+            set -e
+
+            # Prove the run really built this release (or a superset of it).
+            actual_sha=$(gh run view "${run_id}" --json headSha --jq '.headSha')
+            if [ "${actual_sha}" = "${COMMIT}" ]; then
+              echo "Run ${run_id} built the release commit ${COMMIT}."
+            else
+              covers=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${COMMIT}...${actual_sha}" --jq '.status')
+              case "$covers" in
+                ahead|identical) echo "::warning::run ${run_id} built ${actual_sha}, a superset of ${COMMIT} (main advanced)." ;;
+                *) echo "::error::run ${run_id} built ${actual_sha}, which does not contain ${COMMIT}"; exit 1 ;;
+              esac
+            fi
+
+            if [ "${watch_rc}" -eq 0 ]; then
+              echo "Production deployment ${run_id} succeeded for ${COMMIT}."
+              exit 0
+            fi
+
+            conclusion=$(gh run view "${run_id}" --json conclusion --jq '.conclusion')
+            if [ "${conclusion}" = "cancelled" ] && [ "${attempt}" -lt 3 ]; then
+              echo "::warning::deployment ${run_id} for ${COMMIT} was cancelled, most likely superseded by a later Pages deployment. Re-dispatching (attempt $((attempt+1))/3)."
+              continue
+            fi
+            echo "::error::deployment ${run_id} for ${COMMIT} concluded '${conclusion}' (watch exit ${watch_rc})"
+            exit 1
+          done
+          echo "::error::no successful production deployment for ${COMMIT} after 3 attempts"
+          exit 1
 
       # Emits the public release event for this genuinely published release.
       # Signs with the same HMAC contract the Worker verifies; the secret is
