@@ -12,6 +12,8 @@ interface AppIconProps {
   themeColor?: string;
   isMaskable?: boolean;
   maskShape?: 'rounded' | 'squircle' | 'circle';
+  /** full-lockup artwork must never be cropped, so it is contained, not covered */
+  fit?: 'cover' | 'contain';
   className?: string;
   priority?: boolean;
 }
@@ -77,6 +79,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
   themeColor,
   isMaskable = false,
   maskShape = 'rounded',
+  fit = 'cover',
   className = '',
   priority = false,
 }) => {
@@ -140,7 +143,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
       <img
         src={resolvedSrc}
         alt={`${name} icon`}
-        className="w-full h-full object-cover select-none"
+        className={`w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} select-none`}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
         decoding="async"

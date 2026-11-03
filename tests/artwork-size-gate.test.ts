@@ -58,7 +58,9 @@ describe('A — every app uses the same icon slot dimensions', () => {
         expect(keys, `${app.slug} must not own '${banned}'`).not.toContain(banned);
       }
     }
-    expect(CINEFLOW.icon).toBe('/brand/cineflow-icon-384.png');
+    expect(CINEFLOW.icon).toBe('/brand/cineflow-icon-lockup-512.png');
+    // a policy declaration is allowed; a size declaration is not
+    expect(CINEFLOW.artworkPolicy).toBe('full-lockup');
   });
 });
 

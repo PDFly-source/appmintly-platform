@@ -3,6 +3,7 @@
 import React from 'react';
 import { AppIcon } from '@/components/AppIcon';
 import { sizeForSlot, type ArtworkSlot } from '@/lib/artwork-tokens';
+import { requiresFullLockup } from '@/lib/artwork-policy';
 
 /**
  * The ONLY way a marketplace surface renders app artwork.
@@ -22,7 +23,7 @@ import { sizeForSlot, type ArtworkSlot } from '@/lib/artwork-tokens';
  */
 
 interface AppArtworkProps {
-  app: { icon?: string; name?: string; themeColor?: string; category?: string };
+  app: { icon?: string; name?: string; themeColor?: string; category?: string; artworkPolicy?: string };
   slot: ArtworkSlot;
   priority?: boolean;
   className?: string;
@@ -33,6 +34,7 @@ export const AppArtwork: React.FC<AppArtworkProps> = ({ app, slot, priority = fa
     src={app.icon}
     name={app.name || 'App'}
     size={sizeForSlot(slot)}
+    fit={requiresFullLockup(app) ? 'contain' : 'cover'}
     themeColor={app.themeColor}
     category={app.category}
     priority={priority}

@@ -11,6 +11,7 @@
  * Exit 1 on any violation; prints `file:line: RULE: message`.
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { auditLockups } from './check-artwork-lockup.mjs';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
@@ -18,7 +19,7 @@ const TOKENS = 'lib/artwork-tokens.ts';
 const DATA_FILES = ['data/apps.json', 'data/upcoming-apps.json', 'data/categories.json'];
 
 /** keys that would let a publisher/catalogue record size its own artwork */
-const OVERRIDE_KEYS = /^(brandLockup\w*|iconSize|imageSize|logoSize|artwork\w*|iconWidth|iconHeight|scale|heroWidth)$/i;
+const OVERRIDE_KEYS = /^(brandLockup\w*|iconSize|imageSize|logoSize|artworkWidth|artworkHeight|artworkScale|iconWidth|iconHeight|scale|heroWidth)$/i;
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
@@ -103,6 +104,7 @@ export function auditAll(files) {
     violations.push(...auditSource(file, readFileSync(join(ROOT, file), 'utf8')));
   }
   violations.push(...auditData());
+  violations.push(...auditLockups());
   return violations;
 }
 

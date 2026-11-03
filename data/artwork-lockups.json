@@ -1,0 +1,29 @@
+{
+  "cineflow": {
+    "asset": "/brand/cineflow-icon-lockup-512.png",
+    "policy": "full-lockup",
+    "width": 512,
+    "height": 512,
+    "elements": {
+      "symbol": [
+        102,
+        36,
+        409,
+        370
+      ],
+      "wordmark": [
+        37,
+        371,
+        474,
+        450
+      ],
+      "tagline": [
+        51,
+        465,
+        459,
+        475
+      ]
+    },
+    "source": "supplied master 1254x1254, content re-centred at 7% padding"
+  }
+}
