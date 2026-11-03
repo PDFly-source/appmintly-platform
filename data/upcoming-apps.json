@@ -3953,7 +3953,7 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/pdfminifly/",
-    "releaseVersion": "2.1.2",
+    "releaseVersion": "2.1.3",
     "releaseDate": "2026-03-01",
     "milestones": [
       {
@@ -3973,7 +3973,7 @@
           "evidence_class": "repository-inspection",
           "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.3.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-15"
+          "date": "2026-11-02"
         }
       ]
     },
