@@ -31,7 +31,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # commit + push the derived data
+  actions: write    # dispatch the existing deploy.yml (workflow_dispatch)
 
 concurrency:
   group: 'lab-sync'
@@ -58,7 +59,14 @@ jobs:
         run: python3 scripts/generate-engineering-data.py
 
       - name: Commit only when the sync produced changes
+        id: sync
         run: |
+          set -euo pipefail
+          # Fail closed: never commit or deploy a payload that cannot be parsed.
+          for f in data/upcoming-apps.json data/lab-apps.json data/engineering-status.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
+              || { echo "::error::Invalid JSON in $f - refusing to commit or deploy"; exit 1; }
+          done
           git config user.name "appmintly-lab-sync"
           git config user.email "actions@users.noreply.github.com"
           if [ -n "$(git status --porcelain data/)" ]; then
@@ -66,7 +74,44 @@ jobs:
             git commit -m "lab-sync: synchronize Published/Released records from the production catalog (automated)"
             git push
             echo "sync=committed" >> "$GITHUB_OUTPUT"
+            echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           else
-            echo "In sync — no changes to commit."
+            echo "In sync - no changes to commit."
             echo "sync=in-sync" >> "$GITHUB_OUTPUT"
           fi
+
+      # The push above is made with GITHUB_TOKEN, which never triggers the
+      # push-driven deploy.yml. workflow_dispatch is the documented exception
+      # (its events always create a run), so the deployment is requested
+      # explicitly and then watched to a definite result.
+      - name: Deploy the committed data through the existing production workflow
+        if: steps.sync.outputs.sync == 'committed'
+        timeout-minutes: 30
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT: ${{ steps.sync.outputs.commit }}
+        run: |
+          set -euo pipefail
+          # Never queue a second deployment for a commit that already has one.
+          inflight=$(gh run list --workflow=deploy.yml --limit 20 \
+            --json headSha,status \
+            --jq "[.[] | select(.headSha==\"$COMMIT\" and (.status==\"queued\" or .status==\"in_progress\"))] | length")
+          if [ "${inflight:-0}" -gt 0 ]; then
+            echo "Deployment for $COMMIT is already queued or running - not dispatching a duplicate."
+            exit 0
+          fi
+          gh workflow run deploy.yml --ref main
+          run_id=""
+          for _ in $(seq 1 24); do
+            run_id=$(gh run list --workflow=deploy.yml --limit 20 \
+              --json databaseId,headSha,event \
+              --jq "[.[] | select(.headSha==\"$COMMIT\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
+            [ -n "$run_id" ] && break
+            sleep 5
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::deploy.yml dispatch produced no run for $COMMIT"
+            exit 1
+          fi
+          echo "Dispatched deploy.yml run $run_id for $COMMIT"
+          gh run watch "$run_id" --exit-status --interval 15
