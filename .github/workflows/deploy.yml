@@ -129,7 +129,28 @@ jobs:
       # Direct Upload to the EXISTING project; --branch=main matches its
       # production branch, so this publishes to https://appmintly.pages.dev/.
       - name: Deploy to existing Cloudflare Pages project
-        run: npx --yes wrangler@4 pages deploy out --project-name=appmintly --branch=main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo 'Missing Actions secret: CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo 'Missing Actions secret: CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+          # Provenance must describe the tree that was actually built, so read it
+          # from the checkout rather than the ref that triggered the run.
+          DEPLOYED_SHA=$(git rev-parse HEAD)
+          # app/api and out/ legitimately differ at this point (the export build
+          # removes the API route and writes the bundle), so only SOURCE drift is
+          # disqualifying.
+          drift=$(git status --porcelain -- . ':(exclude)out' ':(exclude).next' ':(exclude)app/api')
+          if [ -n "$drift" ]; then
+            echo '::error::uncommitted source changes present; the upload would not correspond to any commit'
+            echo "$drift" | head -5
+            exit 1
+          fi
+          echo "Deploying commit $DEPLOYED_SHA (content built from this checkout)"
+          npx --yes wrangler@4 pages deploy out \
+            --project-name=appmintly \
+            --branch=main \
+            --commit-hash "$DEPLOYED_SHA" \
+            --commit-message "$DEPLOYED_SHA $(git log -1 --pretty=%s | cut -c1-80)"

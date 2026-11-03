@@ -72,9 +72,12 @@ describe("Android release dispatches the production deployment with tracking", (
     // one run is pending at a time; the release step above absorbs the
     // resulting cancellation. Scans must stay out of that group.
     expect(deploy.concurrency.group).toBe("pages");
-    expect(feed.concurrency.group).toBe("pages");
+    // The feed's production slot now lives on its gated publish job, so a
+    // no-change run never enters the group at all.
+    expect(feed.concurrency).toBeUndefined();
+    expect(feed.jobs.publish.concurrency.group).toBe("pages");
     expect(deploy.concurrency["cancel-in-progress"]).toBe(false);
-    expect(feed.concurrency["cancel-in-progress"]).toBe(false);
+    expect(feed.jobs.publish.concurrency["cancel-in-progress"]).toBe(false);
     expect(sync.concurrency.group).not.toBe("pages");
   });
 });

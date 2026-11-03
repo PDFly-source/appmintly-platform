@@ -25,10 +25,6 @@ permissions:
   id-token: write      # required by actions/deploy-pages
   actions: read
 
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
-
 env:
   EXPORT_URL: 'https://appmintly-publisher-api.sbn50088.workers.dev/admin/events/export'
   FEED_PATH: 'public/data/events.json'
@@ -36,6 +32,8 @@ env:
 jobs:
   refresh-feed:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.build.outputs.changed || 'false' }}
     environment:
       name: github-pages
       url: ${{ steps.deploy_pages.outputs.page_url }}
@@ -185,12 +183,37 @@ jobs:
           git commit -m 'chore(events): refresh static feed [skip ci]'
           git push origin HEAD:main
 
+      - name: Summary
+        run: |
+          {
+            echo '### Events static feed'
+            echo ''
+            echo "- export HTTP status: \`${{ steps.fetch.outputs.http_status }}\`"
+            echo "- feed updated: \`${{ steps.build.outputs.changed || 'false' }}\`"
+            echo "- secrets exposed: none (key used only as a request header)"
+          } >> "$GITHUB_STEP_SUMMARY"
+  publish:
+    needs: refresh-feed
+    if: needs.refresh-feed.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    # Only a genuine feed change may take the shared production slot, so a
+    # no-change run can never displace a queued release deployment.
+    concurrency:
+      group: 'pages'
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Install dependencies
-        if: steps.build.outputs.changed == 'true'
         run: npm ci
 
       - name: Build static export (GitHub Pages scope)
-        if: steps.build.outputs.changed == 'true'
         env:
           GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
         run: |
@@ -207,14 +230,12 @@ jobs:
             echo 'FATAL: GitHub Pages build is not base-path scoped; the mirror would 404 every asset'; exit 1; }
 
       - name: Upload Pages artifact
-        if: steps.build.outputs.changed == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: out
 
       - name: Deploy to GitHub Pages
         id: deploy_pages
-        if: steps.build.outputs.changed == 'true'
         uses: actions/deploy-pages@v4
 
       # Cloudflare Pages serves the project at the SITE ROOT, so it needs a
@@ -224,7 +245,6 @@ jobs:
       # as unstyled HTML (2026-11-02 incident). deploy.yml already builds twice
       # for exactly this reason; this workflow now does the same.
       - name: Build static export (Cloudflare root scope)
-        if: steps.build.outputs.changed == 'true'
         env:
           GOOGLE_SITE_VERIFICATION_TOKEN: ${{ secrets.GOOGLE_SITE_VERIFICATION_TOKEN }}
         run: |
@@ -243,22 +263,24 @@ jobs:
             echo 'FATAL: Cloudflare build is missing root-scoped CSS'; exit 1; }
 
       - name: Deploy to Cloudflare Pages
-        if: steps.build.outputs.changed == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set -eu
+          set -euo pipefail
           test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo 'Missing Actions secret: CLOUDFLARE_API_TOKEN'; exit 1; }
           test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo 'Missing Actions secret: CLOUDFLARE_ACCOUNT_ID'; exit 1; }
-          npx --yes wrangler@4 pages deploy out --project-name=appmintly --branch=main
+          DEPLOYED_SHA=$(git rev-parse HEAD)
+          drift=$(git status --porcelain -- . ':(exclude)out' ':(exclude).next' ':(exclude)app/api')
+          if [ -n "$drift" ]; then
+            echo '::error::uncommitted source changes present; the upload would not correspond to any commit'
+            echo "$drift" | head -5
+            exit 1
+          fi
+          echo "Deploying commit $DEPLOYED_SHA (content built from this checkout)"
+          npx --yes wrangler@4 pages deploy out \
+            --project-name=appmintly \
+            --branch=main \
+            --commit-hash "$DEPLOYED_SHA" \
+            --commit-message "$DEPLOYED_SHA $(git log -1 --pretty=%s | cut -c1-80)"
 
-      - name: Summary
-        run: |
-          {
-            echo '### Events static feed'
-            echo ''
-            echo "- export HTTP status: \`${{ steps.fetch.outputs.http_status }}\`"
-            echo "- feed updated: \`${{ steps.build.outputs.changed || 'false' }}\`"
-            echo "- secrets exposed: none (key used only as a request header)"
-          } >> "$GITHUB_STEP_SUMMARY"

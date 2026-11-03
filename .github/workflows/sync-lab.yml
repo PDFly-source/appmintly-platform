@@ -145,18 +145,59 @@ jobs:
             echo "Deployment for $remote_sha is already queued or running - not dispatching a duplicate."
             exit 0
           fi
-          gh workflow run deploy.yml --ref main
-          run_id=""
-          for _ in $(seq 1 24); do
-            run_id=$(gh run list --workflow=deploy.yml --limit 20 \
-              --json databaseId,headSha,event \
-              --jq "[.[] | select(.headSha==\"$remote_sha\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
-            [ -n "$run_id" ] && break
-            sleep 5
-          done
-          if [ -z "$run_id" ]; then
-            echo "::error::deploy.yml dispatch produced no run for $remote_sha"
+          # True when commit $1 already contains the scan commit.
+          contains_commit() {
+            [ -n "${1:-}" ] || return 1
+            local status
+            status=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${remote_sha}...$1" --jq '.status' 2>/dev/null || echo unknown)
+            [ "$status" = "ahead" ] || [ "$status" = "identical" ]
+          }
+
+          attempts=3
+          for attempt in $(seq 1 "$attempts"); do
+            gh workflow run deploy.yml --ref main
+            run_id=""
+            for _ in $(seq 1 24); do
+              run_id=$(gh run list --workflow=deploy.yml --limit 20 \
+                --json databaseId,headSha,event \
+                --jq "[.[] | select(.headSha==\"$remote_sha\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
+              [ -n "$run_id" ] && break
+              sleep 5
+            done
+            if [ -z "$run_id" ]; then
+              echo "::error::deploy.yml dispatch produced no run for $remote_sha"
+              exit 1
+            fi
+            echo "Dispatched deploy.yml run $run_id for $remote_sha (attempt $attempt/$attempts)"
+
+            set +e
+            gh run watch "$run_id" --exit-status --interval 15
+            watch_rc=$?
+            set -e
+            if [ "$watch_rc" -eq 0 ]; then
+              echo "Deployment run $run_id succeeded for $remote_sha"
+              exit 0
+            fi
+
+            conclusion=$(gh run view "$run_id" --json conclusion --jq '.conclusion' 2>/dev/null || echo unknown)
+            # A cancel is normally a newer arrival taking the shared 'pages'
+            # slot. If a successful deployment already contains this commit the
+            # required content is live, so retrying would only churn.
+            if [ "$conclusion" = "cancelled" ]; then
+              while read -r sha; do
+                if contains_commit "$sha"; then
+                  echo "::warning::run $run_id was cancelled, but deployment $sha already contains $remote_sha"
+                  exit 0
+                fi
+              done <<< "$(gh run list --workflow=deploy.yml --limit 10 --json headSha,conclusion \
+                --jq '[.[] | select(.conclusion=="success")][].headSha')"
+              if [ "$attempt" -lt "$attempts" ]; then
+                echo "::warning::run $run_id was cancelled and no successful deployment contains $remote_sha yet; retrying"
+                continue
+              fi
+            fi
+            echo "::error::deployment run $run_id for $remote_sha concluded '${conclusion}' (watch exit ${watch_rc})"
             exit 1
-          fi
-          echo "Dispatched deploy.yml run $run_id for $remote_sha"
-          gh run watch "$run_id" --exit-status --interval 15
+          done
+          echo "::error::no successful deployment for $remote_sha after $attempts attempts"
+          exit 1
