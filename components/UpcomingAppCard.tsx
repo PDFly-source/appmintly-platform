@@ -26,6 +26,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { classesForSlot } from '@/lib/artwork-tokens';
 import {
   AlertCircle,
   ArrowRight,
@@ -393,7 +394,7 @@ export function UpcomingAppCard({ app, compareOn = false, onCompareToggle, compa
               alt={`${app.name} official logo`}
               width={200}
               height={200}
-              className="w-20 h-20 sm:w-28 sm:h-28 object-contain"
+              className={`${classesForSlot('upcoming')} object-contain`}
               loading="lazy"
               decoding="async"
               onLoad={() => setLogoLoaded(true)}

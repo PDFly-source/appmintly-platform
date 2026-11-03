@@ -236,7 +236,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
         className="group flex items-center justify-between p-3 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all duration-200"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <AppArtwork app={app} size="sm" />
+          <AppArtwork app={app} slot="list" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <h4 className="font-semibold text-sm text-ink truncate group-hover:text-link-text transition-colors">
@@ -341,7 +341,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
           className="flex items-start gap-3.5 sm:gap-4 mb-3 focus:outline-hidden"
         >
                     <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
-  <AppArtwork app={app} size="xl" className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200" />
+  <AppArtwork app={app} slot="cardLarge" className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200" />
           </div>
           <div className="min-w-0 flex-1 pt-1">
             <h3 className="text-base sm:text-lg font-semibold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
@@ -387,7 +387,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
       {/* Identity first: icon, name, publisher — the app IS the card, badges are supporting metadata */}
       <Link href={`/app/${app.slug}`} className="flex items-start gap-3.5 mb-3 focus:outline-hidden">
                 <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
-  <AppArtwork app={app} size="lg" className="group-hover:scale-105 transition-transform duration-300" />
+  <AppArtwork app={app} slot="card" className="group-hover:scale-105 transition-transform duration-300" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-base text-ink group-hover:text-link-text transition-colors line-clamp-1">

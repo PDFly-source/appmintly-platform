@@ -541,7 +541,7 @@ function SavedRow({
     <li>
       <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card hover:border-mut/40 transition min-w-0">
         <Link href={`/app/${app.slug}`} className="shrink-0" aria-hidden="true" tabIndex={-1}>
-          <AppArtwork app={app} size="lg" className="shrink-0" />
+          <AppArtwork app={app} slot="library" className="shrink-0" />
         </Link>
         <div className="flex-1 min-w-0">
           <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
@@ -621,7 +621,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
   return (
     <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card hover:border-mut/40 transition min-w-0">
       <Link href={`/app/${app.slug}`} className="shrink-0" aria-hidden="true" tabIndex={-1}>
-        <AppArtwork app={app} size="lg" className="shrink-0" />
+        <AppArtwork app={app} slot="library" className="shrink-0" />
       </Link>
       <div className="flex-1 min-w-0">
         <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">

@@ -342,22 +342,9 @@ export default function AppDetailPage() {
                 contained (never cropped) and keeps its own aspect ratio; its
                 baked-in margins plus the panel padding keep the tagline clear
                 of the rounded corners at every width. */}
-            {app.brandLockup ? (
-              <div className="shrink-0 mx-auto md:mx-0 w-full max-w-[420px] md:w-[340px] lg:w-[380px] rounded-[1.5rem] ring-1 ring-line shadow-xs">
-                <AppArtwork app={app} layout="hero" priority />
-              </div>
-            ) : (
-              <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
-                <AppIcon
-                  src={app.icon}
-                  name={app.name}
-                  size="2xl"
-                  themeColor={app.themeColor}
-                  category={app.category}
-                  priority
-                />
-              </div>
-            )}
+            <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
+              <AppArtwork app={app} slot="detail" priority />
+            </div>
 
             {/* App Header Info */}
             <div className="flex-1 min-w-0 text-center md:text-left space-y-3">

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BASE_PATH } from '@/lib/api-path';
+import { ARTWORK_SIZE_CLASSES, type ArtworkSize } from '@/lib/artwork-tokens';
 
 interface AppIconProps {
   src?: string;
@@ -15,14 +16,23 @@ interface AppIconProps {
   priority?: boolean;
 }
 
-const sizeClasses = {
-  xs: 'w-6 h-6 text-[10px]',
-  sm: 'w-9 h-9 text-xs',
-  md: 'w-12 h-12 text-sm',
-  lg: 'w-14 h-14 sm:w-16 sm:h-16 text-base',
-  xl: 'w-20 h-20 sm:w-24 sm:h-24 text-xl',
-  '2xl': 'w-28 h-28 sm:w-32 sm:h-32 text-2xl',
+// Box geometry is owned by lib/artwork-tokens.ts; only the lettermark type
+// scale is local here. This keeps one canonical size for every surface.
+const LETTERTYPE: Record<ArtworkSize, string> = {
+  xs: 'text-[10px]',
+  sm: 'text-xs',
+  md: 'text-sm',
+  lg: 'text-base',
+  xl: 'text-xl',
+  '2xl': 'text-2xl',
 };
+
+const sizeClasses = Object.fromEntries(
+  (Object.keys(ARTWORK_SIZE_CLASSES) as ArtworkSize[]).map((k) => [
+    k,
+    `${ARTWORK_SIZE_CLASSES[k]} ${LETTERTYPE[k]}`,
+  ])
+) as Record<ArtworkSize, string>;
 
 const maskClasses = {
   rounded: 'rounded-2xl',

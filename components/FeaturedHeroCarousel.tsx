@@ -121,7 +121,7 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
             <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-2 shadow-md">
               <AppArtwork
                 app={current}
-                size="xl"
+                slot="featured"
                 className="rounded-xl"
                 priority
               />
