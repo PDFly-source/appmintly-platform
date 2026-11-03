@@ -119,6 +119,10 @@ export interface AppItem {
   icon: string;
   screenshots: string[];
   banner?: string;
+  /** Full brand lockup (symbol + wordmark + tagline) for large-format brand
+   *  surfaces such as the store detail hero. Distinct from `icon`, which stays
+   *  a single mark for small square slots. */
+  brandLockup?: string;
   url?: string;
   launchUrl?: string;
   webUrl?: string;

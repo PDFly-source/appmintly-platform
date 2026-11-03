@@ -335,16 +335,33 @@ export default function AppDetailPage() {
         {/* 1. TOP HERO SECTION (App Store Style) */}
         <section className="bg-card border border-line rounded-3xl p-6 sm:p-10 shadow-xs relative overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-start gap-6 lg:gap-8">
-            {/* App Icon */}
-            <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
-              <AppIcon
-                src={app.icon}
-                name={app.name}
-                size="2xl"
-                themeColor={app.themeColor}
-                category={app.category}
-              />
-            </div>
+            {/* Brand identity: apps that ship a full lockup show symbol +
+                wordmark + tagline here instead of the bare mark, so the hero
+                carries the whole brand rather than a lone icon. The artwork is
+                contained (never cropped) and keeps its own aspect ratio; its
+                baked-in margins plus the panel padding keep the tagline clear
+                of the rounded corners at every width. */}
+            {app.brandLockup ? (
+              <div className="shrink-0 mx-auto md:mx-0 w-full md:w-[320px] rounded-[1.5rem] overflow-hidden ring-1 ring-line shadow-xs">
+                <img
+                  src={resolveAssetDisplayUrl(app.brandLockup)}
+                  alt={`${app.name} logo: the film-strip C with play mark above the Cineflow wordmark and the tagline PRIVATE · CINEMA · CONTROL`}
+                  width={1115}
+                  height={1105}
+                  className="block w-full h-auto max-w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
+                <AppIcon
+                  src={app.icon}
+                  name={app.name}
+                  size="2xl"
+                  themeColor={app.themeColor}
+                  category={app.category}
+                />
+              </div>
+            )}
 
             {/* App Header Info */}
             <div className="flex-1 min-w-0 text-center md:text-left space-y-3">
