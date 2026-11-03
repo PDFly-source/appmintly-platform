@@ -60,6 +60,25 @@ describe('Android launcher icon composition', () => {
     expect(report.problems.join(' ')).toMatch(/symbol-only/);
   });
 
+  it('measures the adaptive foreground as the launcher composites it (alpha over white)', () => {
+    // The first 0.2.5 attempt failed the gate because a transparent foreground with
+    // a white plate read as one solid band. Flattening must recover the real stack.
+    const size = 216;
+    const data = Buffer.alloc(size * size * 4);
+    const bars = [[20, 50], [62, 82], [96, 110], [118, 132], [140, 154]];
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const inArt = x > 30 && x < size - 30 && y > 14 && y < size - 20;
+        const dark = bars.some(([a, b]) => y >= a && y <= b) && inArt;
+        if (inArt) { data[i] = dark ? 13 : 255; data[i + 1] = dark ? 16 : 255; data[i + 2] = dark ? 24 : 255; data[i + 3] = 255; }
+      }
+    }
+    const report = analyseIcon({ width: size, height: size, channels: 4, data }, 'rgba-foreground');
+    expect(report.ok).toBe(true);
+    expect(report.bands).toBeGreaterThanOrEqual(MIN_BANDS);
+  });
+
   it('keeps the builder pointed at adaptive + round mipmaps', () => {
     const src = readFileSync('lib/apk-builder.ts', 'utf8');
     expect(src).toContain('android:icon="@mipmap/ic_launcher"');

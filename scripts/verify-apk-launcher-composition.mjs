@@ -39,7 +39,27 @@ const REQUIRED = [
 /** Minimum separated ink bands for a full lockup stack: symbol, wordmark, tagline lines. */
 export const MIN_BANDS = 4;
 
-export function analyseIcon(img, label = 'icon') {
+/**
+ * Flatten RGBA artwork onto white before measuring.
+ *
+ * The adaptive foreground is transparent outside the trimmed art, and our art
+ * carries a white plate. Reading transparency as "background" made the plate one
+ * solid ink band and hid the real stack (the first 0.2.5 attempt failed exactly
+ * that way), so measure what the launcher actually composites.
+ */
+export function flatten(img) {
+  if (img.channels < 4) return img;
+  const { width, height, channels, data } = img;
+  const out = Buffer.alloc(width * height * 3);
+  for (let i = 0, j = 0; i < data.length; i += channels, j += 3) {
+    const a = data[i + 3] / 255;
+    for (let c = 0; c < 3; c++) out[j + c] = Math.round(data[i + c] * a + 255 * (1 - a));
+  }
+  return { width, height, channels: 3, data: out };
+}
+
+export function analyseIcon(rawImg, label = 'icon') {
+  const img = flatten(rawImg);
   const b = bands(img, { threshold: 0.002, gapFraction: 0.002 });
   const heights = b.map((x) => x.height);
   const total = img.height;
