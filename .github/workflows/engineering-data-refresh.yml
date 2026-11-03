@@ -13,6 +13,17 @@ on:
 permissions:
   contents: write
 
+# Serialise with the Lab sync. Both workflows write
+# data/engineering-status.json and data/lab-apps.json, so two concurrent runs
+# can produce a non-fast-forward push (the loser's scan is lost) or a stale
+# overwrite. One shared group makes them queue instead of race.
+# cancel-in-progress stays false: a queued scan must never kill a run that is
+# mid-write, and this group never contains a deployment (those live in
+# deploy.yml's own 'pages' group).
+concurrency:
+  group: 'lab-sync'
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -30,6 +41,7 @@ jobs:
 
       - name: Commit only when the derived data actually changed
         run: |
+          set -euo pipefail
           git config user.name "AppMintly Automation"
           git config user.email "automation@appmintly.invalid"
           git add data/engineering-status.json data/engineering-events.json data/lab-apps.json
