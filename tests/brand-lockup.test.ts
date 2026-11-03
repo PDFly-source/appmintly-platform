@@ -1,97 +1,133 @@
-/**
- * CineFlow full brand lockup — marketplace listing regression pins.
- *
- * Owner correction (2026-11-03): the marketplace detail page showed the
- * symbol-only mark, so the listing represented CineFlow by a lone icon. The
- * requirement is the complete brand identity — film-strip C with play mark,
- * the "Cineflow" wordmark, and the "PRIVATE · CINEMA · CONTROL" tagline —
- * visible together on the store detail hero.
- *
- * The shipped artwork is composed from the supplied master file's own raster
- * (no re-typesetting, no recolouring): the symbol + wordmark keep their native
- * relationship, and the tagline is scaled up and wrapped to two lines. It has
- * to be wrapped: as a single line the tagline is 33.8:1, so at the ~264-334px
- * a phone hero allows it would render around 6-7px and be unreadable. Wrapped,
- * it renders at 11.8-15px inside that same space.
- *
- * These pins fail if the asset is re-cropped, resized, replaced by the
- * mark-only tile, or if the detail page stops containing it.
- */
-import { readFileSync, existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import catalog from '../data/apps.json';
+import { readFileSync, existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { resolveBrandArtwork, CINEFLOW_BRAND } from '../lib/brand-artwork';
 
-const ASSET = 'public/brand/cineflow-lockup.webp';
-const SHA256 = '528a01d101a6e03b43ec4450025637f6261ebad954648fdc7a3f35aa20277301';
+/**
+ * [brand-rollout] CineFlow must present the FULL brand lockup — film-strip
+ * C/play symbol, "Cineflow" wordmark and the "PRIVATE · CINEMA · CONTROL"
+ * tagline — on every public marketplace surface, never the symbol-only
+ * launcher icon, and never cropped.
+ *
+ * These assertions guard the failure mode this task exists to fix: one card
+ * quietly rendering `app.icon` (a square mark) while the detail page showed
+ * the lockup.
+ */
 
-/** Canvas size baked into the asset, mirrored by the <img> width/height. */
-const LOCKUP_W = 1115;
-const LOCKUP_H = 1105;
+const REPO = join(process.cwd());
+const apps = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8')) as any[];
+const cineflow = apps.find((a) => a.slug === 'cineflow')!;
+const assetPath = `public${cineflow.brandLockup}`;
 
-/** Read width/height straight out of the WebP bitstream (lossy VP8 chunk). */
+/** WebP intrinsic size from the VP8X / VP8 / VP8L header. */
 function webpSize(buf: Buffer): { width: number; height: number } {
-  const chunk = buf.indexOf(Buffer.from('VP8 '));
-  if (chunk < 0) throw new Error('not a lossy VP8 webp');
-  const p = chunk + 8;
-  const startCode = buf.subarray(p + 3, p + 6);
-  if (startCode[0] !== 0x9d || startCode[1] !== 0x01 || startCode[2] !== 0x2a) {
-    throw new Error('bad VP8 start code');
+  const riff = buf.toString('ascii', 0, 4);
+  const webp = buf.toString('ascii', 8, 12);
+  if (riff !== 'RIFF' || webp !== 'WEBP') throw new Error('not a WebP');
+  const chunk = buf.toString('ascii', 12, 16);
+  if (chunk === 'VP8X') {
+    return { width: 1 + buf.readUIntLE(24, 3), height: 1 + buf.readUIntLE(27, 3) };
   }
-  const width = (buf[p + 6] | (buf[p + 7] << 8)) & 0x3fff;
-  const height = (buf[p + 8] | (buf[p + 9] << 8)) & 0x3fff;
-  return { width, height };
+  if (chunk === 'VP8L') {
+    const bits = buf.readUInt32LE(21);
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  // VP8 (lossy)
+  const start = buf.indexOf(Buffer.from([0x9d, 0x01, 0x2a]));
+  return { width: buf.readUInt16LE(start + 3) & 0x3fff, height: buf.readUInt16LE(start + 5) & 0x3fff };
 }
 
-describe('CineFlow marketplace full brand lockup', () => {
-  it('ships the composed lockup asset', () => {
-    expect(existsSync(ASSET)).toBe(true);
-    const bytes = readFileSync(ASSET);
-    // A mark-only tile is ~10-20KB; the composed lockup carries the wordmark
-    // and both tagline lines, so it is several times heavier.
-    expect(bytes.length).toBeGreaterThan(40_000);
-    expect(createHash('sha256').update(bytes).digest('hex')).toBe(SHA256);
+describe('CineFlow — canonical full-lockup asset', () => {
+  it('exists at the single canonical path with real, separately-measured canvas', () => {
+    expect(existsSync(join(REPO, assetPath))).toBe(true);
+    const size = webpSize(readFileSync(join(REPO, assetPath)));
+    expect(size.width).toBe(cineflow.brandLockupWidth);
+    expect(size.height).toBe(cineflow.brandLockupHeight);
+    expect(size).toEqual({ width: 944, height: 950 });
+    expect(statSync(join(REPO, assetPath)).size).toBeGreaterThan(40_000);
   });
 
-  it('keeps the lockup aspect ratio the detail page declares', () => {
-    const { width, height } = webpSize(readFileSync(ASSET));
-    expect(width).toBe(LOCKUP_W);
-    expect(height).toBe(LOCKUP_H);
-    // Near-square composition: symbol above the wordmark, tagline beneath.
-    expect(width / height).toBeCloseTo(1.009, 2);
+  it('replaces the old square-ish composition rather than sitting beside it', () => {
+    const stale = ['public/brand/cineflow-lockup.webp'];
+    for (const path of stale) expect(existsSync(join(REPO, path)), `${path} should be gone`).toBe(false);
+    expect(CINEFLOW_BRAND.lockup.path).toBe(cineflow.brandLockup);
   });
 
-  it('is declared only by CineFlow and resolves to a real file', () => {
-    const declared = (catalog as Array<{ slug: string; brandLockup?: string }>).filter(
-      (a) => typeof a.brandLockup === 'string' && a.brandLockup.length > 0,
-    );
-    expect(declared.map((a) => a.slug)).toEqual(['cineflow']);
-    for (const app of declared) {
-      const path = String(app.brandLockup).replace(/^\//, 'public/');
-      expect(existsSync(path), `${app.slug} lockup missing at ${path}`).toBe(true);
+  it('carries the tagline as part of the brand identity', () => {
+    expect(cineflow.brandTagline).toBe('PRIVATE · CINEMA · CONTROL');
+    expect(CINEFLOW_BRAND.wordmark).toBe('Cineflow');
+  });
+});
+
+describe('CineFlow — artwork resolution', () => {
+  it('resolves CineFlow to the lockup, never the launcher icon', () => {
+    const art = resolveBrandArtwork(cineflow);
+    expect(art.isLockup).toBe(true);
+    expect(art.src).toBe('/brand/cineflow-lockup-v2.webp');
+    expect(art.src).not.toBe(cineflow.icon);
+    expect(art.aspect).toBeCloseTo(944 / 950, 5);
+  });
+
+  it('names the tagline in the accessible name, so it is not invisible to AT', () => {
+    const art = resolveBrandArtwork(cineflow);
+    expect(art.alt).toContain('CineFlow');
+    expect(art.alt).toContain('PRIVATE · CINEMA · CONTROL');
+  });
+
+  it('leaves every other app on its own icon', () => {
+    const others = apps.filter((a) => a.slug !== 'cineflow');
+    expect(others.length).toBeGreaterThanOrEqual(7);
+    for (const app of others) {
+      const art = resolveBrandArtwork(app);
+      expect(art.isLockup, `${app.slug} must not inherit CineFlow branding`).toBe(false);
+      expect(art.src).toBe(app.icon);
     }
+    expect(cineflow.brandLockup).toBe('/brand/cineflow-lockup-v2.webp');
+  });
+});
+
+describe('CineFlow — every brand surface renders the lockup', () => {
+  const surfaces = [
+    ['components/AppCard.tsx', 'grid, list and compact cards (home rails, explore, search, category, collections, recommendations)'],
+    ['components/FeaturedHeroCarousel.tsx', 'home featured app'],
+    ['app/app/[slug]/AppDetailClient.tsx', 'app detail hero'],
+    ['components/LibraryClient.tsx', 'library'],
+  ] as const;
+
+  for (const [file, label] of surfaces) {
+    it(`${label} resolves brand artwork instead of hardcoding app.icon`, () => {
+      const src = readFileSync(join(REPO, file), 'utf8');
+      const usesArtwork = src.includes('AppArtwork') || src.includes('resolveBrandArtwork');
+      expect(usesArtwork, `${file} must route artwork through the shared resolver`).toBe(true);
+      // A surface that renders <AppIcon src={app.icon}> unconditionally would
+      // silently regress CineFlow to the square mark.
+      const branched = src.includes('isLockup') || src.includes('brandLockup');
+      const unconditionalIcon = /<AppIcon\s+src=\{app\.icon\}[^>]*\/>/.test(src) && !branched;
+      expect(unconditionalIcon).toBe(false);
+    });
+  }
+
+  it('the shared artwork component contains the lockup and never crops it', () => {
+    const src = readFileSync(join(REPO, 'components/AppArtwork.tsx'), 'utf8');
+    expect(src).toContain('object-contain');
+    expect(src).not.toContain('object-cover');
+    expect(src).toContain('aspectRatio');
+    expect(src).not.toContain('overflow-hidden');
+    expect(src).toContain('w-full');
+  });
+});
+
+describe('CineFlow — unrelated artwork untouched', () => {
+  it('category taxonomy is unchanged by the brand rollout', () => {
+    const categories = readFileSync(join(REPO, 'data/categories.json'), 'utf8');
+    expect(categories).toContain('Entertainment');
+    // Generic category icons are declared here, not derived from app artwork.
+    expect(categories).not.toContain('cineflow-lockup');
   });
 
-  it('renders the lockup contained, never cropped, at its own ratio', () => {
-    const src = readFileSync('app/app/[slug]/AppDetailClient.tsx', 'utf8');
-    const start = src.indexOf('app.brandLockup ?');
-    // Only the lockup branch; the fallback branch below it still uses AppIcon.
-    const block = src.slice(start, src.indexOf(') : (', start));
-    expect(block).toContain('object-contain');
-    expect(block).not.toContain('object-cover');
-    expect(block).toContain(`width={${LOCKUP_W}}`);
-    expect(block).toContain(`height={${LOCKUP_H}}`);
-    // The tagline must reach assistive tech too, not just the pixels.
-    expect(block).toContain('PRIVATE · CINEMA · CONTROL');
-    // A lockup must not be funnelled through the small square icon renderer.
-    expect(block).not.toContain('<AppIcon');
-  });
-
-  it('keeps the square symbol icon for small slots', () => {
-    // Cards, lists and the launcher still need the square mark; the lockup is
-    // additive, not a replacement of that asset.
-    const app = (catalog as Array<{ slug: string; icon: string }>).find((a) => a.slug === 'cineflow');
-    expect(app?.icon).toBe('/brand/cineflow-icon-384.png');
-    expect(existsSync('public/brand/cineflow-icon-384.png')).toBe(true);
+  it('other apps keep their own brand assets in the catalogue', () => {
+    const pdfly = apps.find((a) => a.slug === 'pdfminifly')!;
+    expect(pdfly.icon).toMatch(/pdfminifly/);
+    expect(pdfly.brandLockup).toBeUndefined();
   });
 });

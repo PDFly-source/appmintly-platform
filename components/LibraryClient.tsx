@@ -24,6 +24,8 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { AppIcon } from '@/components/AppIcon';
+import { AppArtwork } from '@/components/AppArtwork';
+import { resolveBrandArtwork } from '@/lib/brand-artwork';
 import {
   getLocalFavorites,
   getRecentlyDownloaded,
@@ -540,7 +542,7 @@ function SavedRow({
     <li>
       <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card hover:border-mut/40 transition min-w-0">
         <Link href={`/app/${app.slug}`} className="shrink-0" aria-hidden="true" tabIndex={-1}>
-          <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
+          {resolveBrandArtwork(app).isLockup ? (<AppArtwork app={app} layout="banner" className="w-full max-w-[240px]" />) : (<AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />)}
         </Link>
         <div className="flex-1 min-w-0">
           <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">
@@ -620,7 +622,7 @@ function DownloadRow({ app, timestamp, now }: { app: AppItem; timestamp: number;
   return (
     <div className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-line bg-card hover:border-mut/40 transition min-w-0">
       <Link href={`/app/${app.slug}`} className="shrink-0" aria-hidden="true" tabIndex={-1}>
-        <AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />
+        {resolveBrandArtwork(app).isLockup ? (<AppArtwork app={app} layout="banner" className="w-full max-w-[240px]" />) : (<AppIcon src={app.icon} name={app.name} size="lg" themeColor={app.themeColor} category={app.category} className="shrink-0" />)}
       </Link>
       <div className="flex-1 min-w-0">
         <Link href={`/app/${app.slug}`} className="text-sm font-bold text-ink hover:text-cta transition truncate block">

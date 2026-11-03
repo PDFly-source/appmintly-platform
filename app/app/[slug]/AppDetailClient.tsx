@@ -34,6 +34,7 @@ import { useCatalog } from '@/lib/CatalogContext';
 import { useToast } from '@/lib/ToastContext';
 import { useAppShare } from '@/lib/useAppShare';
 import { AppIcon } from '@/components/AppIcon';
+import { AppArtwork } from '@/components/AppArtwork';
 import { resolveAssetDisplayUrl } from '@/lib/screenshot-assets';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
@@ -342,14 +343,8 @@ export default function AppDetailPage() {
                 baked-in margins plus the panel padding keep the tagline clear
                 of the rounded corners at every width. */}
             {app.brandLockup ? (
-              <div className="shrink-0 mx-auto md:mx-0 w-full md:w-[320px] rounded-[1.5rem] overflow-hidden ring-1 ring-line shadow-xs">
-                <img
-                  src={resolveAssetDisplayUrl(app.brandLockup)}
-                  alt={`${app.name} logo: the film-strip C with play mark above the Cineflow wordmark and the tagline PRIVATE · CINEMA · CONTROL`}
-                  width={1115}
-                  height={1105}
-                  className="block w-full h-auto max-w-full object-contain"
-                />
+              <div className="shrink-0 mx-auto md:mx-0 w-full max-w-[420px] md:w-[340px] lg:w-[380px] rounded-[1.5rem] ring-1 ring-line shadow-xs">
+                <AppArtwork app={app} layout="banner" priority />
               </div>
             ) : (
               <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">
@@ -359,6 +354,7 @@ export default function AppDetailPage() {
                   size="2xl"
                   themeColor={app.themeColor}
                   category={app.category}
+                  priority
                 />
               </div>
             )}
