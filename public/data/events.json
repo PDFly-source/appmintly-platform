@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-02T18:54:23.738Z",
-  "serverTime": 1793645663686,
+  "generatedAt": "2026-11-03T16:19:14.385Z",
+  "serverTime": 1793722754334,
   "source": "appmintly-publisher-api/admin/events/export",
-  "count": 2,
+  "count": 6,
   "events": [
     {
       "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
@@ -21,6 +21,42 @@
       "catalogRevision": "d9136b439547f6aa3442e4551d7da2937c540c3c",
       "ts": 1793645485377,
       "name": "PDFMiniFly"
+    },
+    {
+      "eventId": "18bbc12844bddf9fce7622f9e3a44c7d",
+      "appId": "cineflow",
+      "platform": "android",
+      "version": "0.2.3",
+      "catalogRevision": "3e4bdab60f0251ab3aa407f9c0adf0482fd0acc5",
+      "ts": 1793700395716,
+      "name": "CineFlow"
+    },
+    {
+      "eventId": "d90de7a4aa5e9a588d2270c6cdb17fe1",
+      "appId": "cineflow",
+      "platform": "android",
+      "version": "0.2.4",
+      "catalogRevision": "776ce14196220158a5d462ecd4cede17e9542fbb",
+      "ts": 1793712732531,
+      "name": "CineFlow"
+    },
+    {
+      "eventId": "88d057bd38863c84198c043f7f53bf92",
+      "appId": "cineflow",
+      "platform": "android",
+      "version": "0.2.5",
+      "catalogRevision": "02a2837dc1fa7d92d387236847a099f8f83e4f5b",
+      "ts": 1793714468653,
+      "name": "CineFlow"
+    },
+    {
+      "eventId": "158da4c492aa71dddbacfabcec27ce5d",
+      "appId": "cineflow",
+      "platform": "android",
+      "version": "0.2.6",
+      "catalogRevision": "c0713adcb9bab8f61540fe4c306e1b4c9ca0a116",
+      "ts": 1793716172664,
+      "name": "CineFlow"
     }
   ]
 }
