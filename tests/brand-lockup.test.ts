@@ -86,34 +86,74 @@ describe('CineFlow — artwork resolution', () => {
   });
 });
 
-describe('CineFlow — every brand surface renders the lockup', () => {
-  const surfaces = [
-    ['components/AppCard.tsx', 'grid, list and compact cards (home rails, explore, search, category, collections, recommendations)'],
-    ['components/FeaturedHeroCarousel.tsx', 'home featured app'],
-    ['app/app/[slug]/AppDetailClient.tsx', 'app detail hero'],
-    ['components/LibraryClient.tsx', 'library'],
-  ] as const;
+describe('CineFlow — standard card sizing (the shared design rule)', () => {
+  const card = readFileSync(join(REPO, 'components/AppCard.tsx'), 'utf8');
+  const artworkSrc = readFileSync(join(REPO, 'components/AppArtwork.tsx'), 'utf8');
+  const iconSrc = readFileSync(join(REPO, 'components/AppIcon.tsx'), 'utf8');
 
-  for (const [file, label] of surfaces) {
-    it(`${label} resolves brand artwork instead of hardcoding app.icon`, () => {
-      const src = readFileSync(join(REPO, file), 'utf8');
-      const usesArtwork = src.includes('AppArtwork') || src.includes('resolveBrandArtwork');
-      expect(usesArtwork, `${file} must route artwork through the shared resolver`).toBe(true);
-      // A surface that renders <AppIcon src={app.icon}> unconditionally would
-      // silently regress CineFlow to the square mark.
-      const branched = src.includes('isLockup') || src.includes('brandLockup');
-      const unconditionalIcon = /<AppIcon\s+src=\{app\.icon\}[^>]*\/>/.test(src) && !branched;
-      expect(unconditionalIcon).toBe(false);
-    });
-  }
+  /** pull `name: 'classes'` pairs out of a sizeClasses map */
+  const sizeMap = (src: string) => {
+    const block = src.slice(src.indexOf('sizeClasses'), src.indexOf('};', src.indexOf('sizeClasses')));
+    return Object.fromEntries(
+      [...block.matchAll(/(\w+):\s*'([^']+)'/g)].map((m) => [m[1], m[2]])
+    );
+  };
 
-  it('the shared artwork component contains the lockup and never crops it', () => {
-    const src = readFileSync(join(REPO, 'components/AppArtwork.tsx'), 'utf8');
-    expect(src).toContain('object-contain');
-    expect(src).not.toContain('object-cover');
-    expect(src).toContain('aspectRatio');
-    expect(src).not.toContain('overflow-hidden');
-    expect(src).toContain('w-full');
+  it('the card artwork slot is dimensioned identically to the standard app icon', () => {
+    // AppIcon's classes also carry lettermark type sizes; the box geometry is
+    // what must match, so compare the width/height tokens only.
+    const geometry = (cls: string) => cls.split(/\s+/).filter((t) => /^[wh]-|^sm:/.test(t)).join(' ');
+    const appIcon = sizeMap(iconSrc);
+    const cardArtwork = sizeMap(artworkSrc);
+    for (const size of Object.keys(cardArtwork)) {
+      if (!appIcon[size]) continue;
+      expect(geometry(cardArtwork[size]), `${size} must match AppIcon exactly`).toBe(geometry(appIcon[size]));
+    }
+    // the slot sizes the marketplace actually uses must all be present
+    for (const size of ['sm', 'lg', 'xl']) expect(cardArtwork[size]).toBeTruthy();
+    // the tokens that make up the standard slot, not a bespoke container
+    expect(artworkSrc).toContain('shrink-0 overflow-hidden shadow-2xs border border-ink/10 bg-card');
+    expect(artworkSrc).toContain('rounded-2xl');
+  });
+
+  it('a lockup is contained inside that square, never promoted to a banner', () => {
+    expect(artworkSrc).toContain('object-contain');
+    expect(artworkSrc).not.toContain('object-cover');
+    // the banner layout that made CineFlow oversized is gone
+    expect(artworkSrc).not.toContain("'banner'");
+    // the standard-card path is a fixed square slot: no aspect box, no
+    // full-width promotion. Only the detail hero may set its own ratio.
+    const standardPath = artworkSrc.slice(artworkSrc.indexOf('// Standard square slot'));
+    expect(standardPath).not.toContain('aspectRatio');
+    expect(standardPath).not.toContain('w-full');
+    const heroPath = artworkSrc.slice(artworkSrc.indexOf("layout === 'hero'"), artworkSrc.indexOf('// Standard square slot'));
+    expect(heroPath).toContain('aspectRatio');
+  });
+
+  it('every standard card slot routes through the shared component at its original size', () => {
+    for (const size of ['sm', 'lg', 'xl']) {
+      expect(card).toContain(`<AppArtwork app={app} size="${size}"`);
+    }
+    // the previous per-app oversized layout used an isLockup branch in the card
+    expect(card).not.toContain('isLockup');
+  });
+
+  it('the featured hero uses the standard xl slot, not a promotional banner', () => {
+    const hero = readFileSync(join(REPO, 'components/FeaturedHeroCarousel.tsx'), 'utf8');
+    expect(hero).toContain('<AppArtwork');
+    expect(hero).toContain('size="xl"');
+    expect(hero).not.toContain('max-w-[300px]');
+  });
+
+  it('the dedicated detail hero keeps its larger presentation', () => {
+    const detail = readFileSync(join(REPO, 'app/app/[slug]/AppDetailClient.tsx'), 'utf8');
+    expect(detail).toContain('layout="hero"');
+  });
+
+  it('the shared rule covers every app, not just CineFlow', () => {
+    // any app can supply artwork; none can supply a different slot size
+    expect(artworkSrc).toContain('resolveBrandArtwork(app)');
+    expect(card).not.toMatch(/cineflow/i);
   });
 });
 
@@ -121,7 +161,6 @@ describe('CineFlow — unrelated artwork untouched', () => {
   it('category taxonomy is unchanged by the brand rollout', () => {
     const categories = readFileSync(join(REPO, 'data/categories.json'), 'utf8');
     expect(categories).toContain('Entertainment');
-    // Generic category icons are declared here, not derived from app artwork.
     expect(categories).not.toContain('cineflow-lockup');
   });
 

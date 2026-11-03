@@ -20,7 +20,6 @@ import { AppItem, AppType, isNewApp } from '@/data/apps';
 import { useToast } from '@/lib/ToastContext';
 import { AppIcon } from '@/components/AppIcon';
 import { AppArtwork } from '@/components/AppArtwork';
-import { resolveBrandArtwork } from '@/lib/brand-artwork';
 import { CompareToggle } from '@/components/CompareToggle';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
@@ -42,10 +41,6 @@ interface AppCardProps {
 }
 
 export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
-  // Apps that declare a full brand lockup (CineFlow) present the whole
-  // artwork — symbol, wordmark and tagline — instead of the square icon tile.
-  // Other apps keep the icon path untouched.
-  const isLockup = resolveBrandArtwork(app).isLockup;
   const { toast } = useToast();
   const hasReleasedApk = hasAuthoritativeApkRelease(app);
   const favorite = useLocalFavorite(app.id);
@@ -238,19 +233,10 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
     return (
       <Link
         href={`/app/${app.slug}`}
-        className={`group p-3 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all duration-200 ${isLockup ? 'flex flex-col' : 'flex items-center justify-between'}`}
+        className="group flex items-center justify-between p-3 rounded-2xl bg-card border border-line hover:border-ink/35 hover:shadow-xs transition-all duration-200"
       >
-        {isLockup && <AppArtwork app={app} layout="banner" className="mb-2" />}
         <div className="flex items-center gap-3 min-w-0">
-          {!isLockup && (
-          <AppIcon
-            src={app.icon}
-            name={app.name}
-            size="sm"
-            themeColor={app.themeColor}
-            category={app.category}
-          />
-          )}
+          <AppArtwork app={app} size="sm" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <h4 className="font-semibold text-sm text-ink truncate group-hover:text-link-text transition-colors">
@@ -352,26 +338,11 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
         {/* Identity: large app icon + name + publisher + category / format */}
         <Link
           href={`/app/${app.slug}`}
-          className={`${isLockup ? 'flex flex-col' : 'flex items-start gap-3.5 sm:gap-4'} mb-3 focus:outline-hidden`}
+          className="flex items-start gap-3.5 sm:gap-4 mb-3 focus:outline-hidden"
         >
-          {isLockup ? (
-            <AppArtwork
-              app={app}
-              layout="banner"
-              className="mb-2.5 motion-safe:group-hover:scale-[1.02] transition-transform duration-200"
-            />
-          ) : (
-          <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
-  <AppIcon
-              src={app.icon}
-              name={app.name}
-              size="xl"
-              themeColor={app.themeColor}
-              category={app.category}
-              className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200"
-            />
+                    <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
+  <AppArtwork app={app} size="xl" className="motion-safe:group-hover:scale-[1.03] transition-transform duration-200" />
           </div>
-          )}
           <div className="min-w-0 flex-1 pt-1">
             <h3 className="text-base sm:text-lg font-semibold text-ink tracking-tight line-clamp-1 group-hover:text-cta transition-colors">
               {app.name}
@@ -414,25 +385,10 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
   return (
     <div className="group relative flex flex-col justify-between h-full p-4 sm:p-5 rounded-2xl bg-card border border-line card-accent">
       {/* Identity first: icon, name, publisher — the app IS the card, badges are supporting metadata */}
-      <Link href={`/app/${app.slug}`} className={`${isLockup ? 'flex flex-col' : 'flex items-start gap-3.5'} mb-3 focus:outline-hidden`}>
-        {isLockup ? (
-          <AppArtwork
-            app={app}
-            layout="banner"
-            className="mb-2.5 group-hover:scale-[1.02] transition-transform duration-300"
-          />
-        ) : (
-        <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
-  <AppIcon
-            src={app.icon}
-            name={app.name}
-            size="lg"
-            themeColor={app.themeColor}
-            category={app.category}
-            className="group-hover:scale-105 transition-transform duration-300"
-          />
+      <Link href={`/app/${app.slug}`} className="flex items-start gap-3.5 mb-3 focus:outline-hidden">
+                <div className="shrink-0 icon-shelf rounded-2xl p-1.5">
+  <AppArtwork app={app} size="lg" className="group-hover:scale-105 transition-transform duration-300" />
         </div>
-        )}
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-base text-ink group-hover:text-link-text transition-colors line-clamp-1">
             {app.name}

@@ -5,45 +5,57 @@ import { BASE_PATH } from '@/lib/api-path';
 import { AppIcon } from '@/components/AppIcon';
 import { resolveBrandArtwork, type BrandableApp } from '@/lib/brand-artwork';
 
+/**
+ * Standard app-card artwork.
+ *
+ * DESIGN RULE (permanent, all apps): every marketplace card shows its artwork
+ * in the SAME square slot — the size classes, radius, border, shadow and
+ * background below are AppIcon's own tokens, unchanged. An app that supplies a
+ * full lockup (symbol + wordmark + tagline) renders that artwork *inside* that
+ * square with `object-contain`, so it is never cropped, stretched, squared off
+ * or promoted to a full-width banner. No app gets an oversized image
+ * exception; new catalogue entries inherit this automatically by passing the
+ * same component.
+ *
+ * `hero` is the one deliberate exception, reserved for the dedicated app
+ * detail page, which owns its own larger presentation.
+ */
+
 interface AppArtworkProps {
   app: BrandableApp;
-  /**
-   * 'banner' fills the available width and shows the whole lockup (the
-   * default wherever CineFlow is presented as a brand). 'icon' is the square
-   * affordance for compact chrome (nav, avatars) and for apps without a
-   * lockup.
-   */
-  layout?: 'banner' | 'icon';
+  /** 'icon' = standard card slot (default). 'hero' = detail page only. */
+  layout?: 'icon' | 'hero';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   priority?: boolean;
   className?: string;
-  /** fatal: fall back to the letter tile rather than a broken image */
-  fallbackToIcon?: boolean;
 }
 
-/**
- * Single render path for app artwork across the public marketplace.
- *
- * For apps that declare a full lockup (CineFlow) this renders the entire
- * artwork — symbol, wordmark and tagline — at its own aspect ratio with
- * `object-contain`, so nothing is ever cropped, stretched or squared off.
- * The image is `w-full h-auto`, which lets the tagline scale with the
- * surface instead of disappearing on narrow cards.
- */
+/** Identical to AppIcon's size classes so cards stay pixel-consistent. */
+const sizeClasses: Record<string, string> = {
+  xs: 'w-6 h-6',
+  sm: 'w-9 h-9',
+  md: 'w-12 h-12',
+  lg: 'w-14 h-14 sm:w-16 sm:h-16',
+  xl: 'w-20 h-20 sm:w-24 sm:h-24',
+  '2xl': 'w-28 h-28 sm:w-32 sm:h-32',
+};
+
 export const AppArtwork: React.FC<AppArtworkProps> = ({
   app,
-  layout = 'banner',
+  layout = 'icon',
   size = 'lg',
   priority = false,
   className = '',
-  fallbackToIcon = true,
 }) => {
   const artwork = resolveBrandArtwork(app);
   const [failed, setFailed] = useState(false);
 
-  const showLockup = artwork.isLockup && layout === 'banner' && !(failed && fallbackToIcon);
+  const src = artwork.src;
+  const resolvedSrc = src && src.startsWith('/') ? `${BASE_PATH}${src}` : src;
 
-  if (!showLockup) {
+  // Non-lockup apps, and any artwork that fails to load, take the untouched
+  // AppIcon path: their cards must not change in any way.
+  if (!artwork.isLockup || failed || !resolvedSrc) {
     return (
       <AppIcon
         src={app.icon}
@@ -57,25 +69,35 @@ export const AppArtwork: React.FC<AppArtworkProps> = ({
     );
   }
 
-  const resolved = artwork.src && artwork.src.startsWith('/') ? `${BASE_PATH}${artwork.src}` : artwork.src;
+  const img = (
+    <img
+      src={resolvedSrc}
+      alt={artwork.alt}
+      className="block w-full h-full object-contain select-none"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
 
+  if (layout === 'hero') {
+    // Dedicated detail-page presentation; the caller owns the width and the
+    // aspect box, so the whole lockup stays visible at its own ratio.
+    return (
+      <div className={`relative w-full ${className}`} style={{ aspectRatio: String(artwork.aspect) }}>
+        {img}
+      </div>
+    );
+  }
+
+  // Standard square slot, exactly as every other app card renders it.
   return (
     <div
-      className={`relative w-full ${className}`}
-      // The canvas ratio is enforced here and on the img, so the box never
-      // collapses before the image decodes and never clips the tagline.
-      style={{ aspectRatio: String(artwork.aspect) }}
+      className={`relative shrink-0 overflow-hidden shadow-2xs border border-ink/10 bg-card ${sizeClasses[size] || sizeClasses.lg} rounded-2xl ${className}`}
     >
-      <img
-        src={resolved}
-        alt={artwork.alt}
-        className="block w-full h-full object-contain select-none"
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : 'auto'}
-        decoding="async"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-      />
+      {img}
     </div>
   );
 };

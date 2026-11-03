@@ -344,7 +344,7 @@ export default function AppDetailPage() {
                 of the rounded corners at every width. */}
             {app.brandLockup ? (
               <div className="shrink-0 mx-auto md:mx-0 w-full max-w-[420px] md:w-[340px] lg:w-[380px] rounded-[1.5rem] ring-1 ring-line shadow-xs">
-                <AppArtwork app={app} layout="banner" priority />
+                <AppArtwork app={app} layout="hero" priority />
               </div>
             ) : (
               <div className="shrink-0 icon-shelf rounded-[1.75rem] p-2.5 mx-auto md:mx-0 w-fit">

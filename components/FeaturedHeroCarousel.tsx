@@ -7,9 +7,7 @@ import { AppItem } from '@/data/apps';
 import { BASE_PATH } from '@/lib/api-path';
 import { resolveDeveloper } from '@/data/publishers';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
-import { AppIcon } from '@/components/AppIcon';
 import { AppArtwork } from '@/components/AppArtwork';
-import { resolveBrandArtwork } from '@/lib/brand-artwork';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
 import { useLocalFavorite, toggleLocalFavorite } from '@/lib/localLibrary';
 import { useToast } from '@/lib/ToastContext';
@@ -119,24 +117,15 @@ export const FeaturedHeroCarousel: React.FC<FeaturedHeroCarouselProps> = ({ feat
           </div>
 
           {/* App logo emphasis — framed hero chip */}
-          {resolveBrandArtwork(current).isLockup ? (
-            <div className="mb-5 w-full max-w-[300px] sm:max-w-[360px] lg:max-w-[420px] rounded-2xl border border-white/20 shadow-md">
-              <AppArtwork app={current} layout="banner" priority />
+          {resolvedIcon && (
+            <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-2 shadow-md">
+              <AppArtwork
+                app={current}
+                size="xl"
+                className="rounded-xl"
+                priority
+              />
             </div>
-          ) : (
-            resolvedIcon && (
-              <div className="mb-4 inline-flex rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 p-2 shadow-md">
-                <AppIcon
-                  src={current.icon}
-                  name={current.name}
-                  size="xl"
-                  themeColor={current.themeColor}
-                  category={current.category}
-                  className="rounded-xl"
-                  priority
-                />
-              </div>
-            )
           )}
 
           <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white drop-shadow-sm leading-tight">
