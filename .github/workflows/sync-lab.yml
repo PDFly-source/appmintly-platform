@@ -26,8 +26,24 @@ name: Sync Lab Published from Catalog
 # or malformed output.
 
 on:
+  # 6-hourly fallback. Scheduled runs own scan_time freshness: they always
+  # write a genuine last-scan timestamp, even when no catalogue data moved.
   schedule:
     - cron: '17 */6 * * *'
+  # Instant path for genuine catalogue updates.
+  push:
+    branches:
+      - main
+    # Catalogue INPUTS only. The generated outputs (data/upcoming-apps.json,
+    # data/lab-apps.json, data/engineering-status.json, data/engineering-events.json,
+    # data/engineering-builds.json) are deliberately absent: they are this
+    # workflow's own write targets, so triggering on them would be a self-trigger.
+    paths:
+      - 'data/apps.json'
+      - 'data/publishers.json'
+      - 'data/categories.json'
+      - 'data/collections.json'
+  # Manual runs stay supported exactly as before.
   workflow_dispatch:
 
 permissions:
@@ -40,6 +56,10 @@ concurrency:
 
 jobs:
   sync:
+    # Defensive loop guard. A push made with GITHUB_TOKEN cannot trigger a
+    # workflow at all, so this is a second line of defence rather than the
+    # primary one: a run started by the Actions bot is never a reason to scan.
+    if: github.event_name != 'push' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository (full history — the engineering mirror reads retired-record history)
@@ -60,8 +80,24 @@ jobs:
 
       - name: Commit only when the sync produced changes
         id: sync
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
+          # scan_time freshness belongs to the 6-hourly schedule (and to
+          # engineering-data-refresh). A push-triggered scan that finds nothing
+          # but a new timestamp is therefore no change at all, and must not
+          # deploy: revert it and fall through to the in-sync branch.
+          if [ "${EVENT_NAME}" = "push" ]; then
+            changed="$(git status --porcelain data/ | awk '{print $2}')"
+            if [ "${changed}" = "data/engineering-status.json" ]; then
+              other="$(git diff -U0 -- data/engineering-status.json | grep -E '^[-+][^-+]' | grep -v 'scan_time' || true)"
+              if [ -z "${other}" ]; then
+                git checkout -- data/engineering-status.json
+                echo "Push-triggered scan: only scan_time changed, and the schedule owns that - treating as no change."
+              fi
+            fi
+          fi
           # Fail closed: never commit or deploy a payload that cannot be parsed.
           for f in data/upcoming-apps.json data/lab-apps.json data/engineering-status.json; do
             node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
@@ -92,12 +128,21 @@ jobs:
           COMMIT: ${{ steps.sync.outputs.commit }}
         run: |
           set -euo pipefail
+          # deploy.yml builds ref main, so main must still contain the scan
+          # commit. If it moved, the deploy is a superset (never a stale tree),
+          # and we say so instead of silently deploying something else.
+          remote_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ "${remote_sha}" != "${COMMIT}" ]; then
+            echo "::warning::main advanced to ${remote_sha} after scan commit ${COMMIT}; deploying ${remote_sha} (a superset of the scanned data)."
+          fi
+          echo "scan commit : ${COMMIT}"
+          echo "deploy ref  : ${remote_sha}"
           # Never queue a second deployment for a commit that already has one.
           inflight=$(gh run list --workflow=deploy.yml --limit 20 \
             --json headSha,status \
-            --jq "[.[] | select(.headSha==\"$COMMIT\" and (.status==\"queued\" or .status==\"in_progress\"))] | length")
+            --jq "[.[] | select(.headSha==\"$remote_sha\" and (.status==\"queued\" or .status==\"in_progress\"))] | length")
           if [ "${inflight:-0}" -gt 0 ]; then
-            echo "Deployment for $COMMIT is already queued or running - not dispatching a duplicate."
+            echo "Deployment for $remote_sha is already queued or running - not dispatching a duplicate."
             exit 0
           fi
           gh workflow run deploy.yml --ref main
@@ -105,13 +150,13 @@ jobs:
           for _ in $(seq 1 24); do
             run_id=$(gh run list --workflow=deploy.yml --limit 20 \
               --json databaseId,headSha,event \
-              --jq "[.[] | select(.headSha==\"$COMMIT\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
+              --jq "[.[] | select(.headSha==\"$remote_sha\" and .event==\"workflow_dispatch\")][0].databaseId // empty")
             [ -n "$run_id" ] && break
             sleep 5
           done
           if [ -z "$run_id" ]; then
-            echo "::error::deploy.yml dispatch produced no run for $COMMIT"
+            echo "::error::deploy.yml dispatch produced no run for $remote_sha"
             exit 1
           fi
-          echo "Dispatched deploy.yml run $run_id for $COMMIT"
+          echo "Dispatched deploy.yml run $run_id for $remote_sha"
           gh run watch "$run_id" --exit-status --interval 15
