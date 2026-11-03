@@ -969,10 +969,10 @@
     "launchUrl": "https://pdfly-source.github.io/cineflow/",
     "webUrl": "https://pdfly-source.github.io/cineflow/",
     "pwaUrl": "https://pdfly-source.github.io/cineflow/",
-    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.2.4/CineFlow-0.2.4.apk",
+    "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.2.5/CineFlow-0.2.5.apk",
     "playStoreUrl": "",
     "appStoreUrl": "",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "previousVersion": "",
     "releaseDate": "2026-10-27",
     "lastUpdated": "2026-11-03",
@@ -1043,14 +1043,14 @@
       "buildMode": "webview",
       "packageId": "com.appforge.cineflow",
       "authorized": true,
-      "sha256": "d332b4ea97dd346482c7ebd44a2d8976c51847280ae5927e629f7e56a75bc594",
-      "versionName": "0.2.4",
-      "versionCode": 204,
-      "fileName": "CineFlow-0.2.4.apk",
-      "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.2.4/CineFlow-0.2.4.apk",
-      "fileSizeBytes": 337774,
-      "releaseTag": "cineflow-v0.2.4",
-      "generatedAt": "2026-11-03T13:28:07.819Z",
+      "sha256": "2fe49286e27c09059967497efb3afec1dc6ee0db592fea58b0e82ae42b5d4eff",
+      "versionName": "0.2.5",
+      "versionCode": 205,
+      "fileName": "CineFlow-0.2.5.apk",
+      "apkUrl": "https://github.com/PDFly-source/appmintly-releases/releases/download/cineflow-v0.2.5/CineFlow-0.2.5.apk",
+      "fileSizeBytes": 309102,
+      "releaseTag": "cineflow-v0.2.5",
+      "generatedAt": "2026-11-03T13:57:05.785Z",
       "buildStatus": "released",
       "verified": true,
       "downloadAvailable": true,
@@ -1067,10 +1067,10 @@
         "v3": true
       },
       "securityCheckStatus": "passed",
-      "securityCheckTimestamp": "2026-11-03T13:28:02.885Z",
+      "securityCheckTimestamp": "2026-11-03T13:57:01.313Z",
       "validatorVersion": "11.6.0",
-      "releaseId": 432733453,
-      "assetId": 705708826
+      "releaseId": 432766210,
+      "assetId": 705797502
     },
     "privacyTech": {
       "permissions": [
@@ -1091,7 +1091,7 @@
       ],
       "notes": "Verified 2026-10-27: web audit (PDFly-source/cineflow @ dec873b — real H.264/VP9 playback, SRT+VTT subtitles, offline shell with network emulation, same-origin-only interception) AND signed APK inspection of CineFlow-0.1.0 (SHA-256 a98a80b5...df594): package com.appforge.cineflow, versionCode 100, minSdk 21 / targetSdk 36, exactly three permissions (INTERNET to load the app, ACCESS_NETWORK_STATE for connectivity detection, DOWNLOAD_WITHOUT_NOTIFICATION for update delivery), no storage/media permissions, cleartext traffic disabled, v1+v2+v3 signatures under the AppMintly release certificate (fingerprint dbafc6d3...f61368) — the same key as BillCraft and the rest of the AppMintly APK family."
     },
-    "updatedAt": "2026-11-03T13:28:07.819Z",
+    "updatedAt": "2026-11-03T13:57:05.785Z",
     "artworkPolicy": "full-lockup"
   }
 ]
