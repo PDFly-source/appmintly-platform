@@ -12,8 +12,10 @@ on:
       - 'public/**'
       - 'next.config.ts'
       - 'package.json'
+      # This workflow's own file is deliberately NOT a trigger: editing CI does
+      # not change the built site, and listing it would deploy on every workflow
+      # tweak (that is how 8841390 shipped an unintended production deployment).
       - 'package-lock.json'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 permissions:
