@@ -2,7 +2,7 @@
 
 > **Before making any AppMintly change, read `docs/PRODUCTION_BASELINE.md` and inspect the current `main` branch. Treat the recorded production state as the reference baseline. Update this document only when new evidence confirms a change.**
 
-Last updated: **2026-11-03 06:30Z** (UTC). Maintained by the release engineer; every figure below cites its evidence source and date.
+Last updated: **2026-11-03 07:05Z** (UTC). Maintained by the release engineer; every figure below cites its evidence source and date.
 
 ---
 
@@ -132,11 +132,64 @@ Event traced across all four surfaces on 2026-11-02: Durable Object SQLite (read
 1. **Cloudflare deployment IDs are unreadable by the agent token** — the Pages API answers `403 / code 10000`, and `wrangler pages deployment list` needs Pages read. IDs must be recorded manually from the dashboard (§3).
 2. **`734429e` deployment ID: NOT YET RECORDED.**
 3. **Automated `lab-sync` data commits now deploy themselves (fixed 2026-11-03, commit `5575f32`).** `sync-lab.yml` still pushes with the default `GITHUB_TOKEN`, and those pushes still cannot trigger other workflows, so the earlier header claim that a `data/**` push would fire `deploy.yml` was false in practice (no deploy run exists for `d45645c`). The workflow now dispatches the existing `deploy.yml` explicitly on `ref main` after a successful data commit and watches the run with `gh run watch --exit-status`, which works because `workflow_dispatch` is the documented exception to the no-cascade rule. Same token (`actions: write` added), no PAT, no second pipeline. It skips everything when nothing changed, refuses to commit unparseable JSON, suppresses a duplicate dispatch for an already in-flight commit, and fails visibly if the dispatch is rejected or the deployment ends unsuccessfully. **Not yet proven end to end in production**: per owner decision 2026-11-03 the first live dispatch happens on the next genuine catalog data change.
-4. `/data/upcoming-apps.json` returns 404 by design — the deploy copies eight data files, and `/lab` bakes the roadmap at build time.
+4. **Pages build budget is close to the warning line.** ~256 `deploy.yml` runs occurred in the 30 days to 2026-10-04 (52% of the 500/month free allowance), and the hybrid design adds ~120 scheduled lab deploys. Projected ~75%, past the 70% warning. Account-wide usage including other projects is unverifiable while the Pages API returns 403. Do not add deploy triggers without re-checking this budget.
+5. **Release-driven catalogue changes are not instant.** The Android release workflow pushes with `GITHUB_TOKEN`, which cannot trigger workflows, so those pushes fall back to the 6-hourly schedule.
+6. `/data/upcoming-apps.json` returns 404 by design — the deploy copies eight data files, and `/lab` bakes the roadmap at build time.
 5. Cloudflare plan/usage cannot be read via API with the current token; the free tier is owner-verified in the dashboard, not machine-verified here.
 6. There is no root `README.md`; this document is the entry point.
 
 ---
+
+## 8a. Lab sync automation — hybrid instant + scheduled
+
+Implemented 2026-11-03 in `f448226` (workflow) on top of the dispatch fix `5575f32`. One pipeline, two ways in.
+
+**Triggers on `.github/workflows/sync-lab.yml`**
+
+| Trigger | Scope | Why |
+|---|---|---|
+| `push` → `main` | `data/apps.json`, `data/publishers.json`, `data/categories.json`, `data/collections.json` | The catalogue **inputs**. A genuine catalogue change now scans immediately instead of waiting for the next tick. |
+| `schedule` | `cron: '17 */6 * * *'` | Unchanged 6-hourly fallback. Scheduled runs own `scan_time` freshness and commit it on every run. |
+| `workflow_dispatch` | manual | Unchanged; still the explicit path. |
+
+**Exclusions and loop prevention**
+
+- The generated outputs (`data/upcoming-apps.json`, `data/lab-apps.json`, `data/engineering-status.json`, `data/engineering-events.json`, `data/engineering-builds.json`) are **not** in the push paths. They are this workflow's own write targets, so including them would be a self-trigger.
+- Job guard: `if: github.event_name != 'push' || github.actor != 'github-actions[bot]'`.
+- Primary protection is structural: automation here pushes with the default `GITHUB_TOKEN`, whose push events cannot create workflow runs at all. The guard and the path scoping are the second and third lines of defence.
+- A workflow-file-only commit (like `f448226`) triggers nothing: verified, no run was created for it.
+
+**Push vs schedule semantics (the `scan_time` rule)**
+
+`scripts/generate-engineering-data.py` rewrites `scan_time` on every run. On a **scheduled** run that is committed (Last scan freshness). On a **push-triggered** run, if `scan_time` is the only changed line, the step reverts the file and reports `sync=in-sync`, so an instant trigger can never produce a deploy for a clock-only diff.
+
+**Duplicate and overlap prevention**
+
+1. `concurrency: {group: 'lab-sync', cancel-in-progress: false}` serialises sync runs.
+2. `deploy.yml` keeps its own `pages` group, so deploys never overlap.
+3. Dispatch happens only when the scan produced a real commit (`if: steps.sync.outputs.sync == 'committed'`).
+4. Before dispatching, the step reads `git ls-remote origin refs/heads/main`. If main moved past the scanned commit it emits `::warning::` and deploys the newer tree, which is a superset, never a stale one.
+5. An in-flight `deploy.yml` run for that SHA suppresses a second dispatch.
+6. `gh run watch --exit-status` turns a failed deployment into a failed sync run: never a false success.
+
+**External sources: nothing is polled**
+
+`scripts/sync-published-lab.mjs` reads only `data/apps.json`. `scripts/generate-engineering-data.py` reads only `data/upcoming-apps.json` plus a local `git` history call (no `urllib`/`requests`/HTTP client anywhere in either script). There is therefore **no RSS or API polling in this pipeline, and no webhook-capable external source to subscribe to**. External app sites (for example `pdfminifly.pages.dev`) are never fetched by the marketplace; their releases arrive as commits to `data/apps.json`. Nothing about this pipeline can truthfully be described as "instant external-source detection".
+
+**Known cascade limitation**
+
+The Android release workflow pushes its catalogue commit with the default `GITHUB_TOKEN`, so that push triggers neither `sync-lab` nor `deploy`. Evidence: `d9136b4` produced no push-triggered run; the only runs on it were manual `workflow_dispatch` calls. Instant updates therefore apply to PAT-authenticated pushes (maintainer and agent pushes), while release-driven catalogue changes still rely on the 6-hourly fallback or an explicit dispatch. Closing that gap means adding a dispatch step to the release workflow, which touches the protected release pipeline and needs explicit approval.
+
+**Cloudflare Pages build budget (Free plan, 500 builds/month)**
+
+| Component | Per month |
+|---|---|
+| Scheduled lab-sync deploys (4/day) | ~120 (planning baseline, preserved) |
+| Push-triggered lab-sync deploys | only genuine catalogue pushes, typically a few per month, one deploy each |
+| `deploy.yml` from other pushes/dispatches | already ~256 runs in the 30 days to 2026-10-04 |
+| `events-static-feed` deploys | 6 runs in the same window (upper bound; it skips its deploy when the feed is unchanged) |
+
+Account-wide Pages usage **cannot be verified from here**: the Pages API returns `403 / code 10000` even for the projects list, so other projects and dashboard-triggered builds are unreadable. The GitHub-side count is the available upper bound for this repo: **262 runs ≈ 52% of the free monthly allowance** for the 30 days to 2026-10-04. Adding the ~120 scheduled lab deploys projects to roughly **75%**, which crosses the **70% warning** threshold. The **85% urgent** threshold would be ~425 builds. No paid plan, billing activation or overage is permitted under any circumstance; if the projection climbs past 85%, the fix is to reduce deploy frequency (for example catalogue-only deploys, accepting a frozen Last scan), never to pay.
 
 ## 9. Rules for future agents (mandatory)
 
@@ -170,6 +223,7 @@ Event traced across all four surfaces on 2026-11-02: Durable Object SQLite (read
 | 2026-11-02 18:51Z | PDFMiniFly 2.1.3 released, catalog `d9136b4`, APK sha `822c54a7…` | Release run 41504332741; APK re-downloaded and hashed |
 | 2026-11-02 18:54Z | Release event `804733e4be8cac3476e7faf43a2975a7` on all four surfaces | `/events`, `public/data/events.json`, Pages, feed run 41504585201 |
 | 2026-11-02 19:41Z | Frontend regression fixed and deployed: `c60cfa7` as `56bea799`, 301 assets, 0 base-path refs | Alias/production byte comparison, data-file hashes, upload-count reconciliation |
+| 2026-11-03 07:05Z | Hybrid instant + 6-hourly lab sync implemented in `f448226`: push trigger scoped to the four catalogue inputs, push-mode `scan_time` suppression, pre-dispatch main-SHA check | 29/29 scenario tests on the extracted run blocks (throwaway git remote, stubbed `gh`), YAML parses, `bash -n` clean, suite 633/633, no run created by the workflow-file commit, live site unchanged |
 | 2026-11-03 06:30Z | `sync-lab.yml` now dispatches `deploy.yml` on ref `main` after committing data (`5575f32`); 15/15 logic tests on the extracted run blocks | YAML parses, `bash -n` clean, stubbed-`gh` scenarios A-G pass, repo suite 633/633, no deploy triggered by the workflow-only commit |
 | 2026-11-03 01:00Z | `lab-sync d45645c` corrected the Lab version but never deployed: default `GITHUB_TOKEN` push triggers nothing | No `deploy.yml` run for `d45645c`; feed run at 01:01:47Z was `event=schedule`; `sync-lab.yml` uses `actions/checkout@v4` without a PAT |
 | 2026-11-03 05:10Z | `734429e` deployed via run 41581889608; Lab card `v2.1.3` live, 633/633 tests | Live HTML/DOM, data-file hashes vs tree, GitHub run metadata |
