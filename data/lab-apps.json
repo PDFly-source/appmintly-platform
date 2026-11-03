@@ -1965,7 +1965,7 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.2.3.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.2.5.",
           "source": "AppMintly production catalog (data/apps.json)",
           "date": "2026-11-03"
         }
@@ -1973,7 +1973,7 @@
       "milestones": [
         {
           "id": "pub-cineflow-m1",
-          "title": "Publicly released on the AppMintly marketplace (v0.2.3)",
+          "title": "Publicly released on the AppMintly marketplace (v0.2.5)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/cineflow/.",
           "status": "done"
         }
