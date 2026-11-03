@@ -99,7 +99,10 @@ describe('sizes and dates are formatted from real values only', () => {
     const model = buildCompatibility(realApk);
     expect(row(model, 'SHA-256 checksum').value).toHaveLength(64);
     expect(row(model, 'Package name').value).toBe('com.appforge.cineflow');
-    expect(row(model, 'Version code').value).toBe('202');
+    // Tracks the shipped catalog release instead of pinning a version string:
+    // a new APK must not fail this formatting test. The pass-through itself is
+    // still asserted (203 for the current 0.2.3 build).
+    expect(row(model, 'Version code').value).toBe(String(realApk.apk!.versionCode));
   });
 });
 

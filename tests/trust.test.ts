@@ -155,7 +155,9 @@ describe('release integrity uses only pipeline facts', () => {
     expect(facts.source).toBe('Official AppMintly GitHub release');
     expect(facts.officialAsset).toBe(true);
     expect(facts.signatureSchemes).toEqual(expect.arrayContaining(['V2', 'V3']));
-    expect(facts.version).toBe('0.2.2');
+    // Release version is pass-through from the catalog (0.2.3 at time of writing);
+    // pinning the literal made every new release fail an unrelated suite.
+    expect(facts.version).toBe(cineflow.apk!.versionName);
   });
   it('returns null for an unverified release instead of a fake panel', () => {
     const unverified = { ...cineflow, apk: { ...cineflow.apk!, verified: false } } as AppItem;
