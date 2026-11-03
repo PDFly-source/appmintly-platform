@@ -2,7 +2,7 @@
 
 > **Before making any AppMintly change, read `docs/PRODUCTION_BASELINE.md` and inspect the current `main` branch. Treat the recorded production state as the reference baseline. Update this document only when new evidence confirms a change.**
 
-Last updated: **2026-11-03 05:10Z** (UTC). Maintained by the release engineer; every figure below cites its evidence source and date.
+Last updated: **2026-11-03 06:30Z** (UTC). Maintained by the release engineer; every figure below cites its evidence source and date.
 
 ---
 
@@ -131,7 +131,7 @@ Event traced across all four surfaces on 2026-11-02: Durable Object SQLite (read
 
 1. **Cloudflare deployment IDs are unreadable by the agent token** — the Pages API answers `403 / code 10000`, and `wrangler pages deployment list` needs Pages read. IDs must be recorded manually from the dashboard (§3).
 2. **`734429e` deployment ID: NOT YET RECORDED.**
-3. **Automated `lab-sync` / data commits do not deploy — and its own header says otherwise.** `sync-lab.yml` documents "The committed data/** change then triggers the standard Pages deploy (deploy.yml) — no separate deployment path exists." That is **false in practice**: the workflow checks out with plain `actions/checkout@v4` (no PAT) and pushes with the default `GITHUB_TOKEN`, and GitHub deliberately does not let `GITHUB_TOKEN` pushes trigger other workflows. Verified 2026-11-03: no `deploy.yml` run exists for `d45645c` even though it changed three `data/**` files that match the deploy paths; the only workflow run at 01:01:47Z was `events-static-feed` with `event=schedule`, not `push`. Consequence: automated data corrections sit in `main` but never reach production until a human dispatches `deploy.yml` or another qualifying push lands. Check this first whenever an automated data fix appears to have no effect.
+3. **Automated `lab-sync` data commits now deploy themselves (fixed 2026-11-03, commit `5575f32`).** `sync-lab.yml` still pushes with the default `GITHUB_TOKEN`, and those pushes still cannot trigger other workflows, so the earlier header claim that a `data/**` push would fire `deploy.yml` was false in practice (no deploy run exists for `d45645c`). The workflow now dispatches the existing `deploy.yml` explicitly on `ref main` after a successful data commit and watches the run with `gh run watch --exit-status`, which works because `workflow_dispatch` is the documented exception to the no-cascade rule. Same token (`actions: write` added), no PAT, no second pipeline. It skips everything when nothing changed, refuses to commit unparseable JSON, suppresses a duplicate dispatch for an already in-flight commit, and fails visibly if the dispatch is rejected or the deployment ends unsuccessfully. **Not yet proven end to end in production**: per owner decision 2026-11-03 the first live dispatch happens on the next genuine catalog data change.
 4. `/data/upcoming-apps.json` returns 404 by design — the deploy copies eight data files, and `/lab` bakes the roadmap at build time.
 5. Cloudflare plan/usage cannot be read via API with the current token; the free tier is owner-verified in the dashboard, not machine-verified here.
 6. There is no root `README.md`; this document is the entry point.
@@ -170,5 +170,6 @@ Event traced across all four surfaces on 2026-11-02: Durable Object SQLite (read
 | 2026-11-02 18:51Z | PDFMiniFly 2.1.3 released, catalog `d9136b4`, APK sha `822c54a7…` | Release run 41504332741; APK re-downloaded and hashed |
 | 2026-11-02 18:54Z | Release event `804733e4be8cac3476e7faf43a2975a7` on all four surfaces | `/events`, `public/data/events.json`, Pages, feed run 41504585201 |
 | 2026-11-02 19:41Z | Frontend regression fixed and deployed: `c60cfa7` as `56bea799`, 301 assets, 0 base-path refs | Alias/production byte comparison, data-file hashes, upload-count reconciliation |
+| 2026-11-03 06:30Z | `sync-lab.yml` now dispatches `deploy.yml` on ref `main` after committing data (`5575f32`); 15/15 logic tests on the extracted run blocks | YAML parses, `bash -n` clean, stubbed-`gh` scenarios A-G pass, repo suite 633/633, no deploy triggered by the workflow-only commit |
 | 2026-11-03 01:00Z | `lab-sync d45645c` corrected the Lab version but never deployed: default `GITHUB_TOKEN` push triggers nothing | No `deploy.yml` run for `d45645c`; feed run at 01:01:47Z was `event=schedule`; `sync-lab.yml` uses `actions/checkout@v4` without a PAT |
 | 2026-11-03 05:10Z | `734429e` deployed via run 41581889608; Lab card `v2.1.3` live, 633/633 tests | Live HTML/DOM, data-file hashes vs tree, GitHub run metadata |
