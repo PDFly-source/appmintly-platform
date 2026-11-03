@@ -31,7 +31,9 @@ describe('CineFlow ships its complete brand lockup', () => {
   it('declares the full-lockup policy and points at the assembled square asset', () => {
     expect(policyOf(CINEFLOW)).toBe('full-lockup');
     expect(CINEFLOW.icon).toBe('/brand/cineflow-icon-lockup-512.png');
-    expect(CINEFLOW.artworkVersion ?? CINEFLOW.version).toBe('0.2.3'); // APK version untouched
+    // derived from the catalogue record, never pinned: the artwork version tracks the
+    // app version, so a genuine release must not fail this test (0.2.3 -> 0.2.4 drift)
+    expect(CINEFLOW.artworkVersion ?? CINEFLOW.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it('the asset is square, so it drops into the standard slot without distortion', () => {

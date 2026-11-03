@@ -299,6 +299,17 @@ jobs:
           echo "SIZE=$SIZE" >> "$GITHUB_ENV"
           echo "Validated $APP_FILE: $SIZE bytes, SHA-256 $SHA256"
 
+      - name: Launcher icon composition gate (fail-closed, packaged APK must carry symbol, wordmark and tagline)
+        # 0.2.4 shipped 17 individually-correct launcher resources and still
+        # rendered as the symbol alone: the three-element lockup was squeezed into
+        # about 43% of Android's adaptive safe circle, leaving the tagline ~1px at
+        # launcher size. Counting files cannot detect that, so this gate reads the
+        # packaged PNGs and fails unless the whole stack is really there.
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-apk-launcher-composition.mjs --apk "dist/apk/$APP_FILE"
+
       - name: APK security gate (fail-closed pre-publish scan)
         shell: bash
         run: |
