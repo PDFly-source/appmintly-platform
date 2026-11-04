@@ -486,5 +486,13 @@
     "target": "HisaabKhata",
     "summary": "update record \"HisaabKhata\" (hisaabkhata), status in-development; changed: no material change",
     "commitSha": null
+  },
+  {
+    "ts": "2026-11-04T20:04:03.149Z",
+    "actor": "console",
+    "action": "milestone-update",
+    "target": "HisaabKhata",
+    "summary": "milestone \"hisaabkhata-m2\" on \"HisaabKhata\" (hisaabkhata): In Progress -> Done",
+    "commitSha": null
   }
 ]
