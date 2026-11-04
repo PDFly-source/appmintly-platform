@@ -221,7 +221,7 @@
           "id": "hisaabkhata-m2",
           "title": "Premium UI + Assamese/English bilingual + voice input",
           "description": "Premium UI + Assamese/English bilingual + voice input",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": "hisaabkhata-m3",
@@ -230,7 +230,7 @@
           "status": "planned"
         }
       ],
-      "progress_percent": 33
+      "progress_percent": 67
     },
     {
       "id": "qr-forge",
