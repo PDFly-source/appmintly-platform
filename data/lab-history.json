@@ -494,5 +494,13 @@
     "target": "HisaabKhata",
     "summary": "milestone \"hisaabkhata-m2\" on \"HisaabKhata\" (hisaabkhata): In Progress -> Done",
     "commitSha": null
+  },
+  {
+    "ts": "2026-11-04T20:04:13.811Z",
+    "actor": "console",
+    "action": "milestone-update",
+    "target": "HisaabKhata",
+    "summary": "milestone \"hisaabkhata-m1\" on \"HisaabKhata\" (hisaabkhata): Done -> Done",
+    "commitSha": null
   }
 ]
