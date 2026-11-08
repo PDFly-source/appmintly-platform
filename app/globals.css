@@ -701,3 +701,133 @@ summary {
 
 /* Accessible discrete control target (44x44). Inline text links are exempt. */
 .tap-44 { min-height: 44px; min-width: 44px; }
+/* ==========================================================================
+   AppMintly Appearance — public surface palettes (Phase 4.2, Work 1)
+   Emerald / Sapphire / Ruby / Champagne.
+
+   Appended after the light, dark and amoled blocks on purpose: an attribute
+   selector and `.dark` have equal specificity, so source order decides, and the
+   chosen palette wins over the mode classes. Each palette restates every
+   semantic token rather than patching a few, so no surface is left on a stale
+   colour. Contrast pairs (ink/card, mut/card, on-cta/cta) are asserted by
+   tests/appearance-themes.test.mjs rather than eyeballed.
+   ========================================================================== */
+
+html[data-theme='emerald'] {
+  color-scheme: dark;
+  --c-page: #06130E;
+  --c-card: #0D2019;
+  --c-ink: #EFFAF3;
+  --c-inkbg: #0A1A13;
+  --c-mut: #A8CFBB;
+  --c-line: #1B3328;
+  --c-cta: #22C55E;
+  --c-cta-hover: #4BE08F;
+  --c-on-cta: #04210F;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #C3CBD8;
+  --c-cta-text: #7DF3B4;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #A8F0C6;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #04210F;
+  --c-link-text: #7DF3B4;
+  --c-success-text: #4BE08F;
+  --c-accent-text: #FFB4A2;
+}
+
+html[data-theme='sapphire'] {
+  color-scheme: dark;
+  --c-page: #0A1226;
+  --c-card: #111C3D;
+  --c-ink: #F2F5FF;
+  --c-inkbg: #0E1730;
+  --c-mut: #AFC0E0;
+  --c-line: #22315C;
+  --c-cta: #2563EB;
+  --c-cta-hover: #3B82F6;
+  --c-on-cta: #FFFFFF;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #C3CBD8;
+  --c-cta-text: #9EC5FF;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #9EC5FF;
+  --c-blue-solid: #2563EB;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #9EC5FF;
+  --c-success-text: #7DD3FC;
+  --c-accent-text: #FF9C8F;
+}
+
+html[data-theme='ruby'] {
+  color-scheme: dark;
+  --c-page: #17060B;
+  --c-card: #24090F;
+  --c-ink: #FBEDEF;
+  --c-inkbg: #200910;
+  --c-mut: #DCBBC1;
+  --c-line: #3A1420;
+  --c-cta: #DC2626;
+  --c-cta-hover: #EF4444;
+  --c-on-cta: #FFFFFF;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #C3CBD8;
+  --c-cta-text: #FFB3A7;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #FFC7BC;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #FFB3A7;
+  --c-success-text: #86EFAC;
+  --c-accent-text: #FFB3A7;
+}
+
+html[data-theme='champagne'] {
+  color-scheme: light;
+  --c-page: #F7F1E4;
+  --c-card: #FFFDF8;
+  --c-ink: #26201A;
+  --c-inkbg: #26201A;
+  --c-mut: #635744;
+  --c-line: #E4D8C0;
+  --c-cta: #B0812F;
+  --c-cta-hover: #C79A45;
+  --c-on-cta: #26201A;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #D8CFC0;
+  --c-cta-text: #7A5A20;
+  --c-warning-text: #5A4100;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #F0DCA9;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #26201A;
+  --c-link-text: #7A5A20;
+  --c-success-text: #0F766E;
+  --c-accent-text: #A3200F;
+}
+
+/* Palettes animate rather than snap, and honour reduced motion. */
+html[data-theme] body {
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme] body {
+    transition: none;
+  }
+}

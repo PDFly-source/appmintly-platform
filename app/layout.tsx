@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/lib/ToastContext';
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/lib/theme-context';
+import { appearanceInitScript } from '@/lib/appearance/themes';
 import { CatalogProvider } from '@/lib/CatalogContext';
 import { Navbar } from '@/components/Navbar';
 import { BottomNav } from '@/components/BottomNav';
@@ -74,6 +75,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: appearanceInitScript('public') }} />
         <link rel="icon" href={`${BASE_PATH}/favicon.ico`} sizes="any" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
