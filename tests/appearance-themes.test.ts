@@ -11,6 +11,7 @@ import {
   DEFAULT_THEME,
   isThemeId,
   publicThemeUrl,
+  readPublishedTheme,
   resolveTheme,
   STORAGE_KEYS,
   THEMES,
@@ -87,6 +88,26 @@ describe('resolution and validation', () => {
       expect(isThemeId(bad)).toBe(false);
     }
     expect(resolveTheme('"><script>', 'javascript:alert(1)').theme).toBe('sapphire');
+  });
+});
+
+describe('published default (data/appearance.json)', () => {
+  it('accepts only a real palette id', () => {
+    expect(readPublishedTheme({ theme: 'champagne' })).toBe('champagne');
+    expect(readPublishedTheme({ theme: 'amber' })).toBe(null);
+    expect(readPublishedTheme({ theme: '' })).toBe(null);
+    expect(readPublishedTheme({})).toBe(null);
+    expect(readPublishedTheme(null)).toBe(null);
+    expect(readPublishedTheme('champagne')).toBe(null);
+  });
+
+  it('treats null as "keep the shipped look"', () => {
+    expect(readPublishedTheme({ theme: null })).toBe(null);
+  });
+
+  it('ships the config file with a null default', async () => {
+    const cfg = (await import('@/data/appearance.json')).default as { theme: unknown };
+    expect(cfg.theme).toBe(null);
   });
 });
 

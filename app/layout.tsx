@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/lib/ToastContext';
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/lib/theme-context';
-import { appearanceInitScript } from '@/lib/appearance/themes';
+import { appearanceInitScript, readPublishedTheme } from '@/lib/appearance/themes';
+import appearanceConfig from '@/data/appearance.json';
 import { CatalogProvider } from '@/lib/CatalogContext';
 import { Navbar } from '@/components/Navbar';
 import { BottomNav } from '@/components/BottomNav';
@@ -66,13 +67,20 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+const publishedTheme = readPublishedTheme(appearanceConfig);
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      className="scroll-smooth"
+      suppressHydrationWarning
+      data-theme={publishedTheme ?? undefined}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: appearanceInitScript('public') }} />

@@ -144,3 +144,15 @@ export function appearanceInitScript(surface: Surface): string {
   const ids = JSON.stringify(THEME_IDS);
   return `(function(){try{var ids=${ids};var q=new URLSearchParams(location.search).get('theme');var s=localStorage.getItem('${key}');var t=ids.indexOf(q)>-1?q:(ids.indexOf(s)>-1?s:null);if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
 }
+
+/**
+ * The published default comes from data/appearance.json in this repository, so
+ * the palette can be changed by editing one file — no console, no token. An
+ * unexpected value is ignored rather than trusted, and `null` means "keep the
+ * shipped look".
+ */
+export function readPublishedTheme(value: unknown): ThemeId | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = (value as { theme?: unknown }).theme;
+  return isThemeId(raw) ? raw : null;
+}
