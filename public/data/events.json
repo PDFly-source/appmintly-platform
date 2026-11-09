@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-03T16:19:14.385Z",
-  "serverTime": 1793722754334,
+  "generatedAt": "2026-11-09T18:51:09.014Z",
+  "serverTime": 1794250268957,
   "source": "appmintly-publisher-api/admin/events/export",
-  "count": 6,
+  "count": 7,
   "events": [
     {
       "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
@@ -56,6 +56,15 @@
       "version": "0.2.6",
       "catalogRevision": "c0713adcb9bab8f61540fe4c306e1b4c9ca0a116",
       "ts": 1793716172664,
+      "name": "CineFlow"
+    },
+    {
+      "eventId": "ce7382182b33c99ba0f849dedd683e29",
+      "appId": "cineflow",
+      "platform": "android",
+      "version": "0.3.0",
+      "catalogRevision": "4dd7a0d1ed5696178287488518f973223c0e5500",
+      "ts": 1794249781278,
       "name": "CineFlow"
     }
   ]
