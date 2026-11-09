@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/lib/ToastContext';
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/lib/theme-context';
-import { appearanceInitScript, readPublishedTheme } from '@/lib/appearance/themes';
+import { appearanceInitScript, readPublishedTheme, THEME_IDS } from '@/lib/appearance/themes';
 import appearanceConfig from '@/data/appearance.json';
 import { CatalogProvider } from '@/lib/CatalogContext';
 import { Navbar } from '@/components/Navbar';
@@ -69,6 +69,11 @@ export const viewport: Viewport = {
 
 const publishedTheme = readPublishedTheme(appearanceConfig);
 
+/** The live-sync script validates the published id. It is built from the
+ *  registry, not typed out: a hardcoded list here silently rejected every new
+ *  palette and reverted the page to the baked theme seconds after load. */
+const liveThemePattern = `^(${THEME_IDS.join('|')})$`;
+
 export default function RootLayout({
   children,
 }: {
@@ -89,7 +94,7 @@ export default function RootLayout({
             rebuild. The server-rendered data-theme stays as the first-paint value. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var E='https://appmintly-publisher-api.sbn50088.workers.dev/public/appearance';var ok=/^(emerald|sapphire|ruby|champagne)$/;function a(t){if(t&&ok.test(t)&&document.documentElement.getAttribute('data-theme')!==t){document.documentElement.setAttribute('data-theme',t);}}function p(){fetch(E,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){if(d&&d.theme){a(d.theme);}}).catch(function(){});}p();setInterval(p,3000);document.addEventListener('visibilitychange',function(){if(!document.hidden){p();}});window.addEventListener('focus',p);}catch(e){}})();`,
+            __html: `(function(){try{var E='https://appmintly-publisher-api.sbn50088.workers.dev/public/appearance';var ok=new RegExp('${liveThemePattern}');function a(t){if(t&&ok.test(t)&&document.documentElement.getAttribute('data-theme')!==t){document.documentElement.setAttribute('data-theme',t);}}function p(){fetch(E,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){if(d&&d.theme){a(d.theme);}}).catch(function(){});}p();setInterval(p,3000);document.addEventListener('visibilitychange',function(){if(!document.hidden){p();}});window.addEventListener('focus',p);}catch(e){}})();`,
           }}
         />
         <link rel="icon" href={`${BASE_PATH}/favicon.ico`} sizes="any" />
