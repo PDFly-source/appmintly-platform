@@ -13,6 +13,7 @@ import { SystemStatus } from '@/components/SystemStatus';
 import { NotificationsProvider } from '@/components/NotificationsProvider';
 
 import { SITE_URL } from '@/lib/site-url';
+import { BrandSplash } from '@/components/brand/BrandSplash';
 
 // Base path is '' for local/server deployments and '/appmintly-platform' for
 // the static GitHub Pages build (injected at build time).
@@ -102,6 +103,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className="min-h-screen bg-page text-ink font-sans antialiased selection:bg-forge-red/20 selection:text-accent-text">
+      <BrandSplash />
         {/* Sitewide structured data: marketplace Organization + WebSite */}
         <script
           type="application/ld+json"
