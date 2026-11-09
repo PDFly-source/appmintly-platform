@@ -5,7 +5,7 @@
  *
  * The marketplace palette is PUBLISHED, not per-browser: data/appearance.json is
  * committed by the Publisher console and baked into this static build, so every
- * visitor receives the same palette. This page therefore previews the four
+ * visitor receives the same palette. This page therefore previews the ten
  * themes for the current visit only and never writes a browser-local override.
  *
  * An earlier iteration stored a personal choice under `appmintly.public.theme`;

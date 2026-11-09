@@ -6,7 +6,7 @@
  * normal caching.
  */
 const THEME_ENDPOINT = 'https://appmintly-publisher-api.sbn50088.workers.dev/public/appearance';
-const VALID = /^(emerald|sapphire|ruby|champagne)$/;
+const VALID = /^(emerald|sapphire|ruby|champagne|obsidian|amethyst|copper|aurora|platinum|sakura)$/;
 
 function withTheme(html, theme) {
   if (!VALID.test(theme)) return html;
