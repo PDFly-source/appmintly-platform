@@ -994,3 +994,103 @@ html[data-theme] body {
     transition: none;
   }
 }
+
+/* ── Light palettes: readable ink on pale surfaces ────────────────────────────
+   The marketplace was authored against dark glass: white ink, white 10% chips,
+   cream helper text, gold-on-gold gradient buttons. Champagne, Platinum and
+   Sakura paint pale surfaces, where those choices vanish. These rules rebind
+   the ink to the palette's own tokens and apply only to the light palettes, so
+   dark rendering is unchanged. `.on-dark` subtrees (hero art, media overlays)
+   keep their original ink. */
+
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) {
+  --glass-soft: rgba(38, 32, 26, 0.055);
+  --glass-line: rgba(38, 32, 26, 0.16);
+  --glass-ink-soft: color-mix(in srgb, var(--c-ink) 76%, transparent);
+}
+html[data-theme='platinum'] {
+  --c-inkbg: #1F2937;   /* inverse surface stays dark on a pale page */
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #C9CFD9;
+  --glass-soft: rgba(20, 22, 26, 0.05);
+  --glass-line: rgba(20, 22, 26, 0.16);
+}
+html[data-theme='sakura'] {
+  --c-inkbg: #2A1418;   /* inverse surface stays dark on a pale page */
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #D8C3C8;
+  --glass-soft: rgba(42, 20, 24, 0.05);
+  --glass-line: rgba(42, 20, 24, 0.16);
+}
+
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-white {
+  color: var(--c-ink) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-white/'] {
+  color: var(--glass-ink-soft) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-white/'] {
+  background-color: var(--glass-soft) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='border-white/'] {
+  border-color: var(--glass-line) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#FAF5ED]'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#EDF1F7]'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#F2F5FF]'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#9FB0D6]'] {
+  color: var(--c-mut) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#F5C451]'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-on-dark {
+  color: var(--c-warning-text) !important;
+}
+
+/* Gradient CTA fills lighten toward the top, which erodes their dark ink. */
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .btn-cta {
+  background-image: none !important;
+  background-color: var(--c-cta) !important;
+  color: var(--c-on-cta) !important;
+}
+
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark .text-white {
+  color: #FFFFFF !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*='text-white/'] {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*='bg-white/'] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Utility ink that hardcodes the dark-palette value. */
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-text,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-on-dark,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-warning-text/'] {
+  color: var(--c-warning-text) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-on-ink-mute,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-link-on-dark {
+  color: var(--c-mut) !important;
+}
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-ink'] .text-on-ink-mute,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark .text-on-ink-mute {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* The warning ink utility resolves to the dark-palette amber; pin the pale
+   palettes to their own deep amber so the label stays legible. */
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-warning'] {
+  color: var(--c-warning-text) !important;
+}
+html[data-theme='champagne'] { --c-warning-text: #5A4100; }
+html[data-theme='platinum']  { --c-warning-text: #5A4100; }
+html[data-theme='sakura']    { --c-warning-text: #6B3A1E; }
+
+/* Inverse-surface containers pair bg-inkbg with text-ink in several places.
+   On a pale page both resolve dark, so bind the ink to the inverse ink. */
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-inkbg'] .text-ink,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-inkbg'] [class*='text-ink/'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-ink '] .text-ink {
+  color: var(--c-on-ink) !important;
+}

@@ -24,7 +24,7 @@ export const PWAInstallBanner: React.FC = () => {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-inkbg via-[#23272C] to-inkbg text-white px-4 py-2.5 shadow-md border-b border-white/10 relative z-40">
+      <div className="on-dark bg-gradient-to-r from-inkbg via-[#23272C] to-inkbg text-white px-4 py-2.5 shadow-md border-b border-white/10 relative z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs md:text-sm">
           <div className="flex items-center gap-2.5 min-w-0">
             <AppMintlyLogo variant="mark" size="xs" />
