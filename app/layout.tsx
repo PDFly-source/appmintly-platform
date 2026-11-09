@@ -84,6 +84,14 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: appearanceInitScript('public') }} />
+        {/* Authoritative runtime theme: the Durable Object is the source of truth,
+            so a publisher change reaches every open session within ~3s with no
+            rebuild. The server-rendered data-theme stays as the first-paint value. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var E='https://appmintly-publisher-api.sbn50088.workers.dev/public/appearance';var ok=/^(emerald|sapphire|ruby|champagne)$/;function a(t){if(t&&ok.test(t)&&document.documentElement.getAttribute('data-theme')!==t){document.documentElement.setAttribute('data-theme',t);}}function p(){fetch(E,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){if(d&&d.theme){a(d.theme);}}).catch(function(){});}p();setInterval(p,3000);document.addEventListener('visibilitychange',function(){if(!document.hidden){p();}});window.addEventListener('focus',p);}catch(e){}})();`,
+          }}
+        />
         <link rel="icon" href={`${BASE_PATH}/favicon.ico`} sizes="any" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
