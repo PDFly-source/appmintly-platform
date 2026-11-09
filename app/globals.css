@@ -1026,22 +1026,22 @@ html[data-theme='sakura'] {
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-white {
   color: var(--c-ink) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-white/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*="text-white/"] {
   color: var(--glass-ink-soft) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-white/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*="bg-white/"] {
   background-color: var(--glass-soft) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='border-white/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*="border-white/"] {
   border-color: var(--glass-line) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#FAF5ED]'],
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#EDF1F7]'],
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#F2F5FF]'],
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#9FB0D6]'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-\[\#FAF5ED\],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-\[\#EDF1F7\],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-\[\#F2F5FF\],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-\[\#9FB0D6\] {
   color: var(--c-mut) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-[#F5C451]'],
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-\[\#F5C451\],
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-on-dark {
   color: var(--c-warning-text) !important;
 }
@@ -1056,17 +1056,17 @@ html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark .text-white {
   color: #FFFFFF !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*='text-white/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*="text-white/"] {
   color: rgba(255, 255, 255, 0.78) !important;
 }
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*='bg-white/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .on-dark [class*="bg-white/"] {
   background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Utility ink that hardcodes the dark-palette value. */
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-text,
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-warning-on-dark,
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='text-warning-text/'] {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*="text-warning-text/"] {
   color: var(--c-warning-text) !important;
 }
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .text-on-ink-mute,
@@ -1090,7 +1090,7 @@ html[data-theme='sakura']    { --c-warning-text: #6B3A1E; }
 /* Inverse-surface containers pair bg-inkbg with text-ink in several places.
    On a pale page both resolve dark, so bind the ink to the inverse ink. */
 html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-inkbg'] .text-ink,
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-inkbg'] [class*='text-ink/'],
-html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-ink '] .text-ink {
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) [class*='bg-inkbg'] .text-ink\/90,
+html:is([data-theme='champagne'], [data-theme='platinum'], [data-theme='sakura']) .bg-ink .text-ink {
   color: var(--c-on-ink) !important;
 }
