@@ -40,16 +40,25 @@ const TOKENS: Record<string, { page: string; card: string; ink: string; mut: str
   sapphire: { page: '#0A1226', card: '#111C3D', ink: '#F2F5FF', mut: '#AFC0E0', cta: '#2563EB', onCta: '#FFFFFF' },
   ruby: { page: '#17060B', card: '#24090F', ink: '#FBEDEF', mut: '#DCBBC1', cta: '#DC2626', onCta: '#FFFFFF' },
   champagne: { page: '#F7F1E4', card: '#FFFDF8', ink: '#26201A', mut: '#635744', cta: '#B0812F', onCta: '#26201A' },
+  obsidian: { page: '#0B0B0F', card: '#16161D', ink: '#F4F5F8', mut: '#A6A9B8', cta: '#E9EBF2', onCta: '#0B0B0F' },
+  amethyst: { page: '#120A1F', card: '#1D1133', ink: '#F3EBFF', mut: '#C0AEDC', cta: '#8B5CF6', onCta: '#120619' },
+  copper: { page: '#140D09', card: '#221410', ink: '#FBEEE6', mut: '#D3B4A2', cta: '#C2703D', onCta: '#1A0C05' },
+  aurora: { page: '#071318', card: '#0E2130', ink: '#EAF6FA', mut: '#A2C4CE', cta: '#14B8A6', onCta: '#04201C' },
+  platinum: { page: '#F4F5F7', card: '#FFFFFF', ink: '#14161A', mut: '#5A6270', cta: '#1F2937', onCta: '#FFFFFF' },
+  sakura: { page: '#FDF2F4', card: '#FFF9FA', ink: '#2A1418', mut: '#77555C', cta: '#BE123C', onCta: '#FFFFFF' },
 };
 
 describe('palette registry', () => {
-  it('ships exactly the four approved themes', () => {
-    expect(THEME_IDS).toEqual(['emerald', 'sapphire', 'ruby', 'champagne']);
-    expect(THEMES).toHaveLength(4);
+  it('ships exactly the ten approved themes, in picker order', () => {
+    expect(THEME_IDS).toEqual([
+      'emerald', 'sapphire', 'ruby', 'champagne',
+      'obsidian', 'amethyst', 'copper', 'aurora', 'platinum', 'sakura',
+    ]);
+    expect(THEMES).toHaveLength(10);
   });
 
-  it('marks Champagne as the only light palette', () => {
-    expect(THEMES.filter((t) => t.light).map((t) => t.id)).toEqual(['champagne']);
+  it('keeps exactly three light palettes', () => {
+    expect(THEMES.filter((t) => t.light).map((t) => t.id)).toEqual(['champagne', 'platinum', 'sakura']);
   });
 
   it('has a swatch for every palette and no duplicate labels', () => {
@@ -58,7 +67,7 @@ describe('palette registry', () => {
       expect(theme.swatch.surface).toMatch(/^#[0-9A-F]{6}$/i);
       expect(theme.swatch.accent).toMatch(/^#[0-9A-F]{6}$/i);
     }
-    expect(new Set(THEMES.map((t) => t.label)).size).toBe(4);
+    expect(new Set(THEMES.map((t) => t.label)).size).toBe(10);
   });
 
   it('keeps the shipped default theme resolvable', () => {
@@ -83,7 +92,7 @@ describe('resolution and validation', () => {
     expect(resolveTheme(null, null)).toEqual({ theme: 'sapphire', source: 'default' });
   });
 
-  it('refuses anything that is not one of the four ids', () => {
+  it('refuses anything that is not one of the ten ids', () => {
     for (const bad of ['amber', '', 'EMERALD', 'emerald ', 'red;background:url(x)', null, undefined, 42]) {
       expect(isThemeId(bad)).toBe(false);
     }

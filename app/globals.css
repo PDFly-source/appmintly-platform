@@ -703,7 +703,8 @@ summary {
 .tap-44 { min-height: 44px; min-width: 44px; }
 /* ==========================================================================
    AppMintly Appearance — public surface palettes (Phase 4.2, Work 1)
-   Emerald / Sapphire / Ruby / Champagne.
+   Emerald / Sapphire / Ruby / Champagne, extended in Work 6 with
+   Obsidian / Amethyst / Copper / Aurora / Platinum / Sakura.
 
    Appended after the light, dark and amoled blocks on purpose: an attribute
    selector and `.dark` have equal specificity, so source order decides, and the
@@ -819,6 +820,168 @@ html[data-theme='champagne'] {
   --c-link-text: #7A5A20;
   --c-success-text: #0F766E;
   --c-accent-text: #A3200F;
+}
+
+html[data-theme='obsidian'] {
+  color-scheme: dark;
+  --c-page: #0B0B0F;
+  --c-card: #16161D;
+  --c-ink: #F4F5F8;
+  --c-inkbg: #07070A;
+  --c-mut: #A6A9B8;
+  --c-line: #3A3A40;
+  --c-cta: #E9EBF2;
+  --c-cta-hover: #ECEEF4;
+  --c-on-cta: #0B0B0F;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #BEBFC1;
+  --c-cta-text: #C9CDD9;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #C9CDD9;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #C9CDD9;
+  --c-success-text: #4ADE80;
+  --c-accent-text: #FF6B6B;
+}
+
+html[data-theme='amethyst'] {
+  color-scheme: dark;
+  --c-page: #120A1F;
+  --c-card: #1D1133;
+  --c-ink: #F3EBFF;
+  --c-inkbg: #0C0714;
+  --c-mut: #C0AEDC;
+  --c-line: #3F3454;
+  --c-cta: #8B5CF6;
+  --c-cta-hover: #9B73F7;
+  --c-on-cta: #120619;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #BEB7C7;
+  --c-cta-text: #C9B2FF;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #C9B2FF;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #C9B2FF;
+  --c-success-text: #6EE7B7;
+  --c-accent-text: #F0A6C8;
+}
+
+html[data-theme='copper'] {
+  color-scheme: dark;
+  --c-page: #140D09;
+  --c-card: #221410;
+  --c-ink: #FBEEE6;
+  --c-inkbg: #0D0806;
+  --c-mut: #D3B4A2;
+  --c-line: #453732;
+  --c-cta: #C2703D;
+  --c-cta-hover: #CB8458;
+  --c-on-cta: #1A0C05;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #C4BAB3;
+  --c-cta-text: #F2C39A;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #F2C39A;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #F2C39A;
+  --c-success-text: #86EFAC;
+  --c-accent-text: #FF9E7A;
+}
+
+html[data-theme='aurora'] {
+  color-scheme: dark;
+  --c-page: #071318;
+  --c-card: #0E2130;
+  --c-ink: #EAF6FA;
+  --c-inkbg: #050C10;
+  --c-mut: #A2C4CE;
+  --c-line: #314350;
+  --c-cta: #14B8A6;
+  --c-cta-hover: #35C2B2;
+  --c-on-cta: #04201C;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #B7C0C3;
+  --c-cta-text: #7FE7DC;
+  --c-warning-text: #F5C451;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #7FE7DC;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #0E1526;
+  --c-on-success: #0E1526;
+  --c-link-text: #7FE7DC;
+  --c-success-text: #5EEAD4;
+  --c-accent-text: #C4B5FD;
+}
+
+html[data-theme='platinum'] {
+  color-scheme: light;
+  --c-page: #F4F5F7;
+  --c-card: #FFFFFF;
+  --c-ink: #14161A;
+  --c-inkbg: #E8E9EB;
+  --c-mut: #5A6270;
+  --c-line: #DEDEDF;
+  --c-cta: #1F2937;
+  --c-cta-hover: #1B2430;
+  --c-on-cta: #FFFFFF;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #D8CFC0;
+  --c-cta-text: #2A3444;
+  --c-warning-text: #5A4100;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #757B85;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #14161A;
+  --c-on-success: #FFFFFF;
+  --c-link-text: #2A3444;
+  --c-success-text: #0F766E;
+  --c-accent-text: #B42318;
+}
+
+html[data-theme='sakura'] {
+  color-scheme: light;
+  --c-page: #FDF2F4;
+  --c-card: #FFF9FA;
+  --c-ink: #2A1418;
+  --c-inkbg: #F0E6E8;
+  --c-mut: #77555C;
+  --c-line: #E1D9DA;
+  --c-cta: #BE123C;
+  --c-cta-hover: #A71035;
+  --c-on-cta: #FFFFFF;
+  --c-on-ink: #FFFFFF;
+  --c-on-ink-mute: #D8CFC0;
+  --c-cta-text: #9F1239;
+  --c-warning-text: #5A4100;
+  --c-on-warning: #3D2A00;
+  --c-warning-on-dark: #F5C451;
+  --c-link-on-dark: #C1657E;
+  --c-blue-solid: #1560D8;
+  --c-on-blue: #FFFFFF;
+  --c-on-brand: #2A1418;
+  --c-on-success: #FFFFFF;
+  --c-link-text: #9F1239;
+  --c-success-text: #0F766E;
+  --c-accent-text: #0F766E;
 }
 
 /* Palettes animate rather than snap, and honour reduced motion. */

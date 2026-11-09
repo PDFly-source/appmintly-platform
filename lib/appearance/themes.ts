@@ -1,5 +1,5 @@
 /**
- * AppMintly Appearance — the four approved surface themes.
+ * AppMintly Appearance — the ten approved surface themes.
  *
  * One palette model drives both surfaces. Each surface maps these tokens onto
  * its own CSS variable namespace: the Publisher console consumes `--sr-*`, the
@@ -19,7 +19,17 @@
  *   surfaces are independent and never share storage.
  */
 
-export type ThemeId = 'emerald' | 'sapphire' | 'ruby' | 'champagne';
+export type ThemeId =
+  | 'emerald'
+  | 'sapphire'
+  | 'ruby'
+  | 'champagne'
+  | 'obsidian'
+  | 'amethyst'
+  | 'copper'
+  | 'aurora'
+  | 'platinum'
+  | 'sakura';
 
 export type ThemePalette = {
   id: ThemeId;
@@ -61,6 +71,48 @@ export const THEMES: ThemePalette[] = [
     light: true,
     note: 'Warm ivory with champagne gold accents.',
     swatch: { page: '#F7F1E4', surface: '#FFFCF5', accent: '#B0812F' },
+  },
+  {
+    id: 'obsidian',
+    label: 'Obsidian',
+    light: false,
+    note: 'Liquid graphite with a silver-white accent.',
+    swatch: { page: '#0B0B0F', surface: '#16161D', accent: '#E9EBF2' },
+  },
+  {
+    id: 'amethyst',
+    label: 'Amethyst',
+    light: false,
+    note: 'Deep aubergine with amethyst violet accents.',
+    swatch: { page: '#120A1F', surface: '#1D1133', accent: '#8B5CF6' },
+  },
+  {
+    id: 'copper',
+    label: 'Copper',
+    light: false,
+    note: 'Burnt umber with burnished copper accents.',
+    swatch: { page: '#140D09', surface: '#221410', accent: '#C2703D' },
+  },
+  {
+    id: 'aurora',
+    label: 'Aurora',
+    light: false,
+    note: 'Deep teal with mint aurora and violet light.',
+    swatch: { page: '#071318', surface: '#0E2130', accent: '#14B8A6' },
+  },
+  {
+    id: 'platinum',
+    label: 'Platinum',
+    light: true,
+    note: 'Cool platinum grey with graphite accents.',
+    swatch: { page: '#F4F5F7', surface: '#FFFFFF', accent: '#1F2937' },
+  },
+  {
+    id: 'sakura',
+    label: 'Sakura',
+    light: true,
+    note: 'Soft blush ivory with deep rose accents.',
+    swatch: { page: '#FDF2F4', surface: '#FFF9FA', accent: '#BE123C' },
   },
 ];
 
