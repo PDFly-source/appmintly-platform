@@ -1809,15 +1809,15 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.10.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.11.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-28"
+          "date": "2026-11-09"
         }
       ],
       "milestones": [
         {
           "id": "pub-appmintly-m1",
-          "title": "Publicly released on the AppMintly marketplace (v1.0.10)",
+          "title": "Publicly released on the AppMintly marketplace (v1.0.11)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/appmintly/.",
           "status": "done"
         }
@@ -1861,15 +1861,15 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.3.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.2.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-02"
+          "date": "2026-11-09"
         }
       ],
       "milestones": [
         {
           "id": "pub-pdfminifly-m1",
-          "title": "Publicly released on the AppMintly marketplace (v2.1.3)",
+          "title": "Publicly released on the AppMintly marketplace (v2.2.0)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/pdfminifly/.",
           "status": "done"
         }
@@ -1887,15 +1887,15 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.1.1.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.2.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-16"
+          "date": "2026-11-09"
         }
       ],
       "milestones": [
         {
           "id": "pub-niramay-m1",
-          "title": "Publicly released on the AppMintly marketplace (v2.1.1)",
+          "title": "Publicly released on the AppMintly marketplace (v2.2.0)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/niramay/.",
           "status": "done"
         }
@@ -1939,15 +1939,15 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.0.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.1.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-10-17"
+          "date": "2026-11-09"
         }
       ],
       "milestones": [
         {
           "id": "pub-billcraft-m1",
-          "title": "Publicly released on the AppMintly marketplace (v0.1.0)",
+          "title": "Publicly released on the AppMintly marketplace (v0.1.1)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/billcraft/.",
           "status": "done"
         }
@@ -1965,15 +1965,15 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.2.6.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.3.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-03"
+          "date": "2026-11-09"
         }
       ],
       "milestones": [
         {
           "id": "pub-cineflow-m1",
-          "title": "Publicly released on the AppMintly marketplace (v0.2.6)",
+          "title": "Publicly released on the AppMintly marketplace (v0.3.0)",
           "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/cineflow/.",
           "status": "done"
         }
