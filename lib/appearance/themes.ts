@@ -8,6 +8,15 @@
  *
  * Emerald, Sapphire, Ruby and Champagne mirror the supplied reference artwork:
  * deep forest green, deep navy, deep burgundy and warm ivory with champagne gold.
+ *
+ * SURFACE CONTRACT (public theme is published, not per-browser):
+ *   The public marketplace renders the palette published in data/appearance.json.
+ *   That file is committed by the Publisher console and baked into the static
+ *   build, so every visitor receives it. No browser-local value can override it:
+ *   `appmintly.public.theme` was a personal override in an earlier iteration and
+ *   is now cleared on first paint, never read. The Publisher console keeps its
+ *   own browser-local palette under `appmintly.publisher.theme`; the two
+ *   surfaces are independent and never share storage.
  */
 
 export type ThemeId = 'emerald' | 'sapphire' | 'ruby' | 'champagne';
@@ -68,7 +77,11 @@ export function themeById(id: ThemeId): ThemePalette {
   return THEMES.find((t) => t.id === id) || THEMES[1];
 }
 
-/** Storage keys are per surface and per origin. Never cross-origin. */
+/**
+ * Storage keys are per surface and per origin. Never cross-origin.
+ * `public` is legacy only: it is cleared on paint and never read, because the
+ * published palette must reach every visitor identically.
+ */
 export const STORAGE_KEYS = {
   publisher: 'appmintly.publisher.theme',
   public: 'appmintly.public.theme',
@@ -134,25 +147,37 @@ export function publicThemeUrl(base: string, theme: ThemeId): string {
 }
 
 /**
- * Pre-paint initialiser. Runs inline in <head> before React so the chosen
- * palette is on <html> for the first frame (no flash of the default theme).
- * It only reads a validated value and sets one attribute: no user data leaves
- * the browser and a hand-edited value cannot inject anything.
- */
-export function appearanceInitScript(surface: Surface): string {
-  const key = STORAGE_KEYS[surface];
-  const ids = JSON.stringify(THEME_IDS);
-  return `(function(){try{var ids=${ids};var q=new URLSearchParams(location.search).get('theme');var s=localStorage.getItem('${key}');var t=ids.indexOf(q)>-1?q:(ids.indexOf(s)>-1?s:null);if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
-}
-
-/**
  * The published default comes from data/appearance.json in this repository, so
- * the palette can be changed by editing one file — no console, no token. An
- * unexpected value is ignored rather than trusted, and `null` means "keep the
- * shipped look".
+ * the palette is changed by committing one file — the Publisher console does
+ * that server-side. An unexpected value is ignored rather than trusted, and
+ * `null` means "keep the shipped look".
  */
 export function readPublishedTheme(value: unknown): ThemeId | null {
   if (!value || typeof value !== 'object') return null;
   const raw = (value as { theme?: unknown }).theme;
   return isThemeId(raw) ? raw : null;
+}
+
+/**
+ * Pre-paint initialiser. Runs inline in <head> before React so the palette is
+ * on <html> for the first frame (no flash of the wrong theme).
+ *
+ * Public surface: the published theme is already server-rendered into the
+ *   `data-theme` attribute of <html>. The only thing this script may apply is
+ *   an explicit `?theme=` preview from a console deep link, and it removes the
+ *   legacy browser-local override so no visitor is stuck on an old palette.
+ *
+ * Publisher surface: query, then this browser's stored console palette.
+ *
+ * It only reads validated values and sets one attribute: no user data leaves
+ * the browser and a hand-edited value cannot inject anything.
+ */
+export function appearanceInitScript(surface: Surface): string {
+  const ids = JSON.stringify(THEME_IDS);
+  if (surface === 'publisher') {
+    const key = STORAGE_KEYS.publisher;
+    return `(function(){try{var ids=${ids};var q=new URLSearchParams(location.search).get('theme');var s=localStorage.getItem('${key}');var t=ids.indexOf(q)>-1?q:(ids.indexOf(s)>-1?s:null);if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+  }
+  const legacy = STORAGE_KEYS.public;
+  return `(function(){try{var ids=${ids};localStorage.removeItem('${legacy}');var q=new URLSearchParams(location.search).get('theme');if(ids.indexOf(q)>-1){document.documentElement.setAttribute('data-theme',q);}}catch(e){}})();`;
 }

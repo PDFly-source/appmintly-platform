@@ -1,58 +1,66 @@
 'use client';
 
 /**
- * Appearance — public marketplace theme chooser.
+ * Appearance — public marketplace palette preview.
  *
- * Matches the approved reference: a compact "Theme:" row of four buttons with a
- * clear selected state, and a Back control underneath. Choosing a theme applies
- * it immediately (no reload), stores it for this browser and origin, and the
- * choice survives refresh and navigation.
+ * The marketplace palette is PUBLISHED, not per-browser: data/appearance.json is
+ * committed by the Publisher console and baked into this static build, so every
+ * visitor receives the same palette. This page therefore previews the four
+ * themes for the current visit only and never writes a browser-local override.
  *
- * Persistence is deliberately local: `appmintly.public.theme` in localStorage.
- * The Publisher console is a different origin and cannot read it, so no
- * cross-origin or cross-device sync is claimed anywhere.
+ * An earlier iteration stored a personal choice under `appmintly.public.theme`;
+ * that key is cleared on first paint (see appearanceInitScript) and is never
+ * read, so a visitor who once deep-linked a theme is not stuck on it.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import appearanceConfig from '@/data/appearance.json';
 import {
   applyThemeToDocument,
-  readStoredTheme,
-  resolveTheme,
+  DEFAULT_THEME,
+  readPublishedTheme,
   themeById,
   THEMES,
-  writeStoredTheme,
   type ThemeId,
 } from '@/lib/appearance/themes';
 
 export default function AppearancePage() {
-  const [theme, setTheme] = useState<ThemeId>('emerald');
-  const [status, setStatus] = useState<'idle' | 'saved' | 'blocked'>('idle');
+  const published = readPublishedTheme(appearanceConfig);
+  const [theme, setTheme] = useState<ThemeId>(published ?? DEFAULT_THEME);
+  const [previewing, setPreviewing] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const query = new URLSearchParams(window.location.search).get('theme');
-      const resolved = resolveTheme(query, readStoredTheme('public'), 'emerald');
-      setTheme(resolved.theme);
-      applyThemeToDocument(resolved.theme);
-      if (resolved.source !== 'default') {
-        const ok = writeStoredTheme('public', resolved.theme);
-        setStatus(ok ? 'saved' : 'blocked');
+      const match = THEMES.find((option) => option.id === query);
+      if (match) {
+        setTheme(match.id);
+        applyThemeToDocument(match.id);
+        setPreviewing(match.id !== published);
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [published]);
 
   const choose = useCallback((next: ThemeId) => {
     setTheme(next);
     applyThemeToDocument(next);
-    setStatus(writeStoredTheme('public', next) ? 'saved' : 'blocked');
-  }, []);
+    setPreviewing(next !== published);
+  }, [published]);
+
+  const restorePublished = useCallback(() => {
+    if (!published) return;
+    setTheme(published);
+    applyThemeToDocument(published);
+    setPreviewing(false);
+  }, [published]);
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
       <h1 className="text-2xl font-semibold text-ink">Appearance</h1>
       <p className="mt-2 text-sm text-mut">
-        Choose how AppMintly looks on this device. Your choice is saved in this browser only.
+        AppMintly publishes one palette for everybody. Pick a theme below to preview it on this device;
+        your preview ends when you leave or reload.
       </p>
 
       <section aria-labelledby="theme-label" className="mt-6 rounded-2xl border border-line bg-card p-4">
@@ -84,12 +92,21 @@ export default function AppearancePage() {
         </div>
 
         <p className="mt-3 text-xs text-mut" role="status" aria-live="polite">
-          {status === 'saved'
-            ? `${themeById(theme).label} applied and saved on this browser.`
-            : status === 'blocked'
-              ? `${themeById(theme).label} applied for this visit; browser storage is blocked, so it will not persist.`
-              : `${themeById(theme).label} is the current theme.`}
+          {published
+            ? `Published palette: ${themeById(published).label}.`
+            : 'Published palette: the shipped AppMintly look.'}
+          {previewing ? ` Previewing ${themeById(theme).label} for this visit only.` : ''}
         </p>
+
+        {previewing && published ? (
+          <button
+            type="button"
+            onClick={restorePublished}
+            className="mt-3 rounded-xl border border-line px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-cta"
+          >
+            Back to the published palette
+          </button>
+        ) : null}
       </section>
 
       <Link

@@ -105,9 +105,12 @@ describe('published default (data/appearance.json)', () => {
     expect(readPublishedTheme({ theme: null })).toBe(null);
   });
 
-  it('ships the config file with a null default', async () => {
+  it('ships a config file the console can publish into', async () => {
+    // The file is committed by the Publisher console, so its value is a moving
+    // target: either a real palette id or null (keep the shipped look). What
+    // must never ship is an invalid id, which would silently unpublish the site.
     const cfg = (await import('@/data/appearance.json')).default as { theme: unknown };
-    expect(cfg.theme).toBe(null);
+    expect(cfg.theme === null || isThemeId(cfg.theme)).toBe(true);
   });
 });
 
@@ -117,13 +120,25 @@ describe('persistence contract', () => {
     expect(STORAGE_KEYS.public).toBe('appmintly.public.theme');
   });
 
-  it('initialises from the validated value only, and never writes', () => {
+  it('never lets a browser-local value override the published public palette', () => {
     const script = appearanceInitScript('public');
+    // The legacy override is purged, not read.
     expect(script).toContain('appmintly.public.theme');
-    expect(script).toContain('setAttribute');
+    expect(script).toContain('removeItem');
+    expect(script).not.toContain('getItem');
     expect(script).not.toContain('setItem');
-    expect(script).not.toContain('document.body');
+    // An explicit ?theme= preview (console deep link) still applies.
     expect(script).toContain('indexOf');
+    expect(script).toContain('setAttribute');
+    expect(script).not.toContain('document.body');
+  });
+
+  it('keeps the console palette browser-local and independent', () => {
+    const script = appearanceInitScript('publisher');
+    expect(script).toContain('appmintly.publisher.theme');
+    expect(script).toContain('getItem');
+    expect(script).not.toContain('appmintly.public.theme');
+    expect(script).not.toContain('setItem');
   });
 
   it('builds a public deep link with the theme in the query', () => {
