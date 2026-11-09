@@ -28,6 +28,7 @@ import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openApk } from './lib/apk-zip.mjs';
+import { execFileSync } from 'node:child_process';
 import { readPng, bands } from './lib/png-bands.mjs';
 
 const DENSITIES = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'];
@@ -211,7 +212,20 @@ if (isMain) {
     const i = process.argv.indexOf(flag);
     return i >= 0 ? process.argv[i + 1] : undefined;
   };
-  const sourcePng = arg('--source') || 'tests/fixtures/cineflow-logo-original.png';
+  // The expected composition is the artwork this release actually supplied to
+  // the builder (the ICON_URL the workflow exports). Without it every app was
+  // judged against one app's fixture, so only CineFlow could ever pass.
+  let sourcePng = arg('--source');
+  if (!sourcePng && process.env.ICON_URL && /^https?:/.test(process.env.ICON_URL)) {
+    try {
+      const out = join(tmpdir(), 'launcher-source.png');
+      execFileSync('curl', ['-fsSL', process.env.ICON_URL, '-o', out], { stdio: 'ignore' });
+      if (readPng(out)) sourcePng = out;
+    } catch {
+      /* fall through to the fixture */
+    }
+  }
+  sourcePng = sourcePng || 'tests/fixtures/cineflow-logo-original.png';
   const image = arg('--image');
   const sigOnly = arg('--signature');
   if (sigOnly) {
