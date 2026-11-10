@@ -802,7 +802,38 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-11-10T04:00:29.331Z"
+    "updatedAt": "2026-11-10T04:00:29.331Z",
+    "nativeArtifact": {
+      "enabled": true,
+      "buildKind": "native",
+      "buildProfile": "build-profiles.json#/profiles/nexdrop/artifacts/app",
+      "packageId": "com.nexdrop.ndt1",
+      "versionName": "1.4.7",
+      "versionCode": 20,
+      "fileName": "NexDrop-1.4.7.apk",
+      "fileSizeBytes": 3572396,
+      "sha256": "a06d53f760f106b98ea47cec60f4d0efcf0518bfcdd52e8b39d2afdec83b7f97",
+      "certificateSha256Fingerprint": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",
+      "certificateSubject": "CN=NexDrop Release",
+      "signatureSchemes": {
+        "v1": false,
+        "v2": true,
+        "v3": true
+      },
+      "minSdk": 26,
+      "targetSdk": 34,
+      "architecture": "universal",
+      "sourceRepository": "PDFly-source/nexdrop",
+      "sourceCommit": "3f66b2710a02cf465861480dafa18d77506cac4c",
+      "ciRunId": 42784755304,
+      "buildStatus": "verified-unpublished",
+      "verified": true,
+      "downloadAvailable": false,
+      "apkUrl": null,
+      "releaseTag": null,
+      "upgradeNote": "Upgrades native-signed installs (same certificate). Installations carrying the WebView wrapper signature (dbafc6d3...) cannot upgrade in place and must reinstall; Android refuses a cross-signature update regardless of versionCode.",
+      "scopeNote": "Native phone client only. NexDrop TV (com.nexdrop.tv) remains an independent artifact and is not part of this build."
+    }
   },
   {
     "id": "billcraft",
