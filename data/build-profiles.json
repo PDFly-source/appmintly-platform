@@ -89,38 +89,9 @@
           ],
           "cleartextAllowed": false,
           "debuggableAllowed": false
-        },
-        {
-          "id": "tv",
-          "module": ":tv",
-          "gradleTask": ":tv:assembleRelease",
-          "catalogSlug": "nexdrop-tv",
-          "packageId": "com.nexdrop.tv",
-          "appLabel": "NexDrop TV (receive-only)",
-          "launcherSource": "app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
-          "requiredNativeModules": [
-            "ndt1"
-          ],
-          "minSdk": 26,
-          "targetSdk": 34,
-          "independentArtifact": true,
-          "allowedDangerousPermissions": [
-            "android.permission.ACCESS_COARSE_LOCATION",
-            "android.permission.ACCESS_FINE_LOCATION",
-            "android.permission.CAMERA",
-            "android.permission.REQUEST_INSTALL_PACKAGES",
-            "android.permission.POST_NOTIFICATIONS",
-            "android.permission.CHANGE_WIFI_MULTICAST_STATE",
-            "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
-          ],
-          "allowedExportedComponents": [
-            "com.nexdrop.ndt1.MainActivity"
-          ],
-          "cleartextAllowed": false,
-          "debuggableAllowed": false,
-          "catalogPending": true
         }
-      ]
+      ],
+      "scope": "app-only: NexDrop TV (com.nexdrop.tv) and Studyria are excluded from this project by owner decision"
     }
   }
 }

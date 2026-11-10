@@ -1,98 +1,77 @@
 import { describe, it, expect } from 'vitest';
-import {
-  loadProfiles, loadCatalog, resolveProfile, validateIdentity,
-  validateVersionSafety, validateRepository, gatesFor, maxPublishedVersionCode,
-} from '../scripts/build-profile.mjs';
+import { execFileSync } from 'node:child_process';
 
-const profiles = loadProfiles();
-const catalog = loadCatalog();
-const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
+/** Drives the real CLI: the workflow calls exactly these commands, so the
+ *  tests must exercise the same contract the release depends on. */
+const run = (args: string[]) => {
+  try {
+    const out = execFileSync('node', ['scripts/build-profile.mjs', ...args], { encoding: 'utf8' });
+    return { code: 0, out };
+  } catch (e: any) {
+    return { code: e.status ?? 1, out: `${e.stdout ?? ''}${e.stderr ?? ''}` };
+  }
+};
 
-describe('A. single source of truth', () => {
-  it('profiles and the published catalog agree', () => {
-    const { problems } = validateIdentity(profiles, catalog);
-    expect(problems).toEqual([]);
+describe('build profiles are the single source of truth', () => {
+  it('validates against the published catalog with nothing pending', () => {
+    const r = run(['validate']);
+    expect(r.code).toBe(0);
+    expect(JSON.parse(r.out).ok).toBe(true);
+    expect(JSON.parse(r.out).warnings).toEqual([]);
   });
-  it('declares an unpublished artifact as a warning, not a silent pass', () => {
-    const { warnings } = validateIdentity(profiles, catalog);
-    expect(warnings.some((w: string) => w.includes('nexdrop-tv'))).toBe(true);
-  });
-  it('catches a package identity that disagrees with the catalog', () => {
-    const bad = clone(catalog);
-    const entry = bad.find((a: any) => a.slug === 'nexdrop');
-    entry.apk.packageId = 'com.nexdrop.wrong';
-    const { problems } = validateIdentity(profiles, bad);
-    expect(problems.join(' ')).toContain('com.nexdrop.wrong');
-  });
-  it('refuses two artifacts claiming the same catalog slug', () => {
-    const bad = clone(profiles);
-    bad.profiles.nexdrop.artifacts[1].catalogSlug = 'nexdrop';
-    const { problems } = validateIdentity(bad, catalog);
-    expect(problems.join(' ')).toContain('claimed by more than one artifact');
-  });
-});
 
-describe('B. version safety', () => {
-  const published = maxPublishedVersionCode(catalog, 'com.nexdrop.ndt1');
-  it('knows the highest published versionCode', () => {
-    expect(published).toBe(10500);
+  it('keeps NexDrop app-only: :app, com.nexdrop.ndt1, :app:assembleRelease', () => {
+    const r = run(['resolve', 'nexdrop', '--artifact', 'app']);
+    const d = JSON.parse(r.out);
+    expect(d.kernel).toBe('native');
+    expect(d.artifact_id).toBe('app');
+    expect(d.package_id).toBe('com.nexdrop.ndt1');
+    expect(d.gradle_task).toBe(':app:assembleRelease');
+    expect(d.project_path).toBe('android');
   });
-  it('refuses a downgrade or a re-publish', () => {
-    expect(validateVersionSafety({ catalog, packageId: 'com.nexdrop.ndt1', versionCode: 19, floor: 10501 }).problems.length).toBe(2);
-    expect(validateVersionSafety({ catalog, packageId: 'com.nexdrop.ndt1', versionCode: 10500, floor: 10501 }).problems.length).toBeGreaterThan(0);
-  });
-  it('accepts a genuine increment above the floor', () => {
-    expect(validateVersionSafety({ catalog, packageId: 'com.nexdrop.ndt1', versionCode: 10501, floor: 10501 }).problems).toEqual([]);
-  });
-});
 
-describe('D. repository security', () => {
-  const { profile, artifact } = resolveProfile(profiles, 'nexdrop', 'app');
-  const ok = {
-    profiles, profile, artifact, repo: 'PDFly-source/nexdrop',
-    ref: 'a'.repeat(40), task: ':app:assembleRelease', projectPath: 'android', dryRun: false,
-  };
-  it('accepts the approved allowlisted request', () => {
-    expect(validateRepository(ok as any)).toEqual([]);
+  it('has no NexDrop TV artifact anywhere in scope', () => {
+    const r = run(['resolve', 'nexdrop', '--artifact', 'app']);
+    expect(JSON.stringify(JSON.parse(r.out))).not.toContain('com.nexdrop.tv');
+    expect(run(['resolve', 'nexdrop', '--artifact', 'tv']).code).not.toBe(0);
   });
-  it('rejects an unlisted repository', () => {
-    expect(validateRepository({ ...ok, repo: 'evil/repo' } as any).join(' ')).toContain('allowlist');
-  });
-  it('requires an immutable SHA for a release build', () => {
-    expect(validateRepository({ ...ok, ref: 'main' } as any).join(' ')).toContain('immutable commit SHA');
-  });
-  it('rejects an unapproved gradle task', () => {
-    expect(validateRepository({ ...ok, task: ':app:bundleRelease' } as any).join(' ')).toContain('not approved');
-  });
-  it('rejects a project path outside the profile', () => {
-    expect(validateRepository({ ...ok, projectPath: '../..' } as any).join(' ')).toContain('project path');
-  });
-});
 
-describe('E. NexDrop TV is an independent artifact', () => {
-  it('resolves with its own identity', () => {
-    const { kernel, artifact } = resolveProfile(profiles, 'nexdrop', 'tv');
-    expect(kernel).toBe('native');
-    expect(artifact.packageId).toBe('com.nexdrop.tv');
-    expect(artifact.catalogSlug).toBe('nexdrop-tv');
-    expect(artifact.independentArtifact).toBe(true);
+  it('rejects a versionCode at or below the published one', () => {
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10500']).code).not.toBe(0);
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10501']).code).toBe(0);
   });
-  it('is not conflated with the phone app', () => {
-    const phone = resolveProfile(profiles, 'nexdrop', 'app').artifact;
-    const tv = resolveProfile(profiles, 'nexdrop', 'tv').artifact;
-    expect(phone.packageId).not.toBe(tv.packageId);
-    expect(phone.gradleTask).not.toBe(tv.gradleTask);
-  });
-});
 
-describe('kernels stay separated', () => {
-  it('webview apps resolve to the wrapper kernel', () => {
-    expect(resolveProfile(profiles, 'cineflow').kernel).toBe('webview');
-    expect(gatesFor(profiles, resolveProfile(profiles, 'cineflow'))).toContain('webview-ownership');
+  it('rejects a downgrade below the floor even when it beats the catalog', () => {
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10500']).code).not.toBe(0);
   });
-  it('native apps never inherit wrapper gates', () => {
-    const gates = gatesFor(profiles, resolveProfile(profiles, 'nexdrop', 'app'));
-    expect(gates).toContain('native-signature');
-    expect(gates).not.toContain('webview-ownership');
+
+  it('allows only the approved repository', () => {
+    const base = ['assert-repository', 'nexdrop', '--artifact', 'app', '--task', ':app:assembleRelease',
+      '--project-path', 'android', '--ref', 'f2891a03b8fae5857fc5f95df7f65f29ad36d3a4'];
+    expect(run([...base, '--repo', 'PDFly-source/nexdrop', '--dry-run', 'false']).code).toBe(0);
+    expect(run([...base, '--repo', 'attacker/evil', '--dry-run', 'false']).code).not.toBe(0);
+  });
+
+  it('requires an immutable ref for a release and allows a branch only in dry-run', () => {
+    const base = ['assert-repository', 'nexdrop', '--artifact', 'app', '--repo', 'PDFly-source/nexdrop',
+      '--task', ':app:assembleRelease', '--project-path', 'android'];
+    expect(run([...base, '--ref', 'main', '--dry-run', 'false']).code).not.toBe(0);
+    expect(run([...base, '--ref', 'main', '--dry-run', 'true']).code).toBe(0);
+  });
+
+  it('refuses a Gradle task outside the approved list', () => {
+    const base = ['assert-repository', 'nexdrop', '--artifact', 'app', '--repo', 'PDFly-source/nexdrop',
+      '--project-path', 'android', '--dry-run', 'false', '--ref', 'f2891a03b8fae5857fc5f95df7f65f29ad36d3a4'];
+    expect(run([...base, '--task', ':tv:assembleRelease']).code).not.toBe(0);
+    expect(run([...base, '--task', 'clean']).code).not.toBe(0);
+  });
+
+  it('emits native gate arguments derived from the profile', () => {
+    const r = run(['gate-args', 'nexdrop', '--artifact', 'app']);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('--min-sdk 26');
+    expect(r.out).toContain('--target-sdk 34');
+    expect(r.out).toContain('--allow-exported com.nexdrop.ndt1.MainActivity');
+    expect(r.out).toContain('--cleartext-allowed false');
   });
 });

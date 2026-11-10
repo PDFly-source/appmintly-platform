@@ -303,9 +303,18 @@ jobs:
           # The native project reads its keystore from NEXDROP_* env vars and
           # stamps versionCode/versionName from the -P overrides below, so the
           # release identity always comes from this workflow, never the checkout.
-          export NEXDROP_KEYSTORE_FILE="${ANDROID_KEYSTORE_PATH:?keystore not prepared}"
-          export NEXDROP_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD"
-          export NEXDROP_KEY_PASSWORD="$KEY_PASSWORD"
+          # Isolated per-app signing: never borrow the AppMintly wrapper keystore
+          # (different alias; signing native with it breaks upgrades).
+          KS_B64="${{ secrets.NEXDROP_KEYSTORE_BASE64 }}"
+          if [ -z "$KS_B64" ]; then
+            echo "::error::NEXDROP_KEYSTORE_BASE64 is not configured; the native kernel needs its own signing identity (NEXDROP_KEYSTORE_BASE64, NEXDROP_KEYSTORE_PASSWORD, NEXDROP_KEY_PASSWORD)."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/nx-sign"
+          printf '%s' "$KS_B64" | base64 -d > "$RUNNER_TEMP/nx-sign/nexdrop.jks"
+          export NEXDROP_KEYSTORE_FILE="$RUNNER_TEMP/nx-sign/nexdrop.jks"
+          export NEXDROP_KEYSTORE_PASSWORD="${{ secrets.NEXDROP_KEYSTORE_PASSWORD }}"
+          export NEXDROP_KEY_PASSWORD="${{ secrets.NEXDROP_KEY_PASSWORD }}"
           cd "native/${{ inputs.native_project_path }}"
           ./gradlew --no-daemon --stacktrace "${{ inputs.native_gradle_task }}" \
             -PversionNameOverride="${VERSION_NAME}" \
