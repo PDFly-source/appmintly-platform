@@ -168,7 +168,7 @@ if (isMain) {
       const fp = r.artifact.previousReleaseCertificateSha256;
       if (!fp) { console.error('profile has no previousReleaseCertificateSha256'); process.exit(1); }
       console.log(fp);
-      return;
+      process.exit(0);
     }
     if (cmd === 'gate-args') {
       const r = resolveProfile(profiles, slug, artifactId);
