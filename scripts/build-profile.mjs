@@ -77,22 +77,41 @@ export function validateIdentity(profiles, catalog) {
   return { problems, warnings };
 }
 
-/** B. version safety: strictly greater than everything already published. */
-export function maxPublishedVersionCode(catalog, packageId) {
+/** B. version safety: strictly greater than everything already published.
+ *
+ * Version codes are only comparable INSIDE one signing identity: Android refuses
+ * an update whose signature differs before it ever looks at versionCode, so the
+ * wrapper's numbering (dbafc6d3..., 10500) says nothing about the native line
+ * (11cb2ab8..., 19). When a certificate is supplied we therefore count only the
+ * entries published under that same certificate - a separate install population.
+ */
+export function maxPublishedVersionCode(catalog, packageId, certificateSha256 = null) {
   return catalog.reduce((max, a) => {
     const pkg = a.apk?.packageId || a.packageId;
+    if (pkg !== packageId) return max;
+    if (certificateSha256) {
+      const cert = a.apk?.certificateSha256Fingerprint;
+      if (!cert || cert !== certificateSha256) return max;
+    }
     const code = Number(a.apk?.versionCode || 0);
-    return pkg === packageId && code > max ? code : max;
+    return code > max ? code : max;
   }, 0);
 }
 
-export function validateVersionSafety({ catalog, packageId, versionCode, floor }) {
+export function validateVersionSafety({
+  catalog, packageId, versionCode, floor,
+  certificateSha256 = null, previousReleaseVersionCode = 0,
+}) {
   const problems = [];
-  const published = maxPublishedVersionCode(catalog, packageId);
+  // Cert-scoped when the caller declares a signing identity, package-scoped otherwise
+  // (unchanged legacy behaviour for the wrapper kernel).
+  const published = maxPublishedVersionCode(catalog, packageId, certificateSha256);
+  const previous = Number(previousReleaseVersionCode) || 0;
+  const baseline = Math.max(published, previous);
   if (!Number.isFinite(versionCode) || versionCode <= 0) problems.push(`versionCode '${versionCode}' is not a positive integer`);
-  if (versionCode <= published) problems.push(`versionCode ${versionCode} must be greater than the highest published ${published} for ${packageId} (downgrade refused)`);
+  if (versionCode <= baseline) problems.push(`versionCode ${versionCode} must be greater than the highest published ${baseline} for ${packageId} (downgrade refused)`);
   if (floor && versionCode < floor) problems.push(`versionCode ${versionCode} is below the profile floor ${floor}`);
-  return { problems, published };
+  return { problems, published: baseline, certificateSha256 };
 }
 
 /** D. repository security: allowlist, immutable ref, approved path and task. */
@@ -159,7 +178,14 @@ if (isMain) {
     }
     if (cmd === 'assert-version') {
       const r = resolveProfile(profiles, slug, artifactId);
-      const res = validateVersionSafety({ catalog, packageId: r.artifact.packageId, versionCode: Number(arg('--version-code')), floor: r.profile.versionCodeFloor });
+      const res = validateVersionSafety({
+        catalog,
+        packageId: r.artifact.packageId,
+        versionCode: Number(arg('--version-code')),
+        floor: r.profile.versionCodeFloor,
+        certificateSha256: r.artifact.previousReleaseCertificateSha256 || null,
+        previousReleaseVersionCode: r.artifact.previousReleaseVersionCode || 0,
+      });
       out({ ok: res.problems.length === 0, published_version_code: res.published, problems: res.problems });
       process.exit(res.problems.length ? 1 : 0);
     }

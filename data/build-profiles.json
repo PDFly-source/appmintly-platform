@@ -60,7 +60,7 @@
       "projectPath": "android",
       "refMode": "sha",
       "signingSecretSet": "NEXDROP",
-      "versionCodeFloor": 10501,
+      "versionCodeFloor": 20,
       "artifacts": [
         {
           "id": "app",
@@ -90,6 +90,8 @@
           "cleartextAllowed": false,
           "debuggableAllowed": false,
           "previousReleaseCertificateSha256": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",
+          "previousReleaseVersionCode": 19,
+          "versionCodePolicy": "per-artifact: floor/previous release apply inside the signing identity in previousReleaseCertificateSha256; the WebView wrapper line is governed independently",
           "signingAliasPolicy": "match-by-fingerprint",
           "signingAliasFallback": "nexdrop"
         }
