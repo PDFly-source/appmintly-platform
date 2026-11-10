@@ -1,0 +1,86 @@
+name: Verify native APK (independent)
+# Audit-only verifier: downloads a published/uploaded native APK artifact and runs
+# AppMintly's independent gate suite against it. Never publishes, never touches the
+# catalog, never signs anything.
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_url:
+        description: Actions artifact API URL (https://api.github.com/repos/<owner>/<repo>/actions/artifacts/<id>/zip)
+        required: true
+        type: string
+      slug:
+        description: Catalog slug whose build profile defines the expected gates
+        required: true
+        default: nexdrop
+        type: string
+      artifact_id:
+        description: Build profile artifact id
+        required: true
+        default: app
+        type: string
+      version_code:
+        description: Expected versionCode
+        required: true
+        type: string
+      version_name:
+        description: Expected versionName
+        required: true
+        type: string
+      expected_sha256:
+        description: APK SHA-256 the artifact must match (empty = report only)
+        required: false
+        default: ''
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install Android build tools (aapt2, apksigner)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          if [ ! -d "$SDK/build-tools" ]; then
+            echo "::error::no build-tools on the runner"; exit 1
+          fi
+          BT="$(ls -d "$SDK"/build-tools/* | sort -V | tail -1)"
+          echo "BUILD_TOOLS=$BT" >> "$GITHUB_ENV"
+          test -x "$BT/aapt2" || { echo "::error::aapt2 missing"; exit 1; }
+          test -x "$BT/apksigner" || { echo "::error::apksigner missing"; exit 1; }
+          command -v unzip >/dev/null || { echo "::error::unzip missing"; exit 1; }
+      - name: Download the artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o artifact.zip "${{ inputs.artifact_url }}"
+          unzip -o -q artifact.zip -d artifact
+          APK="$(find artifact -name '*.apk' | head -1)"
+          test -s "$APK" || { echo "::error::no APK inside the artifact"; exit 1; }
+          echo "APK_PATH=$APK" >> "$GITHUB_ENV"
+          sha256sum "$APK"
+      - name: Assert SHA-256
+        if: inputs.expected_sha256 != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          test "$ACTUAL" = "${{ inputs.expected_sha256 }}" || { echo "::error::sha256 $ACTUAL != expected"; exit 1; }
+      - name: AppMintly independent native gate suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS="$(node scripts/build-profile.mjs gate-args '${{ inputs.slug }}' --artifact '${{ inputs.artifact_id }}')"
+          FP="$(node scripts/build-profile.mjs expected-fingerprint '${{ inputs.slug }}' --artifact '${{ inputs.artifact_id }}')"
+          node scripts/verify-native-apk.mjs --apk "$APK_PATH" \
+            --package "$(node scripts/build-profile.mjs expected-package '${{ inputs.slug }}' --artifact '${{ inputs.artifact_id }}')" \
+            --version-code "${{ inputs.version_code }}" --version-name "${{ inputs.version_name }}" \
+            --expected-fingerprint "$FP" $ARGS
