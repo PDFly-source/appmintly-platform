@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-09T18:51:09.014Z",
-  "serverTime": 1794250268957,
+  "generatedAt": "2026-11-10T02:10:45.024Z",
+  "serverTime": 1794276644965,
   "source": "appmintly-publisher-api/admin/events/export",
-  "count": 7,
+  "count": 11,
   "events": [
     {
       "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
@@ -66,6 +66,42 @@
       "catalogRevision": "4dd7a0d1ed5696178287488518f973223c0e5500",
       "ts": 1794249781278,
       "name": "CineFlow"
+    },
+    {
+      "eventId": "05fa1a08f0ad9e2b974be01c3e084c3e",
+      "appId": "niramay",
+      "platform": "android",
+      "version": "2.2.0",
+      "catalogRevision": "1ca4a71d4b33302b9ad13f202a8a0e55c1b3ac90",
+      "ts": 1794252210766,
+      "name": "Niramay"
+    },
+    {
+      "eventId": "d14646679ef0ce86f1961cfffe5fe2eb",
+      "appId": "appmintly",
+      "platform": "android",
+      "version": "1.0.11",
+      "catalogRevision": "0d424bf5b7be56097ef9ae5ffdf70c3b4d6be807",
+      "ts": 1794252852810,
+      "name": "AppMintly"
+    },
+    {
+      "eventId": "d4c774aec6f2597457b44fe18fa87279",
+      "appId": "billcraft",
+      "platform": "android",
+      "version": "0.1.1",
+      "catalogRevision": "f3d00de8e908c9799ca0f92d03c1bf381d04aa5c",
+      "ts": 1794253121436,
+      "name": "BillCraft"
+    },
+    {
+      "eventId": "a4b21ca41e690aa98242502603373361",
+      "appId": "pdfminifly",
+      "platform": "android",
+      "version": "2.2.0",
+      "catalogRevision": "26a35a99df18e03d8a1e517547a0cbb2492ec40b",
+      "ts": 1794253407971,
+      "name": "PDFMiniFly"
     }
   ]
 }
