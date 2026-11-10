@@ -83,6 +83,37 @@ env:
   APK_ARTIFACT_ONLY: '1'
   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
+      native_project_repo:
+        description: Build from a native Android Gradle project (owner/name) instead of the WebView wrapper
+        required: false
+        default: ''
+        type: string
+      native_project_ref:
+        description: Branch, tag or SHA of the native Android project
+        required: false
+        default: main
+        type: string
+      native_gradle_task:
+        description: Gradle task for the native release build
+        required: false
+        default: ':app:assembleRelease'
+        type: string
+      native_version_code:
+        description: versionCode stamped on the native APK (must exceed the published wrapper code)
+        required: false
+        default: ''
+        type: string
+      native_launcher_source:
+        description: Path inside the native project whose launcher artwork the icon gate compares against
+        required: false
+        default: app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+        type: string
+      dry_run:
+        description: Build and validate only - do not publish, update the catalog or emit release events
+        required: false
+        default: false
+        type: boolean
+
 jobs:
   release:
     runs-on: ubuntu-24.04
@@ -174,12 +205,14 @@ jobs:
           echo "$ANDROID_SDK_ROOT/build-tools/36.0.0" >> "$GITHUB_PATH"
 
       - name: WebView ownership anti-regression gate (fail-closed)
+        if: inputs.native_project_repo == ''
         shell: bash
         run: |
           set -euo pipefail
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-webview-ownership.ts "$SOURCE_URL"
 
       - name: Launcher-icon gate (fail-closed on placeholder icons)
+        if: inputs.native_project_repo == ''
         # CineFlow v0.2.0 shipped a generic "C" tile because the dispatched
         # icon URL 404'd and the letter-tile fallback was silently accepted.
         # This gate refuses a release build without real icon artwork.
@@ -188,6 +221,7 @@ jobs:
           npm exec --yes --package=tsx@4.20.5 -- tsx scripts/test-apk-icons.ts
 
       - name: Premium launch experience anti-regression gate (splash + welcome)
+        if: inputs.native_project_repo == ''
         shell: bash
         run: |
           set -euo pipefail
@@ -201,7 +235,60 @@ jobs:
             echo 'ICON_URL input was empty (the v1.0.5 generic-letter root cause); defaulted to the official AppMintly launcher icon.'
           fi
 
+      - name: Checkout native Android project
+        if: inputs.native_project_repo != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.native_project_repo }}
+          ref: ${{ inputs.native_project_ref }}
+          path: native
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Compile production-signed native APK
+        if: inputs.native_project_repo != ''
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist/apk
+          APP_FILE="${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          # The native project reads its keystore from NEXDROP_* env vars and
+          # stamps versionCode/versionName from the -P overrides below, so the
+          # release identity always comes from this workflow, never the checkout.
+          export NEXDROP_KEYSTORE_FILE="${ANDROID_KEYSTORE_PATH:?keystore not prepared}"
+          export NEXDROP_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD"
+          export NEXDROP_KEY_PASSWORD="$KEY_PASSWORD"
+          cd native
+          ./gradlew --no-daemon --stacktrace "${{ inputs.native_gradle_task }}" \
+            -PversionNameOverride="${VERSION_NAME}" \
+            -PversionCodeOverride="${{ inputs.native_version_code }}"
+          APK="$(find . -path '*build/outputs/apk/release/*.apk' -type f | head -1)"
+          test -s "$APK" || { echo "::error::native release build produced no APK"; exit 1; }
+          cp "$APK" "../dist/apk/$APP_FILE"
+          ls -l "../dist/apk/$APP_FILE"
+
+      - name: Verify native APK identity (package, versionCode, real bytecode)
+        if: inputs.native_project_repo != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="dist/apk/${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          BUILDTOOLS="$(ls -d "${ANDROID_HOME:-$ANDROID_SDK_ROOT}"/build-tools/* 2>/dev/null | tail -1)"
+          AAPT2="$BUILDTOOLS/aapt2"
+          test -x "$AAPT2" || { echo "::error::aapt2 not found"; exit 1; }
+          "$AAPT2" dump badging "$APK" | head -1 | tee /tmp/badging.txt
+          grep -q "package: name='${PACKAGE_ID}'" /tmp/badging.txt || { echo "::error::package id is not ${PACKAGE_ID}"; exit 1; }
+          grep -q "versionCode='${{ inputs.native_version_code }}'" /tmp/badging.txt || { echo "::error::versionCode is not ${{ inputs.native_version_code }}"; exit 1; }
+          unzip -l "$APK" | grep -q 'classes.*\\.dex' || { echo "::error::APK carries no bytecode"; exit 1; }
+          echo "native APK identity verified: ${PACKAGE_ID} v${{ inputs.native_version_code }}"
+
       - name: Compile production-signed APK
+        if: inputs.native_project_repo == ''
         shell: bash
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -308,7 +395,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/verify-apk-launcher-composition.mjs --apk "dist/apk/$APP_FILE"
+          SRC_ARG=()
+          if [ -n "${{ inputs.native_project_repo }}" ]; then
+            SRC_ARG=(--source "native/${{ inputs.native_launcher_source }}")
+          fi
+          node scripts/verify-apk-launcher-composition.mjs --apk "dist/apk/$APP_FILE" "${SRC_ARG[@]+"${SRC_ARG[@]}"}"
 
       - name: APK security gate (fail-closed pre-publish scan)
         shell: bash
@@ -371,6 +462,7 @@ jobs:
           '
 
       - name: Publish APK to the public distribution repository
+        if: inputs.dry_run != true
         shell: bash
         env:
           DISTRIBUTION_TOKEN: ${{ secrets.DISTRIBUTION_REPO_TOKEN }}
@@ -424,6 +516,7 @@ jobs:
           echo "Published $APP_FILE to $PUBLIC_URL (release $RELEASE_ID, asset $ASSET_ID2)"
 
       - name: Verify anonymous public download is byte-for-byte identical
+        if: inputs.dry_run != true
         shell: bash
         run: |
           set -euo pipefail
@@ -469,6 +562,7 @@ jobs:
           echo "Anonymous public download verified: $URL ($SIZE bytes, SHA-256 $SHA256)"
 
       - name: Update marketplace catalog metadata
+        if: inputs.dry_run != true
         id: catalog
         shell: bash
         run: |
@@ -512,7 +606,7 @@ jobs:
       # actually happen. A cancelled run (a later Pages deployment superseding
       # it) is retried; a failed one is reported, never swallowed.
       - name: Verify the production deployment for this release
-        if: github.event_name == 'workflow_dispatch' && steps.catalog.outputs.committed == 'true'
+        if: (github.event_name == 'workflow_dispatch' && steps.catalog.outputs.committed == 'true') && inputs.dry_run != true
         timeout-minutes: 40
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -598,7 +692,7 @@ jobs:
       # The event id is derived from (app, platform, version, catalog revision),
       # so a re-run of this step is idempotent and cannot duplicate the feed.
       - name: Publish release event
-        if: steps.catalog.outputs.committed == 'true'
+        if: (steps.catalog.outputs.committed == 'true') && inputs.dry_run != true
         env:
           # GitHub stores this as EVENT_EMISSION_SECRET (documented in worker.js:2290
           # and wrangler.toml:45); the shell variable keeps the Worker-side name.
