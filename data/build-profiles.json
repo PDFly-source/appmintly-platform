@@ -1,0 +1,126 @@
+{
+  "$schema": "./build-profiles.schema.json",
+  "version": 1,
+  "_comment": "SINGLE SOURCE OF TRUTH for how each catalogued app is built. apps.json stores only published artifact metadata. A profile and its catalog entry must agree on catalogSlug, packageId and buildKind (enforced by scripts/build-profile.mjs).",
+  "allowedRepositories": [
+    "PDFly-source/nexdrop"
+  ],
+  "kernels": {
+    "webview": {
+      "kernel": "lib/apk-builder.ts",
+      "entry": "scripts/build-android-apk.ts",
+      "requiresLaunchUrl": true,
+      "gates": [
+        "webview-ownership",
+        "launcher-icon",
+        "launch-experience",
+        "launcher-composition",
+        "apk-security"
+      ]
+    },
+    "native": {
+      "kernel": "gradle",
+      "requiresLaunchUrl": false,
+      "gates": [
+        "native-identity",
+        "native-signature",
+        "native-manifest",
+        "native-sdk",
+        "native-dex",
+        "launcher-composition",
+        "native-sha256"
+      ]
+    }
+  },
+  "profiles": {
+    "appmintly": {
+      "buildKind": "webview",
+      "catalogSlug": "appmintly"
+    },
+    "pdfminifly": {
+      "buildKind": "webview",
+      "catalogSlug": "pdfminifly"
+    },
+    "niramay": {
+      "buildKind": "webview",
+      "catalogSlug": "niramay"
+    },
+    "billcraft": {
+      "buildKind": "webview",
+      "catalogSlug": "billcraft"
+    },
+    "cineflow": {
+      "buildKind": "webview",
+      "catalogSlug": "cineflow"
+    },
+    "nexdrop": {
+      "buildKind": "native",
+      "catalogSlug": "nexdrop",
+      "repository": "PDFly-source/nexdrop",
+      "projectPath": "android",
+      "refMode": "sha",
+      "signingSecretSet": "NEXDROP",
+      "versionCodeFloor": 10501,
+      "artifacts": [
+        {
+          "id": "app",
+          "module": ":app",
+          "gradleTask": ":app:assembleRelease",
+          "catalogSlug": "nexdrop",
+          "packageId": "com.nexdrop.ndt1",
+          "appLabel": "NexDrop",
+          "launcherSource": "app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+          "requiredNativeModules": [
+            "ndt1"
+          ],
+          "minSdk": 26,
+          "targetSdk": 34,
+          "allowedDangerousPermissions": [
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.CAMERA",
+            "android.permission.REQUEST_INSTALL_PACKAGES",
+            "android.permission.POST_NOTIFICATIONS",
+            "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+            "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+          ],
+          "allowedExportedComponents": [
+            "com.nexdrop.ndt1.MainActivity"
+          ],
+          "cleartextAllowed": false,
+          "debuggableAllowed": false
+        },
+        {
+          "id": "tv",
+          "module": ":tv",
+          "gradleTask": ":tv:assembleRelease",
+          "catalogSlug": "nexdrop-tv",
+          "packageId": "com.nexdrop.tv",
+          "appLabel": "NexDrop TV (receive-only)",
+          "launcherSource": "app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+          "requiredNativeModules": [
+            "ndt1"
+          ],
+          "minSdk": 26,
+          "targetSdk": 34,
+          "independentArtifact": true,
+          "allowedDangerousPermissions": [
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.CAMERA",
+            "android.permission.REQUEST_INSTALL_PACKAGES",
+            "android.permission.POST_NOTIFICATIONS",
+            "android.permission.CHANGE_WIFI_MULTICAST_STATE",
+            "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
+          ],
+          "allowedExportedComponents": [
+            "com.nexdrop.ndt1.MainActivity"
+          ],
+          "cleartextAllowed": false,
+          "debuggableAllowed": false,
+          "catalogPending": true
+        }
+      ]
+    }
+  }
+}

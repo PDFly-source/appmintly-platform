@@ -58,6 +58,26 @@ on:
         required: false
         type: string
 
+      slug:
+        description: Catalog slug the profile is keyed by (for example nexdrop)
+        required: false
+        default: ''
+        type: string
+      native_artifact:
+        description: Artifact id inside the native profile (app, tv, ...)
+        required: false
+        default: 'app'
+        type: string
+      native_project_path:
+        description: Gradle project path inside the native repository
+        required: false
+        default: android
+        type: string
+      native_expected_fingerprint:
+        description: Expected signer SHA-256 fingerprint; publishing is refused when it differs
+        required: false
+        default: ''
+        type: string
       native_project_repo:
         description: Build from a native Android Gradle project (owner/name) instead of the WebView wrapper
         required: false
@@ -236,6 +256,28 @@ jobs:
             echo 'ICON_URL input was empty (the v1.0.5 generic-letter root cause); defaulted to the official AppMintly launcher icon.'
           fi
 
+      - name: Native build contract (profile, identity, version, repository)
+        if: inputs.native_project_repo != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Version safety must compare against what is actually published, so read
+          # the catalog from origin/main instead of this checkout's copy.
+          git fetch --depth=1 origin main
+          git show origin/main:data/apps.json > "$RUNNER_TEMP/published-apps.json"
+          node scripts/build-profile.mjs validate --catalog "$RUNNER_TEMP/published-apps.json"
+          node scripts/build-profile.mjs assert-version "${{ inputs.slug }}" \
+            --artifact "${{ inputs.native_artifact }}" \
+            --version-code "${{ inputs.native_version_code }}" \
+            --catalog "$RUNNER_TEMP/published-apps.json"
+          node scripts/build-profile.mjs assert-repository "${{ inputs.slug }}" \
+            --artifact "${{ inputs.native_artifact }}" \
+            --repo "${{ inputs.native_project_repo }}" \
+            --ref "${{ inputs.native_project_ref }}" \
+            --task "${{ inputs.native_gradle_task }}" \
+            --project-path "${{ inputs.native_project_path }}" \
+            --dry-run "${{ inputs.dry_run }}"
+
       - name: Checkout native Android project
         if: inputs.native_project_repo != ''
         uses: actions/checkout@v4
@@ -264,7 +306,7 @@ jobs:
           export NEXDROP_KEYSTORE_FILE="${ANDROID_KEYSTORE_PATH:?keystore not prepared}"
           export NEXDROP_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD"
           export NEXDROP_KEY_PASSWORD="$KEY_PASSWORD"
-          cd native
+          cd "native/${{ inputs.native_project_path }}"
           ./gradlew --no-daemon --stacktrace "${{ inputs.native_gradle_task }}" \
             -PversionNameOverride="${VERSION_NAME}" \
             -PversionCodeOverride="${{ inputs.native_version_code }}"
@@ -272,6 +314,24 @@ jobs:
           test -s "$APK" || { echo "::error::native release build produced no APK"; exit 1; }
           cp "$APK" "../dist/apk/$APP_FILE"
           ls -l "../dist/apk/$APP_FILE"
+
+      - name: Native APK security gate (fail-closed)
+        if: inputs.native_project_repo != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="dist/apk/${APP_NAME//[^[:alnum:]]/}-${VERSION_NAME}.apk"
+          GATE_ARGS="$(node scripts/build-profile.mjs gate-args "${{ inputs.slug }}" --artifact "${{ inputs.native_artifact }}")"
+          EXTRA=()
+          if [ -n "${{ inputs.native_expected_fingerprint }}" ]; then
+            EXTRA=(--expected-fingerprint "${{ inputs.native_expected_fingerprint }}")
+          fi
+          # shellcheck disable=SC2086
+          node scripts/verify-native-apk.mjs --apk "$APK" \
+            --package "${{ inputs.package_id }}" \
+            --version-code "${{ inputs.native_version_code }}" \
+            --version-name "${{ inputs.version_name }}" \
+            $GATE_ARGS "${EXTRA[@]}"
 
       - name: Verify native APK identity (package, versionCode, real bytecode)
         if: inputs.native_project_repo != ''
