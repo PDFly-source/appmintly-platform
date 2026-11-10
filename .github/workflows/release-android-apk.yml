@@ -103,6 +103,16 @@ on:
         required: false
         default: app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
         type: string
+      verify_apk_url:
+        description: Audit-only mode - verify this native APK artifact URL and run nothing else
+        required: false
+        default: ''
+        type: string
+      verify_sha256:
+        description: Expected SHA-256 of the APK being verified
+        required: false
+        default: ''
+        type: string
       dry_run:
         description: Build and validate only - do not publish, update the catalog or emit release events
         required: false
@@ -136,7 +146,67 @@ env:
 
 
 jobs:
+  verify:
+    # Audit-only: verifies published/uploaded native bytes. Builds nothing,
+    # signs nothing, publishes nothing, touches no catalog.
+    if: inputs.verify_apk_url != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Locate the Android toolchain (aapt2, apksigner)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          AAPT2="$(ls "$SDK"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)"
+          APKSIGNER="$(ls "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$AAPT2" ] || [ -z "$APKSIGNER" ]; then
+            echo "::error::aapt2/apksigner not present on the runner - refusing to report an unverified APK"
+            exit 1
+          fi
+          command -v unzip >/dev/null || { echo "::error::unzip missing"; exit 1; }
+          echo "AAPT2=$AAPT2" >> "$GITHUB_ENV"
+          echo "APKSIGNER=$APKSIGNER" >> "$GITHUB_ENV"
+          echo "aapt2: $AAPT2"
+          echo "apksigner: $APKSIGNER"
+      - name: Download the APK artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json"             "${{ inputs.verify_apk_url }}" -o artifact.zip
+          unzip -o -q artifact.zip -d apk-dir
+          APK="$(find apk-dir -name '*.apk' | head -1)"
+          test -s "$APK" || { echo "::error::no APK in the artifact"; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+      - name: SHA-256 of the artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(sha256sum "$APK" | awk '{print $1}')"
+          echo "apk sha256: $SHA"
+          if [ -n "${{ inputs.verify_sha256 }}" ] && [ "$SHA" != "${{ inputs.verify_sha256 }}" ]; then
+            echo "::error::APK SHA-256 $SHA does not match the expected ${{ inputs.verify_sha256 }}"
+            exit 1
+          fi
+      - name: Independent native APK verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARGS="$(node scripts/build-profile.mjs gate-args "${{ inputs.slug }}" --artifact "${{ inputs.native_artifact }}")"
+          FP="$(node scripts/build-profile.mjs expected-fingerprint "${{ inputs.slug }}" --artifact "${{ inputs.native_artifact }}")"
+          node scripts/verify-native-apk.mjs --apk "$APK" \
+            --package "${{ inputs.package_id }}" \
+            --version-code "${{ inputs.native_version_code }}" \
+            --version-name "${{ inputs.version_name }}" \
+            --expected-fingerprint "$FP" $ARGS
+
   release:
+    if: inputs.verify_apk_url == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
