@@ -90,8 +90,11 @@ export function maxPublishedVersionCode(catalog, packageId, certificateSha256 = 
     const pkg = a.apk?.packageId || a.packageId;
     if (pkg !== packageId) return max;
     if (certificateSha256) {
+      // A recorded certificate that DIFFERS means another install population
+      // (the WebView wrapper). Entries with no recorded certificate are still
+      // counted: unknown identity must stay fail-closed, never silently ignored.
       const cert = a.apk?.certificateSha256Fingerprint;
-      if (!cert || cert !== certificateSha256) return max;
+      if (cert && cert !== certificateSha256) return max;
     }
     const code = Number(a.apk?.versionCode || 0);
     return code > max ? code : max;

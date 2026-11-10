@@ -36,13 +36,17 @@ describe('build profiles are the single source of truth', () => {
     expect(run(['resolve', 'nexdrop', '--artifact', 'tv']).code).not.toBe(0);
   });
 
-  it('rejects a versionCode at or below the published one', () => {
-    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10500']).code).not.toBe(0);
-    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10501']).code).toBe(0);
+  it('rejects a versionCode at or below the native published line', () => {
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '19']).code).not.toBe(0);
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '20']).code).toBe(0);
   });
 
-  it('rejects a downgrade below the floor even when it beats the catalog', () => {
-    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '10500']).code).not.toBe(0);
+  it('never measures the native line against the WebView wrapper numbering', () => {
+    // The wrapper is signed dbafc6d3... and numbered 10500/10501; Android compares
+    // versionCode only inside one signature, so those numbers must not gate native.
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '20']).code).toBe(0);
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '21']).code).toBe(0);
+    expect(run(['assert-version', 'nexdrop', '--artifact', 'app', '--version-code', '18']).code).not.toBe(0);
   });
 
   it('allows only the approved repository', () => {
