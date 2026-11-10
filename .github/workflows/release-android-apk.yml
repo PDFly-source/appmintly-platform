@@ -58,31 +58,6 @@ on:
         required: false
         type: string
 
-permissions:
-  contents: write
-  actions: write
-
-concurrency:
-  group: release-${{ inputs.package_id }}
-  cancel-in-progress: false
-
-env:
-  APP_NAME: ${{ inputs.app_name }}
-  PACKAGE_ID: ${{ inputs.package_id }}
-  VERSION_NAME: ${{ inputs.version_name }}
-  SOURCE_URL: ${{ inputs.source_url }}
-  ICON_URL: ${{ inputs.icon_url }}
-  THEME_COLOR: ${{ inputs.theme_color }}
-  BACKGROUND_COLOR: ${{ inputs.background_color }}
-  DISTRIBUTION_REPO: ${{ inputs.distribution_repo }}
-  WELCOME_HEADLINE: ${{ inputs.welcome_headline }}
-  WELCOME_TAGLINE: ${{ inputs.welcome_tagline }}
-  WELCOME_BODY: ${{ inputs.welcome_body }}
-  WELCOME_CTA: ${{ inputs.welcome_cta }}
-  SIGNING_MODE: release
-  APK_ARTIFACT_ONLY: '1'
-  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-
       native_project_repo:
         description: Build from a native Android Gradle project (owner/name) instead of the WebView wrapper
         required: false
@@ -113,6 +88,32 @@ env:
         required: false
         default: false
         type: boolean
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: release-${{ inputs.package_id }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: ${{ inputs.app_name }}
+  PACKAGE_ID: ${{ inputs.package_id }}
+  VERSION_NAME: ${{ inputs.version_name }}
+  SOURCE_URL: ${{ inputs.source_url }}
+  ICON_URL: ${{ inputs.icon_url }}
+  THEME_COLOR: ${{ inputs.theme_color }}
+  BACKGROUND_COLOR: ${{ inputs.background_color }}
+  DISTRIBUTION_REPO: ${{ inputs.distribution_repo }}
+  WELCOME_HEADLINE: ${{ inputs.welcome_headline }}
+  WELCOME_TAGLINE: ${{ inputs.welcome_tagline }}
+  WELCOME_BODY: ${{ inputs.welcome_body }}
+  WELCOME_CTA: ${{ inputs.welcome_cta }}
+  SIGNING_MODE: release
+  APK_ARTIFACT_ONLY: '1'
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
 
 jobs:
   release:
