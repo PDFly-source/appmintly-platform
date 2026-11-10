@@ -88,7 +88,10 @@
             "com.nexdrop.ndt1.MainActivity"
           ],
           "cleartextAllowed": false,
-          "debuggableAllowed": false
+          "debuggableAllowed": false,
+          "previousReleaseCertificateSha256": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",
+          "signingAliasPolicy": "match-by-fingerprint",
+          "signingAliasFallback": "nexdrop"
         }
       ],
       "scope": "app-only: NexDrop TV (com.nexdrop.tv) and Studyria are excluded from this project by owner decision"

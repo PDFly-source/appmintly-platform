@@ -163,6 +163,13 @@ if (isMain) {
       out({ ok: res.problems.length === 0, published_version_code: res.published, problems: res.problems });
       process.exit(res.problems.length ? 1 : 0);
     }
+    if (cmd === 'expected-fingerprint') {
+      const r = resolveProfile(slug, flags.artifact);
+      const fp = r.artifact.previousReleaseCertificateSha256;
+      if (!fp) { console.error('profile has no previousReleaseCertificateSha256'); process.exit(1); }
+      console.log(fp);
+      return;
+    }
     if (cmd === 'gate-args') {
       const r = resolveProfile(profiles, slug, artifactId);
       const a = r.artifact;
