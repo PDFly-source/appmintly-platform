@@ -164,7 +164,7 @@ if (isMain) {
       process.exit(res.problems.length ? 1 : 0);
     }
     if (cmd === 'expected-fingerprint') {
-      const r = resolveProfile(slug, flags.artifact);
+      const r = resolveProfile(profiles, slug, artifactId);
       const fp = r.artifact.previousReleaseCertificateSha256;
       if (!fp) { console.error('profile has no previousReleaseCertificateSha256'); process.exit(1); }
       console.log(fp);
