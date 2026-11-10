@@ -103,8 +103,10 @@ export function validateRepository({ profiles, profile, artifact, repo, ref, tas
   }
   if (repo !== profile.repository) problems.push(`repository '${repo}' != profile repository '${profile.repository}'`);
   const refMode = profile.refMode || 'sha';
-  if (refMode === 'sha' && !SHA_RE.test(String(ref || ''))) {
-    problems.push(dryRun ? `ref '${ref}' is not an immutable 40-hex commit SHA` : `release builds require an immutable commit SHA, got '${ref}'`);
+  // Release builds must pin an immutable commit. A dry-run may resolve a
+  // moving reference because it publishes nothing (owner condition D).
+  if (!dryRun && refMode === 'sha' && !SHA_RE.test(String(ref || ''))) {
+    problems.push(`release builds require an immutable commit SHA, got '${ref}'`);
   }
   if (projectPath !== profile.projectPath) problems.push(`project path '${projectPath}' != profile path '${profile.projectPath}'`);
   const approvedTasks = (profile.artifacts || []).map((a) => a.gradleTask);
