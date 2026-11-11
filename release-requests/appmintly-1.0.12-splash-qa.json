@@ -7,6 +7,6 @@
     "apk_name": "AppMintly-1.0.12.apk",
     "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
   },
-  "note": "retry: retirement judged on the settled frame; hierarchy poll is informational",
-  "requested_at": "2026-11-11T17:34Z"
+  "note": "retry: lock landscape with wm set-user-rotation before both rotated passes",
+  "requested_at": "2026-11-11T17:55Z"
 }

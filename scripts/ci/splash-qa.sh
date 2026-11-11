@@ -88,6 +88,17 @@ wait_gone() { # wait_gone <label> <max_seconds> [limit_seconds]
   return 0
 }
 
+rotate_landscape() {
+  # settings put alone does not reliably take effect on this emulator; wm's
+  # explicit lock does, so both are applied and the result is logged.
+  adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
+  adb shell wm set-user-rotation lock 1 >/dev/null 2>&1 \
+    || adb shell settings put system user_rotation 1 >/dev/null 2>&1
+  adb shell settings put system user_rotation 1 >/dev/null 2>&1
+  sleep 2
+  info "[rot] $(adb shell dumpsys input 2>/dev/null | grep -m1 -i 'SurfaceOrientation' | tr -d '\r' || echo 'surface orientation unknown')"
+}
+
 wake() {
   adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
   adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
@@ -231,9 +242,7 @@ fi
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true
 
 # ------------------------------------------------------------------- rotation
-adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
-adb shell settings put system user_rotation 1 >/dev/null 2>&1
-sleep 2
+rotate_landscape
 
 # Pass 1, landscape: liveness and an independent capture path. The emulator's
 # landscape surface does not always hand back fresh exec-out screencaps, so the
@@ -256,10 +265,7 @@ wait_gone "landscape launch" 15
 
 # Pass 2, landscape: the analysable frame set. The rotation is re-applied here
 # because the setting does not reliably survive the first activity teardown.
-adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
-adb shell settings put system user_rotation 1 >/dev/null 2>&1
-sleep 2
-info "[rot] $(adb shell dumpsys window displays 2>/dev/null | grep -m1 -oiE 'rotation [0-3]' || echo 'rotation unknown')"
+rotate_landscape
 launch_cold
 sleep 0.3
 shot "rot_early"
