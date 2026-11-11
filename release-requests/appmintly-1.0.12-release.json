@@ -1,0 +1,16 @@
+{
+  "workflow": "release-android-apk.yml",
+  "ref": "main",
+  "inputs": {
+    "app_name": "AppMintly",
+    "package_id": "com.appmintly.appmintly",
+    "version_name": "1.0.12",
+    "source_url": "https://appmintly.pages.dev/",
+    "icon_url": "https://appmintly.pages.dev/icon-512.png",
+    "theme_color": "#17191C",
+    "background_color": "#F8F2E7",
+    "distribution_repo": "PDFly-source/appmintly-releases"
+  },
+  "note": "owner-authorized 1.0.12 splash release: QA matrix PASS (run 43068072673)",
+  "requested_at": "2026-11-11T18:05Z"
+}
