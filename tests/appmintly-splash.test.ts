@@ -142,7 +142,11 @@ describe('splash implementation — native, local, no old splash', () => {
 
   it('cannot trap the user: the hard startup timeout is unchanged', () => {
     expect(APPMINTLY_SPLASH_HARD_TIMEOUT_MS).toBe(12000);
-    expect(builderSrc).toContain('mainHandler.postDelayed(splashTimeout, ${APPMINTLY_SPLASH_HARD_TIMEOUT_MS}L);');
+    expect(builderSrc).toContain('mainHandler.postDelayed(splashTimeout, ${splashHardTimeoutMs}L);');
+    expect(builderSrc).toContain('hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS');
+    expect(builderSrc).toContain(
+      'const splashHardTimeoutMs = splashSpec ? splashSpec.hardTimeoutMs : APPMINTLY_SPLASH_HARD_TIMEOUT_MS;'
+    );
   });
 
   it('contains no progress-bar styling, matching the reference document', () => {
@@ -169,12 +173,16 @@ describe('launch theme — old branding cannot appear first', () => {
   });
 
   it('the splash palette replaces the derived brand gradient for this package only', () => {
-    expect(builderSrc).toContain("const isAppMintlySplashBuild = packageId === APPMINTLY_SPLASH_PACKAGE;");
+    // The boolean became a per-package design registry; the guarantee is the
+    // same and is now stated once, in the spec that carries the canvas colour.
+    expect(builderSrc).toContain('packageId === APPMINTLY_SPLASH_PACKAGE');
+    expect(builderSrc).toContain('bg: APPMINTLY_SPLASH_BG');
+    expect(builderSrc).toContain('const splashSpecBg = splashSpec ? splashSpec.bg : themeColor;');
     expect(builderSrc).toContain(
-      'isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, \'white\', 0.08)'
+      "const splashBgTop = splashSpec ? splashSpec.bg : mixHex(themeColor, 'white', 0.08)"
     );
     expect(builderSrc).toContain(
-      'isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, \'black\', 0.10)'
+      "const splashBgBottom = splashSpec ? splashSpec.bg : mixHex(themeColor, 'black', 0.10)"
     );
   });
 });
@@ -188,8 +196,12 @@ describe('other apps keep the previous launch experience', () => {
 
   it('the new splash is gated on the marketplace package id, not on a global switch', () => {
     expect(APPMINTLY_SPLASH_PACKAGE).toBe('com.appmintly.appmintly');
-    const gated = builderSrc.match(/isAppMintlySplashBuild/g) ?? [];
+    // every native-splash branch is driven by the registry, never by a constant
+    const gated = builderSrc.match(/isNativeSplashBuild/g) ?? [];
     expect(gated.length).toBeGreaterThan(8);
+    expect(builderSrc).toContain('packageId === APPMINTLY_SPLASH_PACKAGE');
+    expect(builderSrc).toContain('packageId === PDFMINIFLY_SPLASH_PACKAGE');
+    expect(builderSrc).not.toContain('const isAppMintlySplashBuild');
   });
 
   it('a different package id generates different Java than the AppMintly build', () => {

@@ -52,8 +52,11 @@ ok(
   'splash gradient colors are derived from the per-app theme color (two shades)',
   // AppMintly's own APK swaps in the owner-supplied light canvas; every other
   // build still derives both shades from its theme color.
-  /const splashBgTop = isAppMintlySplashBuild \? APPMINTLY_SPLASH_BG : mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
-    /const splashBgBottom = isAppMintlySplashBuild \? APPMINTLY_SPLASH_BG : mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
+  // Any package with an owner-supplied splash spec gets that canvas colour;
+  // every other build still derives both shades from its theme color.
+  /const splashBgTop = splashSpec \? splashSpec\.bg : mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
+    /const splashBgBottom = splashSpec \? splashSpec\.bg : mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
+    /bg: APPMINTLY_SPLASH_BG/.test(builderSrc) &&
     /<color name="splash_bg_top">\$\{splashBgTop\}<\/color>/.test(builderSrc),
 );
 
@@ -74,7 +77,11 @@ ok(
 ok(
   'hard 12s timeout can never trap the user behind the splash (offline/slow loads)',
   (/mainHandler\.postDelayed\(splashTimeout, 12000L\);/.test(builderSrc) ||
-    /mainHandler\.postDelayed\(splashTimeout, \$\{APPMINTLY_SPLASH_HARD_TIMEOUT_MS\}L\);/.test(builderSrc)) &&
+    /mainHandler\.postDelayed\(splashTimeout, \$\{splashHardTimeoutMs\}L\);/.test(builderSrc)) &&
+    /hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS/.test(builderSrc) &&
+    /export const PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS = 12000;/.test(
+      fs.readFileSync('lib/splash/pdfminifly-splash.ts', 'utf8'),
+    ) &&
     /export const APPMINTLY_SPLASH_HARD_TIMEOUT_MS = 12000;/.test(
       fs.readFileSync('lib/splash/appmintly-splash.ts', 'utf8'),
     ) &&
@@ -222,9 +229,11 @@ const {
 } = require('../lib/splash/appmintly-splash');
 
 ok(
-  'AppMintly splash is scoped to the marketplace package id only',
+  'owner-supplied splashes are scoped per package id, not switched on globally',
   /export const APPMINTLY_SPLASH_PACKAGE = 'com\.appmintly\.appmintly';/.test(splashModule) &&
-    /const isAppMintlySplashBuild = packageId === APPMINTLY_SPLASH_PACKAGE;/.test(builderSrc),
+    /packageId === APPMINTLY_SPLASH_PACKAGE/.test(builderSrc) &&
+    /packageId === PDFMINIFLY_SPLASH_PACKAGE/.test(builderSrc) &&
+    /: null;/.test(builderSrc),
 );
 const splashJava = appmintlySplashJava('com.appmintly.appmintly');
 ok(
@@ -241,7 +250,8 @@ ok(
   'the reference canvas colour drives window, system splash and overlay',
   /export const APPMINTLY_SPLASH_BG = '#F8FBFF';/.test(splashModule) &&
     /@color\/splash_launch_bg/.test(splashModule) &&
-    /splashOverlay\.setBackgroundColor\(Color\.parseColor\("\$\{APPMINTLY_SPLASH_BG\}"\)\);/.test(builderSrc),
+    /bg: APPMINTLY_SPLASH_BG/.test(builderSrc) &&
+    /splashOverlay\.setBackgroundColor\(Color\.parseColor\("\$\{splashSpecBg\}"\)\);/.test(builderSrc),
 );
 const splashV31 = appmintlySplashStylesV31Xml();
 ok(
@@ -267,7 +277,9 @@ ok(
 ok(
   'the 12s startup safety timeout still overrides the animation gate',
   /splashTimedOut = true;/.test(builderSrc) &&
-    /mainHandler\.postDelayed\(splashTimeout, \$\{APPMINTLY_SPLASH_HARD_TIMEOUT_MS\}L\);/.test(builderSrc) &&
+    /mainHandler\.postDelayed\(splashTimeout, \$\{splashHardTimeoutMs\}L\);/.test(builderSrc) &&
+    /hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS/.test(builderSrc) &&
+    /hardTimeoutMs: PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS/.test(builderSrc) &&
     APPMINTLY_SPLASH_HARD_TIMEOUT_MS === 12000,
 );
 ok(
@@ -276,21 +288,77 @@ ok(
     /final boolean animate = !reducedMotion;/.test(splashModule),
 );
 {
-  const start = builderSrc.indexOf('// --- AppMintly launch splash (owner-supplied design) ---');
+  const start = builderSrc.indexOf('// --- owner-supplied launch splash (native Canvas view) ---');
   const end = builderSrc.indexOf('splashOverlay.addView(splashView', start);
   const appmintlyBranch = start > -1 && end > start ? builderSrc.slice(start, end) : '';
   ok(
     'the AppMintly overlay carries no old gradient, launcher icon or ImageView',
     appmintlyBranch.length > 200 &&
       !/launchBackground\(|ic_launcher|ImageView|GradientDrawable/.test(appmintlyBranch) &&
-      /setBackgroundColor\(Color\.parseColor\("\$\{APPMINTLY_SPLASH_BG\}"\)\)/.test(appmintlyBranch),
+      /setBackgroundColor\(Color\.parseColor\("\$\{splashSpecBg\}"\)\)/.test(appmintlyBranch),
   );
 }
 ok(
-  'splash resources are emitted only for the AppMintly build',
-  /if \(isAppMintlySplashBuild\) \{[\s\S]{0,900}drawable-nodpi/.test(builderSrc) &&
-    /AppMintlySplashView\.java/.test(builderSrc),
+  'splash resources are emitted only for a package with a splash design',
+  /if \(splashSpec\) \{[\s\S]{0,1400}drawable-nodpi/.test(builderSrc) &&
+    /javaFile: 'AppMintlySplashView\.java'/.test(builderSrc) &&
+    /javaFile: 'PdfMiniFlySplashView\.java'/.test(builderSrc) &&
+    !/drawable-nodpi[\s\S]{0,200}if \(!splashSpec\)/.test(builderSrc),
 );
+/* ---------- PDFMiniFly (Task 2): its own owner-supplied splash ---------- */
+const pdfModule = fs.readFileSync('lib/splash/pdfminifly-splash.ts', 'utf8');
+const {
+  PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS: PDF_MINIFLY_TIMEOUT,
+  PDFMINIFLY_SPLASH_PACKAGE: PDF_MINIFLY_PACKAGE,
+  pdfminiflySplashJava,
+  pdfminiflySplashStylesV31Xml,
+} = require('../lib/splash/pdfminifly-splash');
+ok(
+  'PDFMiniFly splash is scoped to its own package id',
+  PDF_MINIFLY_PACKAGE === 'com.appforge.pdfminifly' &&
+    /packageId === PDFMINIFLY_SPLASH_PACKAGE/.test(builderSrc),
+);
+const pdfJava = pdfminiflySplashJava(PDF_MINIFLY_PACKAGE);
+ok(
+  'the PDFMiniFly splash is reproduced natively (no WebView, no remote asset)',
+  /public class PdfMiniFlySplashView extends View/.test(pdfJava) &&
+    !/WebView|https?:\/\//.test(pdfJava),
+);
+ok(
+  'the PDFMiniFly launch surface cannot show the old branded splash',
+  /windowSplashScreenBackground">@color\/pdfminifly_splash_bg/.test(pdfminiflySplashStylesV31Xml()) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/pdfminifly_splash_transparent_icon/.test(
+      pdfminiflySplashStylesV31Xml(),
+    ) &&
+    PDF_MINIFLY_TIMEOUT === 12000,
+);
+ok(
+  'the PDFMiniFly splash follows the reference FINAL cascade (drop + wipe, not zoom/rise)',
+  /animation:drop \.95s cubic-bezier\(\.3,\.8,\.3,1\) \.2s both/.test(
+    fs.readFileSync('docs/splash/PDFMiniFly_Splash.html', 'utf8'),
+  ) &&
+    /LOGO_DELAY = 200L, LOGO_DUR = 950L/.test(pdfModule) &&
+    /WORD_DELAY = 950L, WORD_DUR = 900L/.test(pdfModule) &&
+    /canvas\.clipRect\(/.test(pdfModule),
+);
+ok(
+  'the PDFMiniFly reference artwork is embedded, not redrawn or fetched',
+  /PDFMINIFLY_SPLASH_LOGO_JPEG_BASE64/.test(pdfModule) &&
+    /mix-blend-mode:multiply/.test(fs.readFileSync('docs/splash/PDFMiniFly_Splash.html', 'utf8')) &&
+    /PorterDuff\.Mode\.MULTIPLY/.test(pdfModule),
+);
+ok(
+  'the PDFMiniFly reference HTML is committed as the authoritative design source',
+  fs.existsSync('docs/splash/PDFMiniFly_Splash.html') &&
+    fs.statSync('docs/splash/PDFMiniFly_Splash.html').size > 60000,
+);
+ok(
+  'AppMintly keeps its own design: the two apps never share a splash view',
+  /viewClass: 'AppMintlySplashView'/.test(builderSrc) &&
+    /viewClass: 'PdfMiniFlySplashView'/.test(builderSrc) &&
+    !/AppMintlySplashView/.test(pdfModule),
+);
+
 ok(
   'the reference HTML is committed as the authoritative design source',
   fs.existsSync('docs/splash/AppMintly_Splash.html') &&

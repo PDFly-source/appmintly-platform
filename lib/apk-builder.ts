@@ -19,6 +19,21 @@ import {
   appmintlySplashWordJpeg,
 } from './splash/appmintly-splash';
 import {
+  PDFMINIFLY_SPLASH_BG,
+  PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS,
+  PDFMINIFLY_SPLASH_ICON_NAME,
+  PDFMINIFLY_SPLASH_LOGO_NAME,
+  PDFMINIFLY_SPLASH_PACKAGE,
+  PDFMINIFLY_SPLASH_WORD_NAME,
+  pdfminiflySplashColorEntries,
+  pdfminiflySplashJava,
+  pdfminiflySplashLogoJpeg,
+  pdfminiflySplashStylesV31Xml,
+  pdfminiflySplashStylesXml,
+  pdfminiflySplashTransparentIconXml,
+  pdfminiflySplashWordJpeg,
+} from './splash/pdfminifly-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -514,9 +529,64 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   // lib/splash/appmintly-splash.ts). Its launch surfaces are the reference's
   // light canvas instead of the derived brand gradient; every other build is
   // untouched, byte for byte.
-  const isAppMintlySplashBuild = packageId === APPMINTLY_SPLASH_PACKAGE;
-  const splashBgTop = isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, 'white', 0.08);
-  const splashBgBottom = isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, 'black', 0.10);
+  // Owner-supplied launch splash designs, keyed by package id. A package not
+  // listed here keeps the previous launch experience byte for byte: no splash
+  // resources, no view class, no theme change.
+  const splashSpec: {
+    viewClass: string;
+    /** Colour of the window, the system splash surface and the animated view. */
+    bg: string;
+    hardTimeoutMs: number;
+    javaFile: string;
+    java: (pkg: string) => string;
+    iconName: string;
+    iconXml: string;
+    colorEntries: string;
+    stylesXml: string;
+    stylesV31Xml: string;
+    assets: { name: string; bytes: Buffer }[];
+  } | null =
+    packageId === APPMINTLY_SPLASH_PACKAGE
+      ? {
+          viewClass: 'AppMintlySplashView',
+          bg: APPMINTLY_SPLASH_BG,
+          hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS,
+          javaFile: 'AppMintlySplashView.java',
+          java: appmintlySplashJava,
+          iconName: APPMINTLY_SPLASH_ICON_NAME,
+          iconXml: appmintlySplashTransparentIconXml(),
+          colorEntries: appmintlySplashColorEntries(),
+          stylesXml: appmintlySplashStylesXml(),
+          stylesV31Xml: appmintlySplashStylesV31Xml(),
+          assets: [
+            { name: `${APPMINTLY_SPLASH_MARK_NAME}.jpg`, bytes: appmintlySplashMarkJpeg() },
+            { name: `${APPMINTLY_SPLASH_WORD_NAME}.jpg`, bytes: appmintlySplashWordJpeg() },
+          ],
+        }
+      : packageId === PDFMINIFLY_SPLASH_PACKAGE
+        ? {
+            viewClass: 'PdfMiniFlySplashView',
+            bg: PDFMINIFLY_SPLASH_BG,
+            hardTimeoutMs: PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS,
+            javaFile: 'PdfMiniFlySplashView.java',
+            java: pdfminiflySplashJava,
+            iconName: PDFMINIFLY_SPLASH_ICON_NAME,
+            iconXml: pdfminiflySplashTransparentIconXml(),
+            colorEntries: pdfminiflySplashColorEntries(),
+            stylesXml: pdfminiflySplashStylesXml(),
+            stylesV31Xml: pdfminiflySplashStylesV31Xml(),
+            assets: [
+              { name: `${PDFMINIFLY_SPLASH_LOGO_NAME}.jpg`, bytes: pdfminiflySplashLogoJpeg() },
+              { name: `${PDFMINIFLY_SPLASH_WORD_NAME}.jpg`, bytes: pdfminiflySplashWordJpeg() },
+            ],
+          }
+        : null;
+  const isNativeSplashBuild = splashSpec !== null;
+  const splashViewClass = splashSpec ? splashSpec.viewClass : '';
+  const splashSpecBg = splashSpec ? splashSpec.bg : themeColor;
+  const splashHardTimeoutMs = splashSpec ? splashSpec.hardTimeoutMs : APPMINTLY_SPLASH_HARD_TIMEOUT_MS;
+  const splashBgTop = splashSpec ? splashSpec.bg : mixHex(themeColor, 'white', 0.08);
+  const splashBgBottom = splashSpec ? splashSpec.bg : mixHex(themeColor, 'black', 0.10);
   const welcome = options.welcome;
 
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
@@ -804,7 +874,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     <color name="ic_launcher_background">${adaptiveBackground}</color>
     <color name="splash_bg_top">${splashBgTop}</color>
     <color name="splash_bg_bottom">${splashBgBottom}</color>${
-      isAppMintlySplashBuild ? '\n' + appmintlySplashColorEntries() : ''
+      splashSpec ? '\n' + splashSpec.colorEntries : ''
     }
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
@@ -818,8 +888,8 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // the Android 12+ system splash and the animated view all share the
       // reference canvas colour, and the system splash draws no icon so no
       // older artwork can appear before the new animation starts.
-      const stylesXml = isAppMintlySplashBuild
-        ? appmintlySplashStylesXml()
+      const stylesXml = splashSpec
+        ? splashSpec.stylesXml
         : `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
@@ -827,8 +897,8 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     </style>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'styles.xml'), stylesXml, 'utf8');
-      const stylesV31Xml = isAppMintlySplashBuild
-        ? appmintlySplashStylesV31Xml()
+      const stylesV31Xml = splashSpec
+        ? splashSpec.stylesV31Xml
         : `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
@@ -842,12 +912,12 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       await fs.promises.writeFile(path.join(valuesV31Dir, 'styles.xml'), stylesV31Xml, 'utf8');
 
       // ----------------------------------------------------------------
-      // APPMINTLY LAUNCH SPLASH (owner-supplied AppMintly_Splash.html).
-      // ONLY the marketplace's own package id receives the new splash; every
-      // other build never emits these resources or this view class, so its
-      // generated project stays byte-identical.
+      // OWNER-SUPPLIED LAUNCH SPLASH (AppMintly_Splash.html, PDFMiniFly_Splash.html).
+      // Only the package ids listed in splashSpec receive a splash; every other
+      // build never emits these resources or this view class, so its generated
+      // project stays byte-identical.
       // ----------------------------------------------------------------
-      if (isAppMintlySplashBuild) {
+      if (splashSpec) {
         const drawableNodpiDir = path.join(resDir, 'drawable-nodpi');
         const drawableDir = path.join(resDir, 'drawable');
         await Promise.all([
@@ -855,22 +925,17 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
           fs.promises.mkdir(drawableDir, { recursive: true }),
         ]);
         await Promise.all([
-          fs.promises.writeFile(
-            path.join(drawableNodpiDir, `${APPMINTLY_SPLASH_MARK_NAME}.jpg`),
-            appmintlySplashMarkJpeg()
+          ...splashSpec.assets.map((asset) =>
+            fs.promises.writeFile(path.join(drawableNodpiDir, asset.name), asset.bytes)
           ),
           fs.promises.writeFile(
-            path.join(drawableNodpiDir, `${APPMINTLY_SPLASH_WORD_NAME}.jpg`),
-            appmintlySplashWordJpeg()
-          ),
-          fs.promises.writeFile(
-            path.join(drawableDir, `${APPMINTLY_SPLASH_ICON_NAME}.xml`),
-            appmintlySplashTransparentIconXml(),
+            path.join(drawableDir, `${splashSpec.iconName}.xml`),
+            splashSpec.iconXml,
             'utf8'
           ),
           fs.promises.writeFile(
-            path.join(srcDir, 'AppMintlySplashView.java'),
-            appmintlySplashJava(packageId),
+            path.join(srcDir, splashSpec.javaFile),
+            splashSpec.java(packageId),
             'utf8'
           ),
         ]);
@@ -1150,7 +1215,7 @@ import android.webkit.JavascriptInterface;`
             : `
 import android.webkit.JavascriptInterface;`
         }
-${isAppMintlySplashBuild && !welcome ? '' : 'import android.graphics.drawable.GradientDrawable;\n'}import android.os.Environment;
+${isNativeSplashBuild && !welcome ? '' : 'import android.graphics.drawable.GradientDrawable;\n'}import android.os.Environment;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -1159,7 +1224,7 @@ import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
-${isAppMintlySplashBuild && !welcome ? '' : 'import android.widget.ImageView;\n'}${
+${isNativeSplashBuild && !welcome ? '' : 'import android.widget.ImageView;\n'}${
           welcome
             ? `
 import android.graphics.Typeface;
@@ -1196,11 +1261,11 @@ public class MainActivity extends Activity {
     private FrameLayout rootLayout;
     private FrameLayout splashOverlay;
 ${
-      isAppMintlySplashBuild
-        ? `    // AppMintly launch splash: the animation owns its own 3400ms timeline and
+      isNativeSplashBuild
+        ? `    // Owner-supplied launch splash: the animation owns its own 3400ms timeline and
     // tells the activity when it is finished; the splash only retires once the
     // animation is done AND the page has painted (or the hard timeout hits).
-    private AppMintlySplashView splashView;
+    private ${splashViewClass} splashView;
     private boolean splashContentReady = false;
     private boolean splashAnimationDone = false;
     private boolean splashTimedOut = false;
@@ -1438,12 +1503,12 @@ ${
         splashTimeout = new Runnable() {
             @Override
             public void run() {
-                ${isAppMintlySplashBuild
+                ${isNativeSplashBuild
                     ? 'splashTimedOut = true;\n                maybeRetireSplash();'
                     : 'dismissSplashAfterFirstPaint();'}
             }
         };
-        mainHandler.postDelayed(splashTimeout, ${APPMINTLY_SPLASH_HARD_TIMEOUT_MS}L);
+        mainHandler.postDelayed(splashTimeout, ${splashHardTimeoutMs}L);
     }
 
 ${
@@ -1661,7 +1726,7 @@ ${
         }
     }
 
-${isAppMintlySplashBuild && !welcome ? '' : `    /** Brand launch gradient shared by splash and welcome backgrounds. */
+${isNativeSplashBuild && !welcome ? '' : `    /** Brand launch gradient shared by splash and welcome backgrounds. */
     private GradientDrawable launchBackground() {
         return new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")});
@@ -1674,16 +1739,16 @@ ${isAppMintlySplashBuild && !welcome ? '' : `    /** Brand launch gradient share
 
         float density = getResources().getDisplayMetrics().density;
         ${
-          isAppMintlySplashBuild
-            ? `// --- AppMintly launch splash (owner-supplied design) ---
+          isNativeSplashBuild
+            ? `// --- owner-supplied launch splash (native Canvas view) ---
         // The animated view is the window's first frame: same canvas colour as
         // the window background and the Android 12+ system splash, so there is
         // no flash, no blank frame and no older artwork anywhere in the launch.
         splashOverlay = new FrameLayout(this);
         splashOverlay.setFitsSystemWindows(true);
-        splashOverlay.setBackgroundColor(Color.parseColor("${APPMINTLY_SPLASH_BG}"));
-        splashView = new AppMintlySplashView(this);
-        splashView.setOnSplashFinishedListener(new AppMintlySplashView.OnSplashFinishedListener() {
+        splashOverlay.setBackgroundColor(Color.parseColor("${splashSpecBg}"));
+        splashView = new ${splashViewClass}(this);
+        splashView.setOnSplashFinishedListener(new ${splashViewClass}.OnSplashFinishedListener() {
             @Override
             public void onSplashFinished() {
                 splashAnimationDone = true;
@@ -1725,11 +1790,11 @@ ${welcome ? welcomeViewsJava : ''}    }
      * Idempotent; always safe to call from the WebView callbacks.
      */
     private void dismissSplashAfterFirstPaint() {
-        ${isAppMintlySplashBuild
+        ${isNativeSplashBuild
             ? 'splashContentReady = true;\n        maybeRetireSplash();'
             : 'maybeRetireSplash();'}
     }
-${isAppMintlySplashBuild ? `
+${isNativeSplashBuild ? `
     /** While the light splash is up the status bar follows it (dark icons). */
     private void setSplashStatusBar(boolean splashVisible) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -1740,7 +1805,7 @@ ${isAppMintlySplashBuild ? `
             View decor = window.getDecorView();
             int flags = decor.getSystemUiVisibility();
             if (splashVisible) {
-                window.setStatusBarColor(Color.parseColor("${APPMINTLY_SPLASH_BG}"));
+                window.setStatusBarColor(Color.parseColor("${splashSpecBg}"));
                 decor.setSystemUiVisibility(flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             } else {
                 window.setStatusBarColor(Color.parseColor("${escapeJava(themeColor)}"));
@@ -1760,7 +1825,7 @@ ${isAppMintlySplashBuild ? `
         if (splashDismissed || splashOverlay == null) {
             return;
         }
-        ${isAppMintlySplashBuild
+        ${isNativeSplashBuild
             ? 'if (!splashTimedOut && !(splashContentReady && splashAnimationDone)) {\n            return;\n        }'
             : ''}
         splashDismissed = true;
@@ -1769,7 +1834,7 @@ ${isAppMintlySplashBuild ? `
         }
         if (isReducedMotion()) {
             splashOverlay.setVisibility(View.GONE);
-            ${isAppMintlySplashBuild ? 'setSplashStatusBar(false);' : ''}
+            ${isNativeSplashBuild ? 'setSplashStatusBar(false);' : ''}
             onSplashDismissed();
             return;
         }
@@ -1783,7 +1848,7 @@ ${isAppMintlySplashBuild ? `
             @Override
             public void onAnimationEnd(Animation animation) {
                 splashOverlay.setVisibility(View.GONE);
-                ${isAppMintlySplashBuild ? 'setSplashStatusBar(false);' : ''}
+                ${isNativeSplashBuild ? 'setSplashStatusBar(false);' : ''}
                 onSplashDismissed();
             }
 
