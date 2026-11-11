@@ -63,8 +63,13 @@ jobs:
         # emulator 37.x links libpulse even with -no-audio; without it qemu dies
         # instantly with "libpulse.so.0: cannot open shared object file".
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq python3-pil libpulse0 libpulse-mainloop-glib0
+          set -uo pipefail
+          # Runner mirrors occasionally fail to resolve; retry, then assert that
+          # the two things we actually need are usable.
+          sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 update -qq || echo "::warning::apt update had failures"
+          sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 install -y -qq python3-pil libpulse0 libpulse-mainloop-glib0 || echo "::warning::apt install had failures"
+          ldconfig -p | grep -q 'libpulse\.so\.0' || { echo "::error::libpulse.so.0 is missing"; exit 1; }
+          python3 -c "import PIL; print('PIL ok')" || { echo "::error::python3-pil is missing"; exit 1; }
 
       - name: Boot an API 36 emulator with the APK installed
         uses: reactivecircus/android-emulator-runner@v2
