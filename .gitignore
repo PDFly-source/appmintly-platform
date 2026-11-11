@@ -22,3 +22,7 @@ preview*/
 srv*/
 stage*/
 .pkd-test-out/
+
+# python bytecode from the CI helpers
+__pycache__/
+*.pyc

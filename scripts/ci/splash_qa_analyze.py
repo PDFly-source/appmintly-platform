@@ -247,7 +247,7 @@ REQUIRED = {
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
     # time-resolved frames reliably, so motion detail is reported, not required.
-    'rot': {'logo', 'replace'},
+    'rot': {'logo', 'replace', 'orientation'},
     'rm': {'logo', 'replace'},
 }
 
@@ -286,6 +286,13 @@ def main():
             ok(passed_msg)
         else:
             note(failed_msg)
+
+    if TAG == 'rot' and numeric_all:
+        w0, h0 = numeric_all[0][2][0], numeric_all[0][2][1]
+        verdict('orientation',
+                f"the rotated launch really was landscape ({w0}x{h0})",
+                f"the frames are portrait ({w0}x{h0}) - the rotation did not hold",
+                w0 > h0)
 
     # animation frames only: the settled marketplace is not part of the splash
     if not numeric:
