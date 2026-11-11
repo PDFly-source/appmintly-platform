@@ -21,7 +21,7 @@ import sys
 import zlib
 import glob
 
-if len(sys.argv) >= 2 and sys.argv[1] in ('--delta', '--present'):
+if len(sys.argv) >= 2 and sys.argv[1] in ('--delta', '--present', '--dims'):
     OUT, TAG, DPI = '/tmp', 'none', 420.0
 else:
     OUT, TAG = sys.argv[1], sys.argv[2]
@@ -338,15 +338,20 @@ def main():
         else:
             note(f"only {len(numeric)} launch frame(s), skipping the motion check")
 
-    def nearest(target, window):
-        if not numeric:
+    drawn = [f for f in numeric
+             if ink_count(f[2][3], f[2][2], geometry(f[2][0], f[2][1])['logo']) > 2000]
+    if numeric and not drawn:
+        note("no launch frame has artwork in the logo box (blank window only)")
+
+    def nearest_drawn(target, window):
+        if not drawn:
             return None
-        frame = min(numeric, key=lambda f: abs(f[0] - target))
+        frame = min(drawn, key=lambda f: abs(f[0] - target))
         return frame if abs(frame[0] - target) <= window else None
 
-    mid = nearest(2400, 1400) or (numeric[-1] if numeric else None)
-    ring = nearest(1100, 900)
-    dots = nearest(3200, 900) or mid
+    mid = nearest_drawn(2400, 1400) or (drawn[-1] if drawn else None)
+    ring = nearest_drawn(1100, 900)
+    dots = nearest_drawn(3200, 900) or mid
 
     if mid:
         w, h, bpp, rows = mid[2]
@@ -400,6 +405,12 @@ def main():
     return 1 if failures else 0
 
 
+def dims_cli(path):
+    w, h, _bpp, _rows = read_png(path)
+    print(f"{w} {h}")
+    return 0
+
+
 def present_cli(path):
     """Is this frame the splash? Light canvas plus artwork in the logo box.
     uiautomator cannot dump a hierarchy while the animation runs, so presence at
@@ -425,6 +436,8 @@ def delta_cli(a, b):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) >= 3 and sys.argv[1] == '--dims':
+        sys.exit(dims_cli(sys.argv[2]))
     if len(sys.argv) >= 3 and sys.argv[1] == '--present':
         sys.exit(present_cli(sys.argv[2]))
     if len(sys.argv) >= 4 and sys.argv[1] == '--delta':

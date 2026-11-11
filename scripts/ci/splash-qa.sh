@@ -88,15 +88,32 @@ wait_gone() { # wait_gone <label> <max_seconds> [limit_seconds]
   return 0
 }
 
-rotate_landscape() {
-  # settings put alone does not reliably take effect on this emulator; wm's
-  # explicit lock does, so both are applied and the result is logged.
-  adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
-  adb shell wm set-user-rotation lock 1 >/dev/null 2>&1 \
-    || adb shell settings put system user_rotation 1 >/dev/null 2>&1
-  adb shell settings put system user_rotation 1 >/dev/null 2>&1
-  sleep 2
-  info "[rot] $(adb shell dumpsys input 2>/dev/null | grep -m1 -i 'SurfaceOrientation' | tr -d '\r' || echo 'surface orientation unknown')"
+landscape_now() {
+  adb exec-out screencap -p > "${OUT}/_orient.png" 2>/dev/null
+  [ -s "${OUT}/_orient.png" ] || return 1
+  local dims w h
+  dims=$(python3 scripts/ci/splash_qa_analyze.py --dims "${OUT}/_orient.png" 2>/dev/null)
+  w=${dims%% *}
+  h=${dims##* }
+  [ -n "$w" ] && [ -n "$h" ] && [ "$w" -gt "$h" ]
+}
+
+ensure_landscape() { # ensure_landscape <when>
+  # The rotation setting alone is not evidence: earlier passes reported it set
+  # while the screen was still portrait, so each attempt is verified by the
+  # dimensions of a real capture and retried.
+  local n
+  for n in 1 2 3; do
+    if landscape_now; then
+      info "[rot] landscape confirmed ${1:-(check ${n})}"
+      return 0
+    fi
+    adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
+    adb shell settings put system user_rotation 1 >/dev/null 2>&1
+    sleep 2
+  done
+  info "[rot] device stayed portrait ${1:+$1 }after 3 attempts"
+  return 1
 }
 
 wake() {
@@ -242,7 +259,7 @@ fi
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true
 
 # ------------------------------------------------------------------- rotation
-rotate_landscape
+ensure_landscape "before the rotated probes"
 
 # Pass 1, landscape: liveness and an independent capture path. The emulator's
 # landscape surface does not always hand back fresh exec-out screencaps, so the
@@ -265,10 +282,17 @@ wait_gone "landscape launch" 15
 
 # Pass 2, landscape: the analysable frame set. The rotation is re-applied here
 # because the setting does not reliably survive the first activity teardown.
-rotate_landscape
+ensure_landscape "before the rotated frame pass"
 launch_cold
 sleep 0.3
 shot "rot_early"
+if ! landscape_now; then
+  info "[rot] the rotated launch came up portrait, rotating and relaunching once"
+  ensure_landscape "on relaunch"
+  launch_cold
+  sleep 0.3
+  shot "rot_early"
+fi
 burst "rot"
 sleep 5
 shot "rot_settled"
