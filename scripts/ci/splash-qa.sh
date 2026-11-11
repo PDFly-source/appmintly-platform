@@ -49,17 +49,33 @@ burst() { # burst <tag>
   done
 }
 
+wait_present() { # wait_present <label> <max_seconds>
+  local label="$1" max="$2" deadline rc
+  deadline=$(( $(date +%s) + max ))
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    ui_dump_has 'content-desc="AppMintly"'
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
+      pass "${label}: splash shown"
+      return 0
+    fi
+  done
+  fail "${label}: splash never appeared"
+  return 1
+}
+
 wait_gone() { # wait_gone <label> <max_seconds>
   # Poll instead of sleeping a fixed time: the splash retires when the
   # marketplace paints, and a busy emulator can take a few seconds over that.
-  local label="$1" max="$2" deadline
+  local label="$1" max="$2" deadline rc
   deadline=$(( $(date +%s) + max ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
-    if ! ui_dump_has 'content-desc="AppMintly"'; then
-      pass "$label: splash retired"
+    ui_dump_has 'content-desc="AppMintly"'
+    rc=$?
+    if [ "$rc" -eq 1 ]; then
+      pass "${label}: splash retired"
       return 0
     fi
-    sleep 1
   done
   fail "$label: splash still attached after ${max}s"
   return 1
@@ -76,9 +92,19 @@ launch_cold() {
   adb shell am start -W -n "$PKG/.MainActivity" >"${OUT}/am_start.txt" 2>&1
 }
 
-ui_dump_has() { # ui_dump_has <pattern>
+ui_dump_has() { # ui_dump_has <pattern> -> 0 present, 1 absent, 2 dump failed
+  # uiautomator leaves the previous dump in place when it cannot get an idle
+  # state (exactly what happens during a launch animation), so the file is
+  # removed first and a missing file is reported as "unknown", never as absent.
+  adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
-  adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "$1"
+  if ! adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml'; then
+    return 2
+  fi
+  if adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "$1"; then
+    return 0
+  fi
+  return 1
 }
 
 analyze() { # analyze <tag> <dpi>
@@ -179,11 +205,7 @@ sleep 2
 # same instant is grabbed a second way (write on the device, pull the file).
 launch_cold
 sleep 0.4
-if ui_dump_has 'content-desc="AppMintly"'; then
-  pass "[rot] splash view is attached in landscape"
-else
-  fail "[rot] splash view missing in landscape"
-fi
+wait_present "[rot] landscape" 6
 adb shell screencap -p /sdcard/rot_probe_a.png >/dev/null 2>&1
 sleep 0.7
 adb shell screencap -p /sdcard/rot_probe_b.png >/dev/null 2>&1
@@ -213,11 +235,7 @@ sleep 1
 # ------------------------------------------------------------------- relaunch
 launch_cold
 sleep 0.9
-if ui_dump_has 'content-desc="AppMintly"'; then
-  pass "relaunch shows the splash again (no warm-start skip)"
-else
-  fail "relaunch did not show the splash"
-fi
+wait_present "relaunch (no warm-start skip)" 6
 wait_gone "relaunch" 15
 
 # ------------------------------------------------------------- reduced motion
