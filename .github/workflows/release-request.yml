@@ -21,15 +21,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 2
 
       - name: Validate and dispatch the requested workflow
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_PATH: ${{ github.event_path }}
         run: |
           set -euo pipefail
-          # Every request file added or changed by this push.
-          FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- 'release-requests/*.json' | grep -v 'README' || true)
+          # Request files added or modified by this push, straight from the push
+          # payload (a shallow checkout has no before-commit to diff against).
+          FILES=$(jq -r '[.commits[]? | (.added + .modified)[]] | map(select(startswith("release-requests/") and endswith(".json"))) | unique | .[]' "$EVENT_PATH" 2>/dev/null || true)
+          if [ -z "$FILES" ]; then
+            FILES=$(git diff --name-only HEAD~1 HEAD -- 'release-requests/*.json' 2>/dev/null | grep -v 'README' || true)
+          fi
           if [ -z "$FILES" ]; then
             echo "No request files in this push."
             exit 0
