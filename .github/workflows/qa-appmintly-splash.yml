@@ -1,0 +1,91 @@
+name: QA - AppMintly launch splash (temporary)
+
+# Visual and behavioural proof for the AppMintly launch splash on a real Android
+# image: the first frame is the owner-supplied light canvas (never the old dark
+# gradient), the animation actually runs, the four dots and both rings are drawn,
+# the splash retires into the live marketplace, and a rotation / relaunch /
+# reduced-motion pass cannot leave a stuck or blank screen.
+#
+# Temporary: delete after the reported run.
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Actions run id of the release-signed artifact build'
+        required: true
+        type: string
+      artifact_name:
+        description: 'Artifact name that holds the APK'
+        required: true
+        type: string
+      apk_name:
+        description: 'APK file name inside the artifact'
+        required: true
+        type: string
+      apk_sha:
+        description: 'Expected SHA-256 of the APK'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  splash-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Fetch the production-signed APK from the build run
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.build_run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: apk
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify the downloaded APK before touching a device
+        run: |
+          set -euo pipefail
+          FOUND=$(find apk -name '${{ inputs.apk_name }}' -print -quit)
+          test -n "$FOUND"
+          SHA=$(sha256sum "$FOUND" | cut -d' ' -f1)
+          echo "sha256=$SHA size=$(stat -c%s "$FOUND")"
+          test "$SHA" = "${{ inputs.apk_sha }}"
+
+      - name: Install helpers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-pil
+
+      - name: Boot an API 36 emulator with the APK installed
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: false
+          emulator-options: -no-snapshot -no-boot-anim -no-audio -gpu swiftshader_indirect -camera-back none -camera-front none
+          script: |
+            set -euo pipefail
+            APK=$(find apk -name '${{ inputs.apk_name }}' -print -quit)
+            adb install -r "$APK"
+            adb shell pm list packages | grep -q com.appmintly.appmintly
+            adb shell dumpsys package com.appmintly.appmintly | grep -E "versionName|versionCode" | head -4
+            bash scripts/ci/splash-qa.sh
+
+      - name: Upload splash evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: splash-qa-${{ github.run_id }}
+          path: |
+            splash-qa/
+            splash-qa/report.txt
+          if-no-files-found: warn
+          retention-days: 14
