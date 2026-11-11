@@ -67,11 +67,58 @@ analyze() { # analyze <tag> <dpi>
 }
 
 adb wait-for-device
-adb shell getprop sys.boot_completed | grep -q 1 || sleep 20
+
+# The emulator reports "device offline" for a while after adb first sees it, so
+# wait for a real boot completion instead of assuming the device is usable.
+booted=0
+for _ in $(seq 1 150); do
+  if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+    booted=1
+    break
+  fi
+  sleep 2
+done
+if [ "$booted" != "1" ]; then
+  echo "FAIL  device never finished booting" | tee -a "$REPORT"
+  exit 1
+fi
+info "device booted"
+
+# Keep the screen awake for the whole run.
+adb shell svc power stayon true >/dev/null 2>&1 || true
+adb shell settings put system screen_off_timeout 1800000 >/dev/null 2>&1 || true
 
 DENSITY=$(adb shell wm density | tr -d '\r' | awk '/Physical density/ {print $3}')
 [ -z "${DENSITY}" ] && DENSITY=$(adb shell wm density | tr -d '\r' | grep -oE '[0-9]+' | tail -1)
 info "screen density = ${DENSITY:-unknown} dpi"
+
+APK_PATH="${APK_PATH:-$(find apk -name '*.apk' -print -quit 2>/dev/null)}"
+if [ -z "${APK_PATH}" ]; then
+  echo "FAIL  no APK found to install" | tee -a "$REPORT"
+  exit 1
+fi
+installed=0
+for attempt in 1 2 3 4 5; do
+  if adb install -r "$APK_PATH" >"${OUT}/install_${attempt}.txt" 2>&1 && \
+     adb shell pm list packages 2>/dev/null | grep -q "$PKG"; then
+    installed=1
+    break
+  fi
+  info "install attempt ${attempt} failed, retrying"
+  sleep 5
+done
+if [ "$installed" != "1" ]; then
+  echo "FAIL  could not install $APK_PATH" | tee -a "$REPORT"
+  tail -5 "${OUT}"/install_*.txt 2>/dev/null | tee -a "$REPORT"
+  exit 1
+fi
+pass "installed $(basename "$APK_PATH")"
+
+if adb shell dumpsys package "$PKG" | grep -qE "versionName=1\.0\.12"; then
+  pass "device reports versionName 1.0.12"
+else
+  fail "device does not report versionName 1.0.12"
+fi
 
 adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 | tee -a "$REPORT"
 
