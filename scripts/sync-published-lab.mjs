@@ -87,13 +87,49 @@ function brandLogoFor(app) {
 }
 
 /**
+ * The release the marketplace actually publishes, per one app.
+ *
+ * Mirrors the canonical rule in lib/native-artifact.ts: a usable native
+ * artifact (verified, versioned, checksummed, https release asset) IS the
+ * primary Android release, and the preserved WebView-wrapper block is never
+ * presented as the current version. Apps without one are unchanged.
+ */
+function primaryRelease(app) {
+  const na = app && app.nativeArtifact;
+  const usable =
+    !!na &&
+    na.enabled !== false &&
+    na.verified === true &&
+    typeof na.versionName === 'string' &&
+    na.versionName.length > 0 &&
+    typeof na.versionCode === 'number' &&
+    Number.isFinite(na.versionCode) &&
+    typeof na.sha256 === 'string' &&
+    na.sha256.length > 0 &&
+    typeof na.apkUrl === 'string' &&
+    /^https:\/\//.test(na.apkUrl);
+  return usable ? na : null;
+}
+
+/**
  * Build the sync-managed published record derived from one catalog app.
  * Every field traces back to the catalog record (authoritative source).
  */
 export function publishedRecordFor(app) {
   const features = Array.isArray(app.features) ? app.features : [];
-  const version = typeof app.version === 'string' ? app.version : '';
+  const native = primaryRelease(app);
+  const version = native
+    ? native.versionName
+    : typeof app.version === 'string'
+      ? app.version
+      : '';
   const lastUpdated = typeof app.lastUpdated === 'string' ? app.lastUpdated : '';
+  // Verification evidence is dated to the release it describes. Only a native
+  // promotion changes this: every other record keeps its existing evidence.
+  const evidenceDate =
+    native && typeof native.releaseDate === 'string' && native.releaseDate
+      ? native.releaseDate
+      : lastUpdated;
   const checks = [];
   // Honest, catalog-derived verification: the release check is verifiable
   // directly from the production catalog record itself.
@@ -106,7 +142,7 @@ export function publishedRecordFor(app) {
       version ? `, version ${version}` : ''
     }.`,
     source: 'AppMintly production catalog (data/apps.json)',
-    ...(lastUpdated ? { date: lastUpdated } : {}),
+    ...(evidenceDate ? { date: evidenceDate } : {}),
   });
   return {
     id: `catalog-${app.slug}`,
@@ -127,7 +163,8 @@ export function publishedRecordFor(app) {
     accessMessage: undefined,
     publicUrl: detailUrlFor(app.slug),
     releaseVersion: version || undefined,
-    releaseDate: app.releaseDate || app.publishedAt || lastUpdated || undefined,
+    releaseDate:
+      (native && native.releaseDate) || app.releaseDate || app.publishedAt || lastUpdated || undefined,
     milestones: [
       {
         id: `pub-${app.slug}-m1`,

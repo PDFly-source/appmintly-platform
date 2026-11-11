@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { primaryAndroidRelease } from '../lib/native-artifact';
 
 /**
  * [lab-release-version] The Lab roadmap must not advertise a version the
@@ -21,8 +22,13 @@ const REPO = process.cwd();
 const catalog = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8')) as any[];
 const roadmap = JSON.parse(readFileSync(join(REPO, 'data', 'upcoming-apps.json'), 'utf8')) as any[];
 
-const catalogVersion = (slug: string) =>
-  (catalog.find((a) => a.slug === slug)?.apk as any)?.versionName as string | undefined;
+// The version the marketplace actually publishes for an app: the primary
+// Android release (native when present), falling back to the wrapper block.
+const catalogVersion = (slug: string) => {
+  const app = catalog.find((a) => a.slug === slug);
+  return (primaryAndroidRelease(app)?.versionName ??
+    (app?.apk as any)?.versionName) as string | undefined;
+};
 
 describe('Lab roadmap — release versions follow the catalog', () => {
   it('the PDFMiniFly Lab record advertises the shipped 2.1.3', () => {

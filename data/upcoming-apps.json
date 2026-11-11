@@ -4061,12 +4061,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/nexdrop/",
-    "releaseVersion": "1.5.0",
-    "releaseDate": "2026-10-08",
+    "releaseVersion": "1.4.7",
+    "releaseDate": "2026-11-11",
     "milestones": [
       {
         "id": "pub-nexdrop-m1",
-        "title": "Publicly released on the AppMintly marketplace (v1.5.0)",
+        "title": "Publicly released on the AppMintly marketplace (v1.4.7)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/nexdrop/.",
         "status": "done"
       }
@@ -4079,9 +4079,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.5.0.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.4.7.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-10"
+          "date": "2026-11-11"
         }
       ]
     },

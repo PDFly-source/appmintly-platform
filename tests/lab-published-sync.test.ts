@@ -14,6 +14,7 @@ import {
   publishedRecordFor,
   detailUrlFor,
 } from '../scripts/sync-published-lab.mjs';
+import { primaryAndroidRelease } from '../lib/native-artifact';
 
 const REPO = join(__dirname, '..');
 const catalog = JSON.parse(readFileSync(join(REPO, 'data', 'apps.json'), 'utf8'));
@@ -56,7 +57,9 @@ describe('Phase 2/4 — catalog sync honesty', () => {
       expect(rec.roadmapStatus).toBe('published');
       expect(rec.publicUrl).toBe(detailUrlFor(app.slug));
       expect(rec.publicUrl.startsWith('https://')).toBe(true);
-      expect(rec.releaseVersion).toBe(app.version);
+      // The published version is the primary Android release the marketplace
+      // actually serves (native when present), not the preserved wrapper.
+      expect(rec.releaseVersion).toBe(primaryAndroidRelease(app)?.versionName ?? app.version);
       expect(rec.logo && rec.logo.startsWith('/brand/')).toBe(true);
     }
     // The record set matches the catalog 1:1 — no duplicates per catalog slug.
@@ -187,5 +190,49 @@ describe('Phase 2/4 — catalog sync honesty', () => {
     // the official marketplace detail page only.
     expect(rec.milestones).toHaveLength(1);
     expect(rec.milestones[0].status).toBe('done');
+  });
+});
+
+describe('Lab release version — the primary Android release, not the wrapper', () => {
+  const byslug = (slug: string) => catalog.find((a: any) => a.slug === slug);
+
+  it('NexDrop publishes the verified native 1.4.7, never the preserved wrapper 1.5.0', () => {
+    const rec = publishedRecordFor(byslug('nexdrop'));
+    expect(rec.releaseVersion).toBe('1.4.7');
+    expect(rec.releaseVersion).not.toBe('1.5.0');
+    expect(rec.releaseDate).toBe('2026-11-11');
+    expect(rec.milestones[0].title).toContain('v1.4.7');
+    expect(rec.verification.checks[0].summary).toContain('version 1.4.7');
+    expect(rec.verification.checks[0].date).toBe('2026-11-11');
+    // the wrapper block in the catalog stays exactly as it was
+    expect(byslug('nexdrop').apk.versionName).toBe('1.5.0');
+  });
+
+  it('apps without a usable native artifact keep the catalog version verbatim', () => {
+    for (const app of publishedCatalogApps(catalog)) {
+      if (app.slug === 'nexdrop') continue;
+      const rec = publishedRecordFor(app);
+      expect(rec.releaseVersion).toBe(app.version);
+      expect(rec.verification.checks[0].date).toBe(app.lastUpdated);
+    }
+  });
+
+  it('every published record matches the marketplace resolution rule', () => {
+    for (const app of publishedCatalogApps(catalog)) {
+      const resolved = primaryAndroidRelease(app);
+      const rec = publishedRecordFor(app);
+      expect(rec.releaseVersion).toBe(resolved?.versionName ?? app.version);
+    }
+  });
+
+  it('the committed roadmap file already carries the resolved version', () => {
+    const rec = roadmap.find((r: any) => r.catalogSlug === 'nexdrop');
+    expect(rec.releaseVersion).toBe('1.4.7');
+    expect(rec.releaseDate).toBe('2026-11-11');
+  });
+
+  it('re-syncing the committed roadmap is a no-op (idempotent)', () => {
+    const synced = computeSync(catalog, roadmap);
+    expect(synced.changes).toEqual([]);
   });
 });
