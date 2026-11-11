@@ -73,7 +73,7 @@ wait_gone() { # wait_gone <label> <max_seconds> [limit_seconds]
   t0=$(date +%s%3N)
   deadline=$(( $(date +%s) + max ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
-    ui_dump_has 'content-desc="AppMintly"'
+    splash_state
     rc=$?
     if [ "$rc" -eq 1 ]; then
       ms=$(( $(date +%s%3N) - t0 ))
@@ -96,19 +96,42 @@ launch_cold() {
   adb shell am start -W -n "$PKG/.MainActivity" >"${OUT}/am_start.txt" 2>&1
 }
 
-ui_dump_has() { # ui_dump_has <pattern> -> 0 present, 1 absent, 2 dump failed
-  # uiautomator leaves the previous dump in place when it cannot get an idle
-  # state (exactly what happens during a launch animation), so the file is
-  # removed first and a missing file is reported as "unknown", never as absent.
+splash_state() { # splash_state -> 0 splash up, 1 splash gone, 2 dump unavailable
+  # The marketplace site carries its own content-desc="AppMintly" (the logo), so
+  # that string alone cannot answer this. The splash is the native view shown
+  # before the marketplace WebView exists, so the WebView is the discriminator.
   adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   if ! adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml'; then
     return 2
   fi
-  if adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q "$1"; then
+  local dump
+  dump=$(adb shell cat /sdcard/ui.xml 2>/dev/null)
+  if printf '%s' "$dump" | grep -q 'android.webkit.WebView'; then
+    return 1
+  fi
+  if printf '%s' "$dump" | grep -q 'content-desc="AppMintly"'; then
     return 0
   fi
   return 1
+}
+
+page_ready() { # page_ready -> 0 when the marketplace WebView is in the hierarchy
+  adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml' || return 1
+  adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q 'android.webkit.WebView'
+}
+
+wake() {
+  adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+  adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+}
+
+launch_cold() {
+  adb shell am force-stop "$PKG" >/dev/null 2>&1
+  sleep 1
+  adb shell am start -W -n "$PKG/.MainActivity" >"${OUT}/am_start.txt" 2>&1
 }
 
 analyze() { # analyze <tag> <dpi>
@@ -196,10 +219,10 @@ sleep 4
 shot "cold_settled"
 analyze cold "$DENSITY"
 
-if ui_dump_has '<hierarchy'; then
-  pass "marketplace UI is rendered after the splash (view hierarchy present)"
+if page_ready; then
+  pass "marketplace UI is rendered after the splash (WebView in the hierarchy)"
 else
-  fail "no view hierarchy after the splash (blank screen?)"
+  fail "no marketplace WebView after the splash (blank screen?)"
 fi
 
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true

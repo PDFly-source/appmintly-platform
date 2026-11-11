@@ -7,6 +7,6 @@
     "apk_name": "AppMintly-1.0.12.apk",
     "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
   },
-  "note": "retry: re-apply landscape rotation for the frame pass, orientation gate on rot frames",
-  "requested_at": "2026-11-11T16:52Z"
+  "note": "retry: splash presence keyed off the marketplace WebView (content-desc collides with the site logo)",
+  "requested_at": "2026-11-11T17:12Z"
 }
