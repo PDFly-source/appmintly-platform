@@ -50,8 +50,10 @@ ok(
 );
 ok(
   'splash gradient colors are derived from the per-app theme color (two shades)',
-  /const splashBgTop = mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
-    /const splashBgBottom = mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
+  // AppMintly's own APK swaps in the owner-supplied light canvas; every other
+  // build still derives both shades from its theme color.
+  /const splashBgTop = isAppMintlySplashBuild \? APPMINTLY_SPLASH_BG : mixHex\(themeColor, 'white', 0\.08\);/.test(builderSrc) &&
+    /const splashBgBottom = isAppMintlySplashBuild \? APPMINTLY_SPLASH_BG : mixHex\(themeColor, 'black', 0\.10\);/.test(builderSrc) &&
     /<color name="splash_bg_top">\$\{splashBgTop\}<\/color>/.test(builderSrc),
 );
 
@@ -71,7 +73,11 @@ ok(
 );
 ok(
   'hard 12s timeout can never trap the user behind the splash (offline/slow loads)',
-  /mainHandler\.postDelayed\(splashTimeout, 12000L\);/.test(builderSrc) &&
+  (/mainHandler\.postDelayed\(splashTimeout, 12000L\);/.test(builderSrc) ||
+    /mainHandler\.postDelayed\(splashTimeout, \$\{APPMINTLY_SPLASH_HARD_TIMEOUT_MS\}L\);/.test(builderSrc)) &&
+    /export const APPMINTLY_SPLASH_HARD_TIMEOUT_MS = 12000;/.test(
+      fs.readFileSync('lib/splash/appmintly-splash.ts', 'utf8'),
+    ) &&
     /mainHandler\.removeCallbacks\(splashTimeout\);/.test(builderSrc),
 );
 ok(
@@ -198,6 +204,98 @@ if (failures > 0) {
   console.error(`[launch-template] FAILED: ${failures} regression(s) detected`);
   process.exit(1);
 }
+
+/* ---------- 7. AppMintly splash replacement (owner-supplied design) ----------
+ * The marketplace's own APK no longer ships the gradient + launcher-icon
+ * overlay: it ships the owner-supplied AppMintly_Splash.html design as a native
+ * Canvas view. Every other app keeps the launch experience above, byte for
+ * byte, so these checks are additive and gated on the package id.
+ */
+const splashModule = fs.readFileSync('lib/splash/appmintly-splash.ts', 'utf8');
+const splashAssets = fs.readFileSync('lib/splash/appmintly-splash-assets.ts', 'utf8');
+/* eslint-disable @typescript-eslint/no-var-requires */
+const {
+  appmintlySplashJava,
+  appmintlySplashStylesV31Xml,
+  appmintlySplashStylesXml,
+  APPMINTLY_SPLASH_HARD_TIMEOUT_MS,
+} = require('../lib/splash/appmintly-splash');
+
+ok(
+  'AppMintly splash is scoped to the marketplace package id only',
+  /export const APPMINTLY_SPLASH_PACKAGE = 'com\.appmintly\.appmintly';/.test(splashModule) &&
+    /const isAppMintlySplashBuild = packageId === APPMINTLY_SPLASH_PACKAGE;/.test(builderSrc),
+);
+const splashJava = appmintlySplashJava('com.appmintly.appmintly');
+ok(
+  'the owner-supplied splash is reproduced natively (no WebView, no remote asset)',
+  /public class AppMintlySplashView extends View/.test(splashJava) &&
+    !/WebView|https?:\/\//.test(splashJava),
+);
+ok(
+  'the splash runs for the reference 3400ms',
+  /export const APPMINTLY_SPLASH_MS = 3400;/.test(splashModule) &&
+    /DURATION_MS = 3400L/.test(splashModule),
+);
+ok(
+  'the reference canvas colour drives window, system splash and overlay',
+  /export const APPMINTLY_SPLASH_BG = '#F8FBFF';/.test(splashModule) &&
+    /@color\/splash_launch_bg/.test(splashModule) &&
+    /splashOverlay\.setBackgroundColor\(Color\.parseColor\("\$\{APPMINTLY_SPLASH_BG\}"\)\);/.test(builderSrc),
+);
+const splashV31 = appmintlySplashStylesV31Xml();
+ok(
+  'Android 12+ system splash draws a neutral surface with no icon or halo',
+  /windowSplashScreenBackground">@color\/splash_launch_bg/.test(splashV31) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/splash_transparent_icon/.test(splashV31) &&
+    !/windowSplashScreenIconBackgroundColor/.test(splashV31) &&
+    !/splash_bg_bottom/.test(appmintlySplashStylesXml()),
+);
+ok(
+  'both reference images are bundled byte-for-byte and drawn with multiply semantics',
+  /appmintlySplashMarkJpeg\(\)/.test(builderSrc) &&
+    /appmintlySplashWordJpeg\(\)/.test(builderSrc) &&
+    /splash_mark/.test(splashModule) &&
+    /multiplyMatte/.test(splashModule) &&
+    /data:image\/jpeg;base64,/.test(splashAssets.replace(/BASE64 =\s*'/g, 'data:image/jpeg;base64,')),
+);
+ok(
+  'the splash retires only after BOTH the animation and the first content paint',
+  /splashContentReady = true;/.test(builderSrc) &&
+    /if \(!splashTimedOut && !\(splashContentReady && splashAnimationDone\)\) \{/.test(builderSrc),
+);
+ok(
+  'the 12s startup safety timeout still overrides the animation gate',
+  /splashTimedOut = true;/.test(builderSrc) &&
+    /mainHandler\.postDelayed\(splashTimeout, \$\{APPMINTLY_SPLASH_HARD_TIMEOUT_MS\}L\);/.test(builderSrc) &&
+    APPMINTLY_SPLASH_HARD_TIMEOUT_MS === 12000,
+);
+ok(
+  'reduced motion is honoured inside the splash view as well',
+  /ANIMATOR_DURATION_SCALE/.test(splashModule) &&
+    /final boolean animate = !reducedMotion;/.test(splashModule),
+);
+{
+  const start = builderSrc.indexOf('// --- AppMintly launch splash (owner-supplied design) ---');
+  const end = builderSrc.indexOf('splashOverlay.addView(splashView', start);
+  const appmintlyBranch = start > -1 && end > start ? builderSrc.slice(start, end) : '';
+  ok(
+    'the AppMintly overlay carries no old gradient, launcher icon or ImageView',
+    appmintlyBranch.length > 200 &&
+      !/launchBackground\(|ic_launcher|ImageView|GradientDrawable/.test(appmintlyBranch) &&
+      /setBackgroundColor\(Color\.parseColor\("\$\{APPMINTLY_SPLASH_BG\}"\)\)/.test(appmintlyBranch),
+  );
+}
+ok(
+  'splash resources are emitted only for the AppMintly build',
+  /if \(isAppMintlySplashBuild\) \{[\s\S]{0,900}drawable-nodpi/.test(builderSrc) &&
+    /AppMintlySplashView\.java/.test(builderSrc),
+);
+ok(
+  'the reference HTML is committed as the authoritative design source',
+  fs.existsSync('docs/splash/AppMintly_Splash.html') &&
+    fs.statSync('docs/splash/AppMintly_Splash.html').size > 60000,
+);
 
 /* ---------- 8. Download path: no unhandled scheme, no null filename ----------
  * Two real defects lived here until v2.1.3 for PDFMiniFly / any wrapper app:

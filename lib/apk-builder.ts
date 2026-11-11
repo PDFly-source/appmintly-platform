@@ -4,6 +4,21 @@ import { exec } from 'child_process';
 import util from 'util';
 import crypto from 'crypto';
 import {
+  APPMINTLY_SPLASH_BG,
+  APPMINTLY_SPLASH_HARD_TIMEOUT_MS,
+  APPMINTLY_SPLASH_ICON_NAME,
+  APPMINTLY_SPLASH_MARK_NAME,
+  APPMINTLY_SPLASH_PACKAGE,
+  APPMINTLY_SPLASH_WORD_NAME,
+  appmintlySplashColorEntries,
+  appmintlySplashJava,
+  appmintlySplashMarkJpeg,
+  appmintlySplashStylesV31Xml,
+  appmintlySplashStylesXml,
+  appmintlySplashTransparentIconXml,
+  appmintlySplashWordJpeg,
+} from './splash/appmintly-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -495,8 +510,13 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     const b = clamp(parseInt(h.slice(5, 7), 16) * (1 - amount) + to * amount);
     return '#' + [r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('');
   };
-  const splashBgTop = mixHex(themeColor, 'white', 0.08);
-  const splashBgBottom = mixHex(themeColor, 'black', 0.10);
+  // AppMintly's own APK carries the owner-supplied launch splash (see
+  // lib/splash/appmintly-splash.ts). Its launch surfaces are the reference's
+  // light canvas instead of the derived brand gradient; every other build is
+  // untouched, byte for byte.
+  const isAppMintlySplashBuild = packageId === APPMINTLY_SPLASH_PACKAGE;
+  const splashBgTop = isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, 'white', 0.08);
+  const splashBgBottom = isAppMintlySplashBuild ? APPMINTLY_SPLASH_BG : mixHex(themeColor, 'black', 0.10);
   const welcome = options.welcome;
 
   // Canonical filename e.g. PDFMiniFly-2.1.0.apk
@@ -783,7 +803,9 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     <color name="bg_color">${backgroundColor}</color>
     <color name="ic_launcher_background">${adaptiveBackground}</color>
     <color name="splash_bg_top">${splashBgTop}</color>
-    <color name="splash_bg_bottom">${splashBgBottom}</color>
+    <color name="splash_bg_bottom">${splashBgBottom}</color>${
+      isAppMintlySplashBuild ? '\n' + appmintlySplashColorEntries() : ''
+    }
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'colors.xml'), colorsXml, 'utf8');
 
@@ -792,14 +814,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       // shade instead of the old plain black window, so launch never shows
       // a black flash frame. values-v31 carries the modern splash-screen
       // attributes; older releases simply use the themed window background.
-      const stylesXml = `<?xml version="1.0" encoding="utf-8"?>
+      // AppMintly replaces the gradient launch surface entirely: the window,
+      // the Android 12+ system splash and the animated view all share the
+      // reference canvas colour, and the system splash draws no icon so no
+      // older artwork can appear before the new animation starts.
+      const stylesXml = isAppMintlySplashBuild
+        ? appmintlySplashStylesXml()
+        : `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:windowBackground">@color/splash_bg_bottom</item>
     </style>
 </resources>`;
       await fs.promises.writeFile(path.join(valuesDir, 'styles.xml'), stylesXml, 'utf8');
-      const stylesV31Xml = `<?xml version="1.0" encoding="utf-8"?>
+      const stylesV31Xml = isAppMintlySplashBuild
+        ? appmintlySplashStylesV31Xml()
+        : `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
         <item name="android:windowBackground">@color/splash_bg_bottom</item>
@@ -810,6 +840,41 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       const valuesV31Dir = path.join(resDir, 'values-v31');
       await fs.promises.mkdir(valuesV31Dir, { recursive: true });
       await fs.promises.writeFile(path.join(valuesV31Dir, 'styles.xml'), stylesV31Xml, 'utf8');
+
+      // ----------------------------------------------------------------
+      // APPMINTLY LAUNCH SPLASH (owner-supplied AppMintly_Splash.html).
+      // ONLY the marketplace's own package id receives the new splash; every
+      // other build never emits these resources or this view class, so its
+      // generated project stays byte-identical.
+      // ----------------------------------------------------------------
+      if (isAppMintlySplashBuild) {
+        const drawableNodpiDir = path.join(resDir, 'drawable-nodpi');
+        const drawableDir = path.join(resDir, 'drawable');
+        await Promise.all([
+          fs.promises.mkdir(drawableNodpiDir, { recursive: true }),
+          fs.promises.mkdir(drawableDir, { recursive: true }),
+        ]);
+        await Promise.all([
+          fs.promises.writeFile(
+            path.join(drawableNodpiDir, `${APPMINTLY_SPLASH_MARK_NAME}.jpg`),
+            appmintlySplashMarkJpeg()
+          ),
+          fs.promises.writeFile(
+            path.join(drawableNodpiDir, `${APPMINTLY_SPLASH_WORD_NAME}.jpg`),
+            appmintlySplashWordJpeg()
+          ),
+          fs.promises.writeFile(
+            path.join(drawableDir, `${APPMINTLY_SPLASH_ICON_NAME}.xml`),
+            appmintlySplashTransparentIconXml(),
+            'utf8'
+          ),
+          fs.promises.writeFile(
+            path.join(srcDir, 'AppMintlySplashView.java'),
+            appmintlySplashJava(packageId),
+            'utf8'
+          ),
+        ]);
+      }
 
       // ----------------------------------------------------------------
       // NATIVE UPDATE CHECKER GATE (AppMintly notifications).
@@ -1085,8 +1150,7 @@ import android.webkit.JavascriptInterface;`
             : `
 import android.webkit.JavascriptInterface;`
         }
-import android.graphics.drawable.GradientDrawable;
-import android.os.Environment;
+${isAppMintlySplashBuild && !welcome ? '' : 'import android.graphics.drawable.GradientDrawable;\n'}import android.os.Environment;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -1095,7 +1159,7 @@ import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
-import android.widget.ImageView;${
+${isAppMintlySplashBuild && !welcome ? '' : 'import android.widget.ImageView;\n'}${
           welcome
             ? `
 import android.graphics.Typeface;
@@ -1131,7 +1195,18 @@ public class MainActivity extends Activity {
     // build time) appears only on the very first launch to Home.
     private FrameLayout rootLayout;
     private FrameLayout splashOverlay;
-${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+${
+      isAppMintlySplashBuild
+        ? `    // AppMintly launch splash: the animation owns its own 3400ms timeline and
+    // tells the activity when it is finished; the splash only retires once the
+    // animation is done AND the page has painted (or the hard timeout hits).
+    private AppMintlySplashView splashView;
+    private boolean splashContentReady = false;
+    private boolean splashAnimationDone = false;
+    private boolean splashTimedOut = false;
+`
+        : ''
+    }${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable splashTimeout;
     private boolean pageLoadFailed = false;
     private boolean splashDismissed = false;
@@ -1363,10 +1438,12 @@ ${
         splashTimeout = new Runnable() {
             @Override
             public void run() {
-                dismissSplashAfterFirstPaint();
+                ${isAppMintlySplashBuild
+                    ? 'splashTimedOut = true;\n                maybeRetireSplash();'
+                    : 'dismissSplashAfterFirstPaint();'}
             }
         };
-        mainHandler.postDelayed(splashTimeout, 12000L);
+        mainHandler.postDelayed(splashTimeout, ${APPMINTLY_SPLASH_HARD_TIMEOUT_MS}L);
     }
 
 ${
@@ -1584,18 +1661,39 @@ ${
         }
     }
 
-    /** Brand launch gradient shared by splash and welcome backgrounds. */
+${isAppMintlySplashBuild && !welcome ? '' : `    /** Brand launch gradient shared by splash and welcome backgrounds. */
     private GradientDrawable launchBackground() {
         return new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.parseColor("${splashBgTop}"), Color.parseColor("${splashBgBottom}")});
     }
-
+`}
     private void buildLaunchOverlays() {
         rootLayout = new FrameLayout(this);
         rootLayout.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // --- in-window splash overlay (matches the system splash) ---
+        float density = getResources().getDisplayMetrics().density;
+        ${
+          isAppMintlySplashBuild
+            ? `// --- AppMintly launch splash (owner-supplied design) ---
+        // The animated view is the window's first frame: same canvas colour as
+        // the window background and the Android 12+ system splash, so there is
+        // no flash, no blank frame and no older artwork anywhere in the launch.
+        splashOverlay = new FrameLayout(this);
+        splashOverlay.setFitsSystemWindows(true);
+        splashOverlay.setBackgroundColor(Color.parseColor("${APPMINTLY_SPLASH_BG}"));
+        splashView = new AppMintlySplashView(this);
+        splashView.setOnSplashFinishedListener(new AppMintlySplashView.OnSplashFinishedListener() {
+            @Override
+            public void onSplashFinished() {
+                splashAnimationDone = true;
+                maybeRetireSplash();
+            }
+        });
+        splashOverlay.addView(splashView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setSplashStatusBar(true);`
+            : `// --- in-window splash overlay (matches the system splash) ---
         // Lightweight: two-color gradient + one centered ImageView. No
         // network requests, no animations until the first paint, and it
         // never delays WebView initialization (the load was dispatched
@@ -1603,7 +1701,6 @@ ${
         splashOverlay = new FrameLayout(this);
         splashOverlay.setFitsSystemWindows(true);
         splashOverlay.setBackground(launchBackground());
-        float density = getResources().getDisplayMetrics().density;
         int logoSize = Math.min(
                 (int) (getResources().getDisplayMetrics().widthPixels * 0.38f),
                 (int) (176 * density));
@@ -1617,26 +1714,62 @@ ${
         }
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         logo.setContentDescription("${escapeJava(appName)}");
-        splashOverlay.addView(logo, new FrameLayout.LayoutParams(logoSize, logoSize, Gravity.CENTER));
+        splashOverlay.addView(logo, new FrameLayout.LayoutParams(logoSize, logoSize, Gravity.CENTER));`
+        }
         rootLayout.addView(splashOverlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 ${welcome ? welcomeViewsJava : ''}    }
 
     /**
-     * Retires the splash overlay at the first real content paint (or on
-     * the hard timeout). Idempotent; always safe to call from the WebView
-     * callbacks.
+     * Retires the splash overlay at the first real content paint.
+     * Idempotent; always safe to call from the WebView callbacks.
      */
     private void dismissSplashAfterFirstPaint() {
+        ${isAppMintlySplashBuild
+            ? 'splashContentReady = true;\n        maybeRetireSplash();'
+            : 'maybeRetireSplash();'}
+    }
+${isAppMintlySplashBuild ? `
+    /** While the light splash is up the status bar follows it (dark icons). */
+    private void setSplashStatusBar(boolean splashVisible) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return;
+        }
+        try {
+            Window window = getWindow();
+            View decor = window.getDecorView();
+            int flags = decor.getSystemUiVisibility();
+            if (splashVisible) {
+                window.setStatusBarColor(Color.parseColor("${APPMINTLY_SPLASH_BG}"));
+                decor.setSystemUiVisibility(flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            } else {
+                window.setStatusBarColor(Color.parseColor("${escapeJava(themeColor)}"));
+                decor.setSystemUiVisibility(flags & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+` : ''}
+    /**
+     * Single retirement gate. For the AppMintly splash both halves matter: the
+     * 3400ms animation must have finished AND the page must have painted, so
+     * the user never sees a half-played animation and never sees a blank page.
+     * The hard timeout overrides both. Idempotent.
+     */
+    private void maybeRetireSplash() {
         if (splashDismissed || splashOverlay == null) {
             return;
         }
+        ${isAppMintlySplashBuild
+            ? 'if (!splashTimedOut && !(splashContentReady && splashAnimationDone)) {\n            return;\n        }'
+            : ''}
         splashDismissed = true;
         if (splashTimeout != null) {
             mainHandler.removeCallbacks(splashTimeout);
         }
         if (isReducedMotion()) {
             splashOverlay.setVisibility(View.GONE);
+            ${isAppMintlySplashBuild ? 'setSplashStatusBar(false);' : ''}
             onSplashDismissed();
             return;
         }
@@ -1650,6 +1783,7 @@ ${welcome ? welcomeViewsJava : ''}    }
             @Override
             public void onAnimationEnd(Animation animation) {
                 splashOverlay.setVisibility(View.GONE);
+                ${isAppMintlySplashBuild ? 'setSplashStatusBar(false);' : ''}
                 onSplashDismissed();
             }
 
