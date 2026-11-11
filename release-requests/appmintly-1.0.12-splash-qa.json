@@ -7,6 +7,6 @@
     "apk_name": "AppMintly-1.0.12.apk",
     "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
   },
-  "note": "retry: ring check falls back to the nearest drawn splash frame when the burst misses 1.1s",
-  "requested_at": "2026-11-11T18:34Z"
+  "note": "retry: no relaunch in the rotated pass (it flipped the display back), rotation locked before launch only",
+  "requested_at": "2026-11-11T18:55Z"
 }

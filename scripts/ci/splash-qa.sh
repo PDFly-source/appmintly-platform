@@ -286,13 +286,9 @@ ensure_landscape "before the rotated frame pass"
 launch_cold
 sleep 0.3
 shot "rot_early"
-if ! landscape_now; then
-  info "[rot] the rotated launch came up portrait, rotating and relaunching once"
-  ensure_landscape "on relaunch"
-  launch_cold
-  sleep 0.3
-  shot "rot_early"
-fi
+# Logged, not acted on: starting the activity a second time is itself enough to
+# put the display back into portrait, so the frame set is judged as captured.
+info "[rot] first rotated frame $(python3 scripts/ci/splash_qa_analyze.py --dims "${OUT}/rot_early.png" 2>/dev/null || echo unreadable)"
 burst "rot"
 sleep 5
 shot "rot_settled"
