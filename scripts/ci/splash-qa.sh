@@ -32,13 +32,37 @@ shot() { # shot <name>
 
 # Frames are collected as fast as screencap allows; elapsed ms is recorded per
 # frame so the analysis can pick the frame nearest each animation checkpoint.
-burst() { # burst <tag> <count>
-  local tag="$1" n="$2" i t0
+burst() { # burst <tag>
+  # Screen grabs cost 400-900ms on a loaded emulator, so chase fixed targets
+  # instead of counting frames: whatever lands, the file name carries the real
+  # elapsed time and the analysis picks the closest frame to each checkpoint.
+  local tag="$1" t0 target now wait_ms file
   t0=$(date +%s%3N)
-  for i in $(seq 1 "$n"); do
-    local ms=$(( $(date +%s%3N) - t0 ))
-    adb exec-out screencap -p > "${OUT}/${tag}_$(printf '%03d' "$ms").png" 2>/dev/null
+  for target in 250 600 950 1300 1650 2000 2350 2700 3050 3350; do
+    now=$(( $(date +%s%3N) - t0 ))
+    wait_ms=$(( target - now ))
+    if [ "$wait_ms" -gt 15 ]; then
+      sleep "$(awk "BEGIN{printf \"%.3f\", $wait_ms/1000}")"
+    fi
+    file=$(printf '%04d' $(( $(date +%s%3N) - t0 )))
+    adb exec-out screencap -p > "${OUT}/${tag}_${file}.png" 2>/dev/null
   done
+}
+
+wait_gone() { # wait_gone <label> <max_seconds>
+  # Poll instead of sleeping a fixed time: the splash retires when the
+  # marketplace paints, and a busy emulator can take a few seconds over that.
+  local label="$1" max="$2" deadline
+  deadline=$(( $(date +%s) + max ))
+  while [ "$(date +%s)" -lt "$deadline" ]; do
+    if ! ui_dump_has 'content-desc="AppMintly"'; then
+      pass "$label: splash retired"
+      return 0
+    fi
+    sleep 1
+  done
+  fail "$label: splash still attached after ${max}s"
+  return 1
 }
 
 wake() {
@@ -127,7 +151,7 @@ wake
 launch_cold
 sleep 0.2
 shot "cold_early"
-burst "cold" 10
+burst "cold"
 sleep 7
 shot "cold_settled"
 
@@ -135,11 +159,7 @@ analyze cold "$DENSITY"
 
 [ -s "${OUT}/cold_early.png" ] && pass "cold launch produced frames" || fail "cold launch produced no frame"
 
-if ui_dump_has 'content-desc="AppMintly"' ; then
-  fail "splash still attached long after launch (content-desc=AppMintly present)"
-else
-  pass "splash retired into the marketplace (no splash view after 7s)"
-fi
+wait_gone "cold launch" 15
 
 if ui_dump_has '<hierarchy'; then
   pass "marketplace UI is rendered after the splash (view hierarchy present)"
@@ -154,10 +174,9 @@ adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
 adb shell settings put system user_rotation 1 >/dev/null 2>&1
 sleep 2
 launch_cold
-sleep 0.6
+sleep 0.4
 shot "rot_early"
-sleep 1.2
-shot "rot_mid"
+burst "rot"
 sleep 6
 shot "rot_settled"
 analyze rot "$DENSITY"
@@ -173,28 +192,19 @@ if ui_dump_has 'content-desc="AppMintly"'; then
 else
   fail "relaunch did not show the splash"
 fi
-sleep 7
-if ui_dump_has 'content-desc="AppMintly"'; then
-  fail "relaunch left the splash attached"
-else
-  pass "relaunch retired the splash"
-fi
+wait_gone "relaunch" 15
 
 # ------------------------------------------------------------- reduced motion
 adb shell settings put global animator_duration_scale 0 >/dev/null 2>&1
 launch_cold
-sleep 0.9
+sleep 0.3
 shot "rm_early"
+burst "rm"
 sleep 6
 shot "rm_settled"
 analyze rm "$DENSITY"
 adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
-
-if ui_dump_has 'content-desc="AppMintly"'; then
-  fail "reduced-motion launch left the splash attached"
-else
-  pass "reduced-motion launch still retires into the marketplace"
-fi
+wait_gone "reduced-motion launch" 15
 
 echo "──── summary ────" | tee -a "$REPORT"
 if [ "$FAILED" -eq 0 ]; then

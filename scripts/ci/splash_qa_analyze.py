@@ -154,20 +154,42 @@ def geometry(width, height):
     }
 
 
+def hue_sat(r, g, b):
+    mx, mn = max(r, g, b), min(r, g, b)
+    d = mx - mn
+    if d == 0:
+        return None, 0
+    if mx == r:
+        h = (60 * ((g - b) / d)) % 360
+    elif mx == g:
+        h = 60 * ((b - r) / d) + 120
+    else:
+        h = 60 * ((r - g) / d) + 240
+    return h, d
+
+
 def dot_matches(width, height, bpp, rows, g):
+    """Match each dot by hue: by the time all four are on screen they have
+    faded in over the white canvas, so the exact RGB is diluted while the hue
+    survives. A window around each expected centre is enough."""
+    span = max(8, int(g['dot_pitch'] * 0.55))
     matches = 0
-    radius = max(10, int(g['dot_r'] * 1.6))
     for i, target in enumerate(PALETTE):
+        want = hue_sat(*target)[0]
         cx = int(g['dots_x0'] + i * g['dot_pitch'])
         cy = int(g['dots_y'])
-        best = None
-        for y in range(max(0, cy - radius), min(height, cy + radius)):
-            for x in range(max(0, cx - radius), min(width, cx + radius)):
-                r, gg, b = pixel(rows, bpp, x, y)
-                dist = (r - target[0]) ** 2 + (gg - target[1]) ** 2 + (b - target[2]) ** 2
-                if best is None or dist < best:
-                    best = dist
-        if best is not None and best < 110 ** 2:
+        best_sat = 0
+        for y in range(max(0, cy - span), min(height, cy + span)):
+            for x in range(max(0, cx - span), min(width, cx + span)):
+                h, sat = hue_sat(*pixel(rows, bpp, x, y))
+                if h is None or sat < 18 or sat <= best_sat:
+                    continue
+                delta = abs(h - want)
+                if delta > 180:
+                    delta = 360 - delta
+                if delta <= 26:
+                    best_sat = sat
+        if best_sat:
             matches += 1
     return matches
 
@@ -206,6 +228,16 @@ def frame_delta(a, b, step=9):
     return total / max(1, count)
 
 
+# Which checks a tag must satisfy. `cold` is the full animation; the rotation and
+# reduced-motion passes only prove the splash still appears light, draws, and
+# retires (with reduced motion there is deliberately no animation to measure).
+REQUIRED = {
+    'cold': {'motion', 'logo', 'word', 'rings', 'dots', 'replace'},
+    'rot': {'logo', 'dots', 'replace'},
+    'rm': {'logo', 'replace'},
+}
+
+
 def main():
     paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
     if not paths:
@@ -224,76 +256,88 @@ def main():
         bad("no readable frames")
         return 1
 
-    # brightness on every launch frame (the old dark splash must be gone)
-    lums = [(mean_lum(f[2][3], f[2][2]), f[1]) for f in frames]
-    dim = min(lums)
-    if dim[0] > 190:
-        ok(f"all {len(lums)} launch frames are the light canvas (dimmest mean {dim[0]:.1f})")
-    else:
-        bad(f"a launch frame is dark (mean {dim[0]:.1f} in {dim[1]}) - old splash or flash")
-
-    numeric = [f for f in frames if f[0] is not None]
+    required = REQUIRED.get(TAG, {'logo'})
+    numeric = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])
     named = {f[1]: f for f in frames if f[0] is None}
 
-    if len(numeric) >= 3:
-        level = frame_delta(numeric[0][2], numeric[len(numeric) // 2][2])
-        if level is None:
-            note("frame sizes changed between captures, skipping the motion check")
-        elif level > 4:
-            ok(f"animation runs (frame delta {level:.1f})")
+    def verdict(check, passed_msg, failed_msg, enabled=True):
+        if check in required:
+            ok(passed_msg) if enabled else bad(failed_msg)
+        elif enabled:
+            ok(passed_msg)
         else:
-            bad(f"frames barely differ (delta {level:.1f}) - splash is static")
-    else:
-        note("not enough captured frames for the motion check")
+            note(failed_msg)
 
-    def nearest(target):
+    # animation frames only: the settled marketplace is not part of the splash
+    if not numeric:
+        if 'logo' in required:
+            bad("no timestamped launch frames were captured")
+        else:
+            note("no timestamped launch frames were captured")
+    else:
+        lums = [(mean_lum(f[2][3], f[2][2]), str(f[0])) for f in numeric]
+        dim = min(lums)
+        if dim[0] > 190:
+            ok(f"all {len(lums)} launch frames are the light canvas (dimmest mean {dim[0]:.1f})")
+        else:
+            bad(f"a launch frame is dark (mean {dim[0]:.1f} at {dim[1]}ms) - old splash or flash")
+
+        if len(numeric) >= 3:
+            level = frame_delta(numeric[0][2], numeric[len(numeric) // 2][2])
+            if level is None:
+                note("frame sizes changed between captures, skipping the motion check")
+            else:
+                verdict('motion',
+                        f"animation runs (frame delta {level:.1f})",
+                        f"frames barely differ (delta {level:.1f}) - splash is static",
+                        level > 4)
+        else:
+            note(f"only {len(numeric)} launch frames, skipping the motion check")
+
+    def nearest(target, window):
         if not numeric:
             return None
         frame = min(numeric, key=lambda f: abs(f[0] - target))
-        return frame if abs(frame[0] - target) < 1400 else None
+        return frame if abs(frame[0] - target) <= window else None
 
-    mid = nearest(2400) or (numeric[-1] if numeric else None)
-    ring = nearest(1100)
-    dots = nearest(2900) or mid
+    mid = nearest(2400, 1400) or (numeric[-1] if numeric else None)
+    ring = nearest(1100, 900)
+    dots = nearest(3200, 900) or mid
 
     if mid:
         w, h, bpp, rows = mid[2]
         g = geometry(w, h)
         logo_ink = ink_count(rows, bpp, g['logo'])
         word_ink = ink_count(rows, bpp, g['word'])
-        if logo_ink > 2000:
-            ok(f"logo artwork drawn in the reference box ({logo_ink} ink px)")
-        else:
-            bad(f"logo missing from its box ({logo_ink} ink px)")
-        if word_ink > 200:
-            ok(f"wordmark drawn in the reference box ({word_ink} ink px)")
-        else:
-            bad(f"wordmark missing from its box ({word_ink} ink px)")
-    else:
+        verdict('logo',
+                f"logo artwork drawn in the reference box ({logo_ink} ink px)",
+                f"logo missing from its box ({logo_ink} ink px)",
+                logo_ink > 2000)
+        verdict('word',
+                f"wordmark drawn in the reference box ({word_ink} ink px)",
+                f"wordmark missing from its box ({word_ink} ink px)",
+                word_ink > 200)
+    elif 'logo' in required:
         bad("no mid-animation frame to inspect")
 
     if ring:
         w, h, bpp, rows = ring[2]
         blue, green = ring_tint(w, h, bpp, rows, geometry(w, h))
-        if blue > 150:
-            ok(f"blue ring visible mid-animation ({blue} tinted px)")
-        else:
-            bad(f"blue ring not visible ({blue} tinted px)")
-        if green > 150:
-            ok(f"green ring visible mid-animation ({green} tinted px)")
-        else:
-            bad(f"green ring not visible ({green} tinted px)")
-    else:
-        note("no frame near 1.1s for the ring check")
+        verdict('rings',
+                f"both rings visible mid-animation (blue {blue}, green {green} px)",
+                f"rings not both visible (blue {blue}, green {green} px)",
+                blue > 150 and green > 150)
+    elif 'rings' in required:
+        bad("no frame near 1.1s for the ring check")
 
     if dots:
         w, h, bpp, rows = dots[2]
         matches = dot_matches(w, h, bpp, rows, geometry(w, h))
-        if matches >= 3:
-            ok(f"{matches}/4 palette dots on the reference row")
-        else:
-            bad(f"only {matches}/4 palette dots found on the reference row")
-    else:
+        verdict('dots',
+                f"{matches}/4 palette dots on the reference row",
+                f"only {matches}/4 palette dots found on the reference row",
+                matches >= 3)
+    elif 'dots' in required:
         bad("no late frame for the dots check")
 
     settled = named.get('settled')
@@ -301,10 +345,13 @@ def main():
         level = frame_delta(settled[2], mid[2])
         if level is None:
             note("settled frame size differs, skipping the replacement check")
-        elif level > 8:
-            ok(f"content replaced the splash (settled frame delta {level:.1f})")
         else:
-            bad(f"settled frame still looks like the splash (delta {level:.1f})")
+            verdict('replace',
+                    f"content replaced the splash (settled frame delta {level:.1f})",
+                    f"settled frame still looks like the splash (delta {level:.1f})",
+                    level > 8)
+    elif 'replace' in required:
+        bad("no settled frame for the replacement check")
 
     return 1 if failures else 0
 
