@@ -39,7 +39,7 @@ jobs:
             echo "No request files in this push."
             exit 0
           fi
-          ALLOWED="release-android-apk.yml build-android-apk.yml test-appmintly-launch-visual-qa.yml"
+          ALLOWED="release-android-apk.yml build-android-apk.yml test-appmintly-launch-visual-qa.yml qa-appmintly-splash.yml"
           for f in $FILES; do
             echo "::group::Request $f"
             WF=$(jq -r '.workflow // empty' "$f")

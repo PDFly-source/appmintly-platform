@@ -1,0 +1,12 @@
+{
+  "workflow": "qa-appmintly-splash.yml",
+  "ref": "main",
+  "inputs": {
+    "build_run_id": "43026284262",
+    "artifact_name": "android-apk-appmintly-splash-1012-release",
+    "apk_name": "AppMintly-1.0.12.apk",
+    "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
+  },
+  "note": "visual + behaviour proof of the new launch splash on API 36",
+  "requested_at": "2026-11-11T13:15Z"
+}
