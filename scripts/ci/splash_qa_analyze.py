@@ -351,6 +351,13 @@ def main():
 
     mid = nearest_drawn(2400, 1400) or (drawn[-1] if drawn else None)
     ring = nearest_drawn(1100, 900)
+    if ring is None and drawn:
+        # The emulator latches the surface in bursts, so the 1.1s instant is
+        # often not in the set. Any drawn splash frame still shows whether both
+        # ring tints are on screen, which is what this check is for.
+        ring = min(drawn, key=lambda f: abs(f[0] - 1100))
+        note(f"no capture close to 1.1s; the ring check used the frame at "
+             f"{ring[0]}ms instead")
     dots = nearest_drawn(3200, 900) or mid
 
     if mid:
