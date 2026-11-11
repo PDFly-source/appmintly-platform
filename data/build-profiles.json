@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "description": "Authoritative build profiles for catalog artifacts. A profile describes how an artifact is produced and where its verified bytes live; it never changes an existing artifact record.",
+  "profiles": {
+    "nexdrop-native-android": {
+      "appSlug": "nexdrop",
+      "artifactKind": "native-android",
+      "sourceRepository": "PDFly-source/nexdrop",
+      "sourceBranch": "main",
+      "workflow": ".github/workflows/android-build.yml",
+      "packageId": "com.nexdrop.ndt1",
+      "buildMode": "native",
+      "signing": "Original NexDrop release key (certificate SHA-256 11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a); no wrapper or debug identity",
+      "releaseConvention": "GitHub Release tag nexdrop-android-v<sha7> in PDFly-source/nexdrop, normal (non-prerelease) release carrying NexDrop-release.apk",
+      "verification": "CI startup-smoke installs and launches the signed APK on an API 36 emulator; the release job runs only after that job succeeds; RELEASE-VERIFICATION.md records versionName/versionCode, sha256 and certificate fingerprint",
+      "isWrapperReplacement": false
+    }
+  }
+}

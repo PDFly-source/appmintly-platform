@@ -802,7 +802,33 @@
       ],
       "notes": "The native Android engine transfers over local Wi-Fi with HMAC-SHA256-authenticated pairing sessions; the separate NexDrop web app adds encrypted (DTLS + AES-256-GCM) WebRTC transfers. Neither path uploads file contents to cloud storage."
     },
-    "updatedAt": "2026-11-10T04:00:29.331Z"
+    "updatedAt": "2026-11-10T04:00:29.331Z",
+    "nativeArtifact": {
+      "enabled": true,
+      "kind": "native-android",
+      "buildProfile": "nexdrop-native-android",
+      "packageId": "com.nexdrop.ndt1",
+      "versionName": "1.4.7",
+      "versionCode": 20,
+      "minSdk": 26,
+      "targetSdk": 36,
+      "sha256": "a66d0d933d04fbf145d446b2bcf389ad52eca78cce097d7f3a2d5a0f16cc61ac",
+      "fileSizeBytes": 3562408,
+      "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v5a41934/NexDrop-release.apk",
+      "releaseTag": "nexdrop-android-v5a41934",
+      "sourceRepository": "PDFly-source/nexdrop",
+      "sourceCommit": "5a419340f60ff810f1d6a394c10a4b6d8c187161",
+      "signingCertificateSha256": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",
+      "signatureSchemes": [
+        "v2",
+        "v3"
+      ],
+      "verified": true,
+      "verifiedAt": "2026-11-11T11:15:00Z",
+      "verificationSource": "GitHub Actions run 43002424226 (apk + startup-smoke + release) and RELEASE-VERIFICATION.md",
+      "replacesWebViewWrapper": false,
+      "upgradePath": "Fresh install alongside the WebView-wrapper APK requires uninstalling the wrapper build first: the native release is signed with the original NexDrop release key and cannot install over a wrapper-signed build. Existing wrapper installs are NOT updated by this artifact."
+    }
   },
   {
     "id": "billcraft",
