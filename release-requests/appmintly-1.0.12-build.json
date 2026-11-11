@@ -10,7 +10,7 @@
     "background_color": "#F8F2E7",
     "build_id": "appmintly-splash-1012",
     "signing_mode": "release",
-    "icon_url": "https://appmintly.pages.dev/icon-512.png"
+    "icon_url": "https://appmintly.pages.dev/brand/appmintly-launcher-1024.png"
   },
   "note": "owner-supplied splash design (AppMintly_Splash.html) as native launch animation",
   "requested_at": "2026-11-11T13:09Z"
