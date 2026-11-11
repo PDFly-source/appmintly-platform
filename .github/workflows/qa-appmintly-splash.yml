@@ -74,7 +74,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: false
-          emulator-options: -no-snapshot -no-boot-anim -no-audio -gpu swiftshader_indirect -camera-back none -camera-front none
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -no-snapshot -no-boot-anim -no-audio -gpu swiftshader_indirect -camera-back none -camera-front none
           script: |
             set -euo pipefail
             APK=$(find apk -name '${{ inputs.apk_name }}' -print -quit)
