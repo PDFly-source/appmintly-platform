@@ -1,0 +1,17 @@
+{
+  "workflow": "build-android-apk.yml",
+  "ref": "main",
+  "inputs": {
+    "app_name": "AppMintly",
+    "source_url": "https://appmintly.pages.dev/",
+    "package_id": "com.appmintly.appmintly",
+    "version_name": "1.0.12",
+    "theme_color": "#17191C",
+    "background_color": "#F8F2E7",
+    "build_id": "appmintly-identity-1012",
+    "signing_mode": "release",
+    "icon_url": "https://appmintly.pages.dev/brand/appmintly-launcher-1024.png"
+  },
+  "note": "identity proof: rebuild AppMintly 1.0.12 after the splash registry refactor and compare SHA-256 with the published c04ee442...",
+  "requested_at": "2026-11-11T19:45Z"
+}
