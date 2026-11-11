@@ -21,7 +21,7 @@ import sys
 import zlib
 import glob
 
-if len(sys.argv) >= 2 and sys.argv[1] == '--delta':
+if len(sys.argv) >= 2 and sys.argv[1] in ('--delta', '--present'):
     OUT, TAG, DPI = '/tmp', 'none', 420.0
 else:
     OUT, TAG = sys.argv[1], sys.argv[2]
@@ -393,6 +393,19 @@ def main():
     return 1 if failures else 0
 
 
+def present_cli(path):
+    """Is this frame the splash? Light canvas plus artwork in the logo box.
+    uiautomator cannot dump a hierarchy while the animation runs, so presence at
+    launch time is proven from pixels instead."""
+    w, h, bpp, rows = read_png(path)
+    lum = mean_lum(rows, bpp)
+    ink = ink_count(rows, bpp, geometry(w, h)['logo'])
+    light = lum > 190
+    drawn = ink > 2000
+    print(f"{'PRESENT' if light and drawn else 'ABSENT'} mean={lum:.1f} logo_ink={ink}")
+    return 0
+
+
 def delta_cli(a, b):
     wa = read_png(a)
     wb = read_png(b)
@@ -405,6 +418,8 @@ def delta_cli(a, b):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) >= 3 and sys.argv[1] == '--present':
+        sys.exit(present_cli(sys.argv[2]))
     if len(sys.argv) >= 4 and sys.argv[1] == '--delta':
         sys.exit(delta_cli(sys.argv[2], sys.argv[3]))
     sys.exit(main())

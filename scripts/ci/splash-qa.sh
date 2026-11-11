@@ -49,35 +49,41 @@ burst() { # burst <tag>
   done
 }
 
-wait_present() { # wait_present <label> <max_seconds>
-  local label="$1" max="$2" deadline rc
-  deadline=$(( $(date +%s) + max ))
-  while [ "$(date +%s)" -lt "$deadline" ]; do
-    ui_dump_has 'content-desc="AppMintly"'
-    rc=$?
-    if [ "$rc" -eq 0 ]; then
-      pass "${label}: splash shown"
+splash_shown() { # splash_shown <label> <tag>
+  # uiautomator cannot return a hierarchy while the launch animation runs, so
+  # presence at launch time is proven from the pixels instead.
+  local label="$1" tag="$2" n f
+  for n in 1 2 3; do
+    f="${OUT}/${tag}_probe${n}.png"
+    adb exec-out screencap -p > "$f" 2>/dev/null
+    if [ -s "$f" ] && python3 scripts/ci/splash_qa_analyze.py --present "$f" 2>/dev/null | grep -q '^PRESENT'; then
+      pass "${label}: splash on screen (probe ${n})"
       return 0
     fi
+    sleep 0.6
   done
-  fail "${label}: splash never appeared"
+  fail "${label}: splash was not on screen in any of 3 probes"
   return 1
 }
 
-wait_gone() { # wait_gone <label> <max_seconds>
-  # Poll instead of sleeping a fixed time: the splash retires when the
-  # marketplace paints, and a busy emulator can take a few seconds over that.
-  local label="$1" max="$2" deadline rc
+wait_gone() { # wait_gone <label> <max_seconds> [limit_seconds]
+  local label="$1" max="$2" limit="${3:-0}" deadline rc t0 ms
+  t0=$(date +%s%3N)
   deadline=$(( $(date +%s) + max ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
     ui_dump_has 'content-desc="AppMintly"'
     rc=$?
     if [ "$rc" -eq 1 ]; then
-      pass "${label}: splash retired"
+      ms=$(( $(date +%s%3N) - t0 ))
+      if [ "$limit" -gt 0 ] && [ "$ms" -gt $(( limit * 1000 )) ]; then
+        fail "${label}: splash held past the ${limit}s budget (gone only after ${ms}ms of polling)"
+        return 1
+      fi
+      pass "${label}: splash retired (gone after ${ms}ms of polling)"
       return 0
     fi
   done
-  fail "$label: splash still attached after ${max}s"
+  fail "${label}: splash still attached after ${max}s"
   return 1
 }
 
@@ -173,19 +179,24 @@ fi
 adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 | tee -a "$REPORT"
 
 # ---------------------------------------------------------------- cold launch
+# Pass 1 measures the launch timeline. Pixels cannot show it on this emulator
+# (the surface latches seconds apart), but the view hierarchy can: the splash
+# carries content-desc="AppMintly" while it is attached and stops doing so when
+# its own 3400ms timeline ends, so the poll below timestamps that transition.
 wake
 launch_cold
 sleep 0.2
 shot "cold_early"
+[ -s "${OUT}/cold_early.png" ] && pass "cold launch produced a first frame" || fail "cold launch produced no frame"
+wait_gone "cold launch" 15 8
+
+# Pass 2 collects the analysable frame set (composition, palette, replacement).
+launch_cold
+sleep 0.2
 burst "cold"
-sleep 7
+sleep 4
 shot "cold_settled"
-
 analyze cold "$DENSITY"
-
-[ -s "${OUT}/cold_early.png" ] && pass "cold launch produced frames" || fail "cold launch produced no frame"
-
-wait_gone "cold launch" 15
 
 if ui_dump_has '<hierarchy'; then
   pass "marketplace UI is rendered after the splash (view hierarchy present)"
@@ -205,7 +216,7 @@ sleep 2
 # same instant is grabbed a second way (write on the device, pull the file).
 launch_cold
 sleep 0.4
-wait_present "[rot] landscape" 6
+splash_shown "[rot] landscape" rotp
 adb shell screencap -p /sdcard/rot_probe_a.png >/dev/null 2>&1
 sleep 0.7
 adb shell screencap -p /sdcard/rot_probe_b.png >/dev/null 2>&1
@@ -235,7 +246,7 @@ sleep 1
 # ------------------------------------------------------------------- relaunch
 launch_cold
 sleep 0.9
-wait_present "relaunch (no warm-start skip)" 6
+splash_shown "relaunch (no warm-start skip)" relp
 wait_gone "relaunch" 15
 
 # ------------------------------------------------------------- reduced motion
