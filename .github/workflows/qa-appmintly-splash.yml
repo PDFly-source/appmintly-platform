@@ -36,6 +36,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
+      - name: Check out the QA tooling
+        uses: actions/checkout@v4
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -59,18 +62,15 @@ jobs:
           echo "sha256=$SHA size=$(stat -c%s "$FOUND")"
           test "$SHA" = "${{ inputs.apk_sha }}"
 
-      - name: Install helpers
+      - name: Install the emulator audio runtime
         run: |
           set -uo pipefail
-          # Emulator 37.x links libpulse even with -no-audio, so it must be present
-          # before boot. Prefer the distro package, fall back to the bundled copy
-          # when the runner mirror is unreachable.
-          if ! ldconfig -p | grep -q 'libpulse\.so\.0'; then
-            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 update -qq || echo "::warning::apt update failed"
-            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 install -y -qq libpulse0 libpulse-mainloop-glib0 || echo "::warning::apt install failed"
-          fi
-          if ! ldconfig -p | grep -q 'libpulse\.so\.0'; then
-            echo "apt could not provide libpulse0, installing the bundled runtime"
+          # Emulator 37.x links libpulse even when started with -no-audio. The
+          # runner's package mirror is unreliable (DNS failures take minutes to
+          # time out), so use the bundled runtime instead of apt.
+          if ldconfig -p | grep -q 'libpulse\.so\.0'; then
+            echo "libpulse.so.0 already on the image"
+          else
             sudo mkdir -p /usr/local/lib/pulse
             sudo tar xzf ci/emulator-deps/libpulse-emulator-deps.tgz -C /usr/local/lib/pulse
             echo /usr/local/lib/pulse | sudo tee /etc/ld.so.conf.d/appmintly-emulator-pulse.conf >/dev/null

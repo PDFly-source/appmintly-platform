@@ -7,6 +7,6 @@
     "apk_name": "AppMintly-1.0.12.apk",
     "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
   },
-  "note": "retry: bundled libpulse runtime as offline fallback",
-  "requested_at": "2026-11-11T14:40Z"
+  "note": "retry: add the missing checkout, drop apt for the bundled runtime",
+  "requested_at": "2026-11-11T14:48Z"
 }
