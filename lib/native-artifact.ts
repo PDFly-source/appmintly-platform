@@ -205,6 +205,9 @@ export function applyPrimaryAndroidRelease<T extends AppLike>(app: T): T {
     version: native.versionName,
     apk: promotedApk,
     lastUpdated: native.releaseDate ?? app.lastUpdated,
+    // Structured data / sort order follow the primary release too, so no stale
+    // wrapper date survives anywhere the record is published.
+    updatedAt: native.releaseDate ?? app.updatedAt,
     androidChannel: 'native' as const,
     wrapperApk: wrapper ?? undefined,
   } as unknown as T;

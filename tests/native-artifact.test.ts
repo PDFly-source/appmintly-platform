@@ -45,6 +45,7 @@ describe('native artifact: NexDrop primary Android metadata', () => {
     expect(app.apk?.versionName).toBe('1.4.7');
     expect(app.apk?.versionCode).toBe(20);
     expect(app.lastUpdated).toBe('2026-11-11');
+    expect(app.updatedAt).toBe('2026-11-11');
   });
 
   it('TEST 3 — Get App resolves the nativeArtifact release asset', () => {
