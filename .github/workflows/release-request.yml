@@ -42,6 +42,13 @@ jobs:
           ALLOWED="release-android-apk.yml build-android-apk.yml test-appmintly-launch-visual-qa.yml qa-appmintly-splash.yml"
           for f in $FILES; do
             echo "::group::Request $f"
+            CANCEL=$(jq -r '.cancel_run_id // empty' "$f")
+            if [ -n "$CANCEL" ]; then
+              echo "Cancelling run $CANCEL"
+              gh run cancel "$CANCEL" || echo "::warning::could not cancel $CANCEL (already finished?)"
+              echo "::endgroup::"
+              continue
+            fi
             WF=$(jq -r '.workflow // empty' "$f")
             REF=$(jq -r '.ref // "main"' "$f")
             if [ -z "$WF" ]; then

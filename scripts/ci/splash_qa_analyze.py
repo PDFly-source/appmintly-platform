@@ -1,33 +1,31 @@
 #!/usr/bin/env python3
-"""Frame analysis for the AppMintly launch splash QA run.
+"""Frame analysis for the AppMintly launch splash QA run (dependency-free).
+
+Reads the emulator's `screencap -p` files (8-bit non-interlaced PNG, RGB or
+RGBA) with zlib only, so a flaky package mirror cannot break the QA job.
 
 Reimplements the reference geometry (stage 228x488, fit = min(w/228d, h/488d))
 so the checks look exactly where the port draws:
 
   * brightness  - every launch frame is the light canvas, never the old dark
-                  gradient (this is the regression that matters);
-  * motion      - consecutive frames differ, so the animation really runs;
+                  gradient (the regression that matters);
+  * motion      - frames differ over time, so the animation really runs;
   * logo/word   - ink is present in the two reference rectangles;
   * rings       - both ring tints are on screen mid-animation;
   * dots        - the four palette dots sit on the reference row.
 
 Usage: splash_qa_analyze.py <dir> <tag> <dpi>
 """
-import sys
-import glob
 import os
-from PIL import Image, ImageStat, ImageChops
+import sys
+import zlib
+import glob
 
-OUT, TAG, DPI = sys.argv[1], sys.argv[2], float(sys.argv[3] or 420)
+OUT, TAG = sys.argv[1], sys.argv[2]
+DPI = float(sys.argv[3] or 420)
 D = DPI / 160.0
 
-PALETTE = {
-    'green': (31, 157, 85),
-    'blue': (37, 99, 235),
-    'amber': (245, 166, 35),
-    'red': (229, 57, 47),
-}
-
+PALETTE = [(31, 157, 85), (37, 99, 235), (245, 166, 35), (229, 57, 47)]
 failures = 0
 
 
@@ -45,18 +43,90 @@ def note(msg):
     print(f"info  [{TAG}] {msg}")
 
 
-def frames():
-    """All frames of this tag: [(elapsed_ms or None, path)]."""
-    out = []
-    for path in sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png"))):
-        name = os.path.basename(path)[len(TAG) + 1:-4]
-        ms = int(name) if name.isdigit() else None
-        out.append((ms, path))
-    return out
+def read_png(path):
+    """Return (width, height, bytes_per_pixel, rows) for an 8-bit PNG."""
+    with open(path, 'rb') as fh:
+        data = fh.read()
+    if data[:8] != b'\x89PNG\r\n\x1a\n':
+        raise ValueError('not a PNG')
+    pos, idat, width, height, colour, depth = 8, [], 0, 0, 0, 8
+    while pos < len(data):
+        length = int.from_bytes(data[pos:pos + 4], 'big')
+        kind = data[pos + 4:pos + 8]
+        body = data[pos + 8:pos + 8 + length]
+        pos += 12 + length
+        if kind == b'IHDR':
+            width = int.from_bytes(body[0:4], 'big')
+            height = int.from_bytes(body[4:8], 'big')
+            depth, colour = body[8], body[9]
+            if body[12] != 0:
+                raise ValueError('interlaced PNG is not supported')
+        elif kind == b'IDAT':
+            idat.append(body)
+        elif kind == b'IEND':
+            break
+    if depth != 8 or colour not in (2, 6):
+        raise ValueError(f'unsupported PNG (depth {depth}, colour type {colour})')
+    bpp = 3 if colour == 2 else 4
+    raw = zlib.decompress(b''.join(idat))
+    stride = width * bpp
+    rows, prev, offset = [], bytearray(stride), 0
+    for _ in range(height):
+        ftype = raw[offset]
+        offset += 1
+        line = bytearray(raw[offset:offset + stride])
+        offset += stride
+        if ftype == 1:
+            for i in range(bpp, stride):
+                line[i] = (line[i] + line[i - bpp]) & 0xFF
+        elif ftype == 2:
+            for i in range(stride):
+                line[i] = (line[i] + prev[i]) & 0xFF
+        elif ftype == 3:
+            for i in range(stride):
+                left = line[i - bpp] if i >= bpp else 0
+                line[i] = (line[i] + ((left + prev[i]) >> 1)) & 0xFF
+        elif ftype == 4:
+            for i in range(stride):
+                a = line[i - bpp] if i >= bpp else 0
+                b = prev[i]
+                c = prev[i - bpp] if i >= bpp else 0
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                pred = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                line[i] = (line[i] + pred) & 0xFF
+        rows.append(line)
+        prev = line
+    return width, height, bpp, rows
 
 
-def mean_lum(img):
-    return ImageStat.Stat(img.convert('L')).mean[0]
+def pixel(rows, bpp, x, y):
+    row = rows[y]
+    i = x * bpp
+    return row[i], row[i + 1], row[i + 2]
+
+
+def mean_lum(rows, bpp, step=6):
+    total = count = 0
+    for row in rows[::step]:
+        for i in range(0, len(row), bpp * step):
+            total += (row[i] * 299 + row[i + 1] * 587 + row[i + 2] * 114) // 1000
+            count += 1
+    return total / max(1, count)
+
+
+def ink_count(rows, bpp, box, threshold=140):
+    x0, y0, x1, y1 = (int(v) for v in box)
+    height = len(rows)
+    count = 0
+    for y in range(max(0, y0), min(height, y1)):
+        row = rows[y]
+        for x in range(max(0, x0), min(len(row) // bpp, x1), 2):
+            i = x * bpp
+            lum = (row[i] * 299 + row[i + 1] * 587 + row[i + 2] * 114) // 1000
+            if lum < threshold:
+                count += 1
+    return count * 2
 
 
 def geometry(width, height):
@@ -70,39 +140,30 @@ def geometry(width, height):
     gap = 12 * u
     col_h = logo_h + gap + word_h
     top = oy + ((488 * u - 44 * u) - col_h) / 2.0
+    cx = ox + 114 * u
     return {
-        'u': u, 'cx': ox + 114 * u, 'oy': oy,
-        'logo': (ox + 114 * u - logo_w / 2, top, ox + 114 * u + logo_w / 2, top + logo_h),
-        'word': (ox + 114 * u - word_w / 2, top + logo_h + gap,
-                 ox + 114 * u + word_w / 2, top + logo_h + gap + word_h),
+        'u': u, 'cx': cx,
+        'logo': (cx - logo_w / 2, top, cx + logo_w / 2, top + logo_h),
+        'word': (cx - word_w / 2, top + logo_h + gap, cx + word_w / 2, top + logo_h + gap + word_h),
         'dots_y': oy + (488 - 52 - 4.5) * u,
-        'dots_x0': ox + 114 * u - (4 * 9 * u + 3 * 9 * u) / 2 + 4.5 * u,
+        'dots_x0': cx - (4 * 9 * u + 3 * 9 * u) / 2 + 4.5 * u,
         'dot_pitch': 18 * u,
         'dot_r': 4.5 * u,
-        'ring_centre': (ox + 114 * u, oy + 190 * u),
+        'ring_centre': (cx, oy + 190 * u),
         'ring_r': 100 * u,
     }
 
 
-def ink_count(img, box, threshold=140):
-    crop = img.crop(tuple(int(v) for v in box)).convert('L')
-    hist = crop.histogram()
-    return sum(hist[:threshold])
-
-
-def dot_matches(img, g):
-    px = img.convert('RGB').load()
-    width, height = img.size
+def dot_matches(width, height, bpp, rows, g):
     matches = 0
-    for i, name in enumerate(['green', 'blue', 'amber', 'red']):
+    radius = max(10, int(g['dot_r'] * 1.6))
+    for i, target in enumerate(PALETTE):
         cx = int(g['dots_x0'] + i * g['dot_pitch'])
         cy = int(g['dots_y'])
-        target = PALETTE[name]
         best = None
-        radius = int(max(10, g['dot_r'] * 1.6))
         for y in range(max(0, cy - radius), min(height, cy + radius)):
             for x in range(max(0, cx - radius), min(width, cx + radius)):
-                r, gg, b = px[x, y][:3]
+                r, gg, b = pixel(rows, bpp, x, y)
                 dist = (r - target[0]) ** 2 + (gg - target[1]) ** 2 + (b - target[2]) ** 2
                 if best is None or dist < best:
                     best = dist
@@ -111,21 +172,17 @@ def dot_matches(img, g):
     return matches
 
 
-def ring_tint(img, g):
-    """Count blue-ish and green-ish pixels in the ring annulus."""
-    px = img.convert('RGB').load()
-    width, height = img.size
+def ring_tint(width, height, bpp, rows, g):
     cx, cy = g['ring_centre']
     r0, r1 = 0.30 * g['ring_r'], 1.75 * g['ring_r']
     blue = green = 0
-    step = 3
-    for y in range(max(0, int(cy - r1)), min(height, int(cy + r1)), step):
-        for x in range(max(0, int(cx - r1)), min(width, int(cx + r1)), step):
+    for y in range(max(0, int(cy - r1)), min(height, int(cy + r1)), 3):
+        for x in range(max(0, int(cx - r1)), min(width, int(cx + r1)), 3):
             dx, dy = x - cx, y - cy
             d2 = dx * dx + dy * dy
             if d2 < r0 * r0 or d2 > r1 * r1:
                 continue
-            r, gg, b = px[x, y][:3]
+            r, gg, b = pixel(rows, bpp, x, y)
             if b - r > 10 and b - gg > 1:
                 blue += 1
             elif gg - r > 6 and gg - b > 0:
@@ -133,62 +190,77 @@ def ring_tint(img, g):
     return blue, green
 
 
+def frame_delta(a, b, step=9):
+    """Mean absolute RGB difference between two decoded frames (subsampled)."""
+    wa, ha, bpp_a, rows_a = a
+    wb, hb, bpp_b, rows_b = b
+    if (wa, ha) != (wb, hb):
+        return None
+    total = count = 0
+    for y in range(0, ha, step):
+        ra, rb = rows_a[y], rows_b[y]
+        for x in range(0, wa, step):
+            i = x * bpp_a
+            total += (abs(ra[i] - rb[i]) + abs(ra[i + 1] - rb[i + 1]) + abs(ra[i + 2] - rb[i + 2]))
+            count += 3
+    return total / max(1, count)
+
+
 def main():
-    items = frames()
-    if not items:
+    paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
+    if not paths:
         bad("no frames captured")
         return 1
 
-    numeric = [(ms, p) for ms, p in items if ms is not None]
-    named = {os.path.basename(p)[len(TAG) + 1:-4]: p for ms, p in items if ms is None}
-
-    # ---- brightness on every launch frame (the old dark splash must be gone)
-    lums = []
-    for ms, path in items:
+    frames = []
+    for path in paths:
+        name = os.path.basename(path)[len(TAG) + 1:-4]
+        ms = int(name) if name.isdigit() else None
         try:
-            img = Image.open(path)
-        except Exception:
-            continue
-        lums.append((mean_lum(img), os.path.basename(path)))
-    if lums:
-        dimmest = min(lums)
-        if dimmest[0] > 190:
-            ok(f"all {len(lums)} launch frames are the light canvas (dimmest mean {dimmest[0]:.1f})")
-        else:
-            bad(f"a launch frame is dark (mean {dimmest[0]:.1f} in {dimmest[1]}) - old splash or flash")
-    else:
+            frames.append((ms, name, read_png(path)))
+        except Exception as exc:  # noqa: BLE001 - report and continue
+            note(f"could not read {name}: {exc}")
+    if not frames:
         bad("no readable frames")
+        return 1
 
-    # ---- motion
-    if len(numeric) >= 3:
-        first = Image.open(numeric[0][1]).convert('RGB')
-        mid = Image.open(numeric[len(numeric) // 2][1]).convert('RGB')
-        if first.size == mid.size:
-            diff = ImageStat.Stat(ImageChops.difference(first, mid)).mean
-            level = sum(diff) / len(diff)
-            if level > 4:
-                ok(f"animation runs (frame delta {level:.1f})")
-            else:
-                bad(f"frames barely differ (delta {level:.1f}) - splash is static")
+    # brightness on every launch frame (the old dark splash must be gone)
+    lums = [(mean_lum(f[2][3], f[2][2]), f[1]) for f in frames]
+    dim = min(lums)
+    if dim[0] > 190:
+        ok(f"all {len(lums)} launch frames are the light canvas (dimmest mean {dim[0]:.1f})")
     else:
-        note("not enough numeric frames for the motion check")
+        bad(f"a launch frame is dark (mean {dim[0]:.1f} in {dim[1]}) - old splash or flash")
 
-    # ---- pick checkpoint frames
+    numeric = [f for f in frames if f[0] is not None]
+    named = {f[1]: f for f in frames if f[0] is None}
+
+    if len(numeric) >= 3:
+        level = frame_delta(numeric[0][2], numeric[len(numeric) // 2][2])
+        if level is None:
+            note("frame sizes changed between captures, skipping the motion check")
+        elif level > 4:
+            ok(f"animation runs (frame delta {level:.1f})")
+        else:
+            bad(f"frames barely differ (delta {level:.1f}) - splash is static")
+    else:
+        note("not enough captured frames for the motion check")
+
     def nearest(target):
         if not numeric:
             return None
-        ms, path = min(numeric, key=lambda t: abs(t[0] - target))
-        return path if abs(ms - target) < 1400 else None
+        frame = min(numeric, key=lambda f: abs(f[0] - target))
+        return frame if abs(frame[0] - target) < 1400 else None
 
-    mid_frame = nearest(2400) or (numeric[-1][1] if numeric else None)
-    ring_frame = nearest(1100)
-    dot_frame = nearest(2900) or mid_frame
+    mid = nearest(2400) or (numeric[-1] if numeric else None)
+    ring = nearest(1100)
+    dots = nearest(2900) or mid
 
-    if mid_frame:
-        img = Image.open(mid_frame).convert('RGB')
-        g = geometry(*img.size)
-        logo_ink = ink_count(img, g['logo'])
-        word_ink = ink_count(img, g['word'])
+    if mid:
+        w, h, bpp, rows = mid[2]
+        g = geometry(w, h)
+        logo_ink = ink_count(rows, bpp, g['logo'])
+        word_ink = ink_count(rows, bpp, g['word'])
         if logo_ink > 2000:
             ok(f"logo artwork drawn in the reference box ({logo_ink} ink px)")
         else:
@@ -200,10 +272,9 @@ def main():
     else:
         bad("no mid-animation frame to inspect")
 
-    if ring_frame:
-        img = Image.open(ring_frame).convert('RGB')
-        g = geometry(*img.size)
-        blue, green = ring_tint(img, g)
+    if ring:
+        w, h, bpp, rows = ring[2]
+        blue, green = ring_tint(w, h, bpp, rows, geometry(w, h))
         if blue > 150:
             ok(f"blue ring visible mid-animation ({blue} tinted px)")
         else:
@@ -215,10 +286,9 @@ def main():
     else:
         note("no frame near 1.1s for the ring check")
 
-    if dot_frame:
-        img = Image.open(dot_frame).convert('RGB')
-        g = geometry(*img.size)
-        matches = dot_matches(img, g)
+    if dots:
+        w, h, bpp, rows = dots[2]
+        matches = dot_matches(w, h, bpp, rows, geometry(w, h))
         if matches >= 3:
             ok(f"{matches}/4 palette dots on the reference row")
         else:
@@ -226,18 +296,16 @@ def main():
     else:
         bad("no late frame for the dots check")
 
-    # ---- settled frame must no longer be the splash overlay
     settled = named.get('settled')
-    if settled and mid_frame:
-        a = Image.open(settled).convert('RGB')
-        b = Image.open(mid_frame).convert('RGB')
-        if a.size == b.size:
-            diff = ImageStat.Stat(ImageChops.difference(a, b)).mean
-            level = sum(diff) / len(diff)
-            if level > 8:
-                ok(f"content replaced the splash (settled frame delta {level:.1f})")
-            else:
-                bad(f"settled frame still looks like the splash (delta {level:.1f})")
+    if settled and mid:
+        level = frame_delta(settled[2], mid[2])
+        if level is None:
+            note("settled frame size differs, skipping the replacement check")
+        elif level > 8:
+            ok(f"content replaced the splash (settled frame delta {level:.1f})")
+        else:
+            bad(f"settled frame still looks like the splash (delta {level:.1f})")
+
     return 1 if failures else 0
 
 
