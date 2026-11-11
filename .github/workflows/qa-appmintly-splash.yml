@@ -26,6 +26,10 @@ on:
         description: 'Expected SHA-256 of the APK'
         required: true
         type: string
+      apk_url:
+        description: 'Optional public HTTPS URL of an already-published APK. When set, the exact published bytes are tested and the build-run inputs are ignored.'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -45,7 +49,17 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Fetch the published APK from its public release URL
+        if: ${{ inputs.apk_url != '' }}
+        run: |
+          set -euo pipefail
+          mkdir -p apk
+          curl -fsSL --retry 3 --retry-delay 5 \
+            -o "apk/${{ inputs.apk_name }}" "${{ inputs.apk_url }}"
+          ls -l "apk/${{ inputs.apk_name }}"
+
       - name: Fetch the production-signed APK from the build run
+        if: ${{ inputs.apk_url == '' }}
         uses: actions/download-artifact@v4
         with:
           run-id: ${{ inputs.build_run_id }}
@@ -59,7 +73,8 @@ jobs:
           FOUND=$(find apk -name '${{ inputs.apk_name }}' -print -quit)
           test -n "$FOUND"
           SHA=$(sha256sum "$FOUND" | cut -d' ' -f1)
-          echo "sha256=$SHA size=$(stat -c%s "$FOUND")"
+          echo "source=${{ inputs.apk_url != '' && 'published-release-asset' || 'build-artifact' }}"
+          echo "file=$FOUND sha256=$SHA size=$(stat -c%s "$FOUND")"
           test "$SHA" = "${{ inputs.apk_sha }}"
 
       - name: Install the emulator audio runtime

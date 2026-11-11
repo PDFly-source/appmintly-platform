@@ -1,0 +1,13 @@
+{
+  "workflow": "qa-appmintly-splash.yml",
+  "ref": "main",
+  "inputs": {
+    "build_run_id": "0",
+    "artifact_name": "unused-published-asset-path",
+    "apk_name": "AppMintly-1.0.12.apk",
+    "apk_sha": "c04ee44267409b9df11c09fd4b72911afa542d3f381027c70ffb2e18fc3b093a",
+    "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/appmintly-v1.0.12/AppMintly-1.0.12.apk"
+  },
+  "note": "validate the exact published 1.0.12 binary (release asset, hash-gated) across the full splash matrix",
+  "requested_at": "2026-11-11T18:40Z"
+}
