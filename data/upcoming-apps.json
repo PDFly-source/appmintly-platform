@@ -3849,12 +3849,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/appmintly/",
-    "releaseVersion": "1.0.11",
+    "releaseVersion": "1.0.12",
     "releaseDate": "2026-03-23",
     "milestones": [
       {
         "id": "pub-appmintly-m1",
-        "title": "Publicly released on the AppMintly marketplace (v1.0.11)",
+        "title": "Publicly released on the AppMintly marketplace (v1.0.12)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/appmintly/.",
         "status": "done"
       }
@@ -3867,9 +3867,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.11.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 1.0.12.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-09"
+          "date": "2026-11-11"
         }
       ]
     },
