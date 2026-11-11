@@ -7,6 +7,6 @@
     "apk_name": "AppMintly-1.0.12.apk",
     "apk_sha": "8a0984497c92133be12328822ad38d44e23dd7f13dc06fe9fd07892e3dea9256"
   },
-  "note": "visual + behaviour proof of the new launch splash on API 36",
-  "requested_at": "2026-11-11T13:15Z"
+  "note": "visual + behaviour proof of the new launch splash on API 36 (retry after libpulse0 fix)",
+  "requested_at": "2026-11-11T13:30Z"
 }

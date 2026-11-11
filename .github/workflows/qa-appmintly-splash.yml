@@ -60,7 +60,11 @@ jobs:
           test "$SHA" = "${{ inputs.apk_sha }}"
 
       - name: Install helpers
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-pil
+        # emulator 37.x links libpulse even with -no-audio; without it qemu dies
+        # instantly with "libpulse.so.0: cannot open shared object file".
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-pil libpulse0 libpulse-mainloop-glib0
 
       - name: Boot an API 36 emulator with the APK installed
         uses: reactivecircus/android-emulator-runner@v2
