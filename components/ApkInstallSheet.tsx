@@ -17,6 +17,7 @@ import {
 import { AppItem } from '@/data/apps';
 import { AppIcon } from './AppIcon';
 import { apkDownloadUrl } from '@/lib/distribution';
+import { nativeDownloadUrl } from '@/lib/native-artifact';
 import { apiUrl } from '@/lib/api-path';
 import { useNotifications } from '@/components/NotificationsProvider';
 import { recordDownloadedVersion } from '@/lib/app-installs';
@@ -113,7 +114,11 @@ export function ApkInstallSheet({ app, isOpen, onClose, onOpenWeb }: ApkInstallS
     // When the listing carries full release evidence we hand off through the
     // tracked /dl/<slug> endpoint, whose 302 destination is this same official
     // GitHub asset; otherwise we keep the direct asset unchanged.
-    const releaseUrl = apkDownloadUrl({ ...app, apk: apkMeta ?? app.apk }) ?? apkMeta?.apkUrl;
+    // Native releases download the verified release asset itself; the tracked
+    // platform route answers with the wrapper channel, so it is not used here.
+    const nativeUrl = nativeDownloadUrl(app);
+    const releaseUrl =
+      nativeUrl ?? apkDownloadUrl({ ...app, apk: apkMeta ?? app.apk }) ?? apkMeta?.apkUrl;
 
     // 1. Preferred mechanism: plain browser navigation to the public GitHub
     //    Release asset. Top-level navigation is not subject to CORS, and

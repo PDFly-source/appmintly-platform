@@ -816,6 +816,8 @@
       "fileSizeBytes": 3562408,
       "apkUrl": "https://github.com/PDFly-source/nexdrop/releases/download/nexdrop-android-v5a41934/NexDrop-release.apk",
       "releaseTag": "nexdrop-android-v5a41934",
+      "releaseDate": "2026-11-11",
+      "releasePublishedAt": "2026-11-11T10:32:15Z",
       "sourceRepository": "PDFly-source/nexdrop",
       "sourceCommit": "5a419340f60ff810f1d6a394c10a4b6d8c187161",
       "signingCertificateSha256": "11cb2ab82ba751fea04d101bd3a1498b852581f999056a3bc371e47e326a861a",

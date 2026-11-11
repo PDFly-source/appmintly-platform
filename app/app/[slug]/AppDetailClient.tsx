@@ -297,7 +297,9 @@ export default function AppDetailPage() {
 
   const getPrimaryCtaText = () => {
     if (hasApk) {
-      return 'Get App';
+      // Native releases are named as such so the APK download is never
+      // confused with the web experience offered by "Open on Web".
+      return app.androidChannel === 'native' ? 'Get Android App' : 'Get App';
     }
     if (isStandaloneInstalled) {
       return 'Open App';

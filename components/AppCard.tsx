@@ -24,6 +24,7 @@ import { CompareToggle } from '@/components/CompareToggle';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 import { resolveDeveloper } from '@/data/publishers';
 import { hasAuthoritativeApkRelease } from '@/lib/distribution';
+import { nativeDownloadUrl } from '@/lib/native-artifact';
 import { apiUrl } from '@/lib/api-path';
 import {
   useLocalFavorite,
@@ -69,7 +70,7 @@ export const AppCard: React.FC<AppCardProps> = ({ app, variant = 'grid' }) => {
 
     // 1. Android APK: ONLY when a real authoritative release exists
     if (hasReleasedApk) {
-      const apkUrl = app.apk?.apkUrl || app.apkUrl;
+      const apkUrl = nativeDownloadUrl(app) || app.apk?.apkUrl || app.apkUrl;
       if (apkUrl || app.apk?.fileName) {
         trackAppDownloaded(app.id);
         // Phase 1A: local version history (drives "Update Available" badge)

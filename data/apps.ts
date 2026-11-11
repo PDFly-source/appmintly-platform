@@ -1,5 +1,6 @@
 import rawApps from './apps.json';
 import { APPFORGE_DEMO_MODE, NEW_APP_THRESHOLD_DAYS } from '@/lib/config';
+import { applyPrimaryAndroidRelease, type NativeArtifactLike } from '@/lib/native-artifact';
 
 export type AppType =
   | 'PWA'
@@ -20,7 +21,8 @@ export interface PwaMetadata {
 
 export interface ApkMetadata {
   enabled: boolean;
-  buildMode: 'twa' | 'webview';
+  /** 'native' = the app's own signed native build (see nativeArtifact). */
+  buildMode: 'twa' | 'webview' | 'native';
   packageId: string;
   versionName: string;
   versionCode: number;
@@ -55,6 +57,12 @@ export interface ApkMetadata {
   validatorVersion?: string;
   releaseId?: number;
   assetId?: number;
+  /**
+   * The platform WebView-wrapper record this channel replaced, preserved
+   * verbatim when a native artifact became the primary Android release.
+   * Never rendered as the primary release; kept for audit and comparison.
+   */
+  wrapperArtifact?: Record<string, unknown> | null;
 }
 
 
@@ -152,6 +160,15 @@ export interface AppItem {
   size?: string;
   platform?: string[];
   apk?: ApkMetadata;
+  /**
+   * The app's own signed native release, when the publisher ships one.
+   * When usable it is the primary Android channel (see lib/native-artifact).
+   */
+  nativeArtifact?: NativeArtifactLike | null;
+  /** Which Android channel the record resolves to: native, wrapper, or none. */
+  androidChannel?: 'native' | 'wrapper';
+  /** Wrapper-era record preserved when the native artifact takes over. */
+  wrapperApk?: Record<string, unknown> | null;
   privacyTech?: PrivacyTechFacts;
   previewMedia?: PreviewMedia;
   status?: 'published' | 'draft' | 'archived' | 'Published' | 'Draft' | 'Archived';
@@ -254,7 +271,7 @@ export function isNewApp(app: AppItem): boolean {
  */
 export function normalizeApp(raw: any): AppItem {
   const normStatus = normalizeStatus(raw);
-  return {
+  return applyPrimaryAndroidRelease<AppItem>({
     ...raw,
     id: raw.id || raw.slug,
     slug: raw.slug || raw.id,
@@ -268,7 +285,7 @@ export function normalizeApp(raw: any): AppItem {
     tags: Array.isArray(raw.tags) ? raw.tags : [],
     screenshots: Array.isArray(raw.screenshots) ? raw.screenshots : [],
     changelog: Array.isArray(raw.changelog) ? raw.changelog : [],
-  };
+  });
 }
 
 // Authoritative base catalog loaded directly from version-controlled apps.json
