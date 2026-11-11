@@ -94,11 +94,10 @@ jobs:
           profile: pixel_6
           disable-animations: false
           emulator-boot-timeout: 900
-          emulator-options: -no-window -no-snapshot -no-boot-anim -no-audio -gpu swiftshader_indirect -camera-back none -camera-front none
-          script: |
-            set -uo pipefail
-            APK_PATH="$(find apk -name '${{ inputs.apk_name }}' -print -quit)" \
-              bash scripts/ci/splash-qa.sh
+          emulator-options: -no-window -no-snapshot -no-boot-anim -no-audio -gpu swiftshader_indirect -no-metrics -camera-back none -camera-front none
+          # The action runs this through /bin/sh, so it must stay POSIX:
+          # `set -o pipefail` would abort with exit code 2 before anything runs.
+          script: bash scripts/ci/splash-qa.sh
 
       - name: Upload splash evidence
         if: always()
