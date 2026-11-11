@@ -1,0 +1,56 @@
+name: Release request bridge
+
+# The release/QA workflows are workflow_dispatch only, and the automation token
+# used for agentic work can read Actions but not dispatch workflows. This bridge
+# turns a committed request file into a real dispatch, using the repository's
+# own GITHUB_TOKEN (which holds actions:write). It runs only on changes under
+# release-requests/, so normal commits never touch it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-requests/*.json'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate and dispatch the requested workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Every request file added or changed by this push.
+          FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- 'release-requests/*.json' | grep -v 'README' || true)
+          if [ -z "$FILES" ]; then
+            echo "No request files in this push."
+            exit 0
+          fi
+          ALLOWED="release-android-apk.yml build-android-apk.yml test-appmintly-launch-visual-qa.yml"
+          for f in $FILES; do
+            echo "::group::Request $f"
+            WF=$(jq -r '.workflow // empty' "$f")
+            REF=$(jq -r '.ref // "main"' "$f")
+            if [ -z "$WF" ]; then
+              echo "::error::$f has no workflow field"; exit 1
+            fi
+            case " $ALLOWED " in
+              *" $WF "*) ;;
+              *) echo "::error::$f requests a workflow that is not allow-listed: $WF"; exit 1 ;;
+            esac
+            ARGS=$(jq -r '.inputs // {} | to_entries[] | "-f \(.key)=\(.value)"' "$f")
+            echo "Dispatching $WF on ref $REF with:"
+            echo "$ARGS"
+            # shellcheck disable=SC2086
+            gh workflow run "$WF" --ref "$REF" $ARGS
+            echo "Dispatched $WF"
+            echo "::endgroup::"
+          done
