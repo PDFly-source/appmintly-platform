@@ -173,13 +173,39 @@ fi
 adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
 adb shell settings put system user_rotation 1 >/dev/null 2>&1
 sleep 2
+
+# Pass 1, landscape: liveness and an independent capture path. The emulator's
+# landscape surface does not always hand back fresh exec-out screencaps, so the
+# same instant is grabbed a second way (write on the device, pull the file).
 launch_cold
 sleep 0.4
+if ui_dump_has 'content-desc="AppMintly"'; then
+  pass "[rot] splash view is attached in landscape"
+else
+  fail "[rot] splash view missing in landscape"
+fi
+adb shell screencap -p /sdcard/rot_probe_a.png >/dev/null 2>&1
+sleep 0.7
+adb shell screencap -p /sdcard/rot_probe_b.png >/dev/null 2>&1
+adb pull /sdcard/rot_probe_a.png "${OUT}/rot_probe_a.png" >/dev/null 2>&1
+adb pull /sdcard/rot_probe_b.png "${OUT}/rot_probe_b.png" >/dev/null 2>&1
+if [ -s "${OUT}/rot_probe_a.png" ] && [ -s "${OUT}/rot_probe_b.png" ]; then
+  info "[rot] $(python3 scripts/ci/splash_qa_analyze.py --delta "${OUT}/rot_probe_a.png" "${OUT}/rot_probe_b.png" 2>/dev/null)"
+else
+  info "[rot] independent capture path produced no file"
+fi
+sleep 6
+wait_gone "landscape launch" 15
+
+# Pass 2, landscape: the analysable frame set.
+launch_cold
+sleep 0.3
 shot "rot_early"
 burst "rot"
-sleep 6
+sleep 5
 shot "rot_settled"
 analyze rot "$DENSITY"
+
 adb shell settings put system user_rotation 0 >/dev/null 2>&1
 adb shell settings put system accelerometer_rotation 1 >/dev/null 2>&1
 sleep 1

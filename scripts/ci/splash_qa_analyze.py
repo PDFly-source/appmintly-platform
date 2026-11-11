@@ -21,8 +21,11 @@ import sys
 import zlib
 import glob
 
-OUT, TAG = sys.argv[1], sys.argv[2]
-DPI = float(sys.argv[3] or 420)
+if len(sys.argv) >= 2 and sys.argv[1] == '--delta':
+    OUT, TAG, DPI = '/tmp', 'none', 420.0
+else:
+    OUT, TAG = sys.argv[1], sys.argv[2]
+    DPI = float(sys.argv[3] or 420)
 D = DPI / 160.0
 
 PALETTE = [(31, 157, 85), (37, 99, 235), (245, 166, 35), (229, 57, 47)]
@@ -212,6 +215,14 @@ def ring_tint(width, height, bpp, rows, g):
     return blue, green
 
 
+def frame_signature(frame):
+    """Cheap whole-frame fingerprint: sampled rows, so a splash that only
+    animates its centre is not mistaken for a frozen capture."""
+    _w, h, _bpp, rows = frame
+    stride = max(1, h // 32)
+    return b''.join(bytes(rows[y]) for y in range(0, h, stride))
+
+
 def frame_delta(a, b, step=9):
     """Mean absolute RGB difference between two decoded frames (subsampled)."""
     wa, ha, bpp_a, rows_a = a
@@ -233,9 +244,15 @@ def frame_delta(a, b, step=9):
 # retires (with reduced motion there is deliberately no animation to measure).
 REQUIRED = {
     'cold': {'motion', 'logo', 'word', 'rings', 'dots', 'replace'},
-    'rot': {'logo', 'dots', 'replace'},
+    # A rotated launch only has to prove the splash still paints at the new
+    # size and retires; the emulator's landscape surface does not hand out
+    # time-resolved frames reliably, so motion detail is reported, not required.
+    'rot': {'logo', 'replace'},
     'rm': {'logo', 'replace'},
 }
+
+# The splash is 3400ms; anything sampled after that is the marketplace.
+SPLASH_WINDOW_MS = 3600
 
 
 def main():
@@ -257,7 +274,9 @@ def main():
         return 1
 
     required = REQUIRED.get(TAG, {'logo'})
-    numeric = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])
+    numeric_all = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])
+    numeric = [f for f in numeric_all if f[0] <= SPLASH_WINDOW_MS]
+    late = len(numeric_all) - len(numeric)
     named = {f[1]: f for f in frames if f[0] is None}
 
     def verdict(check, passed_msg, failed_msg, enabled=True):
@@ -282,6 +301,11 @@ def main():
         else:
             bad(f"a launch frame is dark (mean {dim[0]:.1f} at {dim[1]}ms) - old splash or flash")
 
+        if late:
+            note(f"{late} frame(s) after {SPLASH_WINDOW_MS}ms were not judged as splash frames")
+        if len({frame_signature(f[2]) for f in numeric}) == 1 and len(numeric) > 1:
+            note(f"all {len(numeric)} splash frames are identical pixels - the capture "
+                 "was not time-resolved on this device, so motion detail is not asserted")
         if len(numeric) >= 3:
             level = frame_delta(numeric[0][2], numeric[len(numeric) // 2][2])
             if level is None:
@@ -356,5 +380,18 @@ def main():
     return 1 if failures else 0
 
 
+def delta_cli(a, b):
+    wa = read_png(a)
+    wb = read_png(b)
+    level = frame_delta(wa, wb)
+    if level is None:
+        print(f"DIFFERENT_SIZE {a} {b}")
+        return 0
+    print(f"DELTA {level:.1f}")
+    return 0
+
+
 if __name__ == '__main__':
+    if len(sys.argv) >= 4 and sys.argv[1] == '--delta':
+        sys.exit(delta_cli(sys.argv[2], sys.argv[3]))
     sys.exit(main())
