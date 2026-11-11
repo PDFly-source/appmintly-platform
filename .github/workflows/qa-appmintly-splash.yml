@@ -60,21 +60,30 @@ jobs:
           test "$SHA" = "${{ inputs.apk_sha }}"
 
       - name: Install helpers
-        # emulator 37.x links libpulse even with -no-audio; without it qemu dies
-        # instantly with "libpulse.so.0: cannot open shared object file".
         run: |
           set -uo pipefail
-          # Runner mirrors occasionally fail to resolve; retry, then assert that
-          # the two things we actually need are usable.
-          # Only libpulse is needed (emulator 37.x links it even with -no-audio);
-          # the frame analysis is dependency-free pure Python on purpose.
-          timeout 150 sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=15 update -qq || echo "::warning::apt update failed or timed out"
-          for attempt in 1 2 3; do
-            ldconfig -p | grep -q 'libpulse\.so\.0' && break
-            timeout 150 sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=15 install -y -qq libpulse0 libpulse-mainloop-glib0 || echo "::warning::attempt ${attempt} could not install libpulse0"
-          done
-          ldconfig -p | grep -q 'libpulse\.so\.0' || { echo "::error::libpulse.so.0 is missing (runner mirror unreachable)"; exit 1; }
-          python3 -c "import zlib, glob; print('pure-python analysis ok')" 
+          # Emulator 37.x links libpulse even with -no-audio, so it must be present
+          # before boot. Prefer the distro package, fall back to the bundled copy
+          # when the runner mirror is unreachable.
+          if ! ldconfig -p | grep -q 'libpulse\.so\.0'; then
+            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 update -qq || echo "::warning::apt update failed"
+            timeout 180 sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 install -y -qq libpulse0 libpulse-mainloop-glib0 || echo "::warning::apt install failed"
+          fi
+          if ! ldconfig -p | grep -q 'libpulse\.so\.0'; then
+            echo "apt could not provide libpulse0, installing the bundled runtime"
+            sudo mkdir -p /usr/local/lib/pulse
+            sudo tar xzf ci/emulator-deps/libpulse-emulator-deps.tgz -C /usr/local/lib/pulse
+            echo /usr/local/lib/pulse | sudo tee /etc/ld.so.conf.d/appmintly-emulator-pulse.conf >/dev/null
+            sudo ldconfig
+          fi
+          PULSE="$(ldconfig -p | awk '/libpulse\.so\.0 /{print $NF; exit}')"
+          if [ -z "$PULSE" ]; then echo "::error::libpulse.so.0 is not resolvable"; exit 1; fi
+          echo "libpulse.so.0 -> $PULSE"
+          if ldd "$PULSE" | grep -q 'not found'; then
+            ldd "$PULSE" | grep 'not found'
+            echo "::error::libpulse.so.0 has unresolved dependencies"
+            exit 1
+          fi
 
       - name: Boot an API 36 emulator with the APK installed
         uses: reactivecircus/android-emulator-runner@v2
