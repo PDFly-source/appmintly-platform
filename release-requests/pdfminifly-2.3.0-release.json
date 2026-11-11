@@ -1,0 +1,16 @@
+{
+  "workflow": "release-android-apk.yml",
+  "ref": "main",
+  "inputs": {
+    "app_name": "PDFMiniFly",
+    "package_id": "com.appforge.pdfminifly",
+    "version_name": "2.3.0",
+    "source_url": "https://pdfminifly.pages.dev/",
+    "icon_url": "https://appmintly.pages.dev/brand/pdfminifly-logo-official.png",
+    "theme_color": "#7A1635",
+    "background_color": "#F6EFE3",
+    "distribution_repo": "PDFly-source/appmintly-releases"
+  },
+  "note": "Task 2: PDFMiniFly native owner-supplied splash replaces the old launch surface",
+  "requested_at": "2026-11-11T20:20Z"
+}
