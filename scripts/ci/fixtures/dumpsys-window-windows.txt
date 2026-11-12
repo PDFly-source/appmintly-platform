@@ -1,0 +1,29 @@
+WINDOW MANAGER WINDOWS (dumpsys window windows)
+  Display: mDisplayId=0 rootTaskId=1
+    mCurrentFocus=Window{d1c2f6 u0 com.appforge.cineflow/com.appforge.cineflow.MainActivity}
+    mFocusedApp=ActivityRecord{a71f3b u0 com.appforge.cineflow/.MainActivity t42}
+
+  Window #0 Window{d1c2f6 u0 com.appforge.cineflow/com.appforge.cineflow.MainActivity}:
+    mDisplayId=0 rootTaskId=42 mSession=Session{8ff31 u0 pid=3122}
+    mOwnerUid=10142 package=com.appforge.cineflow
+    mAttrs={(0,0)(fillxfill) sim={adjust=pan forwardNavigation} ty=BASE_APPLICATION
+      fl=LAYOUT_IN_SCREEN LAYOUT_NO_LIMITS HARDWARE_ACCELERATED}
+    mFrame=Rect(0, 129 - 1080, 2335)
+    mBounds=Rect(0, 129 - 1080, 2335)
+    mContentFrame=Rect(0, 129 - 1080, 2335)
+    mContentInsets=InsetsSource: {36ef5a2 type=statusBars frames=[(0,0)(1080,129)] visible}
+    Requested w=1080 h=2206 mLayoutSeq=118
+    mHasSurface=true isReadyForDisplay()=true mWindowRemovalAllowed=false
+    mFrameProvider=Window{d1c2f6 u0 com.appforge.cineflow/com.appforge.cineflow.MainActivity}
+
+  Window #1 Window{4b7d2c1 u0 StatusBar}:
+    mDisplayId=0 mSession=Session{91ac2 u0 pid=2011}
+    mAttrs={(0,0)(fillx36) ty=STATUS_BAR}
+    mFrame=Rect(0, 0 - 1080, 129)
+    mHasSurface=true isReadyForDisplay()=true
+
+  Window #2 Window{77e0aa4 u0 NavigationBar}:
+    mDisplayId=0 mSession=Session{5c31b u0 pid=2011}
+    mAttrs={(0,0)(fillx65) ty=NAVIGATION_BAR}
+    mFrame=Rect(0, 2335 - 1080, 2400)
+    mHasSurface=true isReadyForDisplay()=true

@@ -64,6 +64,21 @@ import {
   niramaySplashWordJpeg,
 } from './splash/niramay-splash';
 import {
+  CINEFLOW_SPLASH_BG,
+  CINEFLOW_SPLASH_HARD_TIMEOUT_MS,
+  CINEFLOW_SPLASH_ICON_NAME,
+  CINEFLOW_SPLASH_MARK_NAME,
+  CINEFLOW_SPLASH_PACKAGE,
+  CINEFLOW_SPLASH_WORD_NAME,
+  cineflowSplashColorEntries,
+  cineflowSplashJava,
+  cineflowSplashMarkJpeg,
+  cineflowSplashStylesV31Xml,
+  cineflowSplashStylesXml,
+  cineflowSplashTransparentIconXml,
+  cineflowSplashWordJpeg,
+} from './splash/cineflow-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -639,6 +654,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       assets: [
         { name: `${NIRAMAY_SPLASH_LOGO_NAME}.jpg`, bytes: niramaySplashLogoJpeg() },
         { name: `${NIRAMAY_SPLASH_WORD_NAME}.jpg`, bytes: niramaySplashWordJpeg() },
+      ],
+    },
+    [CINEFLOW_SPLASH_PACKAGE]: {
+      viewClass: 'CineFlowSplashView',
+      bg: CINEFLOW_SPLASH_BG,
+      hardTimeoutMs: CINEFLOW_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'CineFlowSplashView.java',
+      java: cineflowSplashJava,
+      iconName: CINEFLOW_SPLASH_ICON_NAME,
+      iconXml: cineflowSplashTransparentIconXml(),
+      colorEntries: cineflowSplashColorEntries(),
+      stylesXml: cineflowSplashStylesXml(),
+      stylesV31Xml: cineflowSplashStylesV31Xml(),
+      assets: [
+        { name: `${CINEFLOW_SPLASH_MARK_NAME}.jpg`, bytes: cineflowSplashMarkJpeg() },
+        { name: `${CINEFLOW_SPLASH_WORD_NAME}.jpg`, bytes: cineflowSplashWordJpeg() },
       ],
     },
   };

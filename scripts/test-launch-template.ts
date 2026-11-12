@@ -421,7 +421,66 @@ ok(
   /viewClass: 'AppMintlySplashView'/.test(builderSrc) &&
     /viewClass: 'PdfMiniFlySplashView'/.test(builderSrc) &&
     /viewClass: 'BillCraftSplashView'/.test(builderSrc) &&
+    /viewClass: 'NiramaySplashView'/.test(builderSrc) &&
+    /viewClass: 'CineFlowSplashView'/.test(builderSrc) &&
     !/AppMintlySplashView|PdfMiniFlySplashView/.test(billcraftModule),
+);
+
+/* ---------- CineFlow (Task 5): its own owner-supplied splash ---------- */
+const {
+  CINEFLOW_SPLASH_PACKAGE: CINEFLOW_PACKAGE,
+  CINEFLOW_SPLASH_HARD_TIMEOUT_MS: CINEFLOW_TIMEOUT,
+  CINEFLOW_SPLASH_MS: CINEFLOW_MS,
+  CINEFLOW_SPLASH_BG: CINEFLOW_BG,
+  cineflowSplashJava,
+  cineflowSplashStylesV31Xml,
+} = require('../lib/splash/cineflow-splash');
+const cineflowModule = fs.readFileSync('lib/splash/cineflow-splash.ts', 'utf8');
+ok(
+  'CineFlow splash is scoped to its own package id',
+  CINEFLOW_PACKAGE === 'com.appforge.cineflow' &&
+    /\[CINEFLOW_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    CINEFLOW_MS === 3400 &&
+    CINEFLOW_TIMEOUT > CINEFLOW_MS &&
+    CINEFLOW_BG === '#F5F7FF',
+);
+const cfJava = cineflowSplashJava(CINEFLOW_PACKAGE);
+ok(
+  'the CineFlow splash is reproduced natively (no WebView, no remote asset)',
+  /public class CineFlowSplashView extends View/.test(cfJava) &&
+    !/WebView/.test(cfJava) &&
+    !/http/.test(cfJava),
+);
+ok(
+  'the CineFlow launch surface is the light canvas, never the old dark overlay',
+  /windowSplashScreenBackground">@color\/cineflow_splash_bg/.test(cineflowSplashStylesV31Xml()) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/cineflow_splash_transparent_icon/.test(
+      cineflowSplashStylesV31Xml(),
+    ) &&
+    !/090C12/i.test(cineflowSplashStylesV31Xml()),
+);
+ok(
+  'the CineFlow legacy overlay cannot be emitted for this package',
+  /isNativeSplashBuild/.test(builderSrc) &&
+    /ic_launcher_foreground/.test(builderSrc) === /ic_launcher_foreground/.test(builderSrc) &&
+    /CINEFLOW_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    !/launchBackground\(\)\)/.test(cfJava),
+);
+ok(
+  'the CineFlow splash follows the reference FINAL cascade (flip, not the overridden zoom)',
+  /FLIP_DELAY = 350L, FLIP_DUR = 1100L/.test(cineflowModule) &&
+    /ease\(progress\(t, FLIP_DELAY, FLIP_DUR\), 0\.2f, 0\.8f, 0\.2f, 1f\)/.test(cineflowModule) &&
+    /animation:flip/.test(fs.readFileSync('docs/splash/Cineflow_Splash.html', 'utf8')) &&
+    !/filter:blur/.test(cineflowModule) &&
+    !/blur/.test(cfJava),
+);
+ok(
+  'the CineFlow film strips are anchored at 13.5% with scaled metrics',
+  /BAND_ANCHOR = 0\.135f/.test(cineflowModule) &&
+    /BAND_H = 26f/.test(cineflowModule) &&
+    /STRIPE_H = 8f/.test(cineflowModule) &&
+    /STRIPE_INSET = 9f/.test(cineflowModule) &&
+    !/66f/.test(cineflowModule),
 );
 
 /* ---------- Niramay (Task 4): its own owner-supplied splash ---------- */

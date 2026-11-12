@@ -1,0 +1,8 @@
+  Display: mDisplayId=0 uniqueId="local:4619827259835644672" app 2400 x 1080
+    mDisplayInfo=DisplayInfo{"Built-in Screen", app 2400 x 1080, real 2400 x 1080, largest app 2400 x 1080}
+    mInsetsStateController=InsetsStateController
+      InsetsSource id=5300004 type=systemGestures frame=[2322,0][2400,1080] visible=true flags= sideHint=RIGHT
+      InsetsSource id=5300001 type=navigationBars frame=[0,1032][2400,1080] visible=true flags=SUPPRESS_SCRIM
+      InsetsSource id=7 type=displayCutout frame=[2272,0][2400,1080] visible=true flags= sideHint=RIGHT
+      statusBars frame=[0,0][2400,63] visible=true flags= sideHint=TOP
+      InsetsSource id=3 type=ime frame=[0,0][0,0] visible=false flags= sideHint=NONE

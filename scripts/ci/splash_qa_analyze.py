@@ -16,6 +16,7 @@ so the checks look exactly where the port draws:
 
 Usage: splash_qa_analyze.py <dir> <tag> <dpi>
 """
+import json
 import os
 import sys
 import zlib
@@ -44,6 +45,32 @@ def bad(msg):
 
 def note(msg):
     print(f"info  [{TAG}] {msg}")
+
+
+def load_viewport():
+    """Read the device geometry splash-qa.sh recorded before the launch."""
+    path = os.environ.get('SPLASH_VIEWPORT')
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except Exception as exc:                       # noqa: BLE001 - report, never crash
+        note(f"viewport file unreadable ({exc})")
+        return None
+
+
+def write_report(payload, tag=None):
+    """Write a machine-readable record next to the frames when asked to."""
+    root = os.environ.get('SPLASH_QA_REPORT')
+    if not root:
+        return
+    try:
+        os.makedirs(root, exist_ok=True)
+        with open(os.path.join(root, f"report-{tag or TAG}.json"), 'w') as fh:
+            json.dump(payload, fh, indent=2, sort_keys=True)
+    except Exception as exc:                       # noqa: BLE001
+        note(f"could not write the JSON report ({exc})")
 
 
 def read_png(path):
@@ -150,6 +177,10 @@ def geometry(width, height):
         # .mk is 150dp wide from a 420x358 JPEG, .tx 195dp from 620x203.
         logo_w, logo_h = 150 * u, 150 * u * 358 / 420.0
         word_w, word_h = 195 * u, 195 * u * 203 / 620.0
+    elif DESIGN == 'cineflow':
+        # .mk is 135dp wide from a 420x426 JPEG, .tx 215dp from 620x155.
+        logo_w, logo_h = 135 * u, 135 * u * 426 / 420.0
+        word_w, word_h = 215 * u, 215 * u * 155 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -157,8 +188,22 @@ def geometry(width, height):
     col_h = logo_h + gap + word_h
     top = oy + ((488 * u - 44 * u) - col_h) / 2.0
     cx = ox + 114 * u
+    # CineFlow's film strips live in the full-viewport layer, not the stage:
+    # anchors at 13.5% of the viewport, height and stripes scaled by u.
+    band_h = 26 * u
+    stripe_off = 9 * u
+    stripe_h = 8 * u
+    bands = {
+        'band_top': (0, 0.135 * height, width, 0.135 * height + band_h),
+        'band_bottom': (0, height - 0.135 * height - band_h, width, height - 0.135 * height),
+        'stripe_top_band': (0, 0.135 * height + stripe_off, width, 0.135 * height + stripe_off + stripe_h),
+        'stripe_bottom_band': (0, height - 0.135 * height - band_h + stripe_off,
+                               width, height - 0.135 * height - band_h + stripe_off + stripe_h),
+        'loader_strip': (0, top + logo_h + gap + word_h + 2 * u,
+                         width, height - 0.135 * height - band_h - 2 * u),
+    }
     return {
-        'u': u, 'cx': cx,
+        'bands': bands, 'u': u, 'cx': cx,
         'logo': (cx - logo_w / 2, top, cx + logo_w / 2, top + logo_h),
         'word': (cx - word_w / 2, top + logo_h + gap, cx + word_w / 2, top + logo_h + gap + word_h),
         'dots_y': oy + (488 - 52 - 4.5) * u,
@@ -436,6 +481,10 @@ REQUIRED = {
              # required on the captured frame.
              else {'motion', 'logo', 'word', 'line', 'nobar', 'replace'}
              if DESIGN == 'niramay'
+             # CineFlow's reference has no loader either: two film strips and
+             # an empty loader strip are required instead.
+             else {'bands', 'stripe', 'nobar', 'logo', 'word', 'replace'}
+             if DESIGN == 'cineflow'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
@@ -616,6 +665,170 @@ def main():
                 f"wordmark drawn in the reference box ({word_ink} ink px)",
                 f"wordmark missing from its box ({word_ink} ink px)",
                 word_ink > 200)
+        if DESIGN == 'cineflow':
+            # Geometry is measured on the device, never inferred from pixels.
+            # The reference pins the film strips to 13.5% of the .sp layer, and
+            # `inset:0` makes that layer the app viewport - on a device the app
+            # window excludes the status and navigation bars, so a
+            # screenshot-relative reading is off by the insets.
+            vp = load_viewport()
+            width = len(rows[0]) // bpp
+            frame_h = len(rows)
+            evidence = {
+                'frame': {'width': width, 'height': frame_h},
+                'viewport_source': (vp or {}).get('source', 'screenshot-fallback'),
+                'device': vp,
+                'predictions': {},
+                'measured': {},
+            }
+            window = (vp or {}).get('window')
+            if window and window.get('width') and window.get('height'):
+                shot = (vp or {}).get('screenshot') or {}
+                sx = sy = 1.0
+                if shot.get('width') and shot.get('height'):
+                    sx = width / float(shot['width'])
+                    sy = frame_h / float(shot['height'])
+                    uniform = abs(sx - sy) <= 0.03 * max(sx, sy)
+                    if not uniform:
+                        # wm size keeps reporting the natural orientation, so a
+                        # rotated frame must not be rescaled by it.
+                        note(f"device reports a {shot['width']}x{shot['height']} display but "
+                             f"the frame is {width}x{frame_h}; using the measured window as-is")
+                        sx = sy = 1.0
+                    elif abs(sx - 1) > 0.02 or abs(sy - 1) > 0.02:
+                        note(f"the frame is {width}x{frame_h} but the device reported a "
+                             f"{shot['width']}x{shot['height']} screenshot; scaling the "
+                             f"window by {sx:.3f}x{sy:.3f}")
+                vx = max(0, int(round(window.get('x', 0) * sx)))
+                vy0 = max(0, int(round(window.get('y', 0) * sy)))
+                vw = min(width - vx, int(round(window['width'] * sx)))
+                vh = min(frame_h - vy0, int(round(window['height'] * sy)))
+                note(f"app viewport {vw}x{vh} at ({vx},{vy0}) from "
+                     f"{evidence['viewport_source']}; insets "
+                     f"{(vp or {}).get('insets')}")
+            else:
+                vx, vy0, vw, vh = 0, 0, width, frame_h
+                note("no device viewport was recorded; the strips were judged "
+                     "against the whole frame")
+            evidence['viewport'] = {'x': vx, 'y': vy0, 'width': vw, 'height': vh}
+
+            vu = min(vw / 228.0, vh / 488.0)
+            band_h = 26 * vu
+            stripe_off = 9 * vu
+            stripe_h = 8 * vu
+            top_edge = vy0 + 0.135 * vh
+            bot_edge = vy0 + vh - 0.135 * vh
+            band_top = (vx, top_edge, vx + vw, top_edge + band_h)
+            band_bottom = (vx, bot_edge - band_h, vx + vw, bot_edge)
+            vg = geometry(vw, vh)
+            loader_top = vy0 + vg['word'][3] + 2 * vu
+            bands = {
+                'band_top': band_top,
+                'band_bottom': band_bottom,
+                'stripe_top_band': (vx, top_edge + stripe_off, vx + vw, top_edge + stripe_off + stripe_h),
+                'stripe_bottom_band': (vx, bot_edge - band_h + stripe_off,
+                                       vx + vw, bot_edge - band_h + stripe_off + stripe_h),
+                'loader_strip': (vx, loader_top, vx + vw, band_bottom[1] - 2 * vu),
+            }
+            evidence['predictions'] = {
+                'u': round(vu, 4),
+                'band_height': round(band_h, 2),
+                'stripe_height': round(stripe_h, 2),
+                'stripe_inset': round(stripe_off, 2),
+                'anchor_13_5': round(0.135 * vh, 2),
+                'top_band_top': round(top_edge, 2),
+                'bottom_band_bottom': round(bot_edge, 2),
+                'loader_strip_top': round(loader_top, 2),
+            }
+
+            def region(rows, bpp, box):
+                x0, y0, x1, y1 = (int(v) for v in box)
+                x0, y0 = max(0, x0), max(0, y0)
+                x1, y1 = min(len(rows[0]) // bpp, x1), min(len(rows), y1)
+                navy = light = total = 0
+                for y in range(y0, y1):
+                    row = rows[y]
+                    for x in range(x0, x1):
+                        i = x * bpp
+                        r, gr, b = row[i], row[i + 1], row[i + 2]
+                        total += 1
+                        if r < 60 and gr < 70 and 60 < b < 110:
+                            navy += 1
+                        if r > 220 and gr > 225 and b > 240:
+                            light += 1
+                return navy, light, total
+
+            def navy_runs(bpp):
+                """Rows inside the viewport that are mostly strip navy."""
+                out = []
+                for y in range(vy0, vy0 + vh):
+                    row = rows[y]
+                    n = 0
+                    step = max(1, (vw // 120) * bpp)
+                    seen = 0
+                    for x in range(vx * bpp, (vx + vw) * bpp, step):
+                        seen += 1
+                        if row[x] < 60 and row[x + 1] < 70 and 60 < row[x + 2] < 110:
+                            n += 1
+                    if seen and n > seen * 0.5:
+                        out.append(y)
+                groups = []
+                for y in out:
+                    if groups and y - groups[-1][-1] <= 2:
+                        groups[-1].append(y)
+                    else:
+                        groups.append([y])
+                return [(g[0], g[-1]) for g in groups if len(g) > 2]
+
+            runs = navy_runs(bpp)
+            evidence['measured'] = {'navy_runs': runs}
+            if runs:
+                evidence['measured']['top_band_top'] = runs[0][0]
+                evidence['measured']['bottom_band_bottom'] = runs[-1][1]
+
+            t_navy, _, t_total = region(rows, bpp, bands['band_top'])
+            b_navy, _, b_total = region(rows, bpp, bands['band_bottom'])
+            _, t_light, _ = region(rows, bpp, bands['stripe_top_band'])
+            _, b_light, _ = region(rows, bpp, bands['stripe_bottom_band'])
+            evidence['measured'].update({
+                'top_band_px': f'{t_navy}/{t_total}',
+                'bottom_band_px': f'{b_navy}/{b_total}',
+                'stripe_px': f'{t_light}/{b_light}',
+            })
+            if t_navy > 0.6 * t_total and b_navy > 0.6 * b_total:
+                ok(f"both film strips sit at 13.5% of the {vw}x{vh} app viewport "
+                   f"({t_navy}/{t_total} and {b_navy}/{b_total} band px)")
+            else:
+                bad(f"the 13.5% film strips are missing or misplaced "
+                    f"({t_navy}/{t_total} and {b_navy}/{b_total} band px)")
+            if t_light > 40 and b_light > 40:
+                ok(f"the light stripe band is drawn inside both strips "
+                   f"({t_light} and {b_light} px)")
+            else:
+                bad(f"the stripe band is missing from a strip "
+                    f"({t_light} and {b_light} px)")
+
+            # No loader, no bar, no percentage: nothing may be drawn between the
+            # wordmark and the bottom strip (the reference's .pb has no markup).
+            x0, y0, x1, y1 = (int(v) for v in bands['loader_strip'])
+            stray = 0
+            for y in range(max(0, y0), min(len(rows), y1)):
+                row = rows[y]
+                dark = 0
+                for x in range(max(0, x0), min(len(row) // bpp, x1)):
+                    i = x * bpp
+                    if (row[i] * 299 + row[i + 1] * 587 + row[i + 2] * 114) // 1000 < 180:
+                        dark += 1
+                if dark > 8:
+                    stray += 1
+            evidence['measured']['loader_strip_stray_rows'] = stray
+            write_report(evidence)
+            if stray <= 2:
+                ok(f"nothing is drawn in the loader strip ({stray} stray rows) "
+                   f"- CineFlow has no progress bar")
+            else:
+                bad(f"something is drawn in the loader strip ({stray} stray rows)")
+
         if DESIGN == 'pdfminifly':
             glow_px = warm_count(rows, bpp, g['glow'])
             verdict('glow',
