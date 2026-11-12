@@ -178,10 +178,13 @@ launch_cold() {
 measure_viewport() { # measure_viewport <tag>
   local dir="${OUT}/geometry-$1" line
   mkdir -p "$dir"
-  line=$(python3 scripts/ci/splash_viewport.py --package "$PKG" --out "$dir" --print 2>&1 || true)
-  echo "$line" | sed "s/^/info  [$1] /" | tee -a "$REPORT" >/dev/null
   export SPLASH_VIEWPORT="${dir}/viewport.json"
-  echo "$line" | head -1 | grep -q '^viewport '
+  if line=$(python3 scripts/ci/splash_viewport.py --package "$PKG" --out "$dir" 2>&1); then
+    echo "$line" | sed "s/^/info  [$1] /" | tee -a "$REPORT" >/dev/null
+    return 0
+  fi
+  echo "$line" | sed "s/^/info  [$1] /" | tee -a "$REPORT" >/dev/null
+  return 1
 }
 
 analyze() { # analyze <tag> <dpi>

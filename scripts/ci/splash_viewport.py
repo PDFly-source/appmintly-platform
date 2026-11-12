@@ -97,29 +97,81 @@ def window_blocks(dumpsys):
     return blocks
 
 
+def window_frame(block):
+    """The window's own frame: `Frames: ... frame=[l,t][r,b]` first, then mFrame."""
+    match = re.search(r'^\s*Frames:.*?\bframe=(\[[^\]]*\]\[[^\]]*\])', block, re.M)
+    if match:
+        rect = _rect_from(match.group(1))
+        if rect:
+            return rect
+    for pattern in (r'mFrame=(\S.*?)\s*$', r'mBounds=(\S.*?)\s*$'):
+        match = re.search(pattern, block, re.M)
+        if match:
+            rect = _rect_from(match.group(1))
+            if rect:
+                return rect
+    return None
+
+
 def find_app_window(dumpsys, package):
     """Return (frame, block, source) for the package's app window."""
-    candidates = []
+    header = re.compile(r'^\s*Window #\d+ Window\{[^}]*?\b' + re.escape(package) + r'/')
     for block in window_blocks(dumpsys):
-        if package not in block:
+        first = block.splitlines()[0] if block else ''
+        if not header.match(first):
             continue
-        frame = None
-        for pattern in (r'mFrame=(\S.*?)\s*$', r'\bframe=(\S.*?)\s*$', r'mBounds=(\S.*?)\s*$'):
-            match = re.search(pattern, block, re.M)
-            if match:
-                frame = _rect_from(match.group(1))
-                if frame:
-                    break
+        frame = window_frame(block)
         if frame:
-            # Prefer the activity window (has a content view), and among those
-            # the first one: dumpsys lists the focused/topmost window first.
-            is_activity = bool(re.search(r'\bActivity\b|Content\b', block)) or '.MainActivity' in block
-            candidates.append((0 if is_activity else 1, frame, block))
-    if not candidates:
-        return None, None, None
-    candidates.sort(key=lambda item: item[0])
-    _, frame, block = candidates[0]
-    return frame, block, 'dumpsys-window-mFrame'
+            return frame, block, 'dumpsys-window-frame'
+    return None, None, None
+
+
+# Windows that do not belong to the app but define where its content has to stop.
+BAR_WINDOWS = ('StatusBar', 'NavigationBar', 'Taskbar', 'ScreenDecorOverlayBottom',
+               'ScreenDecorOverlay', 'NavigationBar0', 'StatusBar0')
+
+
+def system_bar_insets(dumpsys, display):
+    """Inset sizes the system UI windows impose on the app content area."""
+    insets = {'top': 0, 'right': 0, 'bottom': 0, 'left': 0}
+    if not dumpsys or not display:
+        return insets
+    width, height = display
+    for block in window_blocks(dumpsys):
+        first = block.splitlines()[0] if block else ''
+        if not any(name in first for name in BAR_WINDOWS):
+            continue
+        frame = window_frame(block)
+        if not frame:
+            continue
+        left, top, right, bottom = frame
+        if right <= left or bottom <= top:
+            continue
+        # A system bar is a strip pinned to one display edge. It only counts
+        # when it spans most of the opposite axis, so floating gesture handles
+        # and pills cannot be mistaken for an inset.
+        spans_width = right - left >= width * 0.8
+        spans_height = bottom - top >= height * 0.8
+        if top <= 0 and spans_width and bottom < height:
+            insets['top'] = max(insets['top'], bottom)
+        elif bottom >= height and spans_width and top > 0:
+            insets['bottom'] = max(insets['bottom'], height - top)
+        elif left <= 0 and spans_height and right < width:
+            insets['left'] = max(insets['left'], right)
+        elif right >= width and spans_height and left > 0:
+            insets['right'] = max(insets['right'], width - left)
+    return insets
+
+
+def content_viewport(frame, insets):
+    """The app window minus the system bars: exactly what `inset:0` sees."""
+    if not frame:
+        return None
+    left, top, right, bottom = frame
+    return (max(left, insets.get('left') or 0),
+            max(top, insets.get('top') or 0),
+            right - max(0, insets.get('right') or 0),
+            bottom - max(0, insets.get('bottom') or 0))
 
 
 def find_app_bounds(displays_dumpsys):
@@ -162,6 +214,18 @@ def build_document(screen, window, density, source, raw, dumpsys=''):
         'raw': raw,
     }
     if window:
+        bars = system_bar_insets(dumpsys, screen)
+        document['system_insets'] = bars
+        content = content_viewport(window, bars)
+        if width and height:
+            # The app window may be edge to edge (targetSdk 36 enforces it), in
+            # which case only the content area - the window minus the system
+            # bars - matches the reference's `inset:0` viewport.
+            document['app_window'] = {
+                'x': window[0], 'y': window[1],
+                'width': window[2] - window[0], 'height': window[3] - window[1],
+            }
+        window = content
         left, top, right, bottom = window
         if right <= left or bottom <= top:
             return document
@@ -250,13 +314,16 @@ def main():
 
     document = collect(args.package, args.out, args.screenshot)
     window = document.get('window')
-    if window:
-        print(f"viewport {window['width']}x{window['height']} at "
-              f"({window['x']},{window['y']}) from {document['source']}")
-    else:
-        print(f"no app window found ({document['source']}); the analyzer will use the frame")
     if args.echo:
         print(json.dumps(document, indent=2, sort_keys=True))
+    if not window:
+        print(f"no app window found ({document['source']}); geometry falls back to the frame")
+        return 3
+    bars = document.get('system_insets') or {}
+    print(f"viewport {window['width']}x{window['height']} at "
+          f"({window['x']},{window['y']}) from {document['source']} "
+          f"bars top={bars.get('top', 0)} bottom={bars.get('bottom', 0)} "
+          f"left={bars.get('left', 0)} right={bars.get('right', 0)}")
     return 0
 
 

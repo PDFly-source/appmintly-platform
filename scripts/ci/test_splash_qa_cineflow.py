@@ -228,20 +228,60 @@ expect('FAIL  [cold] something is drawn in the loader strip' in out,
        'artwork pushed into the loader strip is caught against the same viewport')
 
 print('— device parsing —')
-if os.path.exists(VIEWPORT):
-    fixture = os.path.join(HERE, 'fixtures')
-    sample = os.path.join(fixture, 'dumpsys-window-windows.txt')
-    if os.path.exists(sample):
-        got = subprocess.run([sys.executable, VIEWPORT, '--parse-window', sample,
-                              '--package', 'com.appforge.cineflow'],
-                             capture_output=True, text=True)
-        parsed = json.loads(got.stdout or '{}')
-        expect(parsed.get('frame') == [0, 129, 1080, 2335],
-               'a real dumpsys window dump parses to the app frame')
-    else:
-        expect(False, 'a real dumpsys window fixture is present')
+import importlib.util
+spec = importlib.util.spec_from_file_location('splash_viewport', VIEWPORT)
+vpm = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(vpm)
+
+FIXTURES = os.path.join(HERE, 'fixtures')
+portrait = os.path.join(FIXTURES, 'device-portrait-windows.txt')
+landscape = os.path.join(FIXTURES, 'device-landscape-windows.txt')
+
+
+def measure(dump, screen):
+    with open(dump) as fh:
+        text = fh.read()
+    frame, _block, source = vpm.find_app_window(text, 'com.appforge.cineflow')
+    return vpm.build_document(screen, frame, 420, source, {}, text)
+
+
+if os.path.exists(portrait) and os.path.exists(landscape):
+    doc = measure(portrait, (1080, 2400))
+    expect(doc['app_window'] == {'x': 0, 'y': 0, 'width': 1080, 'height': 2400},
+           'a real edge-to-edge portrait dump reports the full-screen app window')
+    expect(doc['system_insets'] == {'top': 128, 'right': 0, 'bottom': 63, 'left': 0},
+           'the status bar (128) and navigation bar (63) insets are read from the dump')
+    expect(doc['window'] == {'x': 0, 'y': 128, 'width': 1080, 'height': 2209},
+           'the content viewport is the window minus those bars (1080x2209 at y=128)')
+
+    doc = measure(landscape, (2400, 1080))
+    expect(doc['window'] == {'x': 144, 'y': 63, 'width': 2203, 'height': 954},
+           'a real landscape dump gives the rotated content viewport (2203x954 at 144,63)')
 else:
-    expect(False, 'splash_viewport.py is present')
+    expect(False, 'the real-device dumps are present')
+
+synthetic = os.path.join(FIXTURES, 'dumpsys-window-windows.txt')
+if os.path.exists(synthetic):
+    got = subprocess.run([sys.executable, VIEWPORT, '--parse-window', synthetic,
+                          '--package', 'com.appforge.cineflow'],
+                         capture_output=True, text=True)
+    parsed = json.loads(got.stdout or '{}')
+    expect(parsed.get('frame') == [0, 129, 1080, 2335],
+           'the synthetic fixture still parses to its app window frame')
+
+# The device-measured viewports must also make the real frames pass: this is the
+# regression the whole correction exists for.
+real = os.environ.get('SPLASH_REAL_FRAMES')
+if real and os.path.isdir(real):
+    for tag, rect, screen in (('cold', (0, 128, 1080, 2209), (1080, 2400)),
+                              ('rot', (144, 63, 2203, 954), (2400, 1080)),
+                              ('rm', (0, 128, 1080, 2209), (1080, 2400))):
+        out, _report = run([(n, (lambda x, y: (255, 255, 255))) for n in ('700',)],
+                           viewport_document(rect, {'top': rect[1], 'right': screen[0] - rect[0] - rect[2],
+                                                    'bottom': screen[1] - rect[1] - rect[3], 'left': rect[0]},
+                                             screen=screen), tag=tag)
+        expect('app viewport %dx%d' % (rect[2], rect[3]) in out,
+               f'the {tag} viewport is applied to the analyzer ({rect[2]}x{rect[3]})')
 
 print()
 if failures:
