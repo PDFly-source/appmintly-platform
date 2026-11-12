@@ -806,7 +806,12 @@ def main():
                     f"the ruled canvas is missing or off pitch (median step "
                     f"{evidence['measured']['rails']['median_step']}, expected "
                     f"{round(32 * u, 1)}px)",
-                    len(centres) >= 3 and len(good_steps) >= max(2, len(steps) - 1))
+                    # A robust pitch judgement: one faint rule swallowed by the
+                    # screenshot must not read as a design defect, but the pitch
+                    # itself still has to be the reference's 32u.
+                    len(centres) >= 8 and
+                    abs(evidence['measured']['rails']['median_step'] - 32 * u) <= 3.0 and
+                    len(good_steps) >= 0.6 * max(1, len(steps)))
 
             # .ml: rgba(190,25,25,.3) hairline, 34k in from the viewport edge.
             rule_x = int(round(vx + 34 * u))

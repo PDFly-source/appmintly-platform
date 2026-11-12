@@ -1394,6 +1394,8 @@ ${
     private boolean splashContentReady = false;
     private boolean splashAnimationDone = false;
     private boolean splashTimedOut = false;
+    /** Renderer death is recovered once per launch, never in a recreate loop. */
+    private boolean rendererRecovered = false;
 `
         : ''
     }${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -1501,7 +1503,22 @@ ${
             // (or the hard timeout) retire the splash - never a blank screen.
             @Override
             public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
-                try { v.reload(); } catch (Throwable ignored) { }
+                // A dead renderer can never paint again, and Android forbids
+                // reusing its WebView: reloading it leaves a blank, unusable
+                // surface (observed on the Studyria 2.0.3 matrix). Retire the
+                // splash so nothing waits on a page that cannot load, then
+                // rebuild the content view exactly once.
+                splashTimedOut = true;
+                maybeRetireSplash();
+                if (!rendererRecovered) {
+                    rendererRecovered = true;
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            try { recreate(); } catch (Throwable ignored) { }
+                        }
+                    });
+                }
                 return true;
             }
 `

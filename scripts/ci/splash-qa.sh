@@ -262,6 +262,16 @@ adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 |
 # (the surface latches seconds apart), but the view hierarchy can: the splash
 # carries content-desc="AppMintly" while it is attached and stops doing so when
 # its own 3400ms timeline ends, so the poll below timestamps that transition.
+# A deterministic ANIMATED baseline. This emulator image can boot with
+# animator_duration_scale at 0, which turns the design into its reduced-motion
+# end state (the reduction the reference itself renders with animation:none).
+# The cold/rotation passes must judge the animated design, so force the scales
+# to 1 here; the reduced-motion pass below sets them to 0 for its own run and
+# restores 1 afterwards.
+adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
+adb shell settings put global window_animation_scale 1 >/dev/null 2>&1
+adb shell settings put global transition_animation_scale 1 >/dev/null 2>&1
+sleep 0.3
 wake
 launch_cold
 sleep 0.2
