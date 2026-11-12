@@ -138,8 +138,13 @@ def geometry(width, height):
     u = D * k
     ox = (width - stage_w * k) / 2.0
     oy = (height - stage_h * k) / 2.0
-    logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
-    word_w, word_h = 190 * u, 190 * u * 159 / 620.0
+    if DESIGN == 'pdfminifly':
+        # .mk is 165dp wide from a 420x320 JPEG, .tx 185dp from 620x155.
+        logo_w, logo_h = 165 * u, 165 * u * 320 / 420.0
+        word_w, word_h = 185 * u, 185 * u * 155 / 620.0
+    else:
+        logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
+        word_w, word_h = 190 * u, 190 * u * 159 / 620.0
     gap = 12 * u
     col_h = logo_h + gap + word_h
     top = oy + ((488 * u - 44 * u) - col_h) / 2.0
@@ -154,7 +159,45 @@ def geometry(width, height):
         'dot_r': 4.5 * u,
         'ring_centre': (cx, oy + 190 * u),
         'ring_r': 100 * u,
+        # PDFMiniFly reference: .rgl 270dp circle at stage (114,190), .pb bar
+        # inset 70dp with a 5dp height, its bottom 54dp above the stage edge.
+        'glow': (cx - 135 * u, oy + 190 * u - 135 * u, cx + 135 * u, oy + 190 * u + 135 * u),
+        'bar': (ox + 70 * u, oy + (488 - 54 - 5) * u, ox + (228 - 70) * u, oy + (488 - 54) * u),
     }
+
+
+def warm_count(rows, bpp, box):
+    """Coral glow pixels: a warm tint over the light canvas (.rgl at .24)."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1, 2):
+        row = rows[y]
+        for x in range(x0, x1, 2):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            if r >= 225 and r - b >= 18 and r - g >= 8:
+                n += 1
+    return n
+
+
+def bar_count(rows, bpp, box):
+    """Progress-bar fill pixels: the #D71920 -> #FF7A1A gradient."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1):
+        row = rows[y]
+        for x in range(x0, x1):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            if r >= 170 and g <= 135 and b <= 95:
+                n += 1
+    return n
 
 
 def hue_sat(r, g, b):
@@ -239,11 +282,15 @@ def frame_delta(a, b, step=9):
     return total / max(1, count)
 
 
+DESIGN = os.environ.get('SPLASH_DESIGN', 'appmintly')
+
 # Which checks a tag must satisfy. `cold` is the full animation; the rotation and
 # reduced-motion passes only prove the splash still appears light, draws, and
 # retires (with reduced motion there is deliberately no animation to measure).
 REQUIRED = {
-    'cold': {'motion', 'logo', 'word', 'rings', 'dots', 'replace'},
+    'cold': ({'motion', 'logo', 'word', 'glow', 'bar', 'replace'}
+             if DESIGN == 'pdfminifly'
+             else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
     # time-resolved frames reliably, so motion detail is reported, not required.
@@ -373,10 +420,28 @@ def main():
                 f"wordmark drawn in the reference box ({word_ink} ink px)",
                 f"wordmark missing from its box ({word_ink} ink px)",
                 word_ink > 200)
+        if DESIGN == 'pdfminifly':
+            glow_px = warm_count(rows, bpp, g['glow'])
+            verdict('glow',
+                    f"the coral radial glow is behind the artwork ({glow_px} warm px)",
+                    f"no coral glow behind the artwork ({glow_px} warm px)",
+                    glow_px > 300)
     elif 'logo' in required:
         bad("no mid-animation frame to inspect")
 
-    if ring:
+    if DESIGN == 'pdfminifly':
+        barframe = nearest_drawn(3200, 900) or mid
+        if barframe:
+            w, h, bpp, rows = barframe[2]
+            filled = bar_count(rows, bpp, geometry(w, h)['bar'])
+            verdict('bar',
+                    f"the progress bar is filled on the reference row ({filled} px)",
+                    f"the progress bar is empty on the reference row ({filled} px)",
+                    filled > 150)
+        elif 'bar' in required:
+            bad("no late frame for the progress bar check")
+
+    if ring and DESIGN == 'appmintly':
         w, h, bpp, rows = ring[2]
         blue, green = ring_tint(w, h, bpp, rows, geometry(w, h))
         verdict('rings',
@@ -386,7 +451,7 @@ def main():
     elif 'rings' in required:
         bad("no frame near 1.1s for the ring check")
 
-    if dots:
+    if dots and DESIGN == 'appmintly':
         w, h, bpp, rows = dots[2]
         matches = dot_matches(w, h, bpp, rows, geometry(w, h))
         verdict('dots',

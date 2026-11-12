@@ -26,6 +26,21 @@ on:
         description: 'Expected SHA-256 of the APK'
         required: true
         type: string
+      splash_design:
+        description: 'Design profile the analyzer should expect (appmintly | pdfminifly)'
+        required: false
+        type: string
+        default: appmintly
+      splash_pkg:
+        description: 'Android package id to verify on the device'
+        required: false
+        type: string
+        default: com.appmintly.appmintly
+      splash_version:
+        description: 'Expected versionName on the device'
+        required: false
+        type: string
+        default: '1.0.12'
       apk_url:
         description: 'Optional public HTTPS URL of an already-published APK. When set, the exact published bytes are tested and the build-run inputs are ignored.'
         required: false
@@ -113,6 +128,10 @@ jobs:
           # The action runs this through /bin/sh, so it must stay POSIX:
           # `set -o pipefail` would abort with exit code 2 before anything runs.
           script: bash scripts/ci/splash-qa.sh
+        env:
+          SPLASH_DESIGN: ${{ inputs.splash_design }}
+          SPLASH_PKG: ${{ inputs.splash_pkg }}
+          SPLASH_VERSION: ${{ inputs.splash_version }}
 
       - name: Upload splash evidence
         if: always()

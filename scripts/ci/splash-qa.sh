@@ -13,7 +13,9 @@
 # Prints PASS/FAIL lines and exits non-zero if any check fails.
 set -uo pipefail
 
-PKG=com.appmintly.appmintly
+PKG="${SPLASH_PKG:-com.appmintly.appmintly}"
+EXPECT_VERSION="${SPLASH_VERSION:-1.0.12}"
+export SPLASH_DESIGN="${SPLASH_DESIGN:-appmintly}"
 OUT="${PWD}/splash-qa"
 REPORT="${OUT}/report.txt"
 FAILED=0
@@ -222,10 +224,10 @@ if [ "$installed" != "1" ]; then
 fi
 pass "installed $(basename "$APK_PATH")"
 
-if adb shell dumpsys package "$PKG" | grep -qE "versionName=1\.0\.12"; then
-  pass "device reports versionName 1.0.12"
+if adb shell dumpsys package "$PKG" | grep -qE "versionName=${EXPECT_VERSION}"; then
+  pass "device reports versionName ${EXPECT_VERSION}"
 else
-  fail "device does not report versionName 1.0.12"
+  fail "device does not report versionName ${EXPECT_VERSION}"
 fi
 
 adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 | tee -a "$REPORT"
