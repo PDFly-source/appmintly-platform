@@ -31,6 +31,11 @@ on:
         required: false
         type: string
         default: appmintly
+      splash_desc:
+        description: 'content-desc the native splash view exposes'
+        required: false
+        type: string
+        default: AppMintly
       splash_pkg:
         description: 'Android package id to verify on the device'
         required: false
@@ -130,6 +135,7 @@ jobs:
           script: bash scripts/ci/splash-qa.sh
         env:
           SPLASH_DESIGN: ${{ inputs.splash_design }}
+          SPLASH_DESC: ${{ inputs.splash_desc }}
           SPLASH_PKG: ${{ inputs.splash_pkg }}
           SPLASH_VERSION: ${{ inputs.splash_version }}
 

@@ -16,6 +16,7 @@ set -uo pipefail
 PKG="${SPLASH_PKG:-com.appmintly.appmintly}"
 EXPECT_VERSION="${SPLASH_VERSION:-1.0.12}"
 export SPLASH_DESIGN="${SPLASH_DESIGN:-appmintly}"
+SPLASH_DESC="${SPLASH_DESC:-AppMintly}"
 OUT="${PWD}/splash-qa"
 REPORT="${OUT}/report.txt"
 FAILED=0
@@ -143,7 +144,7 @@ splash_state() { # splash_state -> 0 splash up, 1 splash gone, 2 dump unavailabl
   if printf '%s' "$dump" | grep -q 'android.webkit.WebView'; then
     return 1
   fi
-  if printf '%s' "$dump" | grep -q 'content-desc="AppMintly"'; then
+  if printf '%s' "$dump" | grep -q "content-desc=\"${SPLASH_DESC}\""; then
     return 0
   fi
   return 1

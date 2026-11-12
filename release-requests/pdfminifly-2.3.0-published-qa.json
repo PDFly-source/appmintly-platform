@@ -1,0 +1,17 @@
+{
+  "workflow": "qa-appmintly-splash.yml",
+  "ref": "main",
+  "inputs": {
+    "build_run_id": "0",
+    "artifact_name": "unused-published-asset-path",
+    "apk_name": "PDFMiniFly-2.3.0.apk",
+    "apk_sha": "a83a31a1e6eaac966046b8cf26d7cd24a99a23d21bd191cd4b2d114bc629f8a1",
+    "splash_design": "pdfminifly",
+    "splash_pkg": "com.appforge.pdfminifly",
+    "splash_version": "2.3.0",
+    "splash_desc": "PDFMiniFly",
+    "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/pdfminifly-v2.3.0/PDFMiniFly-2.3.0.apk"
+  },
+  "note": "Task 2 final QA: the exact published PDFMiniFly 2.3.0 binary, hash-gated",
+  "requested_at": "2026-11-12T04:55Z"
+}
