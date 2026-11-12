@@ -332,6 +332,58 @@ analyze rm "$DENSITY"
 adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
 wait_gone "reduced-motion launch" 15
 
+# ------------------------------------------------- HOME away and back (lifecycle)
+# Leaving the app mid-splash must not leave a stuck view or a dead process: this
+# is the interruption a real user makes most often, and it is the one a
+# canvas-driven splash is most likely to mishandle.
+launch_cold
+sleep 0.8
+adb shell input keyevent KEYCODE_HOME >/dev/null 2>&1
+sleep 1.5
+if adb shell pidof "$PKG" >/dev/null 2>&1; then
+  pass "HOME during the splash keeps the process alive"
+else
+  fail "the app process died when HOME was pressed during the splash"
+fi
+if adb shell dumpsys activity activities 2>/dev/null | grep -q "ANR in ${PKG}\|Application Not Responding"; then
+  fail "an ANR was reported after leaving the app during the splash"
+else
+  pass "no ANR was reported after leaving the app during the splash"
+fi
+launch_cold
+sleep 0.9
+splash_shown "return after HOME" homep
+wait_gone "return after HOME" 15
+if page_ready; then
+  pass "the app returns to the marketplace after HOME during the splash"
+else
+  fail "no marketplace WebView after returning from HOME"
+fi
+
+# ---------------------------------------------------------------- offline launch
+# The splash is local artwork, so it must paint and retire with no network at
+# all; the marketplace is then allowed to show its own offline state.
+adb shell cmd connectivity airplane-mode enable >/dev/null 2>&1 ||   adb shell svc wifi disable >/dev/null 2>&1
+adb shell svc data disable >/dev/null 2>&1
+sleep 2
+launch_cold
+sleep 0.9
+splash_shown "offline launch" offp
+wait_gone "offline launch" 15
+if adb shell pidof "$PKG" >/dev/null 2>&1; then
+  pass "offline launch keeps the process alive after the splash retires"
+else
+  fail "the app process died on an offline launch"
+fi
+shot "offline_settled"
+if [ -s "${OUT}/offline_settled.png" ]; then
+  info "offline settled frame captured ($(python3 scripts/ci/splash_qa_analyze.py --dims "${OUT}/offline_settled.png" 2>/dev/null || echo unreadable))"
+fi
+adb shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
+adb shell svc wifi enable >/dev/null 2>&1 || true
+adb shell svc data enable >/dev/null 2>&1 || true
+sleep 2
+
 echo "──── summary ────" | tee -a "$REPORT"
 if [ "$FAILED" -eq 0 ]; then
   echo "RESULT: PASS (0 failures)" | tee -a "$REPORT"
