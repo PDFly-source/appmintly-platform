@@ -20,6 +20,9 @@ SPLASH_DESC="${SPLASH_DESC:-AppMintly}"
 OUT="${PWD}/splash-qa"
 REPORT="${OUT}/report.txt"
 FAILED=0
+# The analyzer needs the app viewport (not the screenshot) to judge 13.5% anchors.
+export SPLASH_VIEWPORT="${OUT}/viewport.json"
+export SPLASH_QA_REPORT="${OUT}"
 
 mkdir -p "$OUT"
 : > "$REPORT"
@@ -168,8 +171,26 @@ launch_cold() {
   adb shell am start -W -n "$PKG/.MainActivity" >"${OUT}/am_start.txt" 2>&1
 }
 
+# Ask the device where the app window actually is, every pass. The splash View
+# lives in the activity window, which stops short of the status and navigation
+# bars (and moves on rotation), so the 13.5% anchors must be measured against
+# that viewport rather than inferred from the screenshot.
+measure_viewport() { # measure_viewport <tag>
+  local dir="${OUT}/geometry-$1" line
+  mkdir -p "$dir"
+  line=$(python3 scripts/ci/splash_viewport.py --package "$PKG" --out "$dir" --print 2>&1 || true)
+  echo "$line" | sed "s/^/info  [$1] /" | tee -a "$REPORT" >/dev/null
+  export SPLASH_VIEWPORT="${dir}/viewport.json"
+  echo "$line" | head -1 | grep -q '^viewport '
+}
+
 analyze() { # analyze <tag> <dpi>
   local out
+  if measure_viewport "$1"; then
+    pass "app viewport measured from the device for the $1 pass"
+  else
+    fail "the device did not report the app viewport for the $1 pass; geometry fell back to the frame"
+  fi
   out=$(python3 scripts/ci/splash_qa_analyze.py "${OUT}" "$1" "${2:-}" 2>&1)
   echo "$out" | tee -a "$REPORT"
   local n
@@ -383,6 +404,33 @@ adb shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
 adb shell svc wifi enable >/dev/null 2>&1 || true
 adb shell svc data enable >/dev/null 2>&1 || true
 sleep 2
+
+# One machine-readable record per run: geometry, per-tag verdicts, result.
+python3 - "$OUT" "$FAILED" <<'PYJSON' | tee -a "$REPORT"
+import glob, json, os, sys
+out, failed = sys.argv[1], int(sys.argv[2])
+viewport = None
+path = os.path.join(out, 'geometry-cold', 'viewport.json')
+if os.path.exists(path):
+    with open(path) as fh:
+        viewport = json.load(fh)
+tags = {}
+for name in sorted(glob.glob(os.path.join(out, 'report-*.json'))):
+    with open(name) as fh:
+        tags[os.path.basename(name)[len('report-'):-len('.json')]] = json.load(fh)
+summary = {
+    'result': 'PASS' if failed == 0 else 'FAIL',
+    'failures': failed,
+    'viewport': viewport,
+    'checks': tags,
+}
+with open(os.path.join(out, 'splash-qa-report.json'), 'w') as fh:
+    json.dump(summary, fh, indent=2, sort_keys=True)
+window = (viewport or {}).get('window')
+print(f"WROTE splash-qa-report.json result={summary['result']} failures={failed} "
+      f"viewport={window['width']}x{window['height']}@{window['x']},{window['y']}" if window
+      else f"WROTE splash-qa-report.json result={summary['result']} failures={failed} viewport=unmeasured")
+PYJSON
 
 echo "──── summary ────" | tee -a "$REPORT"
 if [ "$FAILED" -eq 0 ]; then
