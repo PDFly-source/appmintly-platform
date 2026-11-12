@@ -113,6 +113,83 @@ def window_frame(block):
     return None
 
 
+def frames_parent(block):
+    """The display rectangle the window is laid out in (`Frames: parent=[..][..]`)."""
+    if not block:
+        return None
+    match = re.search(r'^\s*Frames:.*?\bparent=(\[[^\]]*\]\[[^\]]*\])', block, re.M)
+    return _rect_from(match.group(1)) if match else None
+
+
+INSET_TYPES = {
+    'statusBars': 'bar',
+    'navigationBars': 'bar',
+    'taskbar': 'bar',
+    'displayCutout': 'cutout',
+}
+
+
+def parse_inset_sources(displays_dumpsys):
+    """Every InsetsSource frame in `dumpsys window displays`, visible ones only.
+
+    The display dump is the authority for system insets: it keeps listing the
+    navigation bar and the cutout even when the matching system-UI windows are
+    absent from `dumpsys window windows` at capture time.
+    """
+    sources = []
+    if not displays_dumpsys:
+        return sources
+    for match in re.finditer(
+            r'(?:type=)?(?P<type>[A-Za-z]+)\s+frame=\[(?P<l>-?\d+),(?P<t>-?\d+)\]'
+            r'\[(?P<r>-?\d+),(?P<b>-?\d+)\][^\n]*?(?P<rest>[^\n]*)',
+            displays_dumpsys):
+        kind = match.group('type')
+        if kind not in INSET_TYPES:
+            continue
+        rest = match.group('rest') or ''
+        if re.search(r'\bvisible=false\b', rest):
+            continue
+        frame = (int(match.group('l')), int(match.group('t')),
+                 int(match.group('r')), int(match.group('b')))
+        if frame[2] <= frame[0] or frame[3] <= frame[1]:
+            continue
+        entry = {'type': kind, 'kind': INSET_TYPES[kind], 'frame': list(frame)}
+        if entry not in sources:
+            sources.append(entry)
+    return sources
+
+
+def _edge_inset(insets, frame, display):
+    """Attribute one inset source to the display edge it is pinned to.
+
+    A source counts only when it touches an edge and spans most of the opposite
+    axis, so a floating IME, a gesture handle or a pill never becomes an inset.
+    """
+    left, top, right, bottom = frame
+    width, height = display
+    spans_width = right - left >= width * 0.8
+    spans_height = bottom - top >= height * 0.8
+    if top <= 0 and spans_width and bottom < height:
+        insets['top'] = max(insets['top'], bottom)
+    elif bottom >= height and spans_width and top > 0:
+        insets['bottom'] = max(insets['bottom'], height - top)
+    elif left <= 0 and spans_height and right < width:
+        insets['left'] = max(insets['left'], right)
+    elif right >= width and spans_height and left > 0:
+        insets['right'] = max(insets['right'], width - left)
+    return insets
+
+
+def insets_from_displays(displays_dumpsys, display):
+    """Content insets from the display's InsetsSource frames."""
+    insets = {'top': 0, 'right': 0, 'bottom': 0, 'left': 0}
+    if not displays_dumpsys or not display:
+        return insets
+    for source in parse_inset_sources(displays_dumpsys):
+        _edge_inset(insets, tuple(source['frame']), display)
+    return insets
+
+
 def find_app_window(dumpsys, package):
     """Return (frame, block, source) for the package's app window."""
     header = re.compile(r'^\s*Window #\d+ Window\{[^}]*?\b' + re.escape(package) + r'/')
@@ -201,9 +278,17 @@ def find_insets_state(dumpsys):
     return insets
 
 
-def build_document(screen, window, density, source, raw, dumpsys=''):
+def build_document(screen, window, density, source, raw, dumpsys='',
+                   displays_dumpsys='', display=None, window_block=None):
     """Assemble the JSON document the analyzer consumes."""
-    width, height = screen if screen else (None, None)
+    # `wm size` reports the natural orientation, so a rotated capture must take
+    # its display dimensions from the window's parent rect instead.
+    display = display or frames_parent(window_block) and (
+        frames_parent(window_block)[2] - frames_parent(window_block)[0],
+        frames_parent(window_block)[3] - frames_parent(window_block)[1])
+    if not display:
+        display = screen
+    width, height = display if display else (None, None)
     document = {
         'screenshot': {'width': width, 'height': height},
         'window': None,
@@ -214,8 +299,15 @@ def build_document(screen, window, density, source, raw, dumpsys=''):
         'raw': raw,
     }
     if window:
-        bars = system_bar_insets(dumpsys, screen)
+        bars = insets_from_displays(displays_dumpsys, display)
+        insets_source = 'dumpsys-window-displays' if any(bars.values()) else None
+        if not insets_source:
+            bars = system_bar_insets(dumpsys, display)
+            insets_source = 'dumpsys-window-windows' if any(bars.values()) else 'none'
+        document['insets_source'] = insets_source
         document['system_insets'] = bars
+        document['display'] = {'width': width, 'height': height} if width and height else None
+        document['screenshot_reported'] = screen
         content = content_viewport(window, bars)
         if width and height:
             # The app window may be edge to edge (targetSdk 36 enforces it), in
@@ -271,12 +363,13 @@ def collect(package, out_dir, screenshot=None):
     screen = parse_wm_size(raw['wm_size'])
     density = parse_wm_density(raw['wm_density'])
 
-    frame, _block, source = find_app_window(dumpsys_windows, package)
+    frame, block, source = find_app_window(dumpsys_windows, package)
     if not frame:
         frame = find_app_bounds(dumpsys_displays)
         source = 'dumpsys-displays-mAppBounds' if frame else 'fallback-screenshot'
 
-    document = build_document(screen, frame, density, source, raw, dumpsys_windows)
+    document = build_document(screen, frame, density, source, raw, dumpsys_windows,
+                              displays_dumpsys=dumpsys_displays, window_block=block)
 
     # A screenshot taken by the harness is the ground truth for frame size; keep
     # it in the document so the analyzer can detect a scaled capture.

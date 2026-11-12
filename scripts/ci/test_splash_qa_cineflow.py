@@ -127,10 +127,10 @@ def viewport_document(viewport, insets, screen=(W, H), source='dumpsys-window-mF
 
 
 # ------------------------------------------------------------------------ runner
-def run(frames, viewport_json=None, tag='cold'):
+def run(frames, viewport_json=None, tag='cold', dims=(W, H)):
     with tempfile.TemporaryDirectory() as tmp:
         for name, pixel in frames:
-            write_png(os.path.join(tmp, f'{tag}_{name}.png'), pixel)
+            write_png(os.path.join(tmp, f'{tag}_{name}.png'), pixel, w=dims[0], h=dims[1])
         env = dict(os.environ)
         env['SPLASH_DESIGN'] = 'cineflow'
         env['SPLASH_QA_REPORT'] = tmp
@@ -227,61 +227,113 @@ out, report = run(launch_pixels(splash_frame(status_nav, art_shift=90.0)),
 expect('FAIL  [cold] something is drawn in the loader strip' in out,
        'artwork pushed into the loader strip is caught against the same viewport')
 
-print('— device parsing —')
+print('— device geometry from dumpsys window displays —')
 import importlib.util
 spec = importlib.util.spec_from_file_location('splash_viewport', VIEWPORT)
 vpm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vpm)
 
 FIXTURES = os.path.join(HERE, 'fixtures')
-portrait = os.path.join(FIXTURES, 'device-portrait-windows.txt')
-landscape = os.path.join(FIXTURES, 'device-landscape-windows.txt')
 
 
-def measure(dump, screen):
-    with open(dump) as fh:
-        text = fh.read()
-    frame, _block, source = vpm.find_app_window(text, 'com.appforge.cineflow')
-    return vpm.build_document(screen, frame, 420, source, {}, text)
+def fixture(name):
+    if not name:
+        return None
+    path = os.path.join(FIXTURES, name)
+    if not os.path.exists(path):
+        return None
+    with open(path) as fh:
+        return fh.read()
 
 
-if os.path.exists(portrait) and os.path.exists(landscape):
-    doc = measure(portrait, (1080, 2400))
-    expect(doc['app_window'] == {'x': 0, 'y': 0, 'width': 1080, 'height': 2400},
-           'a real edge-to-edge portrait dump reports the full-screen app window')
-    expect(doc['system_insets'] == {'top': 128, 'right': 0, 'bottom': 63, 'left': 0},
-           'the status bar (128) and navigation bar (63) insets are read from the dump')
-    expect(doc['window'] == {'x': 0, 'y': 128, 'width': 1080, 'height': 2209},
-           'the content viewport is the window minus those bars (1080x2209 at y=128)')
+def measure(windows_name, displays_name, screen, package='com.appforge.cineflow'):
+    """Derive the content viewport exactly as the device pass does."""
+    windows = fixture(windows_name) or ''
+    displays = fixture(displays_name) or ''
+    frame, block, source = vpm.find_app_window(windows, package)
+    if not frame and windows and displays:
+        frame = vpm.find_app_bounds(displays)
+    if not frame and not windows:
+        # synthetic display-only fixtures: an edge-to-edge window covering the screen
+        frame, source = (0, 0, screen[0], screen[1]), 'synthetic-edge-to-edge'
+    if not frame:
+        frame = vpm.find_app_bounds(displays)
+        source = 'dumpsys-displays-mAppBounds' if frame else 'fallback-screenshot'
+    return vpm.build_document(screen, frame, 420, source, {}, windows,
+                              displays_dumpsys=displays, window_block=block)
 
-    doc = measure(landscape, (2400, 1080))
-    expect(doc['window'] == {'x': 144, 'y': 63, 'width': 2203, 'height': 954},
-           'a real landscape dump gives the rotated content viewport (2203x954 at 144,63)')
-else:
-    expect(False, 'the real-device dumps are present')
 
-synthetic = os.path.join(FIXTURES, 'dumpsys-window-windows.txt')
-if os.path.exists(synthetic):
-    got = subprocess.run([sys.executable, VIEWPORT, '--parse-window', synthetic,
-                          '--package', 'com.appforge.cineflow'],
-                         capture_output=True, text=True)
-    parsed = json.loads(got.stdout or '{}')
-    expect(parsed.get('frame') == [0, 129, 1080, 2335],
-           'the synthetic fixture still parses to its app window frame')
+# ---- portrait and landscape, both taken from a real device
+doc = measure('device-portrait-windows.txt', 'device-portrait-displays.txt', (1080, 2400))
+expect(doc.get('insets_source') == 'dumpsys-window-displays',
+       'portrait: insets come from the display InsetsSource frames')
+expect(doc['system_insets'] == {'top': 128, 'right': 0, 'bottom': 63, 'left': 0},
+       'portrait: status bar 128 and navigation bar 63 are read from the display dump')
+expect(doc['window'] == {'x': 0, 'y': 128, 'width': 1080, 'height': 2209},
+       'portrait: content viewport is 1080x2209 at (0,128)')
 
-# The device-measured viewports must also make the real frames pass: this is the
-# regression the whole correction exists for.
-real = os.environ.get('SPLASH_REAL_FRAMES')
-if real and os.path.isdir(real):
-    for tag, rect, screen in (('cold', (0, 128, 1080, 2209), (1080, 2400)),
-                              ('rot', (144, 63, 2203, 954), (2400, 1080)),
-                              ('rm', (0, 128, 1080, 2209), (1080, 2400))):
-        out, _report = run([(n, (lambda x, y: (255, 255, 255))) for n in ('700',)],
-                           viewport_document(rect, {'top': rect[1], 'right': screen[0] - rect[0] - rect[2],
-                                                    'bottom': screen[1] - rect[1] - rect[3], 'left': rect[0]},
-                                             screen=screen), tag=tag)
-        expect('app viewport %dx%d' % (rect[2], rect[3]) in out,
-               f'the {tag} viewport is applied to the analyzer ({rect[2]}x{rect[3]})')
+doc = measure('device-landscape-windows.txt', 'device-landscape-displays.txt', (1080, 2400))
+expect(doc.get('display') == {'width': 2400, 'height': 1080},
+       'landscape: the display size comes from the window parent rect, not wm size')
+expect(doc['system_insets'] == {'top': 63, 'right': 0, 'bottom': 63, 'left': 128},
+       'landscape: cutout left 128, status 63 and navigation 63 are all found')
+expect(doc['window'] == {'x': 128, 'y': 63, 'width': 2272, 'height': 954},
+       'landscape: content viewport is 2272x954 at (128,63)')
+
+# ---- the exact failure mode of run 43234097536: window list without those windows
+doc = measure('device-landscape-no-taskbar-windows.txt', 'device-landscape-displays.txt', (1080, 2400))
+expect(doc.get('insets_source') == 'dumpsys-window-displays',
+       'a window list missing Taskbar and ScreenDecorOverlay still gets display insets')
+expect(doc['window'] == {'x': 128, 'y': 63, 'width': 2272, 'height': 954},
+       'the missing-window case still resolves to 2272x954 at (128,63)')
+
+# ... and the fallback it replaces would have been wrong, which is why it failed
+doc = measure('device-landscape-no-taskbar-windows.txt', None, (1080, 2400))
+expect(doc.get('insets_source') in ('dumpsys-window-windows', 'none'),
+       'without the display dump the collector falls back to the window list')
+expect(doc['window']['height'] == 1017,
+       'the window-list fallback alone drops the bottom 63px (the old 1017 defect)')
+
+# ---- synthetic inset configurations
+doc = measure(None, 'cutout-right-displays.txt', (2400, 1080))
+expect(doc['system_insets'] == {'top': 63, 'right': 128, 'bottom': 48, 'left': 0},
+       'right cutout, top status bar and bottom navigation are each attributed to their edge')
+expect(doc['window'] == {'x': 0, 'y': 63, 'width': 2272, 'height': 969},
+       'a right cutout shortens the content width (2272x969 at 0,63)')
+
+doc = measure(None, 'bottom-in-nav-displays.txt', (1080, 2400))
+expect(doc['system_insets'] == {'top': 0, 'right': 0, 'bottom': 135, 'left': 0},
+       'a display with only a navigation bar reports only a bottom inset')
+expect(doc['window'] == {'x': 0, 'y': 0, 'width': 1080, 'height': 2265},
+       'navigation-bar-only display keeps the full height above the bar')
+
+doc = measure(None, 'mixed-insets-displays.txt', (2400, 1080))
+expect(doc['system_insets'] == {'top': 60, 'right': 0, 'bottom': 48, 'left': 96},
+       'mixed insets combine left cutout, top status bar and bottom navigation')
+expect(doc['window'] == {'x': 96, 'y': 60, 'width': 2304, 'height': 972},
+       'mixed insets produce the 2304x972 content area')
+expect(all(abs(a - b) <= 1 for a, b in zip(doc['system_insets'].values(),
+                                           {'top': 60, 'right': 0, 'bottom': 48, 'left': 96}.values())),
+       'the hidden taskbar source is not counted while the visible bars are')
+
+doc = measure(None, 'no-bars-displays.txt', (1080, 2400))
+expect(doc['system_insets'] == {'top': 0, 'right': 0, 'bottom': 0, 'left': 0},
+       'a display without bar sources invents no insets')
+expect(doc['window'] == {'x': 0, 'y': 0, 'width': 1080, 'height': 2400},
+       'a full-height window is not shrunk by the gesture handle')
+
+# ---- the analyzer consumes whatever the collector measured, unchanged
+for tag, rect, screen in (('cold', (0, 128, 1080, 2209), (1080, 2400)),
+                          ('rot', (128, 63, 2272, 954), (2400, 1080)),
+                          ('rm', (0, 128, 1080, 2209), (1080, 2400))):
+    out, _report = run([('700', splash_frame(rect))],
+                       viewport_document(rect, {'top': rect[1],
+                                                'right': screen[0] - rect[0] - rect[2],
+                                                'bottom': screen[1] - rect[1] - rect[3],
+                                                'left': rect[0]}, screen=screen), tag=tag,
+                       dims=screen)
+    expect(f'app viewport {rect[2]}x{rect[3]}' in out,
+           f'the {tag} pass judges against the measured {rect[2]}x{rect[3]} viewport')
 
 print()
 if failures:

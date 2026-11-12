@@ -1,0 +1,5 @@
+  Display: mDisplayId=0 uniqueId="local:0" app 1080 x 2400
+    mDisplayInfo=DisplayInfo{"Built-in Screen", app 1080 x 2400, real 1080 x 2400}
+      InsetsSource id=5300001 type=navigationBars frame=[0,2265][1080,2400] visible=true flags=SUPPRESS_SCRIM
+      InsetsSource id=12 type=tappableElement frame=[0,2265][1080,2400] visible=true flags=
+      InsetsSource id=3 type=ime frame=[0,0][0,0] visible=false flags= sideHint=NONE

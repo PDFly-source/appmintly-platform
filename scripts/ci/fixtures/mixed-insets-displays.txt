@@ -1,0 +1,7 @@
+  Display: mDisplayId=0 uniqueId="local:1" app 2400 x 1080
+      InsetsSource id=7 type=displayCutout frame=[0,0][96,1080] visible=true flags= sideHint=LEFT
+      statusBars frame=[0,0][2400,60] visible=true flags= sideHint=TOP
+      InsetsSource id=5300001 type=navigationBars frame=[0,1032][2400,1080] visible=true flags=SUPPRESS_SCRIM
+      InsetsSource id=5300002 type=taskbar frame=[0,1020][2400,1080] visible=false flags=
+      InsetsSource id=5300004 type=systemGestures frame=[0,0][78,1080] visible=true flags= sideHint=LEFT
+      InsetsSource id=3 type=ime frame=[612,600][1788,1080] visible=true flags= sideHint=BOTTOM
