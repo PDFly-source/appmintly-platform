@@ -60,7 +60,8 @@ def write_png(path, pixel, w=W, h=H):
         fh.write(data)
 
 
-def splash_frame(viewport, basis='viewport', anchor=0.135, stripes=True, art_shift=0.0):
+def splash_frame(viewport, basis='viewport', anchor=0.135, stripes=True, art_shift=0.0,
+                 mark_offset=(0.0, 0.0)):
     """Paint the reference composition for one app viewport."""
     vx, vy, vw, vh = viewport
     u = min(vw / 228.0, vh / 488.0)
@@ -83,7 +84,10 @@ def splash_frame(viewport, basis='viewport', anchor=0.135, stripes=True, art_shi
     oy = vy + (vh - 488 * u) / 2.0 + art_shift
     mark_top = oy + max(0.0, ((488 - 44) * u - column) / 2.0)
     word_top = mark_top + mark_h + gap
-    art = ((vx + vw / 2 - mark_w / 2, mark_top, mark_w, mark_h),
+    # mark_offset reproduces the 0.3.1 defect: the flip drew the mark half its
+    # own size right and down of the column, so it clipped at the right edge.
+    art = ((vx + vw / 2 - mark_w / 2 + mark_offset[0], mark_top + mark_offset[1],
+            mark_w, mark_h),
            (vx + vw / 2 - word_w / 2, word_top, word_w, word_h))
 
     def pixel(x, y):
@@ -226,6 +230,33 @@ out, report = run(launch_pixels(splash_frame(status_nav, art_shift=90.0)),
                   viewport_document(status_nav, {'top': 129, 'right': 0, 'bottom': 65, 'left': 0}))
 expect('FAIL  [cold] something is drawn in the loader strip' in out,
        'artwork pushed into the loader strip is caught against the same viewport')
+
+print('— artwork placement matches the reference column —')
+# A full-size portrait frame with a real 1080x2209 app viewport, so the
+# placement and clipping checks are exercised against device-sized artwork.
+hrect = (0, 128, 1080, 2209)
+hinsets = {'top': 129, 'right': 0, 'bottom': 65, 'left': 0}
+out, _report = run(launch_pixels(splash_frame(hrect)),
+                   viewport_document(hrect, hinsets, screen=(1080, 2400)), dims=(1080, 2400))
+expect('PASS  [cold] the artwork column is centred' in out,
+       'a centred reference frame is accepted by the placement check')
+expect('PASS  [cold] the whole artwork fits inside the viewport' in out,
+       'a fully visible reference frame is accepted by the fit check')
+
+# CineFlow 0.3.1 defect: the Camera flip left the mark at +w/2, +h/2
+_u = min(hrect[2] / 228.0, hrect[3] / 488.0)
+_mark = (135 * _u, 135 * _u * 426 / 420.0)
+out, _report = run(launch_pixels(splash_frame(hrect, mark_offset=(_mark[0] / 2, _mark[1] / 2))),
+                   viewport_document(hrect, hinsets, screen=(1080, 2400)), dims=(1080, 2400))
+expect('FAIL  [cold] the artwork is clipped' in out,
+       'the 0.3.1 half-size offset is rejected as clipped artwork')
+expect('FAIL  [cold] the artwork column is not centred' in out,
+       'the 0.3.1 half-size offset is rejected as off-centre artwork')
+
+out, _report = run(launch_pixels(splash_frame(hrect, art_shift=140.0)),
+                   viewport_document(hrect, hinsets, screen=(1080, 2400)), dims=(1080, 2400))
+expect('FAIL  [cold] the artwork column is displaced vertically' in out,
+       'a vertically displaced column is rejected')
 
 print('— device geometry from dumpsys window displays —')
 import importlib.util

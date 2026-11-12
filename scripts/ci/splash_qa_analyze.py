@@ -808,6 +808,76 @@ def main():
                 bad(f"the stripe band is missing from a strip "
                     f"({t_light} and {b_light} px)")
 
+            # ---- artwork placement (0.3.2 footnote) ----
+            # The 0.3.1 view drew the mark with a Camera flip about a rect
+            # anchored at the drawn origin (preTranslate(-w/2,-h/2) +
+            # postTranslate(w/2,h/2) cancel), so the mark sat half its own width
+            # right and half its own height below the column and clipped at the
+            # right edge, while the loose "ink inside the box" checks passed.
+            # These checks measure the artwork bbox against the reference.
+            art_top = top_edge + band_h + 2 * vu
+            art_bottom = bot_edge - band_h - 2 * vu
+            minx, maxx, miny, maxy = vx + vw, vx, art_bottom, art_top
+            seen_ink = 0
+            for y in range(int(max(vy0, art_top)), int(min(vy0 + vh, art_bottom))):
+                row = rows[y]
+                for x in range(vx, vx + vw, 2):
+                    i = x * bpp
+                    if row[i] < 120 and row[i + 1] < 120:
+                        seen_ink += 1
+                        if x < minx: minx = x
+                        if x > maxx: maxx = x
+                        if y < miny: miny = y
+                        if y > maxy: maxy = y
+            expected_top = vy0 + vg['logo'][1]
+            expected_bottom = vy0 + vg['word'][3]
+            expected_cx = vx + vw / 2.0
+            art_cx = (minx + maxx) / 2.0 if seen_ink else None
+            evidence['measured']['artwork'] = {
+                'bbox': [minx, miny, maxx, maxy] if seen_ink else None,
+                'centre_x': round(art_cx, 1) if seen_ink else None,
+                'expected_centre_x': round(expected_cx, 1),
+                'expected_top': round(expected_top, 1),
+                'expected_bottom': round(expected_bottom, 1),
+                'expected_mark_width': round(135 * vu, 1),
+            }
+            if not seen_ink:
+                bad('no artwork ink between the film strips')
+            else:
+                centre_off = abs(art_cx - expected_cx)
+                if centre_off <= 0.02 * vw:
+                    ok(f'the artwork column is centred on the {vw}px viewport '
+                       f'(centre {round(art_cx, 1)} vs {round(expected_cx, 1)}, '
+                       f'off by {centre_off:.1f}px)')
+                else:
+                    bad(f'the artwork column is not centred: centre {round(art_cx, 1)} '
+                        f'vs viewport centre {round(expected_cx, 1)} '
+                        f'(off by {centre_off:.1f}px)')
+                edge = 0.01 * vw
+                clipped = []
+                if minx <= vx + edge:
+                    clipped.append(f'left ({minx - vx}px)')
+                if maxx >= vx + vw - edge:
+                    clipped.append(f'right ({vx + vw - maxx}px)')
+                if miny <= vy0 + edge:
+                    clipped.append('top')
+                if maxy >= vy0 + vh - edge:
+                    clipped.append('bottom')
+                if clipped:
+                    bad('the artwork is clipped at the ' + ', '.join(clipped))
+                else:
+                    ok(f'the whole artwork fits inside the viewport '
+                       f'(bbox {minx},{miny} to {maxx},{maxy})')
+                if (abs(miny - expected_top) <= 0.02 * vh
+                        and abs(maxy - expected_bottom) <= 0.02 * vh):
+                    ok(f'the artwork column sits where the reference puts it '
+                       f'(top {miny} vs {round(expected_top, 1)}, bottom {maxy} vs '
+                       f'{round(expected_bottom, 1)})')
+                else:
+                    bad(f'the artwork column is displaced vertically '
+                        f'(top {miny} vs {round(expected_top, 1)}, bottom {maxy} vs '
+                        f'{round(expected_bottom, 1)})')
+
             # No loader, no bar, no percentage: nothing may be drawn between the
             # wordmark and the bottom strip (the reference's .pb has no markup).
             x0, y0, x1, y1 = (int(v) for v in bands['loader_strip'])
