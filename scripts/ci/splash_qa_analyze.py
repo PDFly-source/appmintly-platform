@@ -794,15 +794,33 @@ def main():
                     groups.append([yy])
             centres = [sum(g) / float(len(g)) for g in groups if len(g) >= 1]
             steps = [b - a for a, b in zip(centres, centres[1:])]
-            good_steps = [d for d in steps if abs(d - 32 * u) <= 0.15 * 32 * u]
+            expected_step = 32 * u
+            # Rule centres land on whole device pixels, so every step must be
+            # within one pixel of the reference pitch and the robust (median)
+            # statistic within half a pixel. That is the tightest tolerance the
+            # measurement can support; the rule geometry itself is unchanged.
+            good_steps = [d for d in steps if abs(d - expected_step) <= 1.0]
+            median_step = sorted(steps)[len(steps) // 2] if steps else None
+            median_txt = round(median_step, 2) if median_step is not None else 'none'
+            median_dev_txt = round(median_step - expected_step, 2) if median_step is not None else 'none'
+            deviations = [round(d - expected_step, 2) for d in steps] or [0.0]
             evidence['measured']['rails'] = {
                 'lines': len(centres),
-                'median_step': round(sorted(steps)[len(steps) // 2], 2) if steps else None,
-                'expected_step': round(32 * u, 2),
+                'line_centres': [round(c, 1) for c in centres],
+                'steps': [round(d, 2) for d in steps],
+                'deviation_from_expected': deviations,
+                'median_step': round(median_step, 2) if median_step is not None else None,
+                'median_deviation': round(median_step - expected_step, 2) if median_step is not None else None,
+                'min_deviation': min(deviations) if deviations else None,
+                'max_deviation': max(deviations) if deviations else None,
+                'expected_step': round(expected_step, 2),
+                'tolerance_px': 1.0,
             }
             verdict('rails',
-                    f"the ruled canvas repeats every {round(32 * u, 1)}px "
-                    f"({len(centres)} rules seen, {len(good_steps)} on pitch)",
+                    f"the ruled canvas repeats every {median_txt}px "
+                    f"({len(centres)} rules, {len(good_steps)}/{len(steps)} steps within 1px, "
+                    f"median deviation {median_dev_txt}px, "
+                    f"range {min(deviations)}..{max(deviations)}px)",
                     f"the ruled canvas is missing or off pitch (median step "
                     f"{evidence['measured']['rails']['median_step']}, expected "
                     f"{round(32 * u, 1)}px)",
@@ -810,8 +828,10 @@ def main():
                     # screenshot must not read as a design defect, but the pitch
                     # itself still has to be the reference's 32u.
                     len(centres) >= 8 and
-                    abs(evidence['measured']['rails']['median_step'] - 32 * u) <= 3.0 and
-                    len(good_steps) >= 0.6 * max(1, len(steps)))
+                    median_step is not None and
+                    abs(median_step - expected_step) <= 0.5 and
+                    len(good_steps) >= 0.8 * max(1, len(steps)) and
+                    max(abs(min(deviations)), abs(max(deviations))) <= 1.0)
 
             # .ml: rgba(190,25,25,.3) hairline, 34k in from the viewport edge.
             rule_x = int(round(vx + 34 * u))

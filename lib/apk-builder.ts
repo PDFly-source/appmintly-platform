@@ -1394,8 +1394,10 @@ ${
     private boolean splashContentReady = false;
     private boolean splashAnimationDone = false;
     private boolean splashTimedOut = false;
-    /** Renderer death is recovered once per launch, never in a recreate loop. */
+    /** Renderer death recovery runs once per launch, never in a recreate loop. */
     private boolean rendererRecovered = false;
+    /** Set for the single recreated Activity so the splash does not replay. */
+    private static boolean rendererRecovery = false;
 `
         : ''
     }${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -1512,10 +1514,11 @@ ${
                 maybeRetireSplash();
                 if (!rendererRecovered) {
                     rendererRecovered = true;
+                    rendererRecovery = true;
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
-                            try { recreate(); } catch (Throwable ignored) { }
+                            try { recreate(); } catch (Throwable ignored) { rendererRecovery = false; }
                         }
                     });
                 }
@@ -1899,6 +1902,13 @@ ${isNativeSplashBuild && !welcome ? '' : `    /** Brand launch gradient shared b
         // The animated view is the window's first frame: same canvas colour as
         // the window background and the Android 12+ system splash, so there is
         // no flash, no blank frame and no older artwork anywhere in the launch.
+        if (rendererRecovery) {
+            // Recovered from a dead renderer: this launch already played its
+            // splash, so it must not replay (no duplicate start, no second
+            // timeline). Clear the one-shot flag and go straight to the page.
+            rendererRecovery = false;
+            splashDismissed = true;
+        } else {
         splashOverlay = new FrameLayout(this);
         splashOverlay.setFitsSystemWindows(true);
         splashOverlay.setBackgroundColor(Color.parseColor("${splashSpecBg}"));
@@ -1912,7 +1922,8 @@ ${isNativeSplashBuild && !welcome ? '' : `    /** Brand launch gradient shared b
         });
         splashOverlay.addView(splashView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        setSplashStatusBar(true);`
+        setSplashStatusBar(true);
+        }`
             : `// --- in-window splash overlay (matches the system splash) ---
         // Lightweight: two-color gradient + one centered ImageView. No
         // network requests, no animations until the first paint, and it

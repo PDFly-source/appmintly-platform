@@ -268,6 +268,8 @@ adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 |
 # The cold/rotation passes must judge the animated design, so force the scales
 # to 1 here; the reduced-motion pass below sets them to 0 for its own run and
 # restores 1 afterwards.
+ANIM_ORIG=$(adb shell settings get global animator_duration_scale 2>/dev/null | tr -d '\r\n')
+echo "device animator_duration_scale before tests: ${ANIM_ORIG:-unknown}" | tee -a "$REPORT"
 adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
 adb shell settings put global window_animation_scale 1 >/dev/null 2>&1
 adb shell settings put global transition_animation_scale 1 >/dev/null 2>&1
@@ -278,6 +280,11 @@ sleep 0.6
 ANIM_STATE=$(adb shell settings get global animator_duration_scale 2>/dev/null | tr -d '\r\n')
 echo "animator_duration_scale=${ANIM_STATE:-unknown}" | tee -a "$REPORT"
 printf '%s' "${ANIM_STATE:-1}" > "${OUT}/animator_state.txt"
+if [ "${ANIM_STATE%%.*}" = "1" ]; then
+  pass "the cold pass runs with the device animation scale at 1 (device reports ${ANIM_STATE})"
+else
+  fail "the device did not accept animation scale 1 before the cold pass (reports ${ANIM_STATE:-unknown})"
+fi
 wake
 launch_cold
 sleep 0.2
@@ -400,6 +407,40 @@ else
   fail "no marketplace WebView after returning from HOME"
 fi
 
+# ------------------------------------------------- renderer death (recovery)
+# A WebView renderer can be killed under memory pressure. That is the one launch
+# failure a page can never report, so it is tested separately from HOME: the app
+# must rebuild its content view exactly once, land on the marketplace, and must
+# never replay the launch splash inside the recovered window.
+launch_cold
+wait_gone "renderer-death setup launch" 15
+WEBPID=$(adb shell ps -A 2>/dev/null | awk -v pkg="$PKG" '$0 ~ pkg && /sandboxed_process/ {print $2; exit}')
+if [ -n "$WEBPID" ]; then
+  pass "renderer-death scenario is testable (WebView renderer pid ${WEBPID})"
+  adb shell kill -9 "$WEBPID" >/dev/null 2>&1
+  sleep 2
+  RECOVERED=0
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if page_ready; then RECOVERED=1; break; fi
+    sleep 1
+  done
+  if [ "$RECOVERED" -eq 1 ]; then
+    pass "renderer death: the marketplace WebView is back after one recovery"
+  else
+    fail "renderer death: no marketplace WebView after the recovery (blank screen)"
+  fi
+  splash_state; SPLASH_RC=$?
+  if [ "$SPLASH_RC" -eq 0 ]; then
+    fail "renderer death: the splash replayed inside the recovered window"
+  elif [ "$SPLASH_RC" -eq 1 ]; then
+    pass "renderer death: the recovery landed on the page, not a second splash"
+  else
+    info "renderer death: the hierarchy was unavailable, so no splash replay could be checked"
+  fi
+else
+  info "no sandboxed WebView renderer process was visible; the renderer-death scenario is NOT RUN"
+fi
+
 # ---------------------------------------------------------------- offline launch
 # The splash is local artwork, so it must paint and retire with no network at
 # all; the marketplace is then allowed to show its own offline state.
@@ -450,6 +491,17 @@ print(f"WROTE splash-qa-report.json result={summary['result']} failures={failed}
       f"viewport={window['width']}x{window['height']}@{window['x']},{window['y']}" if window
       else f"WROTE splash-qa-report.json result={summary['result']} failures={failed} viewport=unmeasured")
 PYJSON
+
+# Restore the device exactly as we found it.
+if [ -n "${ANIM_ORIG:-}" ]; then
+  adb shell settings put global animator_duration_scale "$ANIM_ORIG" >/dev/null 2>&1
+  adb shell settings put global window_animation_scale "$ANIM_ORIG" >/dev/null 2>&1
+  adb shell settings put global transition_animation_scale "$ANIM_ORIG" >/dev/null 2>&1
+  pass "device animation scale restored to ${ANIM_ORIG} after the tests"
+else
+  adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
+  pass "device animation scale left at the platform default (nothing was recorded before the tests)"
+fi
 
 echo "──── summary ────" | tee -a "$REPORT"
 if [ "$FAILED" -eq 0 ]; then
