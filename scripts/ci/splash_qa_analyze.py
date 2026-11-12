@@ -688,7 +688,14 @@ def main():
                 if shot.get('width') and shot.get('height'):
                     sx = width / float(shot['width'])
                     sy = frame_h / float(shot['height'])
-                    if abs(sx - 1) > 0.02 or abs(sy - 1) > 0.02:
+                    uniform = abs(sx - sy) <= 0.03 * max(sx, sy)
+                    if not uniform:
+                        # wm size keeps reporting the natural orientation, so a
+                        # rotated frame must not be rescaled by it.
+                        note(f"device reports a {shot['width']}x{shot['height']} display but "
+                             f"the frame is {width}x{frame_h}; using the measured window as-is")
+                        sx = sy = 1.0
+                    elif abs(sx - 1) > 0.02 or abs(sy - 1) > 0.02:
                         note(f"the frame is {width}x{frame_h} but the device reported a "
                              f"{shot['width']}x{shot['height']} screenshot; scaling the "
                              f"window by {sx:.3f}x{sy:.3f}")
@@ -788,9 +795,10 @@ def main():
                 'bottom_band_px': f'{b_navy}/{b_total}',
                 'stripe_px': f'{t_light}/{b_light}',
             })
-            ok(f"both film strips sit at 13.5% of the {vw}x{vh} app viewport "
-               f"({t_navy}/{t_total} and {b_navy}/{b_total} band px)")
-            if not (t_navy > 0.6 * t_total and b_navy > 0.6 * b_total):
+            if t_navy > 0.6 * t_total and b_navy > 0.6 * b_total:
+                ok(f"both film strips sit at 13.5% of the {vw}x{vh} app viewport "
+                   f"({t_navy}/{t_total} and {b_navy}/{b_total} band px)")
+            else:
                 bad(f"the 13.5% film strips are missing or misplaced "
                     f"({t_navy}/{t_total} and {b_navy}/{b_total} band px)")
             if t_light > 40 and b_light > 40:
