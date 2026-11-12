@@ -424,6 +424,90 @@ ok(
     !/AppMintlySplashView|PdfMiniFlySplashView/.test(billcraftModule),
 );
 
+/* ---------- Niramay (Task 4): its own owner-supplied splash ---------- */
+const {
+  NIRAMAY_SPLASH_PACKAGE: NIRAMAY_PACKAGE,
+  NIRAMAY_SPLASH_HARD_TIMEOUT_MS: NIRAMAY_TIMEOUT,
+  NIRAMAY_SPLASH_MS: NIRAMAY_MS,
+  NIRAMAY_SPLASH_BG: NIRAMAY_BG,
+  niramaySplashJava,
+  niramaySplashStylesV31Xml,
+} = require('../lib/splash/niramay-splash');
+const niramayModule = fs.readFileSync('lib/splash/niramay-splash.ts', 'utf8');
+const niramayAssets = fs.readFileSync('lib/splash/niramay-splash-assets.ts', 'utf8');
+ok(
+  'Niramay splash is scoped to its own package id',
+  NIRAMAY_PACKAGE === 'com.appforge.niramay' &&
+    /\[NIRAMAY_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    NIRAMAY_MS === 3400 &&
+    NIRAMAY_TIMEOUT > NIRAMAY_MS &&
+    NIRAMAY_BG === '#F6EED8',
+);
+const nrJava = niramaySplashJava(NIRAMAY_PACKAGE);
+ok(
+  'the Niramay splash is reproduced natively (no WebView, no remote asset)',
+  /public class NiramaySplashView extends View/.test(nrJava) &&
+    !/WebView/.test(nrJava) &&
+    !/http/.test(nrJava),
+);
+ok(
+  'the Niramay launch surface cannot show the old branded splash',
+  /windowSplashScreenBackground">@color\/niramay_splash_bg/.test(niramaySplashStylesV31Xml()) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/niramay_splash_transparent_icon/.test(
+      niramaySplashStylesV31Xml(),
+    ),
+);
+ok(
+  'the Niramay splash follows the reference FINAL cascade (soft, not the overridden zoom)',
+  /soft .*|SOFT/.test('') === false &&
+    /LOGO_DELAY = 300L, LOGO_DUR = 1500L/.test(niramayModule) &&
+    /ease\(lp, 0\.2f, 0\.7f, 0\.2f, 1f\)/.test(niramayModule) &&
+    /\[soft|animation:soft/.test(
+      fs.readFileSync('docs/splash/Niramay_Splash.html', 'utf8'),
+    ) &&
+    !/filter:blur/.test(niramayModule),
+);
+ok(
+  'the Niramay wordmark rises on the final 1.1s / 1.2s timing',
+  /WORD_DELAY = 1200L, WORD_DUR = 1100L/.test(niramayModule) &&
+    !/WORD_DELAY = 900L/.test(niramayModule),
+);
+ok(
+  'Niramay has NO loader and NO progress bar, unlike an invented one',
+  // The generated view must contain no bar geometry of any kind. Assert on the
+  // Java the build writes, not on prose in the module that describes it.
+  !/SEG_|STEPS_|drawRoundRect|drawRect\([^)]*track|progressBar/i.test(nrJava) &&
+    !/class="pb"/.test(fs.readFileSync('docs/splash/Niramay_Splash.html', 'utf8')),
+);
+ok(
+  'the Niramay halo, dots and hairline are all reproduced',
+  /GLOW_INNER = 0x47D4AA46/.test(niramayModule) &&
+    /PARTICLE_X = \{22f, 74f, 40f, 62f, 14f, 84f\}/.test(niramayModule) &&
+    /PARTICLE_Y = \{70f, 62f, 78f, 74f, 50f, 40f\}/.test(niramayModule) &&
+    /PARTICLE_DELAY = \{0L, 900L, 1700L, 2400L, 1200L, 2000L\}/.test(niramayModule) &&
+    /LINE_W = 120f/.test(niramayModule) &&
+    /LINE_BOTTOM = 58f/.test(niramayModule),
+);
+ok(
+  'the Niramay reference artwork is embedded byte for byte, not redrawn or fetched',
+  /NIRAMAY_SPLASH_LOGO_JPEG_BASE64/.test(niramayModule) &&
+    /PorterDuff\.Mode\.MULTIPLY/.test(niramayModule) &&
+    /9d692fecf733a94a|92b551aa6a87e1a5/.test(niramayAssets),
+);
+ok(
+  'the Niramay reference HTML is committed as the authoritative design source',
+  fs.existsSync('docs/splash/Niramay_Splash.html') &&
+    fs.statSync('docs/splash/Niramay_Splash.html').size > 60000,
+);
+ok(
+  'no two apps share a splash view class (Niramay included)',
+  /viewClass: 'AppMintlySplashView'/.test(builderSrc) &&
+    /viewClass: 'PdfMiniFlySplashView'/.test(builderSrc) &&
+    /viewClass: 'BillCraftSplashView'/.test(builderSrc) &&
+    /viewClass: 'NiramaySplashView'/.test(builderSrc) &&
+    !/AppMintlySplashView|PdfMiniFlySplashView|BillCraftSplashView/.test(niramayModule),
+);
+
 ok(
   'the reference HTML is committed as the authoritative design source',
   fs.existsSync('docs/splash/AppMintly_Splash.html') &&

@@ -49,6 +49,21 @@ import {
   billcraftSplashWordJpeg,
 } from './splash/billcraft-splash';
 import {
+  NIRAMAY_SPLASH_BG,
+  NIRAMAY_SPLASH_HARD_TIMEOUT_MS,
+  NIRAMAY_SPLASH_ICON_NAME,
+  NIRAMAY_SPLASH_LOGO_NAME,
+  NIRAMAY_SPLASH_PACKAGE,
+  NIRAMAY_SPLASH_WORD_NAME,
+  niramaySplashColorEntries,
+  niramaySplashJava,
+  niramaySplashLogoJpeg,
+  niramaySplashStylesV31Xml,
+  niramaySplashStylesXml,
+  niramaySplashTransparentIconXml,
+  niramaySplashWordJpeg,
+} from './splash/niramay-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -608,6 +623,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       assets: [
         { name: `${BILLCRAFT_SPLASH_LOGO_NAME}.jpg`, bytes: billcraftSplashLogoJpeg() },
         { name: `${BILLCRAFT_SPLASH_WORD_NAME}.jpg`, bytes: billcraftSplashWordJpeg() },
+      ],
+    },
+    [NIRAMAY_SPLASH_PACKAGE]: {
+      viewClass: 'NiramaySplashView',
+      bg: NIRAMAY_SPLASH_BG,
+      hardTimeoutMs: NIRAMAY_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'NiramaySplashView.java',
+      java: niramaySplashJava,
+      iconName: NIRAMAY_SPLASH_ICON_NAME,
+      iconXml: niramaySplashTransparentIconXml(),
+      colorEntries: niramaySplashColorEntries(),
+      stylesXml: niramaySplashStylesXml(),
+      stylesV31Xml: niramaySplashStylesV31Xml(),
+      assets: [
+        { name: `${NIRAMAY_SPLASH_LOGO_NAME}.jpg`, bytes: niramaySplashLogoJpeg() },
+        { name: `${NIRAMAY_SPLASH_WORD_NAME}.jpg`, bytes: niramaySplashWordJpeg() },
       ],
     },
   };

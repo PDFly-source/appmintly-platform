@@ -146,6 +146,10 @@ def geometry(width, height):
         # .mk is 130dp wide from a 420x410 JPEG, .tx 190dp from 620x197.
         logo_w, logo_h = 130 * u, 130 * u * 410 / 420.0
         word_w, word_h = 190 * u, 190 * u * 197 / 620.0
+    elif DESIGN == 'niramay':
+        # .mk is 150dp wide from a 420x358 JPEG, .tx 195dp from 620x203.
+        logo_w, logo_h = 150 * u, 150 * u * 358 / 420.0
+        word_w, word_h = 195 * u, 195 * u * 203 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -172,6 +176,16 @@ def geometry(width, height):
         'steps': (ox + 60 * u, oy + (488 - 52 - 10) * u, ox + (228 - 60) * u, oy + (488 - 52) * u),
         'seg_w': (108 * u - 12 * u) / 3.0,
         'ring_box': (cx - 180 * u, oy + 190 * u - 180 * u, cx + 180 * u, oy + 190 * u + 180 * u),
+        # Niramay reference: a 300dp gold halo centred at stage (114,190), a
+        # 1dp hairline whose bottom is 58dp above the stage edge, and the strip
+        # where BillCraft's steps (.bottom 52dp) and PDFMiniFly's bar
+        # (.bottom 54dp) used to sit — Niramay has no such element.
+        'glow_ring': (cx - 145 * u, oy + 190 * u - 100 * u,
+                      cx - 80 * u, oy + 190 * u + 40 * u),
+        'line': (cx - 62 * u, oy + (488 - 58 - 1) * u,
+                 cx + 62 * u, oy + (488 - 58 + 3) * u),
+        'loader_band': (cx - 62 * u, oy + (488 - 57) * u,
+                        cx + 62 * u, oy + (488 - 43) * u),
     }
 
 
@@ -188,6 +202,49 @@ def warm_count(rows, bpp, box):
             i = x * bpp
             r, g, b = row[i], row[i + 1], row[i + 2]
             if r >= 225 and r - b >= 18 and r - g >= 8:
+                n += 1
+    return n
+
+
+def gold_metrics(rows, bpp, box):
+    """Gold artwork inside a box: (column span, row span, matching pixels).
+
+    Niramay's accents are #c9a24a hairline/particles (201,162,74) and the
+    rgba(212,170,70,.28) halo over the cream canvas, which lands near
+    (236,219,175). Both are warm with a wide red-to-blue split; the plain
+    #f6eed8 canvas (246,238,216) splits only 30 and the gradient's inner stop
+    (#fffef8) almost not at all, so this separates real gold from the backdrop.
+    """
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    cols, ys, n = set(), set(), 0
+    for y in range(y0, y1):
+        row = rows[y]
+        for x in range(x0, x1):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            if r >= 150 and b <= 140 and r - b >= 45 and g >= b + 20 and g <= r - 8:
+                cols.add(x)
+                ys.add(y)
+                n += 1
+    return len(cols), len(ys), n
+
+
+def offcanvas_count(rows, bpp, box, tol=12, step=2):
+    """Pixels that are not the reference canvas, i.e. anything a loader would be."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1, step):
+        row = rows[y]
+        for x in range(x0, x1, step):
+            i = x * bpp
+            if (abs(row[i] - 246) > tol or abs(row[i + 1] - 238) > tol
+                    or abs(row[i + 2] - 216) > tol):
                 n += 1
     return n
 
@@ -371,6 +428,11 @@ REQUIRED = {
              if DESIGN == 'pdfminifly'
              else {'logo', 'word', 'bar', 'replace'}
              if DESIGN == 'billcraft'
+             # Niramay has no loader in its markup, so no loader check exists;
+             # instead the halo, the hairline and the empty loader strip are
+             # required on the captured frame.
+             else {'motion', 'logo', 'word', 'glow', 'line', 'nobar', 'replace'}
+             if DESIGN == 'niramay'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
@@ -507,6 +569,31 @@ def main():
                     f"the coral radial glow is behind the artwork ({glow_px} warm px)",
                     f"no coral glow behind the artwork ({glow_px} warm px)",
                     glow_px > 300)
+        if DESIGN == 'niramay':
+            # The halo is a soft gold tint, sampled left of the logo so the
+            # multiply-blended artwork cannot be mistaken for it.
+            glow_cols, glow_rows, glow_px = gold_metrics(rows, bpp, g['glow_ring'])
+            verdict('glow',
+                    f"the gold halo is behind the artwork ({glow_px} tinted px)",
+                    f"no gold halo behind the artwork ({glow_px} tinted px)",
+                    glow_px > 120)
+
+            # The hairline: wide and thin is the reference; a bar would be tall.
+            line_cols, line_rows, line_px = gold_metrics(rows, bpp, g['line'])
+            verdict('line',
+                    f"the gold hairline is on the reference row "
+                    f"({line_cols}px wide, {line_rows}px tall)",
+                    f"no gold hairline on the reference row "
+                    f"({line_cols}px wide, {line_rows}px tall)",
+                    line_cols > 80 and line_px > 120 and line_rows <= max(12, int(g['u'] * 6)))
+
+            # The strip where a loader would live must be bare canvas: Niramay's
+            # markup has no progress bar, and nothing may be invented for it.
+            stray = offcanvas_count(rows, bpp, g['loader_band'])
+            verdict('nobar',
+                    f"no progress bar or loader anywhere on the splash ({stray} stray px)",
+                    f"something is drawn where a loader would be ({stray} stray px)",
+                    stray < 200)
     elif 'logo' in required:
         bad("no mid-animation frame to inspect")
 
