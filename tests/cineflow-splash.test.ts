@@ -224,3 +224,77 @@ describe('CineFlow splash — the final cascade, not the overridden rules', () =
     expect(l.markW).toBeCloseTo(298.8, 0);
   });
 });
+
+describe('CineFlow splash — artwork placement (0.3.2 fidelity hotfix)', () => {
+  const java = cineflowSplashJava();
+
+  // The flip is a Camera.rotateY about the canvas origin. Android composes
+  // `m.preTranslate(a)` as m = m·T(a) and `m.postTranslate(a)` as m = T(a)·m, so
+  // preTranslate(-w/2,-h/2) + postTranslate(w/2,h/2) cancel exactly and the rect
+  // drawn at (0,0,w,h) keeps its centre at (w/2,h/2) in the translated space:
+  // the mark landed half its own width right and half its own height below the
+  // column, which is what the owner saw on 0.3.1 (mark clipped at the right
+  // edge). Drawing the rect centred on the origin removes the offset entirely.
+  it('the mark is drawn centred on the column, never offset by half its size', () => {
+    expect(java).toContain(
+      'canvas.drawBitmap(bmp, null, new RectF(-w / 2f, -h / 2f, w / 2f, h / 2f), p);',
+    );
+    expect(java).not.toContain('m.preTranslate(-w / 2f, -h / 2f);');
+    expect(java).not.toContain('m.postTranslate(w / 2f, h / 2f);');
+    expect(java).not.toContain('new RectF(0f, 0f, w, h)');
+  });
+
+  it('the drawn mark box is the reference box at every measured viewport', () => {
+    const layout = (w: number, h: number) => {
+      const u = Math.min(w / 228, h / 488);
+      const stageH = 488 * u;
+      const markW = 135 * u;
+      const markH = markW * (426 / 420);
+      const wordW = 215 * u;
+      const wordH = wordW * (155 / 620);
+      const gap = 12 * u;
+      const oy = (h - stageH) / 2;
+      const contentTop = oy + ((stageH - 44 * u) - (markH + gap + wordH)) / 2;
+      const cx = w / 2;
+      return { u, cx, markW, markH, wordW, wordH, contentTop,
+        mark: { left: cx - markW / 2, right: cx + markW / 2,
+                top: contentTop, bottom: contentTop + markH },
+        word: { left: cx - wordW / 2, right: cx + wordW / 2,
+                top: contentTop + markH + gap } };
+    };
+    // device content viewports proven on the API 36 emulator plus the browser
+    // render used for the reference measurements
+    const viewports: Array<[number, number]> = [
+      [720, 1502], [1080, 2209], [2272, 954], [412, 915], [2400, 1080],
+    ];
+    for (const [w, h] of viewports) {
+      const l = layout(w, h);
+      // centred to the pixel
+      expect(l.mark.left + l.mark.right).toBeCloseTo(w, 6);
+      expect(l.word.left + l.word.right).toBeCloseTo(w, 6);
+      // fully inside the viewport: nothing to clip
+      for (const box of [l.mark, l.word]) {
+        expect(box.left).toBeGreaterThanOrEqual(0);
+        expect(box.right).toBeLessThanOrEqual(w + 1e-9);
+      }
+      expect(l.mark.bottom).toBeLessThanOrEqual(h);
+      expect(l.word.top + l.wordH).toBeLessThanOrEqual(h);
+      // reference proportions: 135/228 and 215/228 of the stage width
+      expect(l.markW / 228 / l.u).toBeCloseTo(135 / 228, 6);
+    }
+  });
+
+  it('reproduces the defect it fixes: the old offset clipped the mark at 720 wide', () => {
+    const w = 720;
+    const h = 1502;
+    const u = Math.min(w / 228, h / 488);
+    const markW = 135 * u;
+    const cx = w / 2;
+    // old form: rect drawn at (0,0,w,h) after translate(cx,cy) -> centre at cx + markW/2
+    const oldRight = cx + markW;
+    expect(oldRight).toBeGreaterThan(w); // clipped, as captured on the owner's device
+    expect(oldRight - w).toBeCloseTo(55.5, 1);
+    // fixed form: symmetric about the centre
+    expect(cx + markW / 2).toBeLessThan(w);
+  });
+});

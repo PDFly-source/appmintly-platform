@@ -381,7 +381,20 @@ public class CineFlowSplashView extends View {
         canvas.restoreToCount(save);
     }
 
-    /** rotateY about the artwork centre with the reference's perspective. */
+    /**
+     * rotateY about the artwork centre with the reference's perspective.
+     *
+     * The camera matrix turns about the canvas origin, so the artwork is drawn
+     * centred on that origin (RectF(-w/2, -h/2, w/2, h/2)): the mark then spins
+     * about its own centre and its centre stays exactly on (cx, cy).
+     *
+     * Do NOT go back to drawing RectF(0, 0, w, h) with the
+     * preTranslate(-w/2,-h/2) + postTranslate(w/2,h/2) pair. Those two offsets
+     * cancel identically at every angle, so the rect's centre lands on
+     * (cx + w/2, cy + h/2): the mark sits half its own width right and half its
+     * own height below the column and clips off the right edge (CineFlow 0.3.1,
+     * found on device against the owner's reference screenshot).
+     */
     private void drawFlipped(Canvas canvas, Bitmap bmp, float cx, float cy, float w, float h,
                              float angleDeg, float scale, float persp, Paint p) {
         if (bmp == null || p.getAlpha() == 0) return;
@@ -394,10 +407,8 @@ public class CineFlowSplashView extends View {
         camera.rotateY(angleDeg);
         camera.getMatrix(m);
         camera.restore();
-        m.preTranslate(-w / 2f, -h / 2f);
-        m.postTranslate(w / 2f, h / 2f);
         canvas.concat(m);
-        canvas.drawBitmap(bmp, null, new RectF(0f, 0f, w, h), p);
+        canvas.drawBitmap(bmp, null, new RectF(-w / 2f, -h / 2f, w / 2f, h / 2f), p);
         canvas.restoreToCount(save);
     }
 
