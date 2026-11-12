@@ -287,8 +287,21 @@ wait_gone "landscape launch" 15
 # because the setting does not reliably survive the first activity teardown.
 ensure_landscape "before the rotated frame pass"
 launch_cold
-sleep 0.3
+# Starting the activity can put the display back into portrait, so the rotation
+# is re-applied and then verified from the capture itself, not from settings.
+ensure_landscape "after the rotated relaunch"
+sleep 0.4
 shot "rot_early"
+rot_dims=$(python3 scripts/ci/splash_qa_analyze.py --dims "${OUT}/rot_early.png" 2>/dev/null || echo unreadable)
+if [ "$rot_dims" != "unreadable" ]; then
+  eval "set -- $rot_dims"
+  if [ "${1:-0}" -lt "${2:-0}" ]; then
+    info "[rot] relaunch reset the display to portrait; re-applying landscape once"
+    ensure_landscape "after the portrait reset"
+    sleep 0.6
+    shot "rot_early"
+  fi
+fi
 # Logged, not acted on: starting the activity a second time is itself enough to
 # put the display back into portrait, so the frame set is judged as captured.
 info "[rot] first rotated frame $(python3 scripts/ci/splash_qa_analyze.py --dims "${OUT}/rot_early.png" 2>/dev/null || echo unreadable)"

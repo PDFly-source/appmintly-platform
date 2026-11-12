@@ -12,6 +12,6 @@
     "splash_desc": "PDFMiniFly",
     "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/pdfminifly-v2.3.0/PDFMiniFly-2.3.0.apk"
   },
-  "note": "Task 2 final QA: the exact published PDFMiniFly 2.3.0 binary, hash-gated",
-  "requested_at": "2026-11-12T04:55Z"
+  "note": "Task 2 final QA retry: rotation re-locked after relaunch, bar judged only on a live frame set",
+  "requested_at": "2026-11-12T05:02Z"
 }

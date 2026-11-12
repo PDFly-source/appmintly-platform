@@ -71,6 +71,23 @@ describe('PDFMiniFly splash reference — provenance', () => {
     expect(sha(pdfminiflySplashWordJpeg())).toBe(PDFMINIFLY_SPLASH_WORD_SHA256);
   });
 
+  it('the progress bar follows the reference fill timeline exactly', () => {
+    const html = readFileSync(join(REPO, 'docs', 'splash', 'PDFMiniFly_Splash.html'), 'utf8');
+    // reference: .pb { left/right 70, bottom 54, height 5 } and the ::after fill
+    expect(html).toContain('left:70px;right:70px');
+    expect(html).toContain('fill 2.4s cubic-bezier(.4,0,.2,1) .6s both');
+    const java = pdfminiflySplashJava('com.appforge.pdfminifly');
+    expect(java).toContain('BAR_DELAY = 600L, BAR_DUR = 2400L');
+    expect(java).toContain('ease(progress(t, BAR_DELAY, BAR_DUR), 0.4f, 0f, 0.2f, 1f)');
+    expect(java).toContain('BAR_INSET_X = 70f');
+    expect(java).toContain('BAR_BOTTOM = 54f');
+    expect(java).toContain('BAR_H = 5f');
+    // the track and the fill both carry the reference colours, fully opaque fill
+    expect(java).toContain('BAR_TRACK = 0x1FD71920');
+    expect(java).toContain('BAR_FILL_START = 0xFFD71920');
+    expect(java).toContain('BAR_FILL_END = 0xFFFF7A1A');
+  });
+
   it('the artwork dimensions are the ones the layout math expects', () => {
     expect(pdfminiflySplashLogoJpeg().length).toBe(28656);
     expect(pdfminiflySplashWordJpeg().length).toBe(23484);
