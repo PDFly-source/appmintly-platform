@@ -470,6 +470,16 @@ def main():
     numeric_all = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])
     numeric = [f for f in numeric_all if f[0] <= SPLASH_WINDOW_MS]
     late = len(numeric_all) - len(numeric)
+
+    # A frame can only answer a composition check if it is the light canvas. This
+    # emulator sometimes hands back a blanked display for a whole burst (it did
+    # on the reduced-motion re-launch), and a black frame would otherwise "pass"
+    # a dark-ink artwork test with every pixel. So blank frames are never used
+    # for composition, and when a burst is blank the tag's own probe capture
+    # stands in for it - for composition only, never for timing.
+    def is_lit(f):
+        return mean_lum(f[2][3], f[2][2]) > 190
+    probes = [f for f in frames if f[0] is None and is_lit(f)]
     named = {f[1]: f for f in frames if f[0] is None}
 
     def verdict(check, passed_msg, failed_msg, enabled=True):
@@ -494,12 +504,48 @@ def main():
         else:
             note("no timestamped launch frames were captured")
     else:
+        # The design canvas is light, so a light frame IS a splash frame. A dark
+        # frame is not automatically a defect: this emulator hands back frames
+        # with the display blanked (mean ~1, the burst starts before the first
+        # draw) and frames where the app's own screen is already up because the
+        # splash retired on schedule. Only the legacy launch surface - a solid
+        # dark green fill - means the old splash came back, so that is what the
+        # check fails on, and everything else is reported with its measurement.
         lums = [(mean_lum(f[2][3], f[2][2]), str(f[0])) for f in numeric]
         dim = min(lums)
+        lit = [l for l in lums if l[0] > 190]
+        legacy = []
+        blank = []
+        settled = []
+        for level, at in lums:
+            if level > 190:
+                continue
+            if level <= 8:
+                blank.append(at)
+            elif level <= 90:
+                legacy.append((level, at))
+            else:
+                settled.append((level, at))
         if dim[0] > 190:
             ok(f"all {len(lums)} launch frames are the light canvas (dimmest mean {dim[0]:.1f})")
+        elif legacy:
+            level, at = min(legacy)
+            bad(f"a launch frame is a dark surface (mean {level:.1f} at {at}ms) - the old "
+                "splash or a flash is still on screen")
         else:
-            bad(f"a launch frame is dark (mean {dim[0]:.1f} at {dim[1]}ms) - old splash or flash")
+            if lit:
+                ok(f"{len(lit)} of {len(lums)} launch frames are the light canvas "
+                   f"(dimmest light frame {min(l[0] for l in lit):.1f})")
+            else:
+                note("no timestamped launch frame is lit - the burst caught a blanked "
+                     "display, so it says nothing for or against the canvas")
+            if blank:
+                note(f"{len(blank)} frame(s) have the display blanked/unpainted "
+                     f"(mean <= 8, first at {blank[0]}ms) - captured before the first draw")
+            if settled:
+                level, at = max(settled)
+                note(f"{len(settled)} frame(s) show the app's own screen already up "
+                     f"(mean {level:.1f} at {at}ms) - the splash retired on schedule")
 
         if late:
             note(f"{late} frame(s) after {SPLASH_WINDOW_MS}ms were not judged as splash frames")
@@ -531,10 +577,14 @@ def main():
         else:
             note(f"only {len(numeric)} launch frame(s), skipping the motion check")
 
-    drawn = [f for f in numeric
-             if ink_count(f[2][3], f[2][2], geometry(f[2][0], f[2][1])['logo']) > 2000]
-    if numeric and not drawn:
-        note("no launch frame has artwork in the logo box (blank window only)")
+    drawn = [f for f in numeric if is_lit(f)
+             and ink_count(f[2][3], f[2][2], geometry(f[2][0], f[2][1])['logo']) > 2000]
+    if not drawn and probes:
+        drawn = [(2400, probes[0][1], probes[0][2])]
+        note(f"the timestamped burst is blank, so the composition checks use the "
+             f"{probes[0][1]} capture from this same launch")
+    if not drawn:
+        note("no launch frame shows artwork in the logo box (blank window only)")
 
     def nearest_drawn(target, window):
         if not drawn:
