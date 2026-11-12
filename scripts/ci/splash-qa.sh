@@ -271,7 +271,13 @@ adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 |
 adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
 adb shell settings put global window_animation_scale 1 >/dev/null 2>&1
 adb shell settings put global transition_animation_scale 1 >/dev/null 2>&1
-sleep 0.3
+sleep 0.6
+# Record what the DEVICE actually reports: the reference's own reduced-motion
+# state (animation:none) is a different, legitimate design state, so the
+# analyzer must judge the bar against the device's real setting, never assume.
+ANIM_STATE=$(adb shell settings get global animator_duration_scale 2>/dev/null | tr -d '\r\n')
+echo "animator_duration_scale=${ANIM_STATE:-unknown}" | tee -a "$REPORT"
+printf '%s' "${ANIM_STATE:-1}" > "${OUT}/animator_state.txt"
 wake
 launch_cold
 sleep 0.2

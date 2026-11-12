@@ -851,11 +851,31 @@ def main():
                 covered = 0.0
                 if fill_ink:
                     covered = (fill_ink[2] - fill_ink[0]) / max(1.0, bar_box[2] - bar_box[0])
-                verdict('bar',
-                        f"the progress bar is filled ({covered * 100:.0f}% of the track)",
-                        f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
-                        f"of the track)",
-                        bar_ink is not None and covered >= 0.85)
+                # The DEVICE decides which state is correct. The reference's
+                # `animation:none !important` leaves the bar EMPTY, so with
+                # animations disabled the empty pill is the design state and a
+                # filled one must not appear; with animations on the fill has to
+                # reach the end of the track.
+                anim_on = True
+                try:
+                    state_dir = os.path.dirname(os.path.abspath(frames[0][1]))
+                    with open(os.path.join(state_dir, 'animator_state.txt'), 'r', encoding='utf-8') as fh:
+                        anim_on = (fh.read().strip() or '1') not in ('0', '0.0', 'off', 'false')
+                except Exception:
+                    anim_on = True
+                if anim_on:
+                    verdict('bar',
+                            f"the progress bar is filled ({covered * 100:.0f}% of the track)",
+                            f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
+                            f"of the track)",
+                            bar_ink is not None and covered >= 0.85)
+                else:
+                    note('the device has animations disabled, so the reference state is the empty pill')
+                    verdict('bar',
+                            'the progress bar is drawn as an empty pill (device animations disabled)',
+                            f"a filled bar appeared although the device has animations disabled "
+                            f"({covered * 100:.0f}%)",
+                            bar_ink is not None and covered <= 0.05)
             write_report(evidence)
 
         if DESIGN == 'cineflow':
