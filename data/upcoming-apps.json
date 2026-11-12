@@ -4008,12 +4008,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/niramay/",
-    "releaseVersion": "2.2.0",
+    "releaseVersion": "2.3.0",
     "releaseDate": "2026-09-30",
     "milestones": [
       {
         "id": "pub-niramay-m1",
-        "title": "Publicly released on the AppMintly marketplace (v2.2.0)",
+        "title": "Publicly released on the AppMintly marketplace (v2.3.0)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/niramay/.",
         "status": "done"
       }
@@ -4026,9 +4026,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.2.0.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.3.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-09"
+          "date": "2026-11-12"
         }
       ]
     },
@@ -4167,12 +4167,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/cineflow/",
-    "releaseVersion": "0.3.0",
+    "releaseVersion": "0.3.1",
     "releaseDate": "2026-10-27",
     "milestones": [
       {
         "id": "pub-cineflow-m1",
-        "title": "Publicly released on the AppMintly marketplace (v0.3.0)",
+        "title": "Publicly released on the AppMintly marketplace (v0.3.1)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/cineflow/.",
         "status": "done"
       }
@@ -4185,9 +4185,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.3.0.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.3.1.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-09"
+          "date": "2026-11-12"
         }
       ]
     },
