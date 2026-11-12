@@ -11,6 +11,6 @@
     "background_color": "#FAF6EE",
     "distribution_repo": "PDFly-source/appmintly-releases"
   },
-  "note": "Task 3: BillCraft native owner-supplied splash replaces the legacy launch surface. Launcher input, theme and background are byte-identical to 0.1.1.",
-  "requested_at": "2026-11-12T06:40Z"
+  "note": "Task 3: BillCraft native owner-supplied splash replaces the legacy launch surface. Re-request after the release gate caught the registry refactor (gate 11 wanted the old ternary text; it now asserts the registry form and covers BillCraft). Launcher input, theme and background are byte-identical to 0.1.1.",
+  "requested_at": "2026-11-12T06:52Z"
 }

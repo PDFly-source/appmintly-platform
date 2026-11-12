@@ -231,9 +231,10 @@ const {
 ok(
   'owner-supplied splashes are scoped per package id, not switched on globally',
   /export const APPMINTLY_SPLASH_PACKAGE = 'com\.appmintly\.appmintly';/.test(splashModule) &&
-    /packageId === APPMINTLY_SPLASH_PACKAGE/.test(builderSrc) &&
-    /packageId === PDFMINIFLY_SPLASH_PACKAGE/.test(builderSrc) &&
-    /: null;/.test(builderSrc),
+    /\[APPMINTLY_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    /\[PDFMINIFLY_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    /\[BILLCRAFT_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    /hasOwnProperty\.call\(splashSpecs, packageId\) \? splashSpecs\[packageId\] : null/.test(builderSrc),
 );
 const splashJava = appmintlySplashJava('com.appmintly.appmintly');
 ok(
@@ -316,7 +317,7 @@ const {
 ok(
   'PDFMiniFly splash is scoped to its own package id',
   PDF_MINIFLY_PACKAGE === 'com.appforge.pdfminifly' &&
-    /packageId === PDFMINIFLY_SPLASH_PACKAGE/.test(builderSrc),
+    /\[PDFMINIFLY_SPLASH_PACKAGE\]: \{/.test(builderSrc),
 );
 const pdfJava = pdfminiflySplashJava(PDF_MINIFLY_PACKAGE);
 ok(
@@ -357,6 +358,70 @@ ok(
   /viewClass: 'AppMintlySplashView'/.test(builderSrc) &&
     /viewClass: 'PdfMiniFlySplashView'/.test(builderSrc) &&
     !/AppMintlySplashView/.test(pdfModule),
+);
+
+const {
+  BILLCRAFT_SPLASH_PACKAGE: BILL_CRAFT_PACKAGE,
+  BILLCRAFT_SPLASH_HARD_TIMEOUT_MS: BILL_CRAFT_TIMEOUT,
+  billcraftSplashJava,
+  billcraftSplashStylesV31Xml,
+} = require('../lib/splash/billcraft-splash');
+const billcraftModule = fs.readFileSync('lib/splash/billcraft-splash.ts', 'utf8');
+ok(
+  'BillCraft splash is scoped to its own package id',
+  BILL_CRAFT_PACKAGE === 'com.appforge.billcraft' &&
+    /\[BILLCRAFT_SPLASH_PACKAGE\]: \{/.test(builderSrc),
+);
+const bcJava = billcraftSplashJava(BILL_CRAFT_PACKAGE);
+ok(
+  'the BillCraft splash is reproduced natively (no WebView, no remote asset)',
+  /public class BillCraftSplashView extends View/.test(bcJava) &&
+    !/WebView|https?:\/\//.test(bcJava),
+);
+ok(
+  'the BillCraft launch surface cannot show the old branded splash',
+  /windowSplashScreenBackground">@color\/billcraft_splash_bg/.test(billcraftSplashStylesV31Xml()) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/billcraft_splash_transparent_icon/.test(
+      billcraftSplashStylesV31Xml(),
+    ) &&
+    BILL_CRAFT_TIMEOUT === 12000,
+);
+ok(
+  'the BillCraft splash follows the reference FINAL cascade (fall, not the overridden zoom)',
+  /animation:fall \.9s cubic-bezier\(\.3,\.7,\.3,1\) \.2s both/.test(
+    fs.readFileSync('docs/splash/BillCraft_Splash.html', 'utf8'),
+  ) &&
+    /LOGO_DELAY = 200L, LOGO_DUR = 900L/.test(billcraftModule) &&
+    /WORD_DELAY = 900L, WORD_DUR = 800L/.test(billcraftModule) &&
+    /RIPPLE_DELAY_1 = 1000L, RIPPLE_DELAY_2 = 1350L/.test(billcraftModule) &&
+    !/filter:blur/.test(billcraftModule),
+);
+ok(
+  'the BillCraft loader is the three reference segments, not the unused .pb bar',
+  /SEG_DELAY_1 = 900L, SEG_DELAY_2 = 1500L, SEG_DELAY_3 = 2100L/.test(billcraftModule) &&
+    /SEG_3 = 0xFF17C3A0/.test(billcraftModule) &&
+    !/BAR_INSET_X/.test(billcraftModule) &&
+    !/class="pb"/.test(fs.readFileSync('docs/splash/BillCraft_Splash.html', 'utf8')),
+);
+ok(
+  'the BillCraft reference artwork is embedded, not redrawn or fetched',
+  /BILLCRAFT_SPLASH_LOGO_JPEG_BASE64/.test(billcraftModule) &&
+    /PorterDuff\.Mode\.MULTIPLY/.test(billcraftModule) &&
+    /BE92|be9213064e01467c/.test(
+      fs.readFileSync('lib/splash/billcraft-splash-assets.ts', 'utf8'),
+    ),
+);
+ok(
+  'the BillCraft reference HTML is committed as the authoritative design source',
+  fs.existsSync('docs/splash/BillCraft_Splash.html') &&
+    fs.statSync('docs/splash/BillCraft_Splash.html').size > 60000,
+);
+ok(
+  'no two apps share a splash view class',
+  /viewClass: 'AppMintlySplashView'/.test(builderSrc) &&
+    /viewClass: 'PdfMiniFlySplashView'/.test(builderSrc) &&
+    /viewClass: 'BillCraftSplashView'/.test(builderSrc) &&
+    !/AppMintlySplashView|PdfMiniFlySplashView/.test(billcraftModule),
 );
 
 ok(
