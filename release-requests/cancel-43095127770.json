@@ -1,0 +1,4 @@
+{
+  "cancel_run_id": "43095127770",
+  "note": "release-request bridge never left the queue (no job created for 8h); cancelling so the PDFMiniFly 2.3.0 request can be dispatched exactly once"
+}
