@@ -181,6 +181,10 @@ def geometry(width, height):
         # .mk is 135dp wide from a 420x426 JPEG, .tx 215dp from 620x155.
         logo_w, logo_h = 135 * u, 135 * u * 426 / 420.0
         word_w, word_h = 215 * u, 215 * u * 155 / 620.0
+    elif DESIGN == 'studyria':
+        # .mk is 165dp wide from a 420x313 JPEG, .tx 200dp from a 620x182.
+        logo_w, logo_h = 165 * u, 165 * u * 313 / 420.0
+        word_w, word_h = 200 * u, 200 * u * 182 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -216,6 +220,9 @@ def geometry(width, height):
         # inset 70dp with a 5dp height, its bottom 54dp above the stage edge.
         'glow': (cx - 135 * u, oy + 190 * u - 135 * u, cx + 135 * u, oy + 190 * u + 135 * u),
         'bar': (ox + 70 * u, oy + (488 - 54 - 5) * u, ox + (228 - 70) * u, oy + (488 - 54) * u),
+        # Studyria reference: .pb inset 60dp, 5dp tall, its bottom 54dp above
+        # the stage edge, with a 54dp-to-434 fill inside a 108dp track.
+        'st_bar': (ox + 60 * u, oy + (488 - 59) * u, ox + (228 - 60) * u, oy + (488 - 54) * u),
         # BillCraft reference: .steps inset 60dp, 4dp tall, its bottom 52dp above
         # the stage edge, three segments across 108dp with 6dp gaps.
         'steps': (ox + 60 * u, oy + (488 - 52 - 10) * u, ox + (228 - 60) * u, oy + (488 - 52) * u),
@@ -485,12 +492,19 @@ REQUIRED = {
              # an empty loader strip are required instead.
              else {'bands', 'stripe', 'nobar', 'logo', 'word', 'replace'}
              if DESIGN == 'cineflow'
+             # Studyria has no loader: a ruled canvas, a margin rule, the
+             # column and the 5dp progress bar are what the frame must show.
+             else {'logo', 'word', 'place', 'rails', 'rule', 'bar', 'replace'}
+             if DESIGN == 'studyria'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
     # time-resolved frames reliably, so motion detail is reported, not required.
     'rot': {'logo', 'replace', 'orientation'},
-    'rm': {'logo', 'replace'},
+    # Studyria's reduced-motion frame must also show its bar, deliberately
+    # EMPTY: the reference's fill width exists only inside a keyframe, and
+    # `animation:none !important` leaves it at 0.
+    'rm': {'logo', 'replace'} | ({'bar'} if DESIGN == 'studyria' else set()),
 }
 
 # The splash is 3400ms; anything sampled after that is the marketplace.
@@ -665,6 +679,180 @@ def main():
                 f"wordmark drawn in the reference box ({word_ink} ink px)",
                 f"wordmark missing from its box ({word_ink} ink px)",
                 word_ink > 200)
+        if DESIGN == 'studyria':
+            # Geometry comes from the device's own window frame, never from the
+            # screenshot: the app viewport excludes the status and navigation
+            # bars, and the reference anchors .ml and the ruled canvas to that
+            # viewport while .pb and the column sit inside the 228x488 stage.
+            vp = load_viewport()
+            width = len(rows[0]) // bpp
+            frame_h = len(rows)
+            evidence = {
+                'frame': {'width': width, 'height': frame_h},
+                'viewport_source': (vp or {}).get('source', 'screenshot-fallback'),
+                'device': vp,
+                'viewport': None,
+                'predictions': {},
+                'measured': {},
+            }
+            window = (vp or {}).get('window') or {}
+            if window.get('width') and window.get('height'):
+                vx = int(window.get('x', 0))
+                vy0 = int(window.get('y', 0))
+                vw = int(window['width'])
+                vh = int(window['height'])
+            else:
+                vx, vy0, vw, vh = 0, 0, width, frame_h
+                note('no window frame was captured; judging against the full frame')
+            evidence['viewport'] = {'x': vx, 'y': vy0, 'width': vw, 'height': vh}
+            u = min(vw / 228.0, vh / 488.0)
+            ox = vx + (vw - 228.0 * u) / 2.0
+            oy = vy0 + (vh - 488.0 * u) / 2.0
+            cx = ox + 114.0 * u
+            mark_w, mark_h = 165.0 * u, 165.0 * u * 313.0 / 420.0
+            word_w, word_h = 200.0 * u, 200.0 * u * 182.0 / 620.0
+            col_h = mark_h + 12.0 * u + word_h
+            top = oy + ((488.0 * u - 44.0 * u) - col_h) / 2.0
+            mark_box = (cx - mark_w / 2.0, top, cx + mark_w / 2.0, top + mark_h)
+            word_box = (cx - word_w / 2.0, top + mark_h + 12.0 * u,
+                        cx + word_w / 2.0, top + mark_h + 12.0 * u + word_h)
+            bar_box = (ox + 60.0 * u, oy + (488.0 - 59.0) * u,
+                       ox + 168.0 * u, oy + (488.0 - 54.0) * u)
+            art_bottom = bar_box[1] - 2.0 * u
+
+            def read(x, y):
+                i = x * bpp
+                row = rows[y]
+                return row[i], row[i + 1], row[i + 2]
+
+            def bbox(x0, y0, x1, y1, pred):
+                minx, maxx, miny, maxy, hits = x1, x0, y1, y0, 0
+                for yy in range(int(max(0, y0)), int(min(frame_h, y1))):
+                    for xx in range(int(max(0, x0)), int(min(width, x1)), 2):
+                        r, g, b = read(xx, yy)
+                        if pred(r, g, b):
+                            hits += 1
+                            minx = min(minx, xx)
+                            maxx = max(maxx, xx)
+                            miny = min(miny, yy)
+                            maxy = max(maxy, yy)
+                return (None if hits == 0 else (minx, miny, maxx, maxy)), hits
+
+            # Artwork ink only: the red margin rule is deliberately not ink, or
+            # its full-height hairline would stretch the measured column.
+            def ink(r, g, b):
+                if r - g > 8 and r - b > 8:
+                    return False
+                return r < 235 or g < 235 or b < 235
+            art, art_hits = bbox(vx, oy, vx + vw, art_bottom, ink)
+            evidence['predictions'] = {
+                'u': round(u, 4),
+                'stage': [round(228 * u, 2), round(488 * u, 2)],
+                'mark_box': [round(v, 1) for v in mark_box],
+                'word_box': [round(v, 1) for v in word_box],
+                'bar_box': [round(v, 1) for v in bar_box],
+            }
+            evidence['measured']['artwork'] = {
+                'bbox': list(art) if art else None,
+                'centre_x': round((art[0] + art[2]) / 2.0, 1) if art else None,
+                'expected_centre_x': round(cx, 1),
+                'expected_top': round(top, 1),
+                'expected_bottom': round(top + col_h, 1),
+            }
+            if art is None:
+                bad('no artwork ink was found between the top of the stage and the bar')
+            else:
+                centre_off = abs((art[0] + art[2]) / 2.0 - cx)
+                verdict('place',
+                        f"the artwork column is centred on the stage (centre "
+                        f"{round((art[0] + art[2]) / 2.0, 1)} vs {round(cx, 1)}, off by "
+                        f"{centre_off:.1f}px) and complete "
+                        f"(bbox {art[0]},{art[1]} to {art[2]},{art[3]})",
+                        f"the artwork column does not sit in the reference column "
+                        f"(bbox {art[0]},{art[1]} to {art[2]},{art[3]}, centre "
+                        f"{round((art[0] + art[2]) / 2.0, 1)} vs {round(cx, 1)}, off by "
+                        f"{centre_off:.1f}px)",
+                        centre_off <= 0.02 * vw
+                        and abs(art[1] - top) <= 0.02 * vh
+                        and abs(art[3] - (top + col_h)) <= 0.02 * vh
+                        and art[0] > vx and art[2] < vx + vw)
+
+            # .sp ruled canvas: 1k lines every 32k, starting at 31k, measured in
+            # a clean strip left of the artwork and away from the margin rule.
+            probe_x0 = int(vx + 2 * u)
+            probe_x1 = max(probe_x0 + 2, int(vx + 28 * u))
+            dark_rows = []
+            for yy in range(int(vy0 + u), int(min(frame_h - 1, vy0 + vh))):
+                vals = [sum(read(xx, yy)) / 3.0 for xx in range(probe_x0, probe_x1, 2)]
+                if vals and min(vals) < 249 and (max(vals) - min(vals)) < 6:
+                    dark_rows.append(yy)
+            groups = []
+            for yy in dark_rows:
+                if groups and yy - groups[-1][-1] <= 1:
+                    groups[-1].append(yy)
+                else:
+                    groups.append([yy])
+            centres = [sum(g) / float(len(g)) for g in groups if len(g) >= 1]
+            steps = [b - a for a, b in zip(centres, centres[1:])]
+            good_steps = [d for d in steps if abs(d - 32 * u) <= 0.15 * 32 * u]
+            evidence['measured']['rails'] = {
+                'lines': len(centres),
+                'median_step': round(sorted(steps)[len(steps) // 2], 2) if steps else None,
+                'expected_step': round(32 * u, 2),
+            }
+            verdict('rails',
+                    f"the ruled canvas repeats every {round(32 * u, 1)}px "
+                    f"({len(centres)} rules seen, {len(good_steps)} on pitch)",
+                    f"the ruled canvas is missing or off pitch (median step "
+                    f"{evidence['measured']['rails']['median_step']}, expected "
+                    f"{round(32 * u, 1)}px)",
+                    len(centres) >= 3 and len(good_steps) >= max(2, len(steps) - 1))
+
+            # .ml: rgba(190,25,25,.3) hairline, 34k in from the viewport edge.
+            rule_x = int(round(vx + 34 * u))
+            red = 0
+            for yy in range(int(vy0 + vh * 0.35), int(vy0 + vh * 0.65), 7):
+                for xx in range(max(0, rule_x - 2), min(width, rule_x + 3)):
+                    r, g, b = read(xx, yy)
+                    if r - g > 8 and r - b > 8:
+                        red += 1
+            verdict('rule',
+                    f"the red margin rule is drawn at {rule_x}px ({red} samples)",
+                    f"the red margin rule is missing at {rule_x}px ({red} samples)",
+                    red >= 12)
+
+            # .pb: the 5dp pill with its #15151a->#b30f10 fill inside the stage.
+            # The track is rgba(0,0,0,.07) over the canvas (~232), the fill runs
+            # #15151a -> #b30f10 (both far darker). So the track is "dimmed
+            # canvas" and the fill is anything clearly below it.
+            track_ink, _ = bbox(bar_box[0], bar_box[1] - u, bar_box[2], bar_box[3] + u,
+                                lambda r, g, b: 150 < (r + g + b) / 3.0 < 246)
+            fill_ink, fill_hits = bbox(bar_box[0], bar_box[1], bar_box[2], bar_box[3],
+                                       lambda r, g, b: (r + g + b) / 3.0 < 140)
+            # A fully filled pill has no track pixels left, and an empty one has
+            # no fill pixels: the bar exists when either is on screen.
+            bar_ink = track_ink or (fill_ink if fill_hits >= 40 else None)
+            evidence['measured']['bar'] = {
+                'track': list(bar_ink) if bar_ink else None,
+                'fill': list(fill_ink) if fill_ink else None,
+                'fill_px': fill_hits,
+            }
+            if TAG == 'rm':
+                verdict('bar',
+                        'the progress bar is drawn as an empty pill under reduced motion',
+                        'the progress bar is missing under reduced motion',
+                        bar_ink is not None and fill_hits < 40)
+            else:
+                covered = 0.0
+                if fill_ink:
+                    covered = (fill_ink[2] - fill_ink[0]) / max(1.0, bar_box[2] - bar_box[0])
+                verdict('bar',
+                        f"the progress bar is filled ({covered * 100:.0f}% of the track)",
+                        f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
+                        f"of the track)",
+                        bar_ink is not None and covered >= 0.85)
+            write_report(evidence)
+
         if DESIGN == 'cineflow':
             # Geometry is measured on the device, never inferred from pixels.
             # The reference pins the film strips to 13.5% of the .sp layer, and

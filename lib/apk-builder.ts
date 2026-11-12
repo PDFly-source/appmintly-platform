@@ -79,6 +79,21 @@ import {
   cineflowSplashWordJpeg,
 } from './splash/cineflow-splash';
 import {
+  STUDYRIA_SPLASH_BG,
+  STUDYRIA_SPLASH_HARD_TIMEOUT_MS,
+  STUDYRIA_SPLASH_ICON_NAME,
+  STUDYRIA_SPLASH_MARK_NAME,
+  STUDYRIA_SPLASH_PACKAGE,
+  STUDYRIA_SPLASH_WORD_NAME,
+  studyriaSplashColorEntries,
+  studyriaSplashJava,
+  studyriaSplashMarkJpeg,
+  studyriaSplashStylesV31Xml,
+  studyriaSplashStylesXml,
+  studyriaSplashTransparentIconXml,
+  studyriaSplashWordJpeg,
+} from './splash/studyria-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -670,6 +685,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       assets: [
         { name: `${CINEFLOW_SPLASH_MARK_NAME}.jpg`, bytes: cineflowSplashMarkJpeg() },
         { name: `${CINEFLOW_SPLASH_WORD_NAME}.jpg`, bytes: cineflowSplashWordJpeg() },
+      ],
+    },
+    [STUDYRIA_SPLASH_PACKAGE]: {
+      viewClass: 'StudyriaSplashView',
+      bg: STUDYRIA_SPLASH_BG,
+      hardTimeoutMs: STUDYRIA_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'StudyriaSplashView.java',
+      java: studyriaSplashJava,
+      iconName: STUDYRIA_SPLASH_ICON_NAME,
+      iconXml: studyriaSplashTransparentIconXml(),
+      colorEntries: studyriaSplashColorEntries(),
+      stylesXml: studyriaSplashStylesXml(),
+      stylesV31Xml: studyriaSplashStylesV31Xml(),
+      assets: [
+        { name: `${STUDYRIA_SPLASH_MARK_NAME}.jpg`, bytes: studyriaSplashMarkJpeg() },
+        { name: `${STUDYRIA_SPLASH_WORD_NAME}.jpg`, bytes: studyriaSplashWordJpeg() },
       ],
     },
   };
@@ -1462,7 +1493,20 @@ ${
             public void onPageFinished(WebView view, String url) {
                 dismissSplashAfterFirstPaint();
             }
-        });
+${
+  isNativeSplashBuild
+    ? `            // Renderer death is the one failure a page can never report: the
+            // load never finishes, so a splash waiting on readiness would hold
+            // forever. Recreate the renderer and let the normal readiness gate
+            // (or the hard timeout) retire the splash - never a blank screen.
+            @Override
+            public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
+                try { v.reload(); } catch (Throwable ignored) { }
+                return true;
+            }
+`
+    : ''
+}        });
 
         // File Chooser for document / image upload
         webView.setWebChromeClient(new WebChromeClient() {
