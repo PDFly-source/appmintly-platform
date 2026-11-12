@@ -3955,12 +3955,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/pdfminifly/",
-    "releaseVersion": "2.2.0",
+    "releaseVersion": "2.3.0",
     "releaseDate": "2026-03-01",
     "milestones": [
       {
         "id": "pub-pdfminifly-m1",
-        "title": "Publicly released on the AppMintly marketplace (v2.2.0)",
+        "title": "Publicly released on the AppMintly marketplace (v2.3.0)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/pdfminifly/.",
         "status": "done"
       }
@@ -3973,9 +3973,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.2.0.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.3.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-09"
+          "date": "2026-11-12"
         }
       ]
     },
@@ -4114,12 +4114,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/billcraft/",
-    "releaseVersion": "0.1.1",
+    "releaseVersion": "0.2.0",
     "releaseDate": "2026-10-17",
     "milestones": [
       {
         "id": "pub-billcraft-m1",
-        "title": "Publicly released on the AppMintly marketplace (v0.1.1)",
+        "title": "Publicly released on the AppMintly marketplace (v0.2.0)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/billcraft/.",
         "status": "done"
       }
@@ -4132,9 +4132,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.1.1.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 0.2.0.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-11-09"
+          "date": "2026-11-12"
         }
       ]
     },
