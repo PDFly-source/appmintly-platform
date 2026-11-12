@@ -12,6 +12,6 @@
     "splash_desc": "PDFMiniFly",
     "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/pdfminifly-v2.3.0/PDFMiniFly-2.3.0.apk"
   },
-  "note": "Task 2 final QA retry: rotation re-locked after relaunch, bar judged only on a live frame set",
-  "requested_at": "2026-11-12T05:02Z"
+  "note": "Task 2 QA retry 2: bar proven by track geometry on-device + timeline test; rotation settles before the activity starts",
+  "requested_at": "2026-11-12T05:12Z"
 }
