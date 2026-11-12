@@ -1,0 +1,17 @@
+{
+  "workflow": "qa-appmintly-splash.yml",
+  "ref": "main",
+  "inputs": {
+    "build_run_id": "43169977318",
+    "artifact_name": "published-release",
+    "apk_name": "BillCraft-0.2.0.apk",
+    "apk_sha": "132e13d370dab6023a50de5c57b58501982d7837f92afa31bdef9830df2c3616",
+    "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/billcraft-v0.2.0/BillCraft-0.2.0.apk",
+    "splash_design": "billcraft",
+    "splash_desc": "BillCraft",
+    "splash_pkg": "com.appforge.billcraft",
+    "splash_version": "0.2.0"
+  },
+  "note": "Task 3 on-device QA of the exact published BillCraft 0.2.0 bytes (hash-gated).",
+  "requested_at": "2026-11-12T07:50Z"
+}
