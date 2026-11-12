@@ -1,0 +1,17 @@
+{
+  "workflow": "qa-appmintly-splash.yml",
+  "ref": "main",
+  "inputs": {
+    "build_run_id": "43186436582",
+    "artifact_name": "published-release",
+    "apk_name": "Niramay-2.3.0.apk",
+    "apk_sha": "0c1b6deb3f22dbf437e1998c1274243d1c35ce58e116df308abe315cc6523f2c",
+    "apk_url": "https://github.com/PDFly-source/appmintly-releases/releases/download/niramay-v2.3.0/Niramay-2.3.0.apk",
+    "splash_design": "niramay",
+    "splash_desc": "Niramay splash",
+    "splash_pkg": "com.appforge.niramay",
+    "splash_version": "2.3.0"
+  },
+  "note": "Task 4 on-device QA re-run with the artefact-aware analyzer: blanked-display frames no longer fail (or falsely pass), and the rotation/reduced-motion dark frames are classified by content. Same publication, no rebuild.",
+  "requested_at": "2026-11-12T09:30Z"
+}
