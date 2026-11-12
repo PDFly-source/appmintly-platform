@@ -1,0 +1,16 @@
+{
+  "workflow": "release-android-apk.yml",
+  "ref": "main",
+  "inputs": {
+    "app_name": "BillCraft",
+    "package_id": "com.appforge.billcraft",
+    "version_name": "0.2.0",
+    "source_url": "https://pdfly-source.github.io/billcraft/",
+    "icon_url": "https://appmintly.pages.dev/brand/billcraft-launcher-1024.png",
+    "theme_color": "#593C8F",
+    "background_color": "#FAF6EE",
+    "distribution_repo": "PDFly-source/appmintly-releases"
+  },
+  "note": "Task 3: BillCraft native owner-supplied splash replaces the legacy launch surface. Launcher input, theme and background are byte-identical to 0.1.1.",
+  "requested_at": "2026-11-12T06:40Z"
+}

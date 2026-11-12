@@ -175,7 +175,7 @@ describe('launch theme — old branding cannot appear first', () => {
   it('the splash palette replaces the derived brand gradient for this package only', () => {
     // The boolean became a per-package design registry; the guarantee is the
     // same and is now stated once, in the spec that carries the canvas colour.
-    expect(builderSrc).toContain('packageId === APPMINTLY_SPLASH_PACKAGE');
+    expect(builderSrc).toContain('[APPMINTLY_SPLASH_PACKAGE]: {');
     expect(builderSrc).toContain('bg: APPMINTLY_SPLASH_BG');
     expect(builderSrc).toContain('const splashSpecBg = splashSpec ? splashSpec.bg : themeColor;');
     expect(builderSrc).toContain(
@@ -199,8 +199,8 @@ describe('other apps keep the previous launch experience', () => {
     // every native-splash branch is driven by the registry, never by a constant
     const gated = builderSrc.match(/isNativeSplashBuild/g) ?? [];
     expect(gated.length).toBeGreaterThan(8);
-    expect(builderSrc).toContain('packageId === APPMINTLY_SPLASH_PACKAGE');
-    expect(builderSrc).toContain('packageId === PDFMINIFLY_SPLASH_PACKAGE');
+    expect(builderSrc).toContain('[APPMINTLY_SPLASH_PACKAGE]: {');
+    expect(builderSrc).toContain('[PDFMINIFLY_SPLASH_PACKAGE]: {');
     expect(builderSrc).not.toContain('const isAppMintlySplashBuild');
   });
 

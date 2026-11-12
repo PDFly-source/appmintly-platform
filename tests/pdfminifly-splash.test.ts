@@ -215,13 +215,13 @@ describe('PDFMiniFly splash — launch surfaces', () => {
 
 describe('PDFMiniFly splash — build wiring and blast radius', () => {
   it('the builder selects the PDFMiniFly design for its package only', () => {
-    expect(builderSrc).toContain("packageId === PDFMINIFLY_SPLASH_PACKAGE");
+    expect(builderSrc).toContain("[PDFMINIFLY_SPLASH_PACKAGE]: {");
     expect(builderSrc).toContain("viewClass: 'PdfMiniFlySplashView'");
     expect(builderSrc).toContain('java: pdfminiflySplashJava,');
   });
 
   it('AppMintly keeps its own design untouched', () => {
-    expect(builderSrc).toContain("packageId === APPMINTLY_SPLASH_PACKAGE");
+    expect(builderSrc).toContain("[APPMINTLY_SPLASH_PACKAGE]: {");
     expect(builderSrc).toContain("viewClass: 'AppMintlySplashView'");
     expect(builderSrc).toContain('java: appmintlySplashJava,');
     // the two designs never share artwork

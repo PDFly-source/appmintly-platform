@@ -34,6 +34,21 @@ import {
   pdfminiflySplashWordJpeg,
 } from './splash/pdfminifly-splash';
 import {
+  BILLCRAFT_SPLASH_BG,
+  BILLCRAFT_SPLASH_HARD_TIMEOUT_MS,
+  BILLCRAFT_SPLASH_ICON_NAME,
+  BILLCRAFT_SPLASH_LOGO_NAME,
+  BILLCRAFT_SPLASH_PACKAGE,
+  BILLCRAFT_SPLASH_WORD_NAME,
+  billcraftSplashColorEntries,
+  billcraftSplashJava,
+  billcraftSplashLogoJpeg,
+  billcraftSplashStylesV31Xml,
+  billcraftSplashStylesXml,
+  billcraftSplashTransparentIconXml,
+  billcraftSplashWordJpeg,
+} from './splash/billcraft-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -532,7 +547,7 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
   // Owner-supplied launch splash designs, keyed by package id. A package not
   // listed here keeps the previous launch experience byte for byte: no splash
   // resources, no view class, no theme change.
-  const splashSpec: {
+  type SplashSpec = {
     viewClass: string;
     /** Colour of the window, the system splash surface and the animated view. */
     bg: string;
@@ -545,42 +560,59 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
     stylesXml: string;
     stylesV31Xml: string;
     assets: { name: string; bytes: Buffer }[];
-  } | null =
-    packageId === APPMINTLY_SPLASH_PACKAGE
-      ? {
-          viewClass: 'AppMintlySplashView',
-          bg: APPMINTLY_SPLASH_BG,
-          hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS,
-          javaFile: 'AppMintlySplashView.java',
-          java: appmintlySplashJava,
-          iconName: APPMINTLY_SPLASH_ICON_NAME,
-          iconXml: appmintlySplashTransparentIconXml(),
-          colorEntries: appmintlySplashColorEntries(),
-          stylesXml: appmintlySplashStylesXml(),
-          stylesV31Xml: appmintlySplashStylesV31Xml(),
-          assets: [
-            { name: `${APPMINTLY_SPLASH_MARK_NAME}.jpg`, bytes: appmintlySplashMarkJpeg() },
-            { name: `${APPMINTLY_SPLASH_WORD_NAME}.jpg`, bytes: appmintlySplashWordJpeg() },
-          ],
-        }
-      : packageId === PDFMINIFLY_SPLASH_PACKAGE
-        ? {
-            viewClass: 'PdfMiniFlySplashView',
-            bg: PDFMINIFLY_SPLASH_BG,
-            hardTimeoutMs: PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS,
-            javaFile: 'PdfMiniFlySplashView.java',
-            java: pdfminiflySplashJava,
-            iconName: PDFMINIFLY_SPLASH_ICON_NAME,
-            iconXml: pdfminiflySplashTransparentIconXml(),
-            colorEntries: pdfminiflySplashColorEntries(),
-            stylesXml: pdfminiflySplashStylesXml(),
-            stylesV31Xml: pdfminiflySplashStylesV31Xml(),
-            assets: [
-              { name: `${PDFMINIFLY_SPLASH_LOGO_NAME}.jpg`, bytes: pdfminiflySplashLogoJpeg() },
-              { name: `${PDFMINIFLY_SPLASH_WORD_NAME}.jpg`, bytes: pdfminiflySplashWordJpeg() },
-            ],
-          }
-        : null;
+  };
+  const splashSpecs: Record<string, SplashSpec> = {
+    [APPMINTLY_SPLASH_PACKAGE]: {
+      viewClass: 'AppMintlySplashView',
+      bg: APPMINTLY_SPLASH_BG,
+      hardTimeoutMs: APPMINTLY_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'AppMintlySplashView.java',
+      java: appmintlySplashJava,
+      iconName: APPMINTLY_SPLASH_ICON_NAME,
+      iconXml: appmintlySplashTransparentIconXml(),
+      colorEntries: appmintlySplashColorEntries(),
+      stylesXml: appmintlySplashStylesXml(),
+      stylesV31Xml: appmintlySplashStylesV31Xml(),
+      assets: [
+        { name: `${APPMINTLY_SPLASH_MARK_NAME}.jpg`, bytes: appmintlySplashMarkJpeg() },
+        { name: `${APPMINTLY_SPLASH_WORD_NAME}.jpg`, bytes: appmintlySplashWordJpeg() },
+      ],
+    },
+    [PDFMINIFLY_SPLASH_PACKAGE]: {
+      viewClass: 'PdfMiniFlySplashView',
+      bg: PDFMINIFLY_SPLASH_BG,
+      hardTimeoutMs: PDFMINIFLY_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'PdfMiniFlySplashView.java',
+      java: pdfminiflySplashJava,
+      iconName: PDFMINIFLY_SPLASH_ICON_NAME,
+      iconXml: pdfminiflySplashTransparentIconXml(),
+      colorEntries: pdfminiflySplashColorEntries(),
+      stylesXml: pdfminiflySplashStylesXml(),
+      stylesV31Xml: pdfminiflySplashStylesV31Xml(),
+      assets: [
+        { name: `${PDFMINIFLY_SPLASH_LOGO_NAME}.jpg`, bytes: pdfminiflySplashLogoJpeg() },
+        { name: `${PDFMINIFLY_SPLASH_WORD_NAME}.jpg`, bytes: pdfminiflySplashWordJpeg() },
+      ],
+    },
+    [BILLCRAFT_SPLASH_PACKAGE]: {
+      viewClass: 'BillCraftSplashView',
+      bg: BILLCRAFT_SPLASH_BG,
+      hardTimeoutMs: BILLCRAFT_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'BillCraftSplashView.java',
+      java: billcraftSplashJava,
+      iconName: BILLCRAFT_SPLASH_ICON_NAME,
+      iconXml: billcraftSplashTransparentIconXml(),
+      colorEntries: billcraftSplashColorEntries(),
+      stylesXml: billcraftSplashStylesXml(),
+      stylesV31Xml: billcraftSplashStylesV31Xml(),
+      assets: [
+        { name: `${BILLCRAFT_SPLASH_LOGO_NAME}.jpg`, bytes: billcraftSplashLogoJpeg() },
+        { name: `${BILLCRAFT_SPLASH_WORD_NAME}.jpg`, bytes: billcraftSplashWordJpeg() },
+      ],
+    },
+  };
+  const splashSpec: SplashSpec | null =
+    Object.prototype.hasOwnProperty.call(splashSpecs, packageId) ? splashSpecs[packageId] : null;
   const isNativeSplashBuild = splashSpec !== null;
   const splashViewClass = splashSpec ? splashSpec.viewClass : '';
   const splashSpecBg = splashSpec ? splashSpec.bg : themeColor;
