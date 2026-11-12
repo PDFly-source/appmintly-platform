@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-10T02:10:45.024Z",
-  "serverTime": 1794276644965,
+  "generatedAt": "2026-11-12T12:48:06.824Z",
+  "serverTime": 1794487686766,
   "source": "appmintly-publisher-api/admin/events/export",
-  "count": 11,
+  "count": 14,
   "events": [
     {
       "eventId": "7ff6a41f88bc5d45f2694b840acf63c1",
@@ -102,6 +102,33 @@
       "catalogRevision": "26a35a99df18e03d8a1e517547a0cbb2492ec40b",
       "ts": 1794253407971,
       "name": "PDFMiniFly"
+    },
+    {
+      "eventId": "3654471b09cc6fc9cbf4ab053d2cb1a5",
+      "appId": "pdfminifly",
+      "platform": "android",
+      "version": "2.3.0",
+      "catalogRevision": "8d57def9079320b2af725621a43f0f8dd3310a69",
+      "ts": 1794459060295,
+      "name": "PDFMiniFly"
+    },
+    {
+      "eventId": "20a617268a895a095845d087e8abadbc",
+      "appId": "billcraft",
+      "platform": "android",
+      "version": "0.2.0",
+      "catalogRevision": "cf3d737a22558a68fd12e6869b4a4f01db06c483",
+      "ts": 1794466162885,
+      "name": "BillCraft"
+    },
+    {
+      "eventId": "5f8e05b07d865ecff28736dc0b1c2704",
+      "appId": "niramay",
+      "platform": "android",
+      "version": "2.3.0",
+      "catalogRevision": "4c7d4f0d786cc77a59b7f09dc66f09287b55256f",
+      "ts": 1794474032224,
+      "name": "Niramay"
     }
   ]
 }
