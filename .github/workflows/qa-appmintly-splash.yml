@@ -27,7 +27,7 @@ on:
         required: true
         type: string
       splash_design:
-        description: 'Design profile the analyzer should expect (appmintly | pdfminifly)'
+        description: 'Design profile the analyzer should expect (appmintly | pdfminifly | billcraft)'
         required: false
         type: string
         default: appmintly

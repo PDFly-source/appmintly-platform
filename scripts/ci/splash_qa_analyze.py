@@ -142,6 +142,10 @@ def geometry(width, height):
         # .mk is 165dp wide from a 420x320 JPEG, .tx 185dp from 620x155.
         logo_w, logo_h = 165 * u, 165 * u * 320 / 420.0
         word_w, word_h = 185 * u, 185 * u * 155 / 620.0
+    elif DESIGN == 'billcraft':
+        # .mk is 130dp wide from a 420x410 JPEG, .tx 190dp from 620x197.
+        logo_w, logo_h = 130 * u, 130 * u * 410 / 420.0
+        word_w, word_h = 190 * u, 190 * u * 197 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -163,6 +167,11 @@ def geometry(width, height):
         # inset 70dp with a 5dp height, its bottom 54dp above the stage edge.
         'glow': (cx - 135 * u, oy + 190 * u - 135 * u, cx + 135 * u, oy + 190 * u + 135 * u),
         'bar': (ox + 70 * u, oy + (488 - 54 - 5) * u, ox + (228 - 70) * u, oy + (488 - 54) * u),
+        # BillCraft reference: .steps inset 60dp, 4dp tall, its bottom 52dp above
+        # the stage edge, three segments across 108dp with 6dp gaps.
+        'steps': (ox + 60 * u, oy + (488 - 52 - 10) * u, ox + (228 - 60) * u, oy + (488 - 52) * u),
+        'seg_w': (108 * u - 12 * u) / 3.0,
+        'ring_box': (cx - 180 * u, oy + 190 * u - 180 * u, cx + 180 * u, oy + 190 * u + 180 * u),
     }
 
 
@@ -213,6 +222,59 @@ def bar_count(rows, bpp, box):
             i = x * bpp
             r, g, b = row[i], row[i + 1], row[i + 2]
             if r >= 170 and g <= 135 and b <= 95:
+                n += 1
+    return n
+
+
+def seg_fill_count(rows, bpp, box):
+    """Filled loader segments: #6d28d9 violet or #17c3a0 teal chips."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1):
+        row = rows[y]
+        for x in range(x0, x1):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            violet = 85 <= r <= 135 and 20 <= g <= 70 and 190 <= b <= 240
+            teal = r <= 60 and 175 <= g <= 215 and 140 <= b <= 180
+            if violet or teal:
+                n += 1
+    return n
+
+
+def seg_track_count(rows, bpp, box):
+    """Unfilled track: rgba(91,33,182,.14) over the #f4efff canvas (~223,210,245)."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1):
+        row = rows[y]
+        for x in range(x0, x1):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            if 210 <= r <= 234 and 198 <= g <= 222 and 232 <= b <= 255 and b - g >= 14:
+                n += 1
+    return n
+
+
+def ring_teal_count(rows, bpp, box):
+    """The teal .rp ring at low opacity over the pale lavender canvas."""
+    x0, y0, x1, y1 = (int(v) for v in box)
+    h, w = len(rows), len(rows[0]) // bpp
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    n = 0
+    for y in range(y0, y1, 2):
+        row = rows[y]
+        for x in range(x0, x1, 2):
+            i = x * bpp
+            r, g, b = row[i], row[i + 1], row[i + 2]
+            if g - r >= 25 and g - b >= 18 and g >= 150:
                 n += 1
     return n
 
@@ -307,6 +369,8 @@ DESIGN = os.environ.get('SPLASH_DESIGN', 'appmintly')
 REQUIRED = {
     'cold': ({'motion', 'logo', 'word', 'glow', 'bar', 'replace'}
              if DESIGN == 'pdfminifly'
+             else {'logo', 'word', 'bar', 'replace'}
+             if DESIGN == 'billcraft'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
@@ -473,6 +537,34 @@ def main():
                      "2.4s fill after a 0.6s delay is asserted by the timeline test")
         elif 'bar' in required:
             bad("no late frame for the progress bar check")
+
+    if DESIGN == 'billcraft':
+        segframe = nearest_drawn(3200, 900) or mid
+        if segframe:
+            w, h, bpp, rows = segframe[2]
+            g3 = geometry(w, h)
+            fill = seg_fill_count(rows, bpp, g3['steps'])
+            track = seg_track_count(rows, bpp, g3['steps'])
+            # Same emulator caveat as the PDFMiniFly bar: the surface latches,
+            # so a captured state can predate the fill. The on-device fact asked
+            # for here is the loader itself on the reference row; the per-segment
+            # delays are pinned by the timeline test.
+            verdict('bar',
+                    (f"the three-segment loader sits on the reference row "
+                     f"({track} track px, {fill} filled px)")
+                    if fill > 250 or track > 400 else
+                    f"no loader on the reference row ({track} track px)",
+                    f"no loader on the reference row ({track} track px)",
+                    fill > 250 or track > 400)
+            if fill <= 250 and track > 400:
+                note("the captured surface predates the segment fill (latched frames); "
+                     "the 0.9s/1.5s/2.1s segment delays are asserted by the timeline test")
+            teal = ring_teal_count(rows, bpp, g3['ring_box'])
+            note(f"teal ripple evidence: {teal} teal-tinted px inside the ring band "
+                 "(the .rp ring is 2dp at up to 30% opacity, so it is reported and "
+                 "proven by the timeline test rather than failed on a latched frame)")
+        elif 'bar' in required:
+            bad("no late frame for the loader check")
 
     if ring and DESIGN == 'appmintly':
         w, h, bpp, rows = ring[2]
