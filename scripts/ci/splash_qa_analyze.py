@@ -150,6 +150,10 @@ def geometry(width, height):
         # .mk is 150dp wide from a 420x358 JPEG, .tx 195dp from 620x203.
         logo_w, logo_h = 150 * u, 150 * u * 358 / 420.0
         word_w, word_h = 195 * u, 195 * u * 203 / 620.0
+    elif DESIGN == 'cineflow':
+        # .mk is 135dp wide from a 420x426 JPEG, .tx 215dp from 620x155.
+        logo_w, logo_h = 135 * u, 135 * u * 426 / 420.0
+        word_w, word_h = 215 * u, 215 * u * 155 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -157,8 +161,22 @@ def geometry(width, height):
     col_h = logo_h + gap + word_h
     top = oy + ((488 * u - 44 * u) - col_h) / 2.0
     cx = ox + 114 * u
+    # CineFlow's film strips live in the full-viewport layer, not the stage:
+    # anchors at 13.5% of the viewport, height and stripes scaled by u.
+    band_h = 26 * u
+    stripe_off = 9 * u
+    stripe_h = 8 * u
+    bands = {
+        'band_top': (0, 0.135 * height, width, 0.135 * height + band_h),
+        'band_bottom': (0, height - 0.135 * height - band_h, width, height - 0.135 * height),
+        'stripe_top_band': (0, 0.135 * height + stripe_off, width, 0.135 * height + stripe_off + stripe_h),
+        'stripe_bottom_band': (0, height - 0.135 * height - band_h + stripe_off,
+                               width, height - 0.135 * height - band_h + stripe_off + stripe_h),
+        'loader_strip': (0, top + logo_h + gap + word_h + 2 * u,
+                         width, height - 0.135 * height - band_h - 2 * u),
+    }
     return {
-        'u': u, 'cx': cx,
+        'bands': bands, 'u': u, 'cx': cx,
         'logo': (cx - logo_w / 2, top, cx + logo_w / 2, top + logo_h),
         'word': (cx - word_w / 2, top + logo_h + gap, cx + word_w / 2, top + logo_h + gap + word_h),
         'dots_y': oy + (488 - 52 - 4.5) * u,
@@ -436,6 +454,10 @@ REQUIRED = {
              # required on the captured frame.
              else {'motion', 'logo', 'word', 'line', 'nobar', 'replace'}
              if DESIGN == 'niramay'
+             # CineFlow's reference has no loader either: two film strips and
+             # an empty loader strip are required instead.
+             else {'bands', 'stripe', 'nobar', 'logo', 'word', 'replace'}
+             if DESIGN == 'cineflow'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
@@ -616,6 +638,64 @@ def main():
                 f"wordmark drawn in the reference box ({word_ink} ink px)",
                 f"wordmark missing from its box ({word_ink} ink px)",
                 word_ink > 200)
+        if DESIGN == 'cineflow':
+            def region(rows, bpp, box):
+                x0, y0, x1, y1 = (int(v) for v in box)
+                x0, y0 = max(0, x0), max(0, y0)
+                x1, y1 = min(len(rows[0]) // bpp, x1), min(len(rows), y1)
+                navy = light = total = 0
+                for y in range(y0, y1):
+                    row = rows[y]
+                    for x in range(x0, x1):
+                        i = x * bpp
+                        r, gr, b = row[i], row[i + 1], row[i + 2]
+                        total += 1
+                        # #141a4a: dark, blue-dominant
+                        if r < 60 and gr < 70 and b > 60 and b < 110:
+                            navy += 1
+                        # #eef0ff stripe light
+                        if r > 220 and gr > 225 and b > 240:
+                            light += 1
+                return navy, light, total
+
+            bands = g['bands']
+            top_navy, _, top_total = region(rows, bpp, bands['band_top'])
+            bot_navy, _, bot_total = region(rows, bpp, bands['band_bottom'])
+            _, top_light, _ = region(rows, bpp, bands['stripe_top_band'])
+            _, bot_light, _ = region(rows, bpp, bands['stripe_bottom_band'])
+            verdict('bands',
+                    f"both film strips sit at 13.5% of the viewport "
+                    f"({top_navy}/{top_total} and {bot_navy}/{bot_total} band px)",
+                    f"the 13.5% film strips are missing or misplaced "
+                    f"({top_navy}/{top_total} and {bot_navy}/{bot_total} band px)",
+                    top_total > 0 and bot_total > 0
+                    and top_navy > 0.6 * top_total and bot_navy > 0.6 * bot_total)
+            verdict('stripe',
+                    f"the light stripe band is drawn inside both strips "
+                    f"({top_light} and {bot_light} px)",
+                    f"the stripe band is missing from a strip "
+                    f"({top_light} and {bot_light} px)",
+                    top_light > 40 and bot_light > 40)
+
+            # No loader, no bar, no percentage: nothing may be drawn between the
+            # wordmark and the bottom strip (the reference's .pb has no markup).
+            x0, y0, x1, y1 = (int(v) for v in bands['loader_strip'])
+            stray = 0
+            for y in range(max(0, y0), min(len(rows), y1)):
+                row = rows[y]
+                dark = 0
+                for x in range(max(0, x0), min(len(row) // bpp, x1)):
+                    i = x * bpp
+                    if (row[i] * 299 + row[i + 1] * 587 + row[i + 2] * 114) // 1000 < 180:
+                        dark += 1
+                if dark > 8:
+                    stray += 1
+            verdict('nobar',
+                    f"nothing is drawn in the loader strip ({stray} stray rows) "
+                    "- CineFlow has no progress bar",
+                    f"something is drawn in the loader strip ({stray} stray rows)",
+                    stray <= 2)
+
         if DESIGN == 'pdfminifly':
             glow_px = warm_count(rows, bpp, g['glow'])
             verdict('glow',
