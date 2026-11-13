@@ -369,6 +369,10 @@ done
 for target in 1200 2900; do
   adb pull "/sdcard/timed_${target}.png" "${OUT}/timed_${target}.png" >/dev/null 2>&1 || true
 done
+adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
+pass "timed captures taken against the attach moment (1200/2900ms targets)"
+analyze timed "${DENSITY}"
+
 for target in 1200 2900; do
   adb pull "/sdcard/Android/data/${PKG}/files/splash_view_${target}.png" \
     "${OUT}/view_${target}.png" >/dev/null 2>&1 || true
@@ -382,11 +386,6 @@ if [ -n "${ATTACH_MS:-}" ] && [ -n "${REC_START:-}" ]; then
 fi
 analyze view "${DENSITY}"
 analyze video "${DENSITY}"
-
-
-adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
-pass "timed captures taken against the attach moment (1200/2900ms targets)"
-analyze timed "${DENSITY}"
 
 # ------------------------------------------------------------------- rotation
 ensure_landscape "before the rotated probes"
