@@ -322,6 +322,12 @@ adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
 adb logcat -c >/dev/null 2>&1 || true
 : > "${OUT}/timed_meta.txt"
 adb shell rm -f /sdcard/timed_1200.png /sdcard/timed_2900.png >/dev/null 2>&1 || true
+adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
+adb shell rm -f "/sdcard/Android/data/${PKG}/files/splash_view_1200.png" \
+  "/sdcard/Android/data/${PKG}/files/splash_view_2900.png" >/dev/null 2>&1 || true
+REC_START=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+adb shell screenrecord --time-limit 9 --bit-rate 8000000 --size 540x1200 \
+  /sdcard/splash_sr.mp4 >/dev/null 2>&1 &
 launch_cold
 ATTACH_MS=""
 for _ in $(seq 1 40); do
@@ -363,6 +369,21 @@ done
 for target in 1200 2900; do
   adb pull "/sdcard/timed_${target}.png" "${OUT}/timed_${target}.png" >/dev/null 2>&1 || true
 done
+for target in 1200 2900; do
+  adb pull "/sdcard/Android/data/${PKG}/files/splash_view_${target}.png" \
+    "${OUT}/view_${target}.png" >/dev/null 2>&1 || true
+done
+adb shell pkill -INT screenrecord >/dev/null 2>&1 || true
+sleep 2
+adb pull /sdcard/splash_sr.mp4 "${OUT}/splash_sr.mp4" >/dev/null 2>&1 || true
+if [ -n "${ATTACH_MS:-}" ] && [ -n "${REC_START:-}" ]; then
+  printf '%s\n' $((ATTACH_MS - REC_START)) > "${OUT}/video_offset.txt"
+  pass "video started ${REC_START}ms on the device clock, attach ${ATTACH_MS}ms (offset $(cat "${OUT}/video_offset.txt")ms)"
+fi
+analyze view "${DENSITY}"
+analyze video "${DENSITY}"
+
+
 adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
 pass "timed captures taken against the attach moment (1200/2900ms targets)"
 analyze timed "${DENSITY}"

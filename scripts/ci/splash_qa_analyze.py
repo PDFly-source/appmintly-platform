@@ -650,6 +650,207 @@ def settled_gone():
     return False
 
 
+def parse_geo(out_dir):
+    """Geometry the view itself logged: track, fill and canvas matrix per moment."""
+    geo = {}
+    for name in ('bar_progress.txt', 'geo.txt', 'splash_log.txt'):
+        path = os.path.join(out_dir, name)
+        if not os.path.exists(path):
+            continue
+        for line in open(path, encoding='utf-8', errors='replace').read().splitlines():
+            m = re.search(r'geo (\d+) t=(\d+)(.*)$', line)
+            if not m:
+                continue
+            tag, ts, rest = m.group(1), int(m.group(2)), m.group(3)
+            def num(key):
+                mm = re.search(r'%s=(-?[\d.]+)' % key, rest)
+                return float(mm.group(1)) if mm else None
+            def rect(key):
+                mm = re.search(r'%s=(-?\d+),(-?\d+),(-?\d+),(-?\d+)' % key, rest)
+                return tuple(int(v) for v in mm.groups()) if mm else None
+            def pair(key):
+                mm = re.search(r'%s=(-?\d+)x(-?\d+)' % key, rest)
+                return tuple(int(v) for v in mm.groups()) if mm else None
+            geo[tag] = {
+                't_ms': ts, 'view': pair('view'), 'screen': pair('screen'), 'u': num('u'),
+                'ox': num('ox'), 'oy': num('oy'), 'stage': pair('stage'),
+                'clip': rect('clip'), 'track': rect('track'), 'fill': rect('fill'),
+                'fill_w': num('fillW'), 'alpha': num('alpha'),
+                'shader': 'shader=true' in rest,
+                'matrix': re.search(r'matrix=([^ ]+)', rest).group(1) if 'matrix=' in rest else None,
+            }
+    return geo
+
+
+def fill_in_image(rows, bpp, width, height, track):
+    """Measured dark coverage of the bar track in a rendered image."""
+    x0, y0, x1, y1 = track
+    x0 = max(0, min(width - 1, x0))
+    x1 = max(0, min(width, x1))
+    y0 = max(0, min(height - 1, y0))
+    y1 = max(0, min(height, y1))
+    if x1 <= x0 or y1 <= y0:
+        return None, 0
+    cols = 0
+    hit = 0
+    for x in range(x0, x1, 2):
+        cols += 1
+        dark = 0
+        for y in range(y0, y1):
+            i = x * bpp
+            r, g, b = rows[y][i], rows[y][i + 1], rows[y][i + 2]
+            if (r + g + b) / 3 < 140:
+                dark += 1
+        if dark:
+            hit += 1
+    return (hit / max(1, cols)), cols
+
+
+def judge_viewdump(out_dir):
+    """The bar as the view itself rasterises it, checked against its own numbers.
+
+    This is the drawing path's own output (same onDraw, same canvas transforms),
+    so it answers 'did the app draw the fill' independently of whether the
+    emulator's screencap can observe an animating surface.
+    """
+    geo = parse_geo(out_dir)
+    failures = 0
+    evidence = {}
+    for tag, expect_full in (('1200', False), ('2900', True)):
+        path = os.path.join(out_dir, 'view_%s.png' % tag)
+        if not os.path.exists(path):
+            print('FAIL  [view] no view-rendered frame for %sms' % tag)
+            failures += 1
+            continue
+        width, height, bpp, rows = read_png(path)
+        g = geo.get(tag) or {}
+        track = g.get('track')
+        if not track:
+            vw = (g.get('view') or (width, height))[0]
+            scale = width / float(vw) if vw else 1.0
+            vp = load_viewport()
+            win = (vp or {}).get('window') or {}
+            u = min(width / 228.0, height / 488.0)
+            ox = (width - 228.0 * u) / 2.0
+            oy = (height - 488.0 * u) / 2.0
+            track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                     int(ox + 168 * u), int(oy + (488 - 54) * u))
+        ratio, cols = fill_in_image(rows, bpp, width, height, track)
+        evidence[tag] = {'track': track, 'fill_ratio': None if ratio is None else round(ratio, 3),
+                         'logged_fill_w': g.get('fill_w'), 't_ms': g.get('t_ms'),
+                         'alpha': g.get('alpha'), 'shader': g.get('shader'),
+                         'matrix': g.get('matrix'), 'clip': g.get('clip'),
+                         'screen': g.get('screen'), 'view': g.get('view')}
+        if ratio is None:
+            print('FAIL  [view] %sms: the bar track lies outside the rendered frame' % tag)
+            failures += 1
+            continue
+        measured_px = ratio * (track[2] - track[0])
+        logged = g.get('fill_w')
+        print('info  [view] %sms frame %dx%d: track %s, fill covers %.0f%% (%.0f px); '
+              'view logged fillW %s at t=%sms'
+              % (tag, width, height, track, ratio * 100, measured_px,
+                 ('%.0f' % logged) if logged is not None else 'n/a', g.get('t_ms')))
+        if expect_full:
+            good = ratio >= 0.85
+            label = 'the view renders a full bar at %sms (%.0f%%)' % (tag, ratio * 100)
+        else:
+            good = 0.05 <= ratio <= 0.65
+            label = 'the view renders a mid fill at %sms (%.0f%%)' % (tag, ratio * 100)
+        print(('PASS  [view] ' if good else 'FAIL  [view] ') + label)
+        if not good:
+            failures += 1
+        if logged is not None and logged > 0:
+            delta = abs(measured_px - logged) / logged
+            agree = delta <= 0.08
+            print(('PASS  [view] ' if agree else 'FAIL  [view] ') +
+                  'rendered fill width %.0f px matches the drawing-code fillW %.0f px (%.0f%% off)'
+                  % (measured_px, logged, delta * 100))
+            if not agree:
+                failures += 1
+    write_report({'view': evidence})
+    return failures
+
+
+def judge_video(out_dir):
+    """Decoded screenrecord frames: the composited surface, sampled independently."""
+    import shutil
+    import subprocess
+    import tempfile
+    video = os.path.join(out_dir, 'splash_sr.mp4')
+    offset_path = os.path.join(out_dir, 'video_offset.txt')
+    if not os.path.exists(video):
+        print('FAIL  [video] no screenrecord file was captured')
+        return 1
+    if not shutil.which('ffmpeg'):
+        print('info  [video] ffmpeg is not available in this runner; the view-rendered '
+              'frames and the native progress decide the bar, the video is kept as raw evidence')
+        return 0
+    attach_offset = 0
+    if os.path.exists(offset_path):
+        try:
+            attach_offset = int(open(offset_path).read().strip())
+        except ValueError:
+            attach_offset = 0
+    geo = parse_geo(out_dir)
+    g = geo.get('1200') or {}
+    vw = (g.get('view') or (1080, 2210))[0]
+    track_view = g.get('track')
+    tmp = tempfile.mkdtemp(dir=out_dir, prefix='vframes')
+    subprocess.run(['ffmpeg', '-v', 'error', '-i', video, '-vf', 'fps=25',
+                    os.path.join(tmp, 'v_%04d.png')], check=False)
+    frames = sorted(glob.glob(os.path.join(tmp, 'v_*.png')))
+    if not frames:
+        print('FAIL  [video] no frames could be decoded from the recording')
+        return 1
+    width, height, bpp, rows = read_png(frames[0])
+    scale = width / float(vw) if vw else 1.0
+    track = None
+    if track_view:
+        track = tuple(int(round(v * scale)) for v in track_view)
+    else:
+        u = min(width / 228.0, height / 488.0)
+        ox = (width - 228.0 * u) / 2.0
+        oy = (height - 488.0 * u) / 2.0
+        track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                 int(ox + 168 * u), int(oy + (488 - 54) * u))
+    series = []
+    for index, path in enumerate(frames):
+        width, height, bpp, rows = read_png(path)
+        ratio, _ = fill_in_image(rows, bpp, width, height, track)
+        # video time of this frame, shifted so t=0 is the splash attach
+        t_ms = index * 40 - attach_offset
+        series.append((t_ms, None if ratio is None else round(ratio, 3)))
+    observed = [(t, r) for t, r in series if r is not None and r > 0.02]
+    evidence = {'frames': len(frames), 'attach_offset_ms': attach_offset,
+                'first_growth_ms': observed[0][0] if observed else None,
+                'peak': max((r for _, r in series if r is not None), default=None),
+                'series_sampled': series[::5][:80]}
+    write_report({'video': evidence})
+    if not observed:
+        print('FAIL  [video] no decoded frame shows any bar fill (peak %s)' % evidence['peak'])
+        return 1
+    peak = evidence['peak']
+    print('info  [video] %d frames decoded, fill first visible at ~%sms, peak coverage %.0f%%'
+          % (len(frames), evidence['first_growth_ms'], (peak or 0) * 100))
+    failures = 0
+    if (peak or 0) >= 0.85:
+        print('PASS  [video] the recorded surface shows a fully filled bar (peak %.0f%%)'
+              % ((peak or 0) * 100))
+    else:
+        print('FAIL  [video] the recorded surface never shows a full bar (peak %.0f%%)'
+              % ((peak or 0) * 100))
+        failures += 1
+    near_targets = {}
+    for target in (1200, 2900):
+        near = min(series, key=lambda s: abs(s[0] - target)) if series else None
+        near_targets[str(target)] = near
+        print('info  [video] nearest decoded frame to %sms is %sms with fill %s'
+              % (target, near[0] if near else 'n/a',
+                 ('%.0f%%' % (near[1] * 100)) if near and near[1] is not None else 'n/a'))
+    return failures
+
+
 def main():
     paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
     if not paths:
@@ -670,6 +871,10 @@ def main():
 
     if TAG == 'timed':
         return judge_timed(OUT)
+    if TAG == 'view':
+        return judge_viewdump(OUT)
+    if TAG == 'video':
+        return judge_video(OUT)
 
     required = REQUIRED.get(TAG, {'logo'})
     numeric_all = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])

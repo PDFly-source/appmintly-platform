@@ -137,6 +137,8 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.provider.Settings;
 import android.util.Log;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.view.View;
 
 /**
@@ -208,6 +210,12 @@ public class StudyriaSplashView extends View {
     private float barLogMs = -1000f;
     private boolean running = false;
     private boolean finished = false;
+    // Frame-dump instrumentation: the view renders itself into a bitmap at the
+    // two evidence moments so the drawn pixels can be inspected independently of
+    // screencap. No effect on what is drawn to the screen.
+    private boolean dumping = false;
+    private boolean dumped1200 = false;
+    private boolean dumped2900 = false;
 
     public StudyriaSplashView(Context context) {
         super(context);
@@ -318,6 +326,77 @@ public class StudyriaSplashView extends View {
         if (running && !finished) {
             postInvalidateOnAnimation();
         }
+        maybeDumpFrame(canvas, t, u, stageW, stageH, ox, oy);
+    }
+
+    /** Logs the real geometry the pixels come from, and dumps the drawn frame. */
+    private void maybeDumpFrame(Canvas canvas, float t, float u, float stageW, float stageH,
+                                float ox, float oy) {
+        if (dumping) return;
+        final boolean early = !dumped1200 && t >= 1180f;
+        final boolean late = !dumped2900 && t >= 2880f;
+        if (!early && !late) return;
+        if (early) dumped1200 = true;
+        if (late) dumped2900 = true;
+
+        final float left = ox + BAR_INSET * u;
+        final float right = ox + stageW - BAR_INSET * u;
+        final float bottom = oy + (STAGE_H - BAR_BOTTOM) * u;
+        final float top = bottom - BAR_H * u;
+        final float p = reducedMotion ? 0f : easeFill(progress(t, FILL_DELAY, FILL_DUR));
+        final float fillW = (right - left) * p;
+
+        final float[] m = new float[9];
+        canvas.getMatrix().getValues(m);
+        final android.graphics.Rect clip = canvas.getClipBounds();
+        final int[] loc = new int[2];
+        getLocationOnScreen(loc);
+        Log.i("StudyriaSplash", "geo " + (early ? "1200" : "2900")
+                + " t=" + Math.round(t)
+                + " view=" + getWidth() + "x" + getHeight()
+                + " screen=" + loc[0] + "," + loc[1]
+                + " u=" + u
+                + " stage=" + Math.round(stageW) + "x" + Math.round(stageH)
+                + " ox=" + Math.round(ox) + " oy=" + Math.round(oy)
+                + " matrix=" + m[0] + "," + m[1] + "," + m[2] + ";" + m[3] + "," + m[4] + "," + m[5]
+                + " clip=" + clip.left + "," + clip.top + "," + clip.right + "," + clip.bottom
+                + " track=" + Math.round(left) + "," + Math.round(top) + ","
+                + Math.round(right) + "," + Math.round(bottom)
+                + " fill=" + Math.round(left) + "," + Math.round(top) + ","
+                + Math.round(left + fillW) + "," + Math.round(bottom)
+                + " fillW=" + Math.round(fillW)
+                + " alpha=" + paint.getAlpha()
+                + " shader=" + (paint.getShader() != null));
+
+        final Bitmap shot = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        final Canvas bc = new Canvas(shot);
+        dumping = true;
+        try {
+            draw(bc);
+        } catch (Throwable ignored) {
+        } finally {
+            dumping = false;
+        }
+        savePng(shot, "splash_view_" + (early ? "1200" : "2900"));
+        shot.recycle();
+    }
+
+    private void savePng(Bitmap bmp, String name) {
+        try {
+            final File dir = getContext().getExternalFilesDir(null);
+            if (dir == null) {
+                Log.i("StudyriaSplash", "dump " + name + " skipped: no external files dir");
+                return;
+            }
+            final File f = new File(dir, name + ".png");
+            final FileOutputStream fos = new FileOutputStream(f);
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+            Log.i("StudyriaSplash", "dump " + name + " path=" + f.getAbsolutePath()
+                    + " bytes=" + f.length() + " size=" + bmp.getWidth() + "x" + bmp.getHeight());
+        } catch (Throwable e) {
+            Log.i("StudyriaSplash", "dump " + name + " failed: " + e);
+        }
     }
 
     /** .sp: repeating 1k rule lines every 32k, the first starting at 31k. */
@@ -392,7 +471,7 @@ public class StudyriaSplashView extends View {
         // The bar-fill assertion reads THIS number: it is the same variable the
         // draw call below uses, so logged progress can never disagree with the
         // pixels. Throttled to ~4 lines a second, so 3.4s logs about 14 lines.
-        if (t - barLogMs >= 250f) {
+        if (!dumping && t - barLogMs >= 250f) {
             barLogMs = t;
             Log.i("StudyriaSplash", "t=" + Math.round(t)
                     + " progress=" + Math.round(p * 1000)
