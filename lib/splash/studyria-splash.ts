@@ -483,6 +483,11 @@ public class StudyriaSplashView extends View {
         if (fillW <= 0f) return;
         paint.setShader(new LinearGradient(left, top, right, top,
                 new int[]{BAR_FILL_FROM, BAR_FILL_TO}, null, Shader.TileMode.CLAMP));
+        // Paint.setColor() also sets the paint's alpha, so the track colour
+        // rgba(0,0,0,.07) left this shared paint at alpha 18 and every fill was
+        // drawn at 7% opacity - invisible on the cream canvas. A shader replaces
+        // the colour but NOT the alpha, so it has to be restored here.
+        paint.setAlpha(255);
         rect.set(left, top, left + fillW, bottom);
         canvas.drawRoundRect(rect, radius, radius, paint);
         paint.setShader(null);

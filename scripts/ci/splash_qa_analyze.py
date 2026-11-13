@@ -852,6 +852,10 @@ def judge_video(out_dir):
 
 
 def main():
+    if TAG == 'view':
+        return judge_viewdump(OUT)
+    if TAG == 'video':
+        return judge_video(OUT)
     paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
     if not paths:
         bad("no frames captured")
