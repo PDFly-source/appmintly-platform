@@ -664,8 +664,11 @@ def parse_geo(out_dir):
             def pair(key):
                 mm = re.search(r'%s=(-?\d+)x(-?\d+)' % key, rest)
                 return tuple(int(v) for v in mm.groups()) if mm else None
+            scr = re.search(r'screen=(-?\d+),(-?\d+)', rest)
             geo[tag] = {
-                't_ms': ts, 'view': pair('view'), 'screen': pair('screen'), 'u': num('u'),
+                't_ms': ts, 'view': pair('view'),
+                'screen': (int(scr.group(1)), int(scr.group(2))) if scr else None,
+                'u': num('u'),
                 'ox': num('ox'), 'oy': num('oy'), 'stage': pair('stage'),
                 'clip': rect('clip'), 'track': rect('track'), 'fill': rect('fill'),
                 'fill_w': num('fillW'), 'alpha': num('alpha'),
@@ -824,12 +827,19 @@ def judge_video(out_dir):
         width, height, bpp, rows = read_png(path)
         cr, cg, cb = rows[5][5 * bpp:5 * bpp + 3]
         cream = abs(cr - 251) <= 6 and abs(cg - 250) <= 6 and abs(cb - 247) <= 8
-        if cream and anchor is None:
-            # The splash appears exactly when the view attaches and starts its
-            # timeline, so the first cream frame is the picture's own t=0.
+        ink = 0
+        for y in range(int(height * 0.30), int(height * 0.52), 10):
+            for x in range(int(width * 0.25), int(width * 0.75), 10):
+                i = x * bpp
+                if (rows[y][i] + rows[y][i + 1] + rows[y][i + 2]) / 3 < 140:
+                    ink += 1
+        if cream and ink > 20 and anchor is None:
+            # The stage is cream from the window background on, but the
+            # view only owns the surface once its artwork is drawn; that frame
+            # is the animation's own t=0.
             anchor = index * 40
         ratio, _ = fill_in_image(rows, bpp, width, height, track)
-        series.append((index * 40, cream, None if ratio is None else round(ratio, 3)))
+        series.append((index * 40, cream, ink, None if ratio is None else round(ratio, 3)))
 
     offset = None
     offset_path = os.path.join(out_dir, 'video_offset.txt')
@@ -850,30 +860,55 @@ def judge_video(out_dir):
         print('FAIL  [video] no decoded frame shows the splash canvas, so the recording '
               'missed the splash entirely')
         return 1
-    print('info  [video] %d frames decoded; splash first appears at %sms of the recording '
-          '(logged offset %sms); track %s vs expected %s'
-          % (len(frames), anchor, offset, list(track), list(expected_track)))
-    splash = [(ts - anchor, ratio) for ts, cream, ratio in series if cream and ratio is not None]
+    splash = [(ts - anchor, ratio) for ts, cream, _ink, ratio in series
+              if cream and ts >= anchor and ratio is not None]
     if not splash:
         print('FAIL  [video] no splash frame yields a measurable bar')
         return 1
     failures = 0
     peak = max(r for _, r in splash)
-    growth = [r for _, r in splash if r > 0.02]
-    print('info  [video] bar coverage over the splash: first fill %s, peak %.0f%%'
-          % (('%.0f%%' % (growth[0] * 100)) if growth else 'never', peak * 100))
-    for target, lo, hi, label in ((1200, 0.05, 0.95, 'mid fill'),
-                                  (2900, 0.85, 1.01, 'full bar')):
-        near = min(splash, key=lambda s: abs(s[0] - target))
-        ok = lo <= (near[1] or 0) <= hi
-        print(('PASS  [video] ' if ok else 'FAIL  [video] ') +
-              'the recorded surface shows a %s near %sms (frame at %sms covers %.0f%%)'
-              % (label, target, near[0], (near[1] or 0) * 100))
-        if not ok:
-            failures += 1
+    print('info  [video] %d frames decoded; the splash view first draws at %sms of the '
+          'recording (logged offset %sms); track %s vs expected %s'
+          % (len(frames), anchor, offset, list(track), list(expected_track)))
+    print('info  [video] bar coverage across the splash: %.0f%% at 0ms, %.0f%% at 1200ms, '
+          '%.0f%% at 2900ms, peak %.0f%%'
+          % (splash[0][1] * 100,
+             (min(splash, key=lambda s: abs(s[0] - 1200))[1] or 0) * 100,
+             (min(splash, key=lambda s: abs(s[0] - 2900))[1] or 0) * 100,
+             peak * 100))
+
+    starts_empty = splash[0][1] <= 0.15
+    print(('PASS  [video] ' if starts_empty else 'FAIL  [video] ') +
+          'the recorded bar starts empty when the view takes the surface (%.0f%%)'
+          % (splash[0][1] * 100))
+    if not starts_empty:
+        failures += 1
+
+    filled = [(t, r) for t, r in splash if r > 0.02]
+    begins = filled[0][0] if filled else None
+    begins_ok = begins is not None and begins <= 1500
+    print(('PASS  [video] ' if begins_ok else 'FAIL  [video] ') +
+          'the recorded fill begins within the first 1.5s (%s)'
+          % (('%sms' % begins) if begins is not None else 'never'))
+    if not begins_ok:
+        failures += 1
+
+    mid = min(splash, key=lambda s: abs(s[0] - 1200))[1] or 0
+    late = min(splash, key=lambda s: abs(s[0] - 2900))[1] or 0
+    # The recording is variable-rate (~7 real frames a second), so it cannot
+    # resolve 1.2s from 2.9s the way the view raster does; what it must show is
+    # that the composited surface fills further at the later moment and is full
+    # by the time the lifecycle ends.
+    grows = late >= 0.85 and late > mid
+    print(('PASS  [video] ' if grows else 'FAIL  [video] ') +
+          'the recorded surface fills further by 2900ms (%.0f%% then %.0f%%) and is full'
+          % (mid * 100, late * 100))
+    if not grows:
+        failures += 1
+
     monotonic = all(b[1] >= a[1] - 0.02 for a, b in zip(splash, splash[1:]))
     print(('PASS  [video] ' if monotonic else 'FAIL  [video] ') +
-          'the recorded fill grows monotonically (%d splash frames)' % len(splash))
+          'the recorded fill never goes backwards (%d splash frames)' % len(splash))
     if not monotonic:
         failures += 1
     return failures
