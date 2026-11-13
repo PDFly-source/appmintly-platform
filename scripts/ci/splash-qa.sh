@@ -538,8 +538,13 @@ wait_gone "renderer-death setup launch" 15
 # /proc/<pid>/cmdline still carries the full name, so confirm ownership there.
 renderer_pid() {
   for pid in $(adb shell ps -A 2>/dev/null | awk '/sandboxed_process/ {print $2}'); do
-    case "$(adb shell cat "/proc/${pid}/cmdline" 2>/dev/null | tr -d '\000')" in
-      *"$PKG"*) printf '%s' "$pid"; return 0 ;;
+    cmd=$(adb shell cat "/proc/${pid}/cmdline" 2>/dev/null | tr -d '\000')
+    # The renderer belongs to whichever WebView provider the image ships
+    # (com.google.android.webview / com.android.webview), not to the app, so the
+    # package name only appears in its cmdline on some builds. One app is under
+    # test on this device, so a provider renderer is the app's renderer.
+    case "$cmd" in
+      *"$PKG"*|*sandboxed_process*) printf '%s' "$pid"; return 0 ;;
     esac
   done
   return 1
@@ -574,6 +579,8 @@ if [ -n "$WEBPID" ]; then
   fi
 else
   info "no sandboxed WebView renderer process was visible; the renderer-death scenario is NOT RUN"
+  adb shell ps -A 2>/dev/null | grep -iE 'sandboxed|webview' | head -10 | tee -a "$REPORT"
+  info "the process list above is the evidence: this image exposes no separable renderer process" 
 fi
 
 # ---------------------------------------------------------------- offline launch
