@@ -97,6 +97,19 @@ jobs:
           echo "file=$FOUND sha256=$SHA size=$(stat -c%s "$FOUND")"
           test "$SHA" = "${{ inputs.apk_sha }}"
 
+      - name: Install ffmpeg for video frame decoding
+        run: |
+          if command -v ffmpeg >/dev/null 2>&1; then echo "ffmpeg already present"; exit 0; fi
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update -qq || true
+            sudo apt-get install -y -qq ffmpeg || true
+          fi
+          if command -v ffmpeg >/dev/null 2>&1; then
+            echo "ffmpeg installed: $(ffmpeg -version | head -1)"
+          else
+            echo "ffmpeg unavailable; the video route will report that honestly"
+          fi
+
       - name: Install the emulator audio runtime
         run: |
           set -uo pipefail

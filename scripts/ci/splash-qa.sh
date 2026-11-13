@@ -153,11 +153,27 @@ splash_state() { # splash_state -> 0 splash up, 1 splash gone, 2 dump unavailabl
   return 1
 }
 
-page_ready() { # page_ready -> 0 when the marketplace WebView is in the hierarchy
-  adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
-  adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml' || return 1
-  adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q 'android.webkit.WebView'
+page_ready() { # page_ready [seconds] -> 0 when the marketplace WebView is in the hierarchy
+  # One dump answers "is the WebView there right now", which is the wrong
+  # question while a 2.38MB site is still loading into a freshly created
+  # WebView: run 43374430936 sampled the instant before it attached and called
+  # a working app blank (the same APK passed this check in 43371177258). The
+  # assertion is unchanged - a WebView must appear - it is simply allowed the
+  # same bounded wait the retirement check already gets, and how long it took
+  # is recorded.
+  local limit="${1:-20}" waited=0
+  while :; do
+    adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    if adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml' &&
+       adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q 'android.webkit.WebView'; then
+      PAGE_READY_MS=$((waited * 500))
+      return 0
+    fi
+    [ "$waited" -ge $((limit * 2)) ] && return 1
+    waited=$((waited + 1))
+    sleep 0.5
+  done
 }
 
 wake() {
@@ -262,6 +278,29 @@ adb shell dumpsys package "$PKG" | grep -E "versionName|versionCode" | head -4 |
 # (the surface latches seconds apart), but the view hierarchy can: the splash
 # carries content-desc="AppMintly" while it is attached and stops doing so when
 # its own 3400ms timeline ends, so the poll below timestamps that transition.
+# A deterministic ANIMATED baseline. This emulator image can boot with
+# animator_duration_scale at 0, which turns the design into its reduced-motion
+# end state (the reduction the reference itself renders with animation:none).
+# The cold/rotation passes must judge the animated design, so force the scales
+# to 1 here; the reduced-motion pass below sets them to 0 for its own run and
+# restores 1 afterwards.
+ANIM_ORIG=$(adb shell settings get global animator_duration_scale 2>/dev/null | tr -d '\r\n')
+echo "device animator_duration_scale before tests: ${ANIM_ORIG:-unknown}" | tee -a "$REPORT"
+adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
+adb shell settings put global window_animation_scale 1 >/dev/null 2>&1
+adb shell settings put global transition_animation_scale 1 >/dev/null 2>&1
+sleep 0.6
+# Record what the DEVICE actually reports: the reference's own reduced-motion
+# state (animation:none) is a different, legitimate design state, so the
+# analyzer must judge the bar against the device's real setting, never assume.
+ANIM_STATE=$(adb shell settings get global animator_duration_scale 2>/dev/null | tr -d '\r\n')
+echo "animator_duration_scale=${ANIM_STATE:-unknown}" | tee -a "$REPORT"
+printf '%s' "${ANIM_STATE:-1}" > "${OUT}/animator_state.txt"
+if [ "${ANIM_STATE%%.*}" = "1" ]; then
+  pass "the cold pass runs with the device animation scale at 1 (device reports ${ANIM_STATE})"
+else
+  fail "the device did not accept animation scale 1 before the cold pass (reports ${ANIM_STATE:-unknown})"
+fi
 wake
 launch_cold
 sleep 0.2
@@ -273,17 +312,132 @@ wait_gone "cold launch" 10
 launch_cold
 sleep 0.2
 burst "cold"
-sleep 4
+# The settled frame must be the moment the splash is actually gone, not a fixed
+# 4s guess: on a slow run the guess lands while the splash is still up, the
+# latched surface then yields two identical frames and a still-attached
+# hierarchy, and "content replaced the splash" fails for a checkout that is
+# fine (run 43378968182). Sample on the observed retirement instead, bounded by
+# the same 12s the app itself allows.
+st="attached"
+for _ in $(seq 1 24); do
+  splash_state
+  case $? in
+    0) st="attached" ;;
+    1) st="gone"; break ;;
+    *) st="unknown" ;;
+  esac
+  sleep 0.5
+done
 shot "cold_settled"
+printf '%s\n' "$st" > "${OUT}/splash_state_settled.txt"
 analyze cold "$DENSITY"
 
 if page_ready; then
-  pass "marketplace UI is rendered after the splash (WebView in the hierarchy)"
+  pass "marketplace UI is rendered after the splash (WebView in the hierarchy after ${PAGE_READY_MS:-0}ms)"
 else
   fail "no marketplace WebView after the splash (blank screen?)"
 fi
 
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true
+
+# ------------------------------------------------------- timed captures (bar)
+# The burst latches this emulator's surface, so one late grab cannot show the
+# bar. The two grabs are anchored to the splash view's own ATTACH moment from
+# logcat (device clock), not to the harness's clock: adb startup alone costs
+# seconds here and made the first attempt capture a retired splash. Each grab
+# records its real device time, its screencap cost and whether the splash node
+# was still attached. Pixels decide the fill; the native progress lines for the
+# same window only corroborate it.
+adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+adb logcat -c >/dev/null 2>&1 || true
+: > "${OUT}/timed_meta.txt"
+adb shell rm -f /sdcard/timed_1200.png /sdcard/timed_2900.png >/dev/null 2>&1 || true
+adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
+adb shell rm -f "/sdcard/Android/data/${PKG}/files/splash_view_1200.png" \
+  "/sdcard/Android/data/${PKG}/files/splash_view_2900.png" >/dev/null 2>&1 || true
+launch_cold
+ATTACH_MS=""
+for _ in $(seq 1 40); do
+  ATTACH_MS=$(adb logcat -d -v epoch -s StudyriaSplash:I 2>/dev/null \
+    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000}')
+  [ -n "$ATTACH_MS" ] && break
+  sleep 0.25
+done
+if [ -n "$ATTACH_MS" ]; then
+  pass "splash attach recorded on the device clock (epoch ${ATTACH_MS}ms)"
+else
+  fail "the splash view never logged its attach; timed bar evidence is unavailable"
+fi
+# One offset read maps the device clock onto the host clock, so the waits are
+# local (instant) instead of an adb round trip per iteration. The old loop asked
+# `adb shell date` up to 120 times and called uiautomator before each grab; both
+# cost seconds here and landed the grabs at 7290ms and 58277ms.
+DEV_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+HOST_MS=$(date +%s%3N)
+OFFSET=$(( ${DEV_MS:-0} - HOST_MS ))
+for target in 1200 2900; do
+  if [ -n "$ATTACH_MS" ]; then
+    TARGET_HOST=$(( ATTACH_MS - OFFSET + target ))
+    for _ in $(seq 1 400); do
+      [ "$(date +%s%3N)" -ge "$TARGET_HOST" ] && break
+      sleep 0.05
+    done
+  fi
+  # No hierarchy dump here: uiautomator needs an idle window and costs seconds,
+  # which would move the grab. Pixel ownership decides; the node reads unknown.
+  node="unknown"
+  CAP0=$(( $(date +%s%3N) + OFFSET ))
+  adb shell screencap -p "/sdcard/timed_${target}.png" >/dev/null 2>&1 || true
+  CAP1=$(( $(date +%s%3N) + OFFSET ))
+  ELAPSED=$(( CAP0 - ${ATTACH_MS:-0} ))
+  printf '%s %s %s %s %s\n' "$target" "$ELAPSED" "$node" "$((CAP1 - CAP0))" "${ATTACH_MS:-0}" \
+    >> "${OUT}/timed_meta.txt"
+done
+for target in 1200 2900; do
+  adb pull "/sdcard/timed_${target}.png" "${OUT}/timed_${target}.png" >/dev/null 2>&1 || true
+done
+adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
+pass "timed captures taken against the attach moment (1200/2900ms targets)"
+analyze timed "${DENSITY}"
+
+for target in 1200 2900; do
+  adb pull "/sdcard/Android/data/${PKG}/files/splash_view_${target}.png" \
+    "${OUT}/view_${target}.png" >/dev/null 2>&1 || true
+done
+analyze view "${DENSITY}"
+
+# ------------------------------------------------------------------- video
+# screenrecord composites through SurfaceFlinger, so it sees frames the
+# screenshot path cannot: on this emulator `screencap` hands back a stale
+# composite of the animating surface for the whole splash interval.
+ensure_portrait "before the video probe"
+adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
+# Clear the log so the attach found below is this launch, not the earlier pass.
+adb logcat -c >/dev/null 2>&1 || true
+REC_START=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+adb shell screenrecord --time-limit 9 --bit-rate 8000000 --size 540x1200 \
+  /sdcard/splash_sr.mp4 >/dev/null 2>&1 &
+sleep 1
+launch_cold
+ATTACH_V=""
+for _ in $(seq 1 40); do
+  ATTACH_V=$(adb logcat -d -v epoch -s StudyriaSplash:I 2>/dev/null \
+    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000; exit}')
+  [ -n "$ATTACH_V" ] && break
+  sleep 0.25
+done
+if [ -n "$ATTACH_V" ] && [ -n "${REC_START:-}" ]; then
+  printf '%s\n' $((ATTACH_V - REC_START)) > "${OUT}/video_offset.txt"
+  pass "video recorded from ${REC_START}ms to attach ${ATTACH_V}ms on the device clock"
+else
+  fail "the video probe could not place the attach moment on the recording clock"
+fi
+sleep 5
+adb shell pkill -INT screenrecord >/dev/null 2>&1 || true
+sleep 2
+adb pull /sdcard/splash_sr.mp4 "${OUT}/splash_sr.mp4" >/dev/null 2>&1 || true
+analyze video "${DENSITY}"
 
 # ------------------------------------------------------------------- rotation
 ensure_landscape "before the rotated probes"
@@ -329,7 +483,22 @@ if [ "$rot_dims" != "unreadable" ]; then
     shot "rot_early"
   fi
 fi
-burst "rot"
+# The frame set is only evidence about rotation if the device was landscape
+# while it was taken: run 43378968182 confirmed landscape, then the surface fell
+# back to portrait during the burst and the analyzer judged a portrait launch.
+# Each attempt re-verifies the orientation around the burst, so a device that
+# gives up the rotation is retried instead of being judged on the wrong frames.
+for rot_attempt in 1 2 3; do
+  ensure_landscape "rot burst attempt ${rot_attempt}" || continue
+  burst "rot"
+  if landscape_now; then
+    break
+  fi
+  info "[rot] the device returned to portrait during attempt ${rot_attempt}; re-applying rotation"
+  adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
+  adb shell settings put system user_rotation 1 >/dev/null 2>&1
+  sleep 2
+done
 sleep 5
 shot "rot_settled"
 analyze rot "$DENSITY"
@@ -379,9 +548,68 @@ sleep 0.9
 splash_shown "return after HOME" homep
 wait_gone "return after HOME" 15
 if page_ready; then
-  pass "the app returns to the marketplace after HOME during the splash"
+  pass "the app returns to the marketplace after HOME during the splash (WebView after ${PAGE_READY_MS:-0}ms)"
 else
   fail "no marketplace WebView after returning from HOME"
+fi
+
+# ------------------------------------------------- renderer death (recovery)
+# A WebView renderer can be killed under memory pressure. That is the one launch
+# failure a page can never report, so it is tested separately from HOME: the app
+# must rebuild its content view exactly once, land on the marketplace, and must
+# never replay the launch splash inside the recovered window.
+launch_cold
+wait_gone "renderer-death setup launch" 15
+# ps truncates the NAME column to 15 characters, so matching the package name
+# against `ps -A` output can never find com.appforge.studyria:sandboxed_process0
+# (runs 43375531198 and 43376448614 skipped the scenario for that reason). Every
+# sandboxed_process on this emulator belongs to the one app under test, and
+# /proc/<pid>/cmdline still carries the full name, so confirm ownership there.
+renderer_pid() {
+  for pid in $(adb shell ps -A 2>/dev/null | awk '/sandboxed_process/ {print $2}'); do
+    cmd=$(adb shell cat "/proc/${pid}/cmdline" 2>/dev/null | tr -d '\000')
+    # The renderer belongs to whichever WebView provider the image ships
+    # (com.google.android.webview / com.android.webview), not to the app, so the
+    # package name only appears in its cmdline on some builds. One app is under
+    # test on this device, so a provider renderer is the app's renderer.
+    case "$cmd" in
+      *"$PKG"*|*sandboxed_process*) printf '%s' "$pid"; return 0 ;;
+    esac
+  done
+  return 1
+}
+WEBPID=""
+for _ in $(seq 1 40); do
+  WEBPID=$(renderer_pid) && break
+  WEBPID=""
+  sleep 0.5
+done
+if [ -n "$WEBPID" ]; then
+  pass "renderer-death scenario is testable (WebView renderer pid ${WEBPID})"
+  adb shell kill -9 "$WEBPID" >/dev/null 2>&1
+  sleep 2
+  RECOVERED=0
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if page_ready 4; then RECOVERED=1; break; fi
+    sleep 1
+  done
+  if [ "$RECOVERED" -eq 1 ]; then
+    pass "renderer death: the marketplace WebView is back after one recovery"
+  else
+    fail "renderer death: no marketplace WebView after the recovery (blank screen)"
+  fi
+  splash_state; SPLASH_RC=$?
+  if [ "$SPLASH_RC" -eq 0 ]; then
+    fail "renderer death: the splash replayed inside the recovered window"
+  elif [ "$SPLASH_RC" -eq 1 ]; then
+    pass "renderer death: the recovery landed on the page, not a second splash"
+  else
+    info "renderer death: the hierarchy was unavailable, so no splash replay could be checked"
+  fi
+else
+  info "no sandboxed WebView renderer process was visible; the renderer-death scenario is NOT RUN"
+  adb shell ps -A 2>/dev/null | grep -iE 'sandboxed|webview' | head -10 | tee -a "$REPORT"
+  info "the process list above is the evidence: this image exposes no separable renderer process" 
 fi
 
 # ---------------------------------------------------------------- offline launch
@@ -434,6 +662,17 @@ print(f"WROTE splash-qa-report.json result={summary['result']} failures={failed}
       f"viewport={window['width']}x{window['height']}@{window['x']},{window['y']}" if window
       else f"WROTE splash-qa-report.json result={summary['result']} failures={failed} viewport=unmeasured")
 PYJSON
+
+# Restore the device exactly as we found it.
+if [ -n "${ANIM_ORIG:-}" ]; then
+  adb shell settings put global animator_duration_scale "$ANIM_ORIG" >/dev/null 2>&1
+  adb shell settings put global window_animation_scale "$ANIM_ORIG" >/dev/null 2>&1
+  adb shell settings put global transition_animation_scale "$ANIM_ORIG" >/dev/null 2>&1
+  pass "device animation scale restored to ${ANIM_ORIG} after the tests"
+else
+  adb shell settings put global animator_duration_scale 1 >/dev/null 2>&1
+  pass "device animation scale left at the platform default (nothing was recorded before the tests)"
+fi
 
 echo "──── summary ────" | tee -a "$REPORT"
 if [ "$FAILED" -eq 0 ]; then

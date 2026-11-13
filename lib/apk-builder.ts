@@ -79,6 +79,21 @@ import {
   cineflowSplashWordJpeg,
 } from './splash/cineflow-splash';
 import {
+  STUDYRIA_SPLASH_BG,
+  STUDYRIA_SPLASH_HARD_TIMEOUT_MS,
+  STUDYRIA_SPLASH_ICON_NAME,
+  STUDYRIA_SPLASH_MARK_NAME,
+  STUDYRIA_SPLASH_PACKAGE,
+  STUDYRIA_SPLASH_WORD_NAME,
+  studyriaSplashColorEntries,
+  studyriaSplashJava,
+  studyriaSplashMarkJpeg,
+  studyriaSplashStylesV31Xml,
+  studyriaSplashStylesXml,
+  studyriaSplashTransparentIconXml,
+  studyriaSplashWordJpeg,
+} from './splash/studyria-splash';
+import {
   validateApkBinary,
   ApkValidationResult,
   MODERN_TARGET_SDK,
@@ -670,6 +685,22 @@ export async function runApkBuild(options: ApkBuildOptions): Promise<BuildJob> {
       assets: [
         { name: `${CINEFLOW_SPLASH_MARK_NAME}.jpg`, bytes: cineflowSplashMarkJpeg() },
         { name: `${CINEFLOW_SPLASH_WORD_NAME}.jpg`, bytes: cineflowSplashWordJpeg() },
+      ],
+    },
+    [STUDYRIA_SPLASH_PACKAGE]: {
+      viewClass: 'StudyriaSplashView',
+      bg: STUDYRIA_SPLASH_BG,
+      hardTimeoutMs: STUDYRIA_SPLASH_HARD_TIMEOUT_MS,
+      javaFile: 'StudyriaSplashView.java',
+      java: studyriaSplashJava,
+      iconName: STUDYRIA_SPLASH_ICON_NAME,
+      iconXml: studyriaSplashTransparentIconXml(),
+      colorEntries: studyriaSplashColorEntries(),
+      stylesXml: studyriaSplashStylesXml(),
+      stylesV31Xml: studyriaSplashStylesV31Xml(),
+      assets: [
+        { name: `${STUDYRIA_SPLASH_MARK_NAME}.jpg`, bytes: studyriaSplashMarkJpeg() },
+        { name: `${STUDYRIA_SPLASH_WORD_NAME}.jpg`, bytes: studyriaSplashWordJpeg() },
       ],
     },
   };
@@ -1363,6 +1394,10 @@ ${
     private boolean splashContentReady = false;
     private boolean splashAnimationDone = false;
     private boolean splashTimedOut = false;
+    /** Renderer death recovery runs once per launch, never in a recreate loop. */
+    private boolean rendererRecovered = false;
+    /** Set for the single recreated Activity so the splash does not replay. */
+    private static boolean rendererRecovery = false;
 `
         : ''
     }${welcome ? '    private LinearLayout welcomeOverlay;\n    private LinearLayout welcomeContent;\n' : ''}    private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -1462,7 +1497,36 @@ ${
             public void onPageFinished(WebView view, String url) {
                 dismissSplashAfterFirstPaint();
             }
-        });
+${
+  isNativeSplashBuild
+    ? `            // Renderer death is the one failure a page can never report: the
+            // load never finishes, so a splash waiting on readiness would hold
+            // forever. Recreate the renderer and let the normal readiness gate
+            // (or the hard timeout) retire the splash - never a blank screen.
+            @Override
+            public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail detail) {
+                // A dead renderer can never paint again, and Android forbids
+                // reusing its WebView: reloading it leaves a blank, unusable
+                // surface (observed on the Studyria 2.0.3 matrix). Retire the
+                // splash so nothing waits on a page that cannot load, then
+                // rebuild the content view exactly once.
+                splashTimedOut = true;
+                maybeRetireSplash();
+                if (!rendererRecovered) {
+                    rendererRecovered = true;
+                    rendererRecovery = true;
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            try { recreate(); } catch (Throwable ignored) { rendererRecovery = false; }
+                        }
+                    });
+                }
+                return true;
+            }
+`
+    : ''
+}        });
 
         // File Chooser for document / image upload
         webView.setWebChromeClient(new WebChromeClient() {
@@ -1838,6 +1902,13 @@ ${isNativeSplashBuild && !welcome ? '' : `    /** Brand launch gradient shared b
         // The animated view is the window's first frame: same canvas colour as
         // the window background and the Android 12+ system splash, so there is
         // no flash, no blank frame and no older artwork anywhere in the launch.
+        if (rendererRecovery) {
+            // Recovered from a dead renderer: this launch already played its
+            // splash, so it must not replay (no duplicate start, no second
+            // timeline). Clear the one-shot flag and go straight to the page.
+            rendererRecovery = false;
+            splashDismissed = true;
+        } else {
         splashOverlay = new FrameLayout(this);
         splashOverlay.setFitsSystemWindows(true);
         splashOverlay.setBackgroundColor(Color.parseColor("${splashSpecBg}"));
@@ -1851,7 +1922,8 @@ ${isNativeSplashBuild && !welcome ? '' : `    /** Brand launch gradient shared b
         });
         splashOverlay.addView(splashView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        setSplashStatusBar(true);`
+        setSplashStatusBar(true);
+        }`
             : `// --- in-window splash overlay (matches the system splash) ---
         // Lightweight: two-color gradient + one centered ImageView. No
         // network requests, no animations until the first paint, and it

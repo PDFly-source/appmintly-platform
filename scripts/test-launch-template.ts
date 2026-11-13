@@ -207,6 +207,88 @@ ok(
 
 console.log('');
 console.log(`[launch-template] ${checks - failures}/${checks} checks passed`);
+/* ---------- Studyria (Task 6): its own owner-supplied splash ---------- */
+const {
+  STUDYRIA_SPLASH_PACKAGE: STUDYRIA_PACKAGE,
+  STUDYRIA_SPLASH_HARD_TIMEOUT_MS: STUDYRIA_TIMEOUT,
+  STUDYRIA_SPLASH_MS: STUDYRIA_MS,
+  STUDYRIA_SPLASH_BG: STUDYRIA_BG,
+  studyriaSplashJava,
+  studyriaSplashStylesV31Xml,
+} = require('../lib/splash/studyria-splash');
+const studyriaModule = fs.readFileSync('lib/splash/studyria-splash.ts', 'utf8');
+ok(
+  'Studyria splash is scoped to its own package id',
+  STUDYRIA_PACKAGE === 'com.appforge.studyria' &&
+    /\[STUDYRIA_SPLASH_PACKAGE\]: \{/.test(builderSrc) &&
+    STUDYRIA_MS === 3400 &&
+    STUDYRIA_TIMEOUT > STUDYRIA_MS &&
+    STUDYRIA_BG === '#FBFAF7',
+);
+const stJava = studyriaSplashJava(STUDYRIA_PACKAGE);
+ok(
+  'the Studyria splash is reproduced natively (no WebView, no remote asset)',
+  /public class StudyriaSplashView extends View/.test(stJava) &&
+    !/WebView/.test(stJava) &&
+    !/http/.test(stJava),
+);
+ok(
+  'the Studyria launch surface is the ruled canvas, never the old dark overlay',
+  /windowSplashScreenBackground">@color\/studyria_splash_bg/.test(studyriaSplashStylesV31Xml()) &&
+    /windowSplashScreenAnimatedIcon">@drawable\/studyria_splash_transparent_icon/.test(
+      studyriaSplashStylesV31Xml(),
+    ) &&
+    !/launchBackground\(\)\)/.test(stJava),
+);
+ok(
+  'the Studyria splash follows the reference FINAL cascade (settle + wipe, not the overridden zoom/rise)',
+  /private static final float SETTLE_FROM_Y = -36f;/.test(stJava) &&
+    /SETTLE_DELAY = 250L, SETTLE_DUR = 1000L/.test(stJava) &&
+    /WIPE_DELAY = 950L, WIPE_DUR = 1000L/.test(stJava) &&
+    /cubicBezier\(p, 0\.2f, 0\.8f, 0\.2f, 1f\)/.test(stJava) &&
+    /cubicBezier\(p, 0\.6f, 0f, 0\.2f, 1f\)/.test(stJava) &&
+    !/0\.72f/.test(stJava),
+);
+ok(
+  'the Studyria ruled canvas and margin rule keep their declared and CSS-pixel sizes',
+  /LINE_OFFSET = 31f/.test(stJava) &&
+    /LINE_PERIOD = 32f/.test(stJava) &&
+    /RULE_LEFT = 34f/.test(stJava) &&
+    /Math\.max\(1f, density\)/.test(stJava),
+);
+ok(
+  'the Studyria progress bar keeps the reference gradient and pill geometry',
+  /BAR_INSET = 60f/.test(stJava) &&
+    /BAR_BOTTOM = 54f/.test(stJava) &&
+    /BAR_H = 5f/.test(stJava) &&
+    /BAR_FILL_FROM = 0xFF15151A/.test(stJava) &&
+    /BAR_FILL_TO = 0xFFB30F10/.test(stJava) &&
+    /FILL_DELAY = 600L, FILL_DUR = 2400L/.test(stJava),
+);
+ok(
+  'the Studyria mark and wordmark are multiplied into the canvas, not pasted',
+  (stJava.match(/PorterDuff\.Mode\.MULTIPLY/g) ?? []).length === 2 &&
+    /setLayerType\(LAYER_TYPE_SOFTWARE, null\)/.test(stJava),
+);
+ok(
+  'reduced motion renders the final frame and leaves the bar unfilled',
+  /reducedMotion \? 1f : easeRule\(/.test(stJava) &&
+    /reducedMotion \? 0f : easeFill\(/.test(stJava) &&
+    /ANIMATOR_DURATION_SCALE/.test(stJava),
+);
+ok(
+  'both Studyria JPEGs ship inside the APK, and no other app borrows them',
+  /\$\{STUDYRIA_SPLASH_MARK_NAME\}\.jpg/.test(builderSrc) &&
+    /\$\{STUDYRIA_SPLASH_WORD_NAME\}\.jpg/.test(builderSrc) &&
+    !/com\.appforge\.(appmintly|pdfminifly|billcraft|niramay|cineflow)/.test(studyriaModule),
+);
+ok(
+  'the Studyria splash retires exactly once and never silently changes the design timing',
+  (stJava.match(/listener\.onSplashFinished\(\)/g) ?? []).length === 1 &&
+    /if \(!finished && t >= DURATION_MS\)/.test(stJava) &&
+    /DURATION_MS = 3400L/.test(stJava),
+);
+
 if (failures > 0) {
   console.error(`[launch-template] FAILED: ${failures} regression(s) detected`);
   process.exit(1);
@@ -423,6 +505,7 @@ ok(
     /viewClass: 'BillCraftSplashView'/.test(builderSrc) &&
     /viewClass: 'NiramaySplashView'/.test(builderSrc) &&
     /viewClass: 'CineFlowSplashView'/.test(builderSrc) &&
+    /viewClass: 'StudyriaSplashView'/.test(builderSrc) &&
     !/AppMintlySplashView|PdfMiniFlySplashView/.test(billcraftModule),
 );
 

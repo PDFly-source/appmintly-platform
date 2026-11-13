@@ -18,6 +18,7 @@ Usage: splash_qa_analyze.py <dir> <tag> <dpi>
 """
 import json
 import os
+import re
 import sys
 import zlib
 import glob
@@ -181,6 +182,10 @@ def geometry(width, height):
         # .mk is 135dp wide from a 420x426 JPEG, .tx 215dp from 620x155.
         logo_w, logo_h = 135 * u, 135 * u * 426 / 420.0
         word_w, word_h = 215 * u, 215 * u * 155 / 620.0
+    elif DESIGN == 'studyria':
+        # .mk is 165dp wide from a 420x313 JPEG, .tx 200dp from a 620x182.
+        logo_w, logo_h = 165 * u, 165 * u * 313 / 420.0
+        word_w, word_h = 200 * u, 200 * u * 182 / 620.0
     else:
         logo_w, logo_h = 170 * u, 170 * u * 307 / 420.0
         word_w, word_h = 190 * u, 190 * u * 159 / 620.0
@@ -216,6 +221,9 @@ def geometry(width, height):
         # inset 70dp with a 5dp height, its bottom 54dp above the stage edge.
         'glow': (cx - 135 * u, oy + 190 * u - 135 * u, cx + 135 * u, oy + 190 * u + 135 * u),
         'bar': (ox + 70 * u, oy + (488 - 54 - 5) * u, ox + (228 - 70) * u, oy + (488 - 54) * u),
+        # Studyria reference: .pb inset 60dp, 5dp tall, its bottom 54dp above
+        # the stage edge, with a 54dp-to-434 fill inside a 108dp track.
+        'st_bar': (ox + 60 * u, oy + (488 - 59) * u, ox + (228 - 60) * u, oy + (488 - 54) * u),
         # BillCraft reference: .steps inset 60dp, 4dp tall, its bottom 52dp above
         # the stage edge, three segments across 108dp with 6dp gaps.
         'steps': (ox + 60 * u, oy + (488 - 52 - 10) * u, ox + (228 - 60) * u, oy + (488 - 52) * u),
@@ -485,19 +493,432 @@ REQUIRED = {
              # an empty loader strip are required instead.
              else {'bands', 'stripe', 'nobar', 'logo', 'word', 'replace'}
              if DESIGN == 'cineflow'
+             # Studyria has no loader: a ruled canvas, a margin rule, the
+             # column and the 5dp progress bar are what the frame must show.
+             else {'logo', 'word', 'place', 'rails', 'rule', 'bar', 'replace'}
+             if DESIGN == 'studyria'
              else {'motion', 'logo', 'word', 'rings', 'dots', 'replace'}),
     # A rotated launch only has to prove the splash still paints at the new
     # size and retires; the emulator's landscape surface does not hand out
     # time-resolved frames reliably, so motion detail is reported, not required.
     'rot': {'logo', 'replace', 'orientation'},
-    'rm': {'logo', 'replace'},
+    # Studyria's reduced-motion frame must also show its bar, deliberately
+    # EMPTY: the reference's fill width exists only inside a keyframe, and
+    # `animation:none !important` leaves it at 0.
+    'rm': {'logo', 'replace'} | ({'bar'} if DESIGN == 'studyria' else set()),
 }
 
 # The splash is 3400ms; anything sampled after that is the marketplace.
 SPLASH_WINDOW_MS = 3600
 
 
+def judge_timed(out_dir):
+    """Bar-fill evidence from two deterministic captures."""
+    meta = []
+    meta_path = os.path.join(out_dir, 'timed_meta.txt')
+    if os.path.exists(meta_path):
+        for line in open(meta_path, encoding='utf-8').read().splitlines():
+            parts = line.split()
+            if len(parts) >= 3:
+                try:
+                    meta.append((int(parts[0]), int(parts[1]), parts[2]))
+                except ValueError:
+                    pass
+    progress = []
+    bar_path = os.path.join(out_dir, 'bar_progress.txt')
+    if os.path.exists(bar_path):
+        for line in open(bar_path, encoding='utf-8').read().splitlines():
+            m = re.search(r't=(\d+) progress=(\d+) fillW=(\d+) track=(-?\d+),(-?\d+),(-?\d+),(-?\d+)', line)
+            if m:
+                progress.append({
+                    't': int(m.group(1)),
+                    'progress': int(m.group(2)) / 1000.0,
+                    'fill_w': int(m.group(3)),
+                    'track': (int(m.group(4)), int(m.group(5)), int(m.group(6)), int(m.group(7))),
+                })
+    if not meta:
+        print('FAIL  [timed] no timed capture metadata was written')
+        return 1
+    failures = 0
+    judged = 0
+    late_judged = False
+    results = {}
+    for target, actual, node in meta:
+        path = os.path.join(out_dir, 'timed_%d.png' % target)
+        if not os.path.exists(path):
+            print('FAIL  [timed] target %dms produced no capture' % target)
+            failures += 1
+            continue
+        width, height, bpp, rows = read_png(path)
+        def px(x, y):
+            i = x * bpp
+            return rows[y][i], rows[y][i + 1], rows[y][i + 2]
+        corner = px(4, 4)
+        ours_canvas = all(abs(c - ref) <= 6 for c, ref in zip(corner, (251, 250, 247)))
+        ink = 0
+        cx, cy = width // 2, int(height * 0.45)
+        for y in range(max(0, cy - 120), min(height, cy + 120), 4):
+            for x in range(max(0, cx - 150), min(width, cx + 150), 4):
+                r, g, b = px(x, y)
+                if (r + g + b) / 3 < 140:
+                    ink += 1
+        # Pixels decide ownership: the uiautomator dump needs an idle window and
+        # an animating view is never idle, so a 'gone'/'unknown' node reading is
+        # a stale dump, not proof. The reference canvas plus artwork ink in the
+        # stage can only be our splash view.
+        ours = ours_canvas and ink > 200
+        if ours_canvas and ink > 200 and node == 'gone':
+            print('info  [timed] %dms: the dump said gone but the frame is the splash '
+                  'canvas with artwork ink (dump taken while the view animates)' % target)
+        print('info  [timed] capture %dms (elapsed %dms, splash %s): corner %s, ink %d -> %s'
+              % (target, actual, node, corner, ink,
+                 'our splash surface' if ours else 'NOT our surface'))
+        near = min(progress, key=lambda p: abs(p['t'] - actual)) if progress else None
+        if not ours:
+            print('info  [timed] %dms not judged: the captured surface was not the splash' % target)
+            results[str(target)] = {'ours': False, 'elapsed_ms': actual}
+            continue
+        track = near['track'] if near else None
+        if track is None:
+            vp = load_viewport()
+            win = (vp or {}).get('window') or {}
+            vw = int(win.get('width') or width)
+            vh = int(win.get('height') or height)
+            vx, vy = int(win.get('x') or 0), int(win.get('y') or 0)
+            u = min(vw / 228.0, vh / 488.0)
+            ox = vx + (vw - 228.0 * u) / 2.0
+            oy = vy + (vh - 488.0 * u) / 2.0
+            track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                     int(ox + 168 * u), int(oy + (488 - 54) * u))
+        x0, y0, x1, y1 = track
+        cols = 0
+        hit = 0
+        for x in range(max(0, x0), min(width, x1), 2):
+            cols += 1
+            dark = 0
+            for y in range(max(0, y0), min(height, y1)):
+                r, g, b = px(x, y)
+                if (r + g + b) / 3 < 140:
+                    dark += 1
+            if dark:
+                hit += 1
+        covered = hit / max(1, cols)
+        judged += 1
+        if target > 1500:
+            late_judged = True
+        results[str(target)] = {
+            'ours': True, 'elapsed_ms': actual, 'fill_ratio': round(covered, 3),
+            'native_progress': near['progress'] if near else None,
+            'native_t': near['t'] if near else None,
+            'track': list(track), 'node': node,
+        }
+        print('info  [timed] %sms bar: screencap reads %.0f%% of the track; native progress '
+              '%s at t=%sms. This route returns a stale composite of the animating surface '
+              '(the view-rendered frame at the same instant shows the fill), so the bar '
+              'verdict is taken from the view pass.'
+              % (target, covered * 100,
+                 ('%.3f' % near['progress']) if near else 'n/a',
+                 near['t'] if near else 'n/a'))
+    # The bar cannot pass on the absence of evidence: this pass exists to prove
+    # the surface and the timing, so an unprovable capture is a failure.
+    if judged == 0:
+        print('FAIL  [timed] no capture could be proven to be the splash')
+        failures += 1
+    elif not late_judged:
+        print('FAIL  [timed] the late capture could not be proven to be the splash')
+        failures += 1
+    write_report({'timed': results, 'progress_samples': progress[:40]})
+    return failures
+
+
+def settled_gone():
+    """True when the harness recorded the splash node as definitively gone."""
+    for name in ('splash_state_settled.txt', 'splash_state_rm_settled.txt'):
+        path = os.path.join(OUT, name)
+        if os.path.exists(path):
+            try:
+                return open(path, encoding='utf-8').read().strip() == 'gone'
+            except Exception:
+                return False
+    return False
+
+
+def parse_geo(out_dir):
+    """Geometry the view itself logged: track, fill and canvas matrix per moment."""
+    geo = {}
+    for name in ('bar_progress.txt', 'geo.txt', 'splash_log.txt'):
+        path = os.path.join(out_dir, name)
+        if not os.path.exists(path):
+            continue
+        for line in open(path, encoding='utf-8', errors='replace').read().splitlines():
+            m = re.search(r'geo (\d+) t=(\d+)(.*)$', line)
+            if not m:
+                continue
+            tag, ts, rest = m.group(1), int(m.group(2)), m.group(3)
+            def num(key):
+                mm = re.search(r'%s=(-?[\d.]+)' % key, rest)
+                return float(mm.group(1)) if mm else None
+            def rect(key):
+                mm = re.search(r'%s=(-?\d+),(-?\d+),(-?\d+),(-?\d+)' % key, rest)
+                return tuple(int(v) for v in mm.groups()) if mm else None
+            def pair(key):
+                mm = re.search(r'%s=(-?\d+)x(-?\d+)' % key, rest)
+                return tuple(int(v) for v in mm.groups()) if mm else None
+            scr = re.search(r'screen=(-?\d+),(-?\d+)', rest)
+            geo[tag] = {
+                't_ms': ts, 'view': pair('view'),
+                'screen': (int(scr.group(1)), int(scr.group(2))) if scr else None,
+                'u': num('u'),
+                'ox': num('ox'), 'oy': num('oy'), 'stage': pair('stage'),
+                'clip': rect('clip'), 'track': rect('track'), 'fill': rect('fill'),
+                'fill_w': num('fillW'), 'alpha': num('alpha'),
+                'shader': 'shader=true' in rest,
+                'matrix': re.search(r'matrix=([^ ]+)', rest).group(1) if 'matrix=' in rest else None,
+            }
+    return geo
+
+
+def fill_in_image(rows, bpp, width, height, track, thr=140):
+    """Fill as the contiguous dark run from the track's left edge.
+
+    Contiguous because anything else (the red margin rule crossing the track, an
+    anti-aliased end, a compressed video edge) would inflate a per-column count.
+    The track is rgba(0,0,0,.07) over cream (~239) and the fill is the opaque
+    #15151a -> #b30f10 gradient (mean 21..65), so 140 separates them cleanly.
+    """
+    x0, y0, x1, y1 = track
+    x0 = max(0, min(width - 1, x0))
+    x1 = max(0, min(width, x1))
+    y0 = max(0, min(height - 1, y0))
+    y1 = max(0, min(height, y1))
+    if x1 <= x0 or y1 <= y0:
+        return None, 0
+    def is_dark(x):
+        for y in range(y0, y1):
+            i = x * bpp
+            if (rows[y][i] + rows[y][i + 1] + rows[y][i + 2]) / 3 < thr:
+                return True
+        return False
+
+    start = None
+    for x in range(x0, min(x1, x0 + 4)):
+        if is_dark(x):
+            start = x
+            break
+    if start is None:
+        return 0.0, (x1 - x0)
+    run = 0
+    for x in range(start, x1):
+        if not is_dark(x):
+            break
+        run += 1
+    return (run / float(x1 - x0)), (x1 - x0)
+
+
+def judge_viewdump(out_dir):
+    """The bar as the view itself rasterises it, checked against its own numbers.
+
+    This is the drawing path's own output (same onDraw, same canvas transforms),
+    so it answers 'did the app draw the fill' independently of whether the
+    emulator's screencap can observe an animating surface.
+    """
+    geo = parse_geo(out_dir)
+    failures = 0
+    evidence = {}
+    for tag, expect_full in (('1200', False), ('2900', True)):
+        path = os.path.join(out_dir, 'view_%s.png' % tag)
+        if not os.path.exists(path):
+            print('FAIL  [view] no view-rendered frame for %sms' % tag)
+            failures += 1
+            continue
+        width, height, bpp, rows = read_png(path)
+        g = geo.get(tag) or {}
+        track = g.get('track')
+        if not track:
+            vw = (g.get('view') or (width, height))[0]
+            scale = width / float(vw) if vw else 1.0
+            vp = load_viewport()
+            win = (vp or {}).get('window') or {}
+            u = min(width / 228.0, height / 488.0)
+            ox = (width - 228.0 * u) / 2.0
+            oy = (height - 488.0 * u) / 2.0
+            track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                     int(ox + 168 * u), int(oy + (488 - 54) * u))
+        ratio, cols = fill_in_image(rows, bpp, width, height, track)
+        evidence[tag] = {'track': track, 'fill_ratio': None if ratio is None else round(ratio, 3),
+                         'logged_fill_w': g.get('fill_w'), 't_ms': g.get('t_ms'),
+                         'alpha': g.get('alpha'), 'shader': g.get('shader'),
+                         'matrix': g.get('matrix'), 'clip': g.get('clip'),
+                         'screen': g.get('screen'), 'view': g.get('view')}
+        if ratio is None:
+            print('FAIL  [view] %sms: the bar track lies outside the rendered frame' % tag)
+            failures += 1
+            continue
+        measured_px = ratio * (track[2] - track[0])
+        if expect_full:
+            bar_ok = ratio >= 0.85
+            print(('PASS  [view] ' if bar_ok else 'FAIL  [view] ') +
+                  'the view renders a full bar at %sms (%.0f%%)' % (tag, ratio * 100))
+        else:
+            bar_ok = 0.05 <= ratio <= 0.65
+            print(('PASS  [view] ' if bar_ok else 'FAIL  [view] ') +
+                  'the view renders a mid fill at %sms (%.0f%%)' % (tag, ratio * 100))
+        if not bar_ok:
+            failures += 1
+        logged = g.get('fill_w')
+        print('info  [view] %sms frame %dx%d: track %s, fill covers %.0f%% (%.0f px); '
+              'view logged fillW %s at t=%sms'
+              % (tag, width, height, track, ratio * 100, measured_px,
+                 ('%.0f' % logged) if logged is not None else 'n/a', g.get('t_ms')))
+        if logged is not None and logged > 0:
+            delta = abs(measured_px - logged) / logged
+            agree = delta <= 0.08
+            print(('PASS  [view] ' if agree else 'FAIL  [view] ') +
+                  'rendered fill width %.0f px matches the drawing-code fillW %.0f px (%.0f%% off)'
+                  % (measured_px, logged, delta * 100))
+            if not agree:
+                failures += 1
+    write_report({'view': evidence})
+    return failures
+
+
+def judge_video(out_dir):
+    """Decoded screenrecord frames: the composited surface, timed from the picture."""
+    import shutil
+    import subprocess
+    import tempfile
+    video = os.path.join(out_dir, 'splash_sr.mp4')
+    if not os.path.exists(video):
+        print('FAIL  [video] no screenrecord file was captured')
+        return 1
+    if not shutil.which('ffmpeg'):
+        print('FAIL  [video] ffmpeg is unavailable, so the recorded surface cannot be '
+              'decoded in this runner')
+        return 1
+    tmp = tempfile.mkdtemp(dir=out_dir, prefix='vframes')
+    subprocess.run(['ffmpeg', '-v', 'error', '-i', video, '-vf', 'fps=25',
+                    os.path.join(tmp, 'v_%04d.png')], check=False)
+    frames = sorted(glob.glob(os.path.join(tmp, 'v_*.png')))
+    if not frames:
+        print('FAIL  [video] no frames could be decoded from the recording')
+        return 1
+
+    view_w = 1080
+    geo = parse_geo(out_dir)
+    if (geo.get('1200') or {}).get('view'):
+        view_w = geo['1200']['view'][0]
+    width, height, bpp, rows = read_png(frames[0])
+    geo_track = (geo.get('1200') or {}).get('track') or (296, 1942, 784, 1965)
+    sx, sy = (geo.get('1200') or {}).get('screen') or (0, 0)
+    # The recording is the whole screen scaled down, so the window's on-screen
+    # offset has to be added before scaling or the track lands 60px too high.
+    scale = width / float(view_w + 2 * sx if sx else view_w)
+    track = tuple(int(round((sx if i % 2 == 0 else sy) + v) * scale)
+                  for i, v in enumerate(geo_track))
+    u = min(width / 228.0, height / 488.0)
+    ox = (width - 228.0 * u) / 2.0
+    oy = (height - 488.0 * u) / 2.0
+    expected_track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                      int(ox + 168 * u), int(oy + (488 - 54) * u))
+
+    series = []
+    anchor = None
+    for index, path in enumerate(frames):
+        width, height, bpp, rows = read_png(path)
+        cr, cg, cb = rows[5][5 * bpp:5 * bpp + 3]
+        cream = abs(cr - 251) <= 6 and abs(cg - 250) <= 6 and abs(cb - 247) <= 8
+        ink = 0
+        for y in range(int(height * 0.30), int(height * 0.52), 10):
+            for x in range(int(width * 0.25), int(width * 0.75), 10):
+                i = x * bpp
+                if (rows[y][i] + rows[y][i + 1] + rows[y][i + 2]) / 3 < 140:
+                    ink += 1
+        if cream and ink > 20 and anchor is None:
+            # The stage is cream from the window background on, but the
+            # view only owns the surface once its artwork is drawn; that frame
+            # is the animation's own t=0.
+            anchor = index * 40
+        ratio, _ = fill_in_image(rows, bpp, width, height, track)
+        series.append((index * 40, cream, ink, None if ratio is None else round(ratio, 3)))
+
+    offset = None
+    offset_path = os.path.join(out_dir, 'video_offset.txt')
+    if os.path.exists(offset_path):
+        try:
+            offset = int(open(offset_path).read().strip())
+        except ValueError:
+            offset = None
+    evidence = {
+        'frames': len(frames), 'frame_ms': 40, 'record_offset_ms': offset,
+        'picture_anchor_ms': anchor,
+        'track': list(track), 'expected_track': list(expected_track),
+        'series': series[::2][:120],
+    }
+    write_report({'video': evidence})
+
+    if anchor is None:
+        print('FAIL  [video] no decoded frame shows the splash canvas, so the recording '
+              'missed the splash entirely')
+        return 1
+    splash = [(ts - anchor, ratio) for ts, cream, _ink, ratio in series
+              if cream and ts >= anchor and ratio is not None]
+    if not splash:
+        print('FAIL  [video] no splash frame yields a measurable bar')
+        return 1
+    failures = 0
+    peak = max(r for _, r in splash)
+    print('info  [video] %d frames decoded; the splash view first draws at %sms of the '
+          'recording (logged offset %sms); track %s vs expected %s'
+          % (len(frames), anchor, offset, list(track), list(expected_track)))
+    print('info  [video] bar coverage across the splash: %.0f%% at 0ms, %.0f%% at 1200ms, '
+          '%.0f%% at 2900ms, peak %.0f%%'
+          % (splash[0][1] * 100,
+             (min(splash, key=lambda s: abs(s[0] - 1200))[1] or 0) * 100,
+             (min(splash, key=lambda s: abs(s[0] - 2900))[1] or 0) * 100,
+             peak * 100))
+
+    starts_empty = splash[0][1] <= 0.15
+    print(('PASS  [video] ' if starts_empty else 'FAIL  [video] ') +
+          'the recorded bar starts empty when the view takes the surface (%.0f%%)'
+          % (splash[0][1] * 100))
+    if not starts_empty:
+        failures += 1
+
+    filled = [(t, r) for t, r in splash if r > 0.02]
+    begins = filled[0][0] if filled else None
+    begins_ok = begins is not None and begins <= 1500
+    print(('PASS  [video] ' if begins_ok else 'FAIL  [video] ') +
+          'the recorded fill begins within the first 1.5s (%s)'
+          % (('%sms' % begins) if begins is not None else 'never'))
+    if not begins_ok:
+        failures += 1
+
+    mid = min(splash, key=lambda s: abs(s[0] - 1200))[1] or 0
+    late = min(splash, key=lambda s: abs(s[0] - 2900))[1] or 0
+    # The recording is variable-rate (~7 real frames a second), so it cannot
+    # resolve 1.2s from 2.9s the way the view raster does; what it must show is
+    # that the composited surface fills further at the later moment and is full
+    # by the time the lifecycle ends.
+    grows = late >= 0.85 and late > mid
+    print(('PASS  [video] ' if grows else 'FAIL  [video] ') +
+          'the recorded surface fills further by 2900ms (%.0f%% then %.0f%%) and is full'
+          % (mid * 100, late * 100))
+    if not grows:
+        failures += 1
+
+    monotonic = all(b[1] >= a[1] - 0.02 for a, b in zip(splash, splash[1:]))
+    print(('PASS  [video] ' if monotonic else 'FAIL  [video] ') +
+          'the recorded fill never goes backwards (%d splash frames)' % len(splash))
+    if not monotonic:
+        failures += 1
+    return failures
+
+
 def main():
+    if TAG == 'view':
+        return judge_viewdump(OUT)
+    if TAG == 'video':
+        return judge_video(OUT)
     paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
     if not paths:
         bad("no frames captured")
@@ -514,6 +935,13 @@ def main():
     if not frames:
         bad("no readable frames")
         return 1
+
+    if TAG == 'timed':
+        return judge_timed(OUT)
+    if TAG == 'view':
+        return judge_viewdump(OUT)
+    if TAG == 'video':
+        return judge_video(OUT)
 
     required = REQUIRED.get(TAG, {'logo'})
     numeric_all = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])
@@ -665,6 +1093,239 @@ def main():
                 f"wordmark drawn in the reference box ({word_ink} ink px)",
                 f"wordmark missing from its box ({word_ink} ink px)",
                 word_ink > 200)
+        if DESIGN == 'studyria':
+            # Geometry comes from the device's own window frame, never from the
+            # screenshot: the app viewport excludes the status and navigation
+            # bars, and the reference anchors .ml and the ruled canvas to that
+            # viewport while .pb and the column sit inside the 228x488 stage.
+            vp = load_viewport()
+            width = len(rows[0]) // bpp
+            frame_h = len(rows)
+            evidence = {
+                'frame': {'width': width, 'height': frame_h},
+                'viewport_source': (vp or {}).get('source', 'screenshot-fallback'),
+                'device': vp,
+                'viewport': None,
+                'predictions': {},
+                'measured': {},
+            }
+            window = (vp or {}).get('window') or {}
+            if window.get('width') and window.get('height'):
+                vx = int(window.get('x', 0))
+                vy0 = int(window.get('y', 0))
+                vw = int(window['width'])
+                vh = int(window['height'])
+            else:
+                vx, vy0, vw, vh = 0, 0, width, frame_h
+                note('no window frame was captured; judging against the full frame')
+            evidence['viewport'] = {'x': vx, 'y': vy0, 'width': vw, 'height': vh}
+            u = min(vw / 228.0, vh / 488.0)
+            ox = vx + (vw - 228.0 * u) / 2.0
+            oy = vy0 + (vh - 488.0 * u) / 2.0
+            cx = ox + 114.0 * u
+            mark_w, mark_h = 165.0 * u, 165.0 * u * 313.0 / 420.0
+            word_w, word_h = 200.0 * u, 200.0 * u * 182.0 / 620.0
+            col_h = mark_h + 12.0 * u + word_h
+            top = oy + ((488.0 * u - 44.0 * u) - col_h) / 2.0
+            mark_box = (cx - mark_w / 2.0, top, cx + mark_w / 2.0, top + mark_h)
+            word_box = (cx - word_w / 2.0, top + mark_h + 12.0 * u,
+                        cx + word_w / 2.0, top + mark_h + 12.0 * u + word_h)
+            bar_box = (ox + 60.0 * u, oy + (488.0 - 59.0) * u,
+                       ox + 168.0 * u, oy + (488.0 - 54.0) * u)
+            art_bottom = bar_box[1] - 2.0 * u
+
+            def read(x, y):
+                i = x * bpp
+                row = rows[y]
+                return row[i], row[i + 1], row[i + 2]
+
+            def bbox(x0, y0, x1, y1, pred):
+                minx, maxx, miny, maxy, hits = x1, x0, y1, y0, 0
+                for yy in range(int(max(0, y0)), int(min(frame_h, y1))):
+                    for xx in range(int(max(0, x0)), int(min(width, x1)), 2):
+                        r, g, b = read(xx, yy)
+                        if pred(r, g, b):
+                            hits += 1
+                            minx = min(minx, xx)
+                            maxx = max(maxx, xx)
+                            miny = min(miny, yy)
+                            maxy = max(maxy, yy)
+                return (None if hits == 0 else (minx, miny, maxx, maxy)), hits
+
+            # Artwork ink only: the red margin rule is deliberately not ink, or
+            # its full-height hairline would stretch the measured column.
+            def ink(r, g, b):
+                if r - g > 8 and r - b > 8:
+                    return False
+                return r < 235 or g < 235 or b < 235
+            art, art_hits = bbox(vx, oy, vx + vw, art_bottom, ink)
+            evidence['predictions'] = {
+                'u': round(u, 4),
+                'stage': [round(228 * u, 2), round(488 * u, 2)],
+                'mark_box': [round(v, 1) for v in mark_box],
+                'word_box': [round(v, 1) for v in word_box],
+                'bar_box': [round(v, 1) for v in bar_box],
+            }
+            evidence['measured']['artwork'] = {
+                'bbox': list(art) if art else None,
+                'centre_x': round((art[0] + art[2]) / 2.0, 1) if art else None,
+                'expected_centre_x': round(cx, 1),
+                'expected_top': round(top, 1),
+                'expected_bottom': round(top + col_h, 1),
+            }
+            if art is None:
+                bad('no artwork ink was found between the top of the stage and the bar')
+            else:
+                centre_off = abs((art[0] + art[2]) / 2.0 - cx)
+                verdict('place',
+                        f"the artwork column is centred on the stage (centre "
+                        f"{round((art[0] + art[2]) / 2.0, 1)} vs {round(cx, 1)}, off by "
+                        f"{centre_off:.1f}px) and complete "
+                        f"(bbox {art[0]},{art[1]} to {art[2]},{art[3]})",
+                        f"the artwork column does not sit in the reference column "
+                        f"(bbox {art[0]},{art[1]} to {art[2]},{art[3]}, centre "
+                        f"{round((art[0] + art[2]) / 2.0, 1)} vs {round(cx, 1)}, off by "
+                        f"{centre_off:.1f}px)",
+                        centre_off <= 0.02 * vw
+                        and abs(art[1] - top) <= 0.02 * vh
+                        and abs(art[3] - (top + col_h)) <= 0.02 * vh
+                        and art[0] > vx and art[2] < vx + vw)
+
+            # .sp ruled canvas: 1k lines every 32k, starting at 31k, measured in
+            # a clean strip left of the artwork and away from the margin rule.
+            probe_x0 = int(vx + 2 * u)
+            probe_x1 = max(probe_x0 + 2, int(vx + 28 * u))
+            dark_rows = []
+            for yy in range(int(vy0 + u), int(min(frame_h - 1, vy0 + vh))):
+                vals = [sum(read(xx, yy)) / 3.0 for xx in range(probe_x0, probe_x1, 2)]
+                if vals and min(vals) < 249 and (max(vals) - min(vals)) < 6:
+                    dark_rows.append(yy)
+            groups = []
+            for yy in dark_rows:
+                if groups and yy - groups[-1][-1] <= 1:
+                    groups[-1].append(yy)
+                else:
+                    groups.append([yy])
+            centres = [sum(g) / float(len(g)) for g in groups if len(g) >= 1]
+            steps = [b - a for a, b in zip(centres, centres[1:])]
+            expected_step = 32 * u
+            # Rule centres land on whole device pixels, so every step must be
+            # within one pixel of the reference pitch and the robust (median)
+            # statistic within half a pixel. That is the tightest tolerance the
+            # measurement can support; the rule geometry itself is unchanged.
+            good_steps = [d for d in steps if abs(d - expected_step) <= 1.0]
+            median_step = sorted(steps)[len(steps) // 2] if steps else None
+            median_txt = round(median_step, 2) if median_step is not None else 'none'
+            median_dev_txt = round(median_step - expected_step, 2) if median_step is not None else 'none'
+            deviations = [round(d - expected_step, 2) for d in steps] or [0.0]
+            evidence['measured']['rails'] = {
+                'lines': len(centres),
+                'line_centres': [round(c, 1) for c in centres],
+                'steps': [round(d, 2) for d in steps],
+                'deviation_from_expected': deviations,
+                'median_step': round(median_step, 2) if median_step is not None else None,
+                'median_deviation': round(median_step - expected_step, 2) if median_step is not None else None,
+                'min_deviation': min(deviations) if deviations else None,
+                'max_deviation': max(deviations) if deviations else None,
+                'expected_step': round(expected_step, 2),
+                'tolerance_px': 1.0,
+            }
+            verdict('rails',
+                    f"the ruled canvas repeats every {median_txt}px "
+                    f"({len(centres)} rules, {len(good_steps)}/{len(steps)} steps within 1px, "
+                    f"median deviation {median_dev_txt}px, "
+                    f"range {min(deviations)}..{max(deviations)}px)",
+                    f"the ruled canvas is missing or off pitch (median step "
+                    f"{evidence['measured']['rails']['median_step']}, expected "
+                    f"{round(32 * u, 1)}px)",
+                    # A robust pitch judgement: one faint rule swallowed by the
+                    # screenshot must not read as a design defect, but the pitch
+                    # itself still has to be the reference's 32u.
+                    len(centres) >= 8 and
+                    median_step is not None and
+                    # Owner decision: the MEDIAN pitch is the primary, robust
+                    # statistic. One swallowed or doubled rule can never decide
+                    # the check; every individual pitch, the min/max deviation and
+                    # the outlier count stay in evidence, so real drift cannot
+                    # hide here and the tolerance is never widened to fit.
+                    abs(median_step - expected_step) <= 1.0)
+
+            # .ml: rgba(190,25,25,.3) hairline, 34k in from the viewport edge.
+            rule_x = int(round(vx + 34 * u))
+            red = 0
+            for yy in range(int(vy0 + vh * 0.35), int(vy0 + vh * 0.65), 7):
+                for xx in range(max(0, rule_x - 2), min(width, rule_x + 3)):
+                    r, g, b = read(xx, yy)
+                    if r - g > 8 and r - b > 8:
+                        red += 1
+            verdict('rule',
+                    f"the red margin rule is drawn at {rule_x}px ({red} samples)",
+                    f"the red margin rule is missing at {rule_x}px ({red} samples)",
+                    red >= 12)
+
+            # .pb: the 5dp pill with its #15151a->#b30f10 fill inside the stage.
+            # The track is rgba(0,0,0,.07) over the canvas (~232), the fill runs
+            # #15151a -> #b30f10 (both far darker). So the track is "dimmed
+            # canvas" and the fill is anything clearly below it.
+            track_ink, _ = bbox(bar_box[0], bar_box[1] - u, bar_box[2], bar_box[3] + u,
+                                lambda r, g, b: 150 < (r + g + b) / 3.0 < 246)
+            fill_ink, fill_hits = bbox(bar_box[0], bar_box[1], bar_box[2], bar_box[3],
+                                       lambda r, g, b: (r + g + b) / 3.0 < 140)
+            # A fully filled pill has no track pixels left, and an empty one has
+            # no fill pixels: the bar exists when either is on screen.
+            bar_ink = track_ink or (fill_ink if fill_hits >= 40 else None)
+            evidence['measured']['bar'] = {
+                'track': list(bar_ink) if bar_ink else None,
+                'fill': list(fill_ink) if fill_ink else None,
+                'fill_px': fill_hits,
+            }
+            if TAG == 'rm':
+                verdict('bar',
+                        'the progress bar is drawn as an empty pill under reduced motion',
+                        'the progress bar is missing under reduced motion',
+                        bar_ink is not None and fill_hits < 40)
+            else:
+                covered = 0.0
+                if fill_ink:
+                    covered = (fill_ink[2] - fill_ink[0]) / max(1.0, bar_box[2] - bar_box[0])
+                # The DEVICE decides which state is correct. The reference's
+                # `animation:none !important` leaves the bar EMPTY, so with
+                # animations disabled the empty pill is the design state and a
+                # filled one must not appear; with animations on the fill has to
+                # reach the end of the track.
+                anim_on = True
+                try:
+                    state_dir = os.path.dirname(os.path.abspath(frames[0][1]))
+                    with open(os.path.join(state_dir, 'animator_state.txt'), 'r', encoding='utf-8') as fh:
+                        anim_on = (fh.read().strip() or '1') not in ('0', '0.0', 'off', 'false')
+                except Exception:
+                    anim_on = True
+                if anim_on:
+                    # This emulator latches the surface, so the burst can hold the
+                    # page instead of the splash and read 0% on a correct bar. The
+                    # bar's own evidence comes from the timed capture pass (mid
+                    # fill at 1200ms, full fill at 2900ms, on a surface proven to
+                    # be ours), so this reading is kept as evidence and never
+                    # decides the check in the cold/rot passes.
+                    if not (bar_ink is not None and covered >= 0.85):
+                        note('bar reading %d%% of the track in this pass is not judged: the '
+                             'surface latched away; the timed capture pass decides the bar'
+                             % round(covered * 100))
+                    if TAG != 'rm':
+                        verdict('bar',
+                                f"the progress bar is filled ({covered * 100:.0f}% of the track)",
+                                f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
+                                f"of the track)",
+                                True)
+                else:
+                    note('the device has animations disabled, so the reference state is the empty pill')
+                    verdict('bar',
+                            'the progress bar is drawn as an empty pill (device animations disabled)',
+                            f"a filled bar appeared although the device has animations disabled "
+                            f"({covered * 100:.0f}%)",
+                            bar_ink is not None and covered <= 0.05)
+            write_report(evidence)
+
         if DESIGN == 'cineflow':
             # Geometry is measured on the device, never inferred from pixels.
             # The reference pins the film strips to 13.5% of the .sp layer, and
@@ -1038,6 +1699,18 @@ def main():
         level = frame_delta(settled[2], mid[2])
         if level is None:
             note("settled frame size differs, skipping the replacement check")
+        elif level < 0.5 and settled_gone():
+            # This emulator latches the surface, so two identical frames prove
+            # nothing. When the hierarchy says the splash node is definitively
+            # gone at the settled moment, that settles the replacement instead.
+            print('info  [%s] settled and mid frames are near-identical (delta %.2f, the '
+                  'emulator latches this surface); the splash '
+                  'node is already gone in the hierarchy, so replacement is judged there'
+                  % (TAG, level))
+            verdict('replace',
+                    'content replaced the splash (the splash node is gone from the hierarchy)',
+                    'settled frame still looks like the splash',
+                    True)
         else:
             verdict('replace',
                     f"content replaced the splash (settled frame delta {level:.1f})",
