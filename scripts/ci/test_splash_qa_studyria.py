@@ -139,6 +139,15 @@ def run(frames, viewport_json, tag='cold', dims=(W, H), design='studyria'):
         return out, report
 
 
+def run_tag(dirpath, tag):
+    env = dict(os.environ)
+    env['SPLASH_DESIGN'] = 'studyria'
+    env['SPLASH_QA_REPORT'] = dirpath
+    out = subprocess.run([sys.executable, ANALYZER, dirpath, tag, '420'],
+                         capture_output=True, text=True, env=env).stdout
+    return out, None
+
+
 def run_timed(dirpath, node='attached'):
     """Run the timed bar-fill pass on a prepared fixture directory."""
     meta = os.path.join(dirpath, 'timed_meta.txt')
@@ -213,17 +222,56 @@ def timed_dir(fill, target_ms=2900):
         % (target_ms, int(fill * 1000), int(bar_[0]), int(bar_[1]), int(bar_[2]), int(bar_[3])))
     return d
 
-out, _ = run_timed(timed_dir(0.0))
-expect('FAIL  [timed]' in out, 'a bar that never fills is rejected by the timed pass')
+# The screenshot route no longer decides the bar (it returns a stale composite
+# of the animating surface), and it must say so rather than passing silently.
 out, _ = run_timed(timed_dir(1.0))
-expect('FAIL' not in out, 'a fully filled bar passes the timed pass')
+expect('the bar verdict is taken from the view pass' in out and 'FAIL  [timed]' not in out,
+       'the screencap pass reports its bar reading and defers the verdict')
 out, _ = run_timed(timed_dir(1.0), node='gone')
-expect('PASS  [timed]' in out, 'a stale gone-dump does not override pixel proof')
+expect('our splash surface' in out, 'a stale gone-dump does not override pixel proof')
 
 d = timed_dir(1.0)
 write_png(os.path.join(d, 'timed_2900.png'), lambda x, y: (10, 15, 23), w=W, h=H)
 out, _ = run_timed(d)
 expect('FAIL  [timed]' in out, 'an unprovable capture fails instead of passing silently')
+
+# The verdict-bearers: the view's own raster, at the exact instant.
+def view_dir(fill_early, fill_late):
+    d = timed_dir(fill_late)
+    u_ = min(W / 228.0, H / 488.0)
+    ox_ = (W - 228.0 * u_) / 2.0
+    oy_ = (H - 488.0 * u_) / 2.0
+    tr = (ox_ + 60 * u_, oy_ + (488 - 59) * u_, ox_ + 168 * u_, oy_ + (488 - 54) * u_)
+    def painter(fill):
+        def p(x, y):
+            if tr[0] <= x < tr[2] and tr[1] <= y < tr[3]:
+                if x < tr[0] + (tr[2] - tr[0]) * fill:
+                    return (21, 21, 26)
+                return (239, 239, 234)
+            return (251, 250, 247)
+        return p
+    write_png(os.path.join(d, 'view_1200.png'), painter(fill_early), w=W, h=H)
+    write_png(os.path.join(d, 'view_2900.png'), painter(fill_late), w=W, h=H)
+    with open(os.path.join(d, 'bar_progress.txt'), 'a') as fh:
+        fh.write('I/StudyriaSplash: geo 1200 t=1200 view=%dx%d screen=0,128 u=1 matrix=1.0,0.0,0.0;'
+                 '0.0,1.0,0.0 clip=0,0,%d,%d track=%d,%d,%d,%d fill=%d,%d,%d,%d fillW=%d '
+                 'alpha=255 shader=true\n'
+                 % (W, H, W, H, tr[0], tr[1], tr[2], tr[3], tr[0], tr[1],
+                    tr[0] + (tr[2] - tr[0]) * fill_early, tr[3], (tr[2] - tr[0]) * fill_early))
+        fh.write('I/StudyriaSplash: geo 2900 t=2900 view=%dx%d screen=0,128 u=1 matrix=1.0,0.0,0.0;'
+                 '0.0,1.0,0.0 clip=0,0,%d,%d track=%d,%d,%d,%d fill=%d,%d,%d,%d fillW=%d '
+                 'alpha=255 shader=true\n'
+                 % (W, H, W, H, tr[0], tr[1], tr[2], tr[3], tr[0], tr[1],
+                    tr[0] + (tr[2] - tr[0]) * fill_late, tr[3], (tr[2] - tr[0]) * fill_late))
+    return d
+
+out, _ = run_tag(view_dir(0.30, 1.0), 'view')
+expect('PASS  [view] the view renders a mid fill' in out and 'PASS  [view] the view renders a full bar' in out
+       and 'FAIL' not in out, 'the view raster proves a mid fill and a full bar')
+out, _ = run_tag(view_dir(0.0, 1.0), 'view')
+expect('FAIL  [view] the view renders a mid fill' in out, 'a view raster without a mid fill is rejected')
+out, _ = run_tag(view_dir(0.30, 0.30), 'view')
+expect('FAIL  [view] the view renders a full bar' in out, 'a view raster without the full bar is rejected')
 
 out, _ = run(launch_pixels(frame(full, rails=False)), viewport_document(full, (W, H)))
 expect('FAIL  [cold] the ruled canvas' in out, 'a missing ruled canvas is rejected')

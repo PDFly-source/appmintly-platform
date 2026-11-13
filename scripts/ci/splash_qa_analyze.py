@@ -608,14 +608,25 @@ def judge_timed(out_dir):
             late_judged = True
         results[str(target)] = {
             'ours': True, 'elapsed_ms': actual, 'fill_ratio': round(covered, 3),
-            'native_progress': progress_here, 'track': list(track), 'node': node,
+            'native_progress': near['progress'] if near else None,
+            'native_t': near['t'] if near else None,
+            'track': list(track), 'node': node,
         }
         print('info  [timed] %sms bar: screencap reads %.0f%% of the track; native progress '
               '%s at t=%sms. This route returns a stale composite of the animating surface '
               '(the view-rendered frame at the same instant shows the fill), so the bar '
               'verdict is taken from the view pass.'
               % (target, covered * 100,
-                 ('%.3f' % progress_here) if progress_here is not None else 'n/a', native_t))
+                 ('%.3f' % near['progress']) if near else 'n/a',
+                 near['t'] if near else 'n/a'))
+    # The bar cannot pass on the absence of evidence: this pass exists to prove
+    # the surface and the timing, so an unprovable capture is a failure.
+    if judged == 0:
+        print('FAIL  [timed] no capture could be proven to be the splash')
+        failures += 1
+    elif not late_judged:
+        print('FAIL  [timed] the late capture could not be proven to be the splash')
+        failures += 1
     write_report({'timed': results, 'progress_samples': progress[:40]})
     return failures
 
@@ -679,15 +690,23 @@ def fill_in_image(rows, bpp, width, height, track, thr=140):
     y1 = max(0, min(height, y1))
     if x1 <= x0 or y1 <= y0:
         return None, 0
-    run = 0
-    for x in range(x0, x1):
-        dark = False
+    def is_dark(x):
         for y in range(y0, y1):
             i = x * bpp
             if (rows[y][i] + rows[y][i + 1] + rows[y][i + 2]) / 3 < thr:
-                dark = True
-                break
-        if not dark:
+                return True
+        return False
+
+    start = None
+    for x in range(x0, min(x1, x0 + 4)):
+        if is_dark(x):
+            start = x
+            break
+    if start is None:
+        return 0.0, (x1 - x0)
+    run = 0
+    for x in range(start, x1):
+        if not is_dark(x):
             break
         run += 1
     return (run / float(x1 - x0)), (x1 - x0)
@@ -733,20 +752,21 @@ def judge_viewdump(out_dir):
             failures += 1
             continue
         measured_px = ratio * (track[2] - track[0])
+        if expect_full:
+            bar_ok = ratio >= 0.85
+            print(('PASS  [view] ' if bar_ok else 'FAIL  [view] ') +
+                  'the view renders a full bar at %sms (%.0f%%)' % (tag, ratio * 100))
+        else:
+            bar_ok = 0.05 <= ratio <= 0.65
+            print(('PASS  [view] ' if bar_ok else 'FAIL  [view] ') +
+                  'the view renders a mid fill at %sms (%.0f%%)' % (tag, ratio * 100))
+        if not bar_ok:
+            failures += 1
         logged = g.get('fill_w')
         print('info  [view] %sms frame %dx%d: track %s, fill covers %.0f%% (%.0f px); '
               'view logged fillW %s at t=%sms'
               % (tag, width, height, track, ratio * 100, measured_px,
                  ('%.0f' % logged) if logged is not None else 'n/a', g.get('t_ms')))
-        if expect_full:
-            good = ratio >= 0.85
-            label = 'the view renders a full bar at %sms (%.0f%%)' % (tag, ratio * 100)
-        else:
-            good = 0.05 <= ratio <= 0.65
-            label = 'the view renders a mid fill at %sms (%.0f%%)' % (tag, ratio * 100)
-        print(('PASS  [view] ' if good else 'FAIL  [view] ') + label)
-        if not good:
-            failures += 1
         if logged is not None and logged > 0:
             delta = abs(measured_px - logged) / logged
             agree = delta <= 0.08
