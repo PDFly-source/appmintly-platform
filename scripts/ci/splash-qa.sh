@@ -312,9 +312,23 @@ wait_gone "cold launch" 10
 launch_cold
 sleep 0.2
 burst "cold"
-sleep 4
+# The settled frame must be the moment the splash is actually gone, not a fixed
+# 4s guess: on a slow run the guess lands while the splash is still up, the
+# latched surface then yields two identical frames and a still-attached
+# hierarchy, and "content replaced the splash" fails for a checkout that is
+# fine (run 43378968182). Sample on the observed retirement instead, bounded by
+# the same 12s the app itself allows.
+st="attached"
+for _ in $(seq 1 24); do
+  splash_state
+  case $? in
+    0) st="attached" ;;
+    1) st="gone"; break ;;
+    *) st="unknown" ;;
+  esac
+  sleep 0.5
+done
 shot "cold_settled"
-splash_state; case $? in 0) st="attached" ;; 1) st="gone" ;; *) st="unknown" ;; esac
 printf '%s\n' "$st" > "${OUT}/splash_state_settled.txt"
 analyze cold "$DENSITY"
 
@@ -469,7 +483,22 @@ if [ "$rot_dims" != "unreadable" ]; then
     shot "rot_early"
   fi
 fi
-burst "rot"
+# The frame set is only evidence about rotation if the device was landscape
+# while it was taken: run 43378968182 confirmed landscape, then the surface fell
+# back to portrait during the burst and the analyzer judged a portrait launch.
+# Each attempt re-verifies the orientation around the burst, so a device that
+# gives up the rotation is retried instead of being judged on the wrong frames.
+for rot_attempt in 1 2 3; do
+  ensure_landscape "rot burst attempt ${rot_attempt}" || continue
+  burst "rot"
+  if landscape_now; then
+    break
+  fi
+  info "[rot] the device returned to portrait during attempt ${rot_attempt}; re-applying rotation"
+  adb shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
+  adb shell settings put system user_rotation 1 >/dev/null 2>&1
+  sleep 2
+done
 sleep 5
 shot "rot_settled"
 analyze rot "$DENSITY"
