@@ -566,7 +566,7 @@ def judge_timed(out_dir):
         # an animating view is never idle, so a 'gone'/'unknown' node reading is
         # a stale dump, not proof. The reference canvas plus artwork ink in the
         # stage can only be our splash view.
-        ours = ours_canvas and ink > 200 and node != 'gone'
+        ours = ours_canvas and ink > 200
         if ours_canvas and ink > 200 and node == 'gone':
             print('info  [timed] %dms: the dump said gone but the frame is the splash '
                   'canvas with artwork ink (dump taken while the view animates)' % target)
