@@ -531,14 +531,23 @@ fi
 # never replay the launch splash inside the recovered window.
 launch_cold
 wait_gone "renderer-death setup launch" 15
-# The renderer is spawned lazily by Chromium once the page starts loading, so a
-# single sample right after the splash retires can catch the window before it
-# exists (run 43375531198 did exactly that and skipped the scenario). Poll for
-# it, and say plainly if this image never creates one.
+# ps truncates the NAME column to 15 characters, so matching the package name
+# against `ps -A` output can never find com.appforge.studyria:sandboxed_process0
+# (runs 43375531198 and 43376448614 skipped the scenario for that reason). Every
+# sandboxed_process on this emulator belongs to the one app under test, and
+# /proc/<pid>/cmdline still carries the full name, so confirm ownership there.
+renderer_pid() {
+  for pid in $(adb shell ps -A 2>/dev/null | awk '/sandboxed_process/ {print $2}'); do
+    case "$(adb shell cat "/proc/${pid}/cmdline" 2>/dev/null | tr -d '\000')" in
+      *"$PKG"*) printf '%s' "$pid"; return 0 ;;
+    esac
+  done
+  return 1
+}
 WEBPID=""
 for _ in $(seq 1 40); do
-  WEBPID=$(adb shell ps -A 2>/dev/null | awk -v pkg="$PKG" '$0 ~ pkg && /sandboxed_process/ {print $2; exit}')
-  [ -n "$WEBPID" ] && break
+  WEBPID=$(renderer_pid) && break
+  WEBPID=""
   sleep 0.5
 done
 if [ -n "$WEBPID" ]; then
