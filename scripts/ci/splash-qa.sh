@@ -298,6 +298,8 @@ sleep 0.2
 burst "cold"
 sleep 4
 shot "cold_settled"
+splash_state; case $? in 0) st="attached" ;; 1) st="gone" ;; *) st="unknown" ;; esac
+printf '%s\n' "$st" > "${OUT}/splash_state_settled.txt"
 analyze cold "$DENSITY"
 
 if page_ready; then
@@ -319,6 +321,7 @@ fi
 adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
 adb logcat -c >/dev/null 2>&1 || true
 : > "${OUT}/timed_meta.txt"
+adb shell rm -f /sdcard/timed_1200.png /sdcard/timed_2900.png >/dev/null 2>&1 || true
 launch_cold
 ATTACH_MS=""
 for _ in $(seq 1 40); do
@@ -334,21 +337,30 @@ else
 fi
 for target in 1200 2900; do
   if [ -n "$ATTACH_MS" ]; then
-    for _ in $(seq 1 80); do
+    for _ in $(seq 1 120); do
       NOW_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
       [ -n "$NOW_MS" ] || break
       [ "$NOW_MS" -ge $((ATTACH_MS + target)) ] && break
       sleep 0.1
     done
   fi
-  BEFORE_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
-  if splash_state; then node="attached"; else node="gone"; fi
+  splash_state; NODE_RC=$?
+  case "$NODE_RC" in
+    0) node="attached" ;;
+    1) node="gone" ;;
+    *) node="unknown" ;;
+  esac
+  # On-device capture: pulling the PNG over adb costs seconds here, which pushed
+  # the second grab past its target. The file is pulled after both are taken.
   CAP0=$(date +%s%3N)
-  adb exec-out screencap -p > "${OUT}/timed_${target}.png" 2>/dev/null || true
+  adb shell screencap -p "/sdcard/timed_${target}.png" >/dev/null 2>&1 || true
   CAP1=$(date +%s%3N)
-  ELAPSED=$(( ${BEFORE_MS:-0} - ${ATTACH_MS:-0} ))
+  ELAPSED=$(( ${CAP0} - ${ATTACH_MS:-0} ))
   printf '%s %s %s %s %s\n' "$target" "$ELAPSED" "$node" "$((CAP1 - CAP0))" "${ATTACH_MS:-0}" \
     >> "${OUT}/timed_meta.txt"
+done
+for target in 1200 2900; do
+  adb pull "/sdcard/timed_${target}.png" "${OUT}/timed_${target}.png" >/dev/null 2>&1 || true
 done
 adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
 pass "timed captures taken against the attach moment (1200/2900ms targets)"

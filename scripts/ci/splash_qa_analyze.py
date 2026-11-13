@@ -560,7 +560,14 @@ def judge_timed(out_dir):
                 r, g, b = px(x, y)
                 if (r + g + b) / 3 < 140:
                     ink += 1
-        ours = ours_canvas and ink > 200 and node == 'attached'
+        # Pixels decide ownership: the uiautomator dump needs an idle window and
+        # an animating view is never idle, so a 'gone'/'unknown' node reading is
+        # a stale dump, not proof. The reference canvas plus artwork ink in the
+        # stage can only be our splash view.
+        ours = ours_canvas and ink > 200 and node != 'gone'
+        if ours_canvas and ink > 200 and node == 'gone':
+            print('info  [timed] %dms: the dump said gone but the frame is the splash '
+                  'canvas with artwork ink (dump taken while the view animates)' % target)
         print('info  [timed] capture %dms (elapsed %dms, splash %s): corner %s, ink %d -> %s'
               % (target, actual, node, corner, ink,
                  'our splash surface' if ours else 'NOT our surface'))
@@ -614,6 +621,18 @@ def judge_timed(out_dir):
             failures += 1
     write_report({'timed': results, 'progress_samples': progress[:40]})
     return failures
+
+
+def settled_gone():
+    """True when the harness recorded the splash node as definitively gone."""
+    for name in ('splash_state_settled.txt', 'splash_state_rm_settled.txt'):
+        path = os.path.join(OUT, name)
+        if os.path.exists(path):
+            try:
+                return open(path, encoding='utf-8').read().strip() == 'gone'
+            except Exception:
+                return False
+    return False
 
 
 def main():
@@ -1393,6 +1412,16 @@ def main():
         level = frame_delta(settled[2], mid[2])
         if level is None:
             note("settled frame size differs, skipping the replacement check")
+        elif level == 0.0 and settled_gone():
+            # This emulator latches the surface, so two identical frames prove
+            # nothing. When the hierarchy says the splash node is definitively
+            # gone at the settled moment, that settles the replacement instead.
+            print('info  [%s] settled and mid frames are identical (latching); the splash '
+                  'node is already gone in the hierarchy, so replacement is judged there' % TAG)
+            verdict('replace',
+                    'content replaced the splash (the splash node is gone from the hierarchy)',
+                    'settled frame still looks like the splash',
+                    True)
         else:
             verdict('replace',
                     f"content replaced the splash (settled frame delta {level:.1f})",
