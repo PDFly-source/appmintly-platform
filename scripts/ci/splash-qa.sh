@@ -309,27 +309,49 @@ fi
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true
 
 # ------------------------------------------------------- timed captures (bar)
-# The burst latches the emulator surface, so one late grab cannot show the bar.
-# Two grabs at fixed offsets from the launch, each with its ACTUAL elapsed time,
-# judged only when the surface is provably ours (canvas corner, artwork ink and
-# the splash node still attached). Pixels decide the fill; the native progress
-# lines for the same window only corroborate it.
+# The burst latches this emulator's surface, so one late grab cannot show the
+# bar. The two grabs are anchored to the splash view's own ATTACH moment from
+# logcat (device clock), not to the harness's clock: adb startup alone costs
+# seconds here and made the first attempt capture a retired splash. Each grab
+# records its real device time, its screencap cost and whether the splash node
+# was still attached. Pixels decide the fill; the native progress lines for the
+# same window only corroborate it.
 adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
 adb logcat -c >/dev/null 2>&1 || true
 : > "${OUT}/timed_meta.txt"
-T0=$(date +%s%3N)
 launch_cold
+ATTACH_MS=""
+for _ in $(seq 1 40); do
+  ATTACH_MS=$(adb logcat -d -v epoch -s StudyriaSplash:I 2>/dev/null \
+    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000; exit}')
+  [ -n "$ATTACH_MS" ] && break
+  sleep 0.25
+done
+if [ -n "$ATTACH_MS" ]; then
+  pass "splash attach recorded on the device clock (epoch ${ATTACH_MS}ms)"
+else
+  fail "the splash view never logged its attach; timed bar evidence is unavailable"
+fi
 for target in 1200 2900; do
-  elapsed=$(( $(date +%s%3N) - T0 ))
-  wait_ms=$((target - elapsed))
-  [ "$wait_ms" -gt 0 ] && sleep "$(awk -v ms="$wait_ms" 'BEGIN{printf "%.3f", ms/1000}')"
-  actual=$(( $(date +%s%3N) - T0 ))
-  shot "timed_${target}"
+  if [ -n "$ATTACH_MS" ]; then
+    for _ in $(seq 1 80); do
+      NOW_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+      [ -n "$NOW_MS" ] || break
+      [ "$NOW_MS" -ge $((ATTACH_MS + target)) ] && break
+      sleep 0.1
+    done
+  fi
+  BEFORE_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
   if splash_state; then node="attached"; else node="gone"; fi
-  printf '%s %s %s\n' "$target" "$actual" "$node" >> "${OUT}/timed_meta.txt"
+  CAP0=$(date +%s%3N)
+  adb exec-out screencap -p > "${OUT}/timed_${target}.png" 2>/dev/null || true
+  CAP1=$(date +%s%3N)
+  ELAPSED=$(( ${BEFORE_MS:-0} - ${ATTACH_MS:-0} ))
+  printf '%s %s %s %s %s\n' "$target" "$ELAPSED" "$node" "$((CAP1 - CAP0))" "${ATTACH_MS:-0}" \
+    >> "${OUT}/timed_meta.txt"
 done
 adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
-pass "timed captures taken at fixed offsets (targets 1200/2900ms, actual elapsed recorded)"
+pass "timed captures taken against the attach moment (1200/2900ms targets)"
 analyze timed "${DENSITY}"
 
 # ------------------------------------------------------------------- rotation

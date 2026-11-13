@@ -139,6 +139,23 @@ def run(frames, viewport_json, tag='cold', dims=(W, H), design='studyria'):
         return out, report
 
 
+def run_timed(dirpath, node='attached'):
+    """Run the timed bar-fill pass on a prepared fixture directory."""
+    meta = os.path.join(dirpath, 'timed_meta.txt')
+    lines = [l for l in open(meta).read().strip().splitlines() if l]
+    if node != 'attached' and lines:
+        parts = lines[0].split()
+        parts[2] = node
+        lines[0] = ' '.join(parts)
+        open(meta, 'w').write('\n'.join(lines) + '\n')
+    env = dict(os.environ)
+    env['SPLASH_DESIGN'] = 'studyria'
+    env['SPLASH_QA_REPORT'] = dirpath
+    out = subprocess.run([sys.executable, ANALYZER, dirpath, 'timed', '420'],
+                         capture_output=True, text=True, env=env).stdout
+    return out, None
+
+
 def settled_frame():
     """The marketplace after the splash: the light page, no artwork, no bar."""
     return lambda x, y: (253, 253, 251) if y % 40 < 26 else (247, 247, 244)
@@ -172,8 +189,37 @@ out, _ = run(launch_pixels(frame(inset_window)), viewport_document(inset_window,
 expect('FAIL' not in out, 'an inset window with the recorded viewport passes')
 
 print('— the profile still rejects the real failure modes —')
-out, _ = run(launch_pixels(frame(full, bar=False)), viewport_document(full, (W, H)))
-expect('FAIL  [cold] the progress bar' in out, 'a missing progress bar is rejected')
+# The bar is judged by the timed capture pass (the burst latches the surface), so
+# an absent bar must be rejected THERE.
+def timed_dir(fill, target_ms=2900):
+    d = tempfile.mkdtemp()
+    u_ = min(W / 228.0, H / 488.0)
+    ox_ = (W - 228.0 * u_) / 2.0
+    oy_ = (H - 488.0 * u_) / 2.0
+    bar_ = (ox_ + 60 * u_, oy_ + (488 - 59) * u_, ox_ + 168 * u_, oy_ + (488 - 54) * u_)
+    def painter(x, y):
+        if bar_[0] <= x < bar_[2] and bar_[1] <= y < bar_[3]:
+            if x < bar_[0] + (bar_[2] - bar_[0]) * fill:
+                return (21, 21, 26)
+            return (233, 232, 230)
+        if abs(x - W // 2) < 90 and abs(y - H // 2) < 70:
+            return (95, 85, 135)
+        return (251, 250, 247)
+    write_png(os.path.join(d, 'timed_%d.png' % target_ms), painter)
+    open(os.path.join(d, 'timed_meta.txt'), 'w').write(
+        '%d %d attached 0 0\n' % (target_ms, target_ms + 30))
+    open(os.path.join(d, 'bar_progress.txt'), 'w').write(
+        'I/StudyriaSplash: t=%d progress=%d fillW=0 track=%d,%d,%d,%d reducedMotion=false\n'
+        % (target_ms, int(fill * 1000), int(bar_[0]), int(bar_[1]), int(bar_[2]), int(bar_[3])))
+    return d
+
+out, _ = run_timed(timed_dir(0.0))
+expect('FAIL  [timed]' in out, 'a bar that never fills is rejected by the timed pass')
+out, _ = run_timed(timed_dir(1.0))
+expect('FAIL' not in out, 'a fully filled bar passes the timed pass')
+out, _ = run_timed(timed_dir(1.0), node='gone')
+expect('not judged' in out and 'FAIL' not in out,
+       'a capture whose surface was not the splash is never judged')
 
 out, _ = run(launch_pixels(frame(full, rails=False)), viewport_document(full, (W, H)))
 expect('FAIL  [cold] the ruled canvas' in out, 'a missing ruled canvas is rejected')

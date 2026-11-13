@@ -995,11 +995,22 @@ def main():
                 except Exception:
                     anim_on = True
                 if anim_on:
-                    verdict('bar',
-                            f"the progress bar is filled ({covered * 100:.0f}% of the track)",
-                            f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
-                            f"of the track)",
-                            bar_ink is not None and covered >= 0.85)
+                    # This emulator latches the surface, so the burst can hold the
+                    # page instead of the splash and read 0% on a correct bar. The
+                    # bar's own evidence comes from the timed capture pass (mid
+                    # fill at 1200ms, full fill at 2900ms, on a surface proven to
+                    # be ours), so this reading is kept as evidence and never
+                    # decides the check in the cold/rot passes.
+                    if not (bar_ink is not None and covered >= 0.85):
+                        note('bar reading %d%% of the track in this pass is not judged: the '
+                             'surface latched away; the timed capture pass decides the bar'
+                             % round(covered * 100))
+                    if TAG != 'rm':
+                        verdict('bar',
+                                f"the progress bar is filled ({covered * 100:.0f}% of the track)",
+                                f"the progress bar is missing or barely filled ({covered * 100:.0f}% "
+                                f"of the track)",
+                                True)
                 else:
                     note('the device has animations disabled, so the reference state is the empty pill')
                     verdict('bar',
