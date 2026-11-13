@@ -3902,12 +3902,12 @@
     "roadmapStatus": "published",
     "roadmapStatusLabel": "published",
     "publicUrl": "https://appmintly.pages.dev/app/studyria/",
-    "releaseVersion": "2.0.2",
+    "releaseVersion": "2.0.3",
     "releaseDate": "2026-09-20",
     "milestones": [
       {
         "id": "pub-studyria-m1",
-        "title": "Publicly released on the AppMintly marketplace (v2.0.2)",
+        "title": "Publicly released on the AppMintly marketplace (v2.0.3)",
         "description": "Listed in the production catalog with a verified public listing at https://appmintly.pages.dev/app/studyria/.",
         "status": "done"
       }
@@ -3920,9 +3920,9 @@
           "category": "release",
           "result": "passed",
           "evidence_class": "repository-inspection",
-          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.0.2.",
+          "summary": "Public release listed in the production AppMintly catalog (data/apps.json), version 2.0.3.",
           "source": "AppMintly production catalog (data/apps.json)",
-          "date": "2026-09-27"
+          "date": "2026-11-13"
         }
       ]
     },
