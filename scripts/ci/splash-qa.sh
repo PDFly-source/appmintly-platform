@@ -153,11 +153,27 @@ splash_state() { # splash_state -> 0 splash up, 1 splash gone, 2 dump unavailabl
   return 1
 }
 
-page_ready() { # page_ready -> 0 when the marketplace WebView is in the hierarchy
-  adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
-  adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml' || return 1
-  adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q 'android.webkit.WebView'
+page_ready() { # page_ready [seconds] -> 0 when the marketplace WebView is in the hierarchy
+  # One dump answers "is the WebView there right now", which is the wrong
+  # question while a 2.38MB site is still loading into a freshly created
+  # WebView: run 43374430936 sampled the instant before it attached and called
+  # a working app blank (the same APK passed this check in 43371177258). The
+  # assertion is unchanged - a WebView must appear - it is simply allowed the
+  # same bounded wait the retirement check already gets, and how long it took
+  # is recorded.
+  local limit="${1:-20}" waited=0
+  while :; do
+    adb shell rm -f /sdcard/ui.xml >/dev/null 2>&1
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    if adb shell ls /sdcard/ui.xml 2>/dev/null | grep -q 'ui\.xml' &&
+       adb shell cat /sdcard/ui.xml 2>/dev/null | grep -q 'android.webkit.WebView'; then
+      PAGE_READY_MS=$((waited * 500))
+      return 0
+    fi
+    [ "$waited" -ge $((limit * 2)) ] && return 1
+    waited=$((waited + 1))
+    sleep 0.5
+  done
 }
 
 wake() {
@@ -303,7 +319,7 @@ printf '%s\n' "$st" > "${OUT}/splash_state_settled.txt"
 analyze cold "$DENSITY"
 
 if page_ready; then
-  pass "marketplace UI is rendered after the splash (WebView in the hierarchy)"
+  pass "marketplace UI is rendered after the splash (WebView in the hierarchy after ${PAGE_READY_MS:-0}ms)"
 else
   fail "no marketplace WebView after the splash (blank screen?)"
 fi
@@ -503,7 +519,7 @@ sleep 0.9
 splash_shown "return after HOME" homep
 wait_gone "return after HOME" 15
 if page_ready; then
-  pass "the app returns to the marketplace after HOME during the splash"
+  pass "the app returns to the marketplace after HOME during the splash (WebView after ${PAGE_READY_MS:-0}ms)"
 else
   fail "no marketplace WebView after returning from HOME"
 fi
@@ -522,7 +538,7 @@ if [ -n "$WEBPID" ]; then
   sleep 2
   RECOVERED=0
   for _ in 1 2 3 4 5 6 7 8 9 10; do
-    if page_ready; then RECOVERED=1; break; fi
+    if page_ready 4; then RECOVERED=1; break; fi
     sleep 1
   done
   if [ "$RECOVERED" -eq 1 ]; then
