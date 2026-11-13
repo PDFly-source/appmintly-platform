@@ -325,9 +325,6 @@ adb shell rm -f /sdcard/timed_1200.png /sdcard/timed_2900.png >/dev/null 2>&1 ||
 adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
 adb shell rm -f "/sdcard/Android/data/${PKG}/files/splash_view_1200.png" \
   "/sdcard/Android/data/${PKG}/files/splash_view_2900.png" >/dev/null 2>&1 || true
-REC_START=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
-adb shell screenrecord --time-limit 9 --bit-rate 8000000 --size 540x1200 \
-  /sdcard/splash_sr.mp4 >/dev/null 2>&1 &
 launch_cold
 ATTACH_MS=""
 for _ in $(seq 1 40); do
@@ -377,14 +374,37 @@ for target in 1200 2900; do
   adb pull "/sdcard/Android/data/${PKG}/files/splash_view_${target}.png" \
     "${OUT}/view_${target}.png" >/dev/null 2>&1 || true
 done
+analyze view "${DENSITY}"
+
+# ------------------------------------------------------------------- video
+# screenrecord composites through SurfaceFlinger, so it sees frames the
+# screenshot path cannot: on this emulator `screencap` hands back a stale
+# composite of the animating surface for the whole splash interval.
+ensure_portrait "before the video probe"
+adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
+REC_START=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+adb shell screenrecord --time-limit 9 --bit-rate 8000000 --size 540x1200 \
+  /sdcard/splash_sr.mp4 >/dev/null 2>&1 &
+sleep 1
+launch_cold
+ATTACH_V=""
+for _ in $(seq 1 40); do
+  ATTACH_V=$(adb logcat -d -v epoch -s StudyriaSplash:I 2>/dev/null \
+    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000; exit}')
+  [ -n "$ATTACH_V" ] && break
+  sleep 0.25
+done
+if [ -n "$ATTACH_V" ] && [ -n "${REC_START:-}" ]; then
+  printf '%s\n' $((ATTACH_V - REC_START)) > "${OUT}/video_offset.txt"
+  pass "video recorded from ${REC_START}ms to attach ${ATTACH_V}ms on the device clock"
+else
+  fail "the video probe could not place the attach moment on the recording clock"
+fi
+sleep 5
 adb shell pkill -INT screenrecord >/dev/null 2>&1 || true
 sleep 2
 adb pull /sdcard/splash_sr.mp4 "${OUT}/splash_sr.mp4" >/dev/null 2>&1 || true
-if [ -n "${ATTACH_MS:-}" ] && [ -n "${REC_START:-}" ]; then
-  printf '%s\n' $((ATTACH_MS - REC_START)) > "${OUT}/video_offset.txt"
-  pass "video started ${REC_START}ms on the device clock, attach ${ATTACH_MS}ms (offset $(cat "${OUT}/video_offset.txt")ms)"
-fi
-analyze view "${DENSITY}"
 analyze video "${DENSITY}"
 
 # ------------------------------------------------------------------- rotation

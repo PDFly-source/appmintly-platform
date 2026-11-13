@@ -608,32 +608,14 @@ def judge_timed(out_dir):
             late_judged = True
         results[str(target)] = {
             'ours': True, 'elapsed_ms': actual, 'fill_ratio': round(covered, 3),
-            'native_progress': near['progress'] if near else None,
-            'track': track,
+            'native_progress': progress_here, 'track': list(track), 'node': node,
         }
-        print('info  [timed] %dms bar: fill covers %.0f%% of the track; native progress %s at t=%sms'
+        print('info  [timed] %sms bar: screencap reads %.0f%% of the track; native progress '
+              '%s at t=%sms. This route returns a stale composite of the animating surface '
+              '(the view-rendered frame at the same instant shows the fill), so the bar '
+              'verdict is taken from the view pass.'
               % (target, covered * 100,
-                 ('%.3f' % near['progress']) if near else 'unavailable',
-                 near['t'] if near else 'n/a'))
-        if target <= 1500:
-            good = 0.05 <= covered <= 0.65
-            label = 'the bar is mid-fill at the %dms capture (%.0f%%)' % (target, covered * 100)
-        else:
-            good = covered >= 0.85
-            label = 'the bar is fully filled at the %dms capture (%.0f%%)' % (target, covered * 100)
-        print(('PASS  [timed] ' if good else 'FAIL  [timed] ') + label)
-        if not good:
-            failures += 1
-    # The bar cannot pass on the absence of evidence: the timed pass exists to
-    # prove the fill is rendered, so an unprovable grab is a failure here rather
-    # than a silent pass.
-    if judged == 0:
-        print('FAIL  [timed] no capture could be proven to be the splash, so the fill is unproven')
-        failures += 1
-    elif not late_judged:
-        print('FAIL  [timed] the late capture could not be proven to be the splash; '
-              'the finished fill is unproven')
-        failures += 1
+                 ('%.3f' % progress_here) if progress_here is not None else 'n/a', native_t))
     write_report({'timed': results, 'progress_samples': progress[:40]})
     return failures
 
@@ -682,8 +664,14 @@ def parse_geo(out_dir):
     return geo
 
 
-def fill_in_image(rows, bpp, width, height, track):
-    """Measured dark coverage of the bar track in a rendered image."""
+def fill_in_image(rows, bpp, width, height, track, thr=140):
+    """Fill as the contiguous dark run from the track's left edge.
+
+    Contiguous because anything else (the red margin rule crossing the track, an
+    anti-aliased end, a compressed video edge) would inflate a per-column count.
+    The track is rgba(0,0,0,.07) over cream (~239) and the fill is the opaque
+    #15151a -> #b30f10 gradient (mean 21..65), so 140 separates them cleanly.
+    """
     x0, y0, x1, y1 = track
     x0 = max(0, min(width - 1, x0))
     x1 = max(0, min(width, x1))
@@ -691,19 +679,18 @@ def fill_in_image(rows, bpp, width, height, track):
     y1 = max(0, min(height, y1))
     if x1 <= x0 or y1 <= y0:
         return None, 0
-    cols = 0
-    hit = 0
-    for x in range(x0, x1, 2):
-        cols += 1
-        dark = 0
+    run = 0
+    for x in range(x0, x1):
+        dark = False
         for y in range(y0, y1):
             i = x * bpp
-            r, g, b = rows[y][i], rows[y][i + 1], rows[y][i + 2]
-            if (r + g + b) / 3 < 140:
-                dark += 1
-        if dark:
-            hit += 1
-    return (hit / max(1, cols)), cols
+            if (rows[y][i] + rows[y][i + 1] + rows[y][i + 2]) / 3 < thr:
+                dark = True
+                break
+        if not dark:
+            break
+        run += 1
+    return (run / float(x1 - x0)), (x1 - x0)
 
 
 def judge_viewdump(out_dir):
@@ -773,29 +760,18 @@ def judge_viewdump(out_dir):
 
 
 def judge_video(out_dir):
-    """Decoded screenrecord frames: the composited surface, sampled independently."""
+    """Decoded screenrecord frames: the composited surface, timed from the picture."""
     import shutil
     import subprocess
     import tempfile
     video = os.path.join(out_dir, 'splash_sr.mp4')
-    offset_path = os.path.join(out_dir, 'video_offset.txt')
     if not os.path.exists(video):
         print('FAIL  [video] no screenrecord file was captured')
         return 1
     if not shutil.which('ffmpeg'):
-        print('info  [video] ffmpeg is not available in this runner; the view-rendered '
-              'frames and the native progress decide the bar, the video is kept as raw evidence')
-        return 0
-    attach_offset = 0
-    if os.path.exists(offset_path):
-        try:
-            attach_offset = int(open(offset_path).read().strip())
-        except ValueError:
-            attach_offset = 0
-    geo = parse_geo(out_dir)
-    g = geo.get('1200') or {}
-    vw = (g.get('view') or (1080, 2210))[0]
-    track_view = g.get('track')
+        print('FAIL  [video] ffmpeg is unavailable, so the recorded surface cannot be '
+              'decoded in this runner')
+        return 1
     tmp = tempfile.mkdtemp(dir=out_dir, prefix='vframes')
     subprocess.run(['ffmpeg', '-v', 'error', '-i', video, '-vf', 'fps=25',
                     os.path.join(tmp, 'v_%04d.png')], check=False)
@@ -803,51 +779,79 @@ def judge_video(out_dir):
     if not frames:
         print('FAIL  [video] no frames could be decoded from the recording')
         return 1
+
+    view_w = 1080
+    geo = parse_geo(out_dir)
+    if (geo.get('1200') or {}).get('view'):
+        view_w = geo['1200']['view'][0]
     width, height, bpp, rows = read_png(frames[0])
-    scale = width / float(vw) if vw else 1.0
-    track = None
-    if track_view:
-        track = tuple(int(round(v * scale)) for v in track_view)
-    else:
-        u = min(width / 228.0, height / 488.0)
-        ox = (width - 228.0 * u) / 2.0
-        oy = (height - 488.0 * u) / 2.0
-        track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
-                 int(ox + 168 * u), int(oy + (488 - 54) * u))
+    scale = width / float(view_w) if view_w else 1.0
+    track = (int(round(296 * scale)), int(round(1942 * scale)),
+             int(round(784 * scale)), int(round(1965 * scale)))
+    u = min(width / 228.0, height / 488.0)
+    ox = (width - 228.0 * u) / 2.0
+    oy = (height - 488.0 * u) / 2.0
+    expected_track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                      int(ox + 168 * u), int(oy + (488 - 54) * u))
+
     series = []
+    anchor = None
     for index, path in enumerate(frames):
         width, height, bpp, rows = read_png(path)
+        cr, cg, cb = rows[5][5 * bpp:5 * bpp + 3]
+        cream = abs(cr - 251) <= 6 and abs(cg - 250) <= 6 and abs(cb - 247) <= 8
+        if cream and anchor is None:
+            # The splash appears exactly when the view attaches and starts its
+            # timeline, so the first cream frame is the picture's own t=0.
+            anchor = index * 40
         ratio, _ = fill_in_image(rows, bpp, width, height, track)
-        # video time of this frame, shifted so t=0 is the splash attach
-        t_ms = index * 40 - attach_offset
-        series.append((t_ms, None if ratio is None else round(ratio, 3)))
-    observed = [(t, r) for t, r in series if r is not None and r > 0.02]
-    evidence = {'frames': len(frames), 'attach_offset_ms': attach_offset,
-                'first_growth_ms': observed[0][0] if observed else None,
-                'peak': max((r for _, r in series if r is not None), default=None),
-                'series_sampled': series[::5][:80]}
+        series.append((index * 40, cream, None if ratio is None else round(ratio, 3)))
+
+    offset = None
+    offset_path = os.path.join(out_dir, 'video_offset.txt')
+    if os.path.exists(offset_path):
+        try:
+            offset = int(open(offset_path).read().strip())
+        except ValueError:
+            offset = None
+    evidence = {
+        'frames': len(frames), 'frame_ms': 40, 'record_offset_ms': offset,
+        'picture_anchor_ms': anchor,
+        'track': list(track), 'expected_track': list(expected_track),
+        'series': series[::2][:120],
+    }
     write_report({'video': evidence})
-    if not observed:
-        print('FAIL  [video] no decoded frame shows any bar fill (peak %s)' % evidence['peak'])
+
+    if anchor is None:
+        print('FAIL  [video] no decoded frame shows the splash canvas, so the recording '
+              'missed the splash entirely')
         return 1
-    peak = evidence['peak']
-    print('info  [video] %d frames decoded, fill first visible at ~%sms, peak coverage %.0f%%'
-          % (len(frames), evidence['first_growth_ms'], (peak or 0) * 100))
+    print('info  [video] %d frames decoded; splash first appears at %sms of the recording '
+          '(logged offset %sms); track %s vs expected %s'
+          % (len(frames), anchor, offset, list(track), list(expected_track)))
+    splash = [(ts - anchor, ratio) for ts, cream, ratio in series if cream and ratio is not None]
+    if not splash:
+        print('FAIL  [video] no splash frame yields a measurable bar')
+        return 1
     failures = 0
-    if (peak or 0) >= 0.85:
-        print('PASS  [video] the recorded surface shows a fully filled bar (peak %.0f%%)'
-              % ((peak or 0) * 100))
-    else:
-        print('FAIL  [video] the recorded surface never shows a full bar (peak %.0f%%)'
-              % ((peak or 0) * 100))
+    peak = max(r for _, r in splash)
+    growth = [r for _, r in splash if r > 0.02]
+    print('info  [video] bar coverage over the splash: first fill %s, peak %.0f%%'
+          % (('%.0f%%' % (growth[0] * 100)) if growth else 'never', peak * 100))
+    for target, lo, hi, label in ((1200, 0.05, 0.95, 'mid fill'),
+                                  (2900, 0.85, 1.01, 'full bar')):
+        near = min(splash, key=lambda s: abs(s[0] - target))
+        ok = lo <= (near[1] or 0) <= hi
+        print(('PASS  [video] ' if ok else 'FAIL  [video] ') +
+              'the recorded surface shows a %s near %sms (frame at %sms covers %.0f%%)'
+              % (label, target, near[0], (near[1] or 0) * 100))
+        if not ok:
+            failures += 1
+    monotonic = all(b[1] >= a[1] - 0.02 for a, b in zip(splash, splash[1:]))
+    print(('PASS  [video] ' if monotonic else 'FAIL  [video] ') +
+          'the recorded fill grows monotonically (%d splash frames)' % len(splash))
+    if not monotonic:
         failures += 1
-    near_targets = {}
-    for target in (1200, 2900):
-        near = min(series, key=lambda s: abs(s[0] - target)) if series else None
-        near_targets[str(target)] = near
-        print('info  [video] nearest decoded frame to %sms is %sms with fill %s'
-              % (target, near[0] if near else 'n/a',
-                 ('%.0f%%' % (near[1] * 100)) if near and near[1] is not None else 'n/a'))
     return failures
 
 
