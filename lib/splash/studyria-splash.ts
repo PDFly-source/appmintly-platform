@@ -216,6 +216,7 @@ public class StudyriaSplashView extends View {
     private boolean dumping = false;
     private boolean dumped1200 = false;
     private boolean dumped2900 = false;
+    private float freezeT = -1f;
 
     public StudyriaSplashView(Context context) {
         super(context);
@@ -288,7 +289,10 @@ public class StudyriaSplashView extends View {
         final int h = getHeight();
         if (w <= 0 || h <= 0) return;
 
-        final float t = reducedMotion ? DURATION_MS : elapsedMs();
+        // A frame dump must render the same instant it reports, otherwise its
+        // pixels and the logged fillW come from different moments of the fill.
+        final float t = freezeT >= 0f ? freezeT
+                : (reducedMotion ? DURATION_MS : elapsedMs());
         // fit(): u is the reference's --k, in device px per design px.
         final float u = Math.min(w / STAGE_W, h / STAGE_H);
         final float stageW = STAGE_W * u;
@@ -371,11 +375,13 @@ public class StudyriaSplashView extends View {
         final Bitmap shot = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
         final Canvas bc = new Canvas(shot);
         dumping = true;
+        freezeT = t;
         try {
             draw(bc);
         } catch (Throwable ignored) {
         } finally {
             dumping = false;
+            freezeT = -1f;
         }
         savePng(shot, "splash_view_" + (early ? "1200" : "2900"));
         shot.recycle();

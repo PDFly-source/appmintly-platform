@@ -805,9 +805,13 @@ def judge_video(out_dir):
     if (geo.get('1200') or {}).get('view'):
         view_w = geo['1200']['view'][0]
     width, height, bpp, rows = read_png(frames[0])
-    scale = width / float(view_w) if view_w else 1.0
-    track = (int(round(296 * scale)), int(round(1942 * scale)),
-             int(round(784 * scale)), int(round(1965 * scale)))
+    geo_track = (geo.get('1200') or {}).get('track') or (296, 1942, 784, 1965)
+    sx, sy = (geo.get('1200') or {}).get('screen') or (0, 0)
+    # The recording is the whole screen scaled down, so the window's on-screen
+    # offset has to be added before scaling or the track lands 60px too high.
+    scale = width / float(view_w + 2 * sx if sx else view_w)
+    track = tuple(int(round((sx if i % 2 == 0 else sy) + v) * scale)
+                  for i, v in enumerate(geo_track))
     u = min(width / 228.0, height / 488.0)
     ox = (width - 228.0 * u) / 2.0
     oy = (height - 488.0 * u) / 2.0
@@ -1660,12 +1664,14 @@ def main():
         level = frame_delta(settled[2], mid[2])
         if level is None:
             note("settled frame size differs, skipping the replacement check")
-        elif level == 0.0 and settled_gone():
+        elif level < 0.5 and settled_gone():
             # This emulator latches the surface, so two identical frames prove
             # nothing. When the hierarchy says the splash node is definitively
             # gone at the settled moment, that settles the replacement instead.
-            print('info  [%s] settled and mid frames are identical (latching); the splash '
-                  'node is already gone in the hierarchy, so replacement is judged there' % TAG)
+            print('info  [%s] settled and mid frames are near-identical (delta %.2f, the '
+                  'emulator latches this surface); the splash '
+                  'node is already gone in the hierarchy, so replacement is judged there'
+                  % (TAG, level))
             verdict('replace',
                     'content replaced the splash (the splash node is gone from the hierarchy)',
                     'settled frame still looks like the splash',

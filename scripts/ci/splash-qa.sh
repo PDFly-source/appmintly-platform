@@ -329,7 +329,7 @@ launch_cold
 ATTACH_MS=""
 for _ in $(seq 1 40); do
   ATTACH_MS=$(adb logcat -d -v epoch -s StudyriaSplash:I 2>/dev/null \
-    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000; exit}')
+    | awk '/attach durationMs/ {printf "%.0f", $1 * 1000}')
   [ -n "$ATTACH_MS" ] && break
   sleep 0.25
 done
@@ -383,6 +383,8 @@ analyze view "${DENSITY}"
 ensure_portrait "before the video probe"
 adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
 adb shell rm -f /sdcard/splash_sr.mp4 >/dev/null 2>&1 || true
+# Clear the log so the attach found below is this launch, not the earlier pass.
+adb logcat -c >/dev/null 2>&1 || true
 REC_START=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
 adb shell screenrecord --time-limit 9 --bit-rate 8000000 --size 540x1200 \
   /sdcard/splash_sr.mp4 >/dev/null 2>&1 &

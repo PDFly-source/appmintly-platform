@@ -174,7 +174,11 @@ describe('Studyria splash — the final cascade, not the overridden rules', () =
     expect(java).toContain('final float p = reducedMotion ? 1f : easeWipe(');
     expect(java).toContain('final float p = reducedMotion ? 0f : easeFill(');
     expect(java).toContain('ANIMATOR_DURATION_SCALE');
-    expect(java).toContain('final float t = reducedMotion ? DURATION_MS : elapsedMs();');
+    // Still reduced-motion -> DURATION_MS; the only addition is the frozen
+    // instant an evidence dump renders at.
+    expect(java).toMatch(
+      /freezeT >= 0f \? freezeT\s*:\s*\(reducedMotion \? DURATION_MS : elapsedMs\(\)\)/);
+    expect(java).toContain('freezeT = t;');
   });
 
   it('the lifecycle is single-shot and exactly once', () => {
