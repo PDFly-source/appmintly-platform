@@ -540,6 +540,8 @@ def judge_timed(out_dir):
         print('FAIL  [timed] no timed capture metadata was written')
         return 1
     failures = 0
+    judged = 0
+    late_judged = False
     results = {}
     for target, actual, node in meta:
         path = os.path.join(out_dir, 'timed_%d.png' % target)
@@ -601,6 +603,9 @@ def judge_timed(out_dir):
             if dark:
                 hit += 1
         covered = hit / max(1, cols)
+        judged += 1
+        if target > 1500:
+            late_judged = True
         results[str(target)] = {
             'ours': True, 'elapsed_ms': actual, 'fill_ratio': round(covered, 3),
             'native_progress': near['progress'] if near else None,
@@ -619,6 +624,16 @@ def judge_timed(out_dir):
         print(('PASS  [timed] ' if good else 'FAIL  [timed] ') + label)
         if not good:
             failures += 1
+    # The bar cannot pass on the absence of evidence: the timed pass exists to
+    # prove the fill is rendered, so an unprovable grab is a failure here rather
+    # than a silent pass.
+    if judged == 0:
+        print('FAIL  [timed] no capture could be proven to be the splash, so the fill is unproven')
+        failures += 1
+    elif not late_judged:
+        print('FAIL  [timed] the late capture could not be proven to be the splash; '
+              'the finished fill is unproven')
+        failures += 1
     write_report({'timed': results, 'progress_samples': progress[:40]})
     return failures
 

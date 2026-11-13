@@ -218,8 +218,12 @@ expect('FAIL  [timed]' in out, 'a bar that never fills is rejected by the timed 
 out, _ = run_timed(timed_dir(1.0))
 expect('FAIL' not in out, 'a fully filled bar passes the timed pass')
 out, _ = run_timed(timed_dir(1.0), node='gone')
-expect('not judged' in out and 'FAIL' not in out,
-       'a capture whose surface was not the splash is never judged')
+expect('PASS  [timed]' in out, 'a stale gone-dump does not override pixel proof')
+
+d = timed_dir(1.0)
+write_png(os.path.join(d, 'timed_2900.png'), lambda x, y: (10, 15, 23), w=W, h=H)
+out, _ = run_timed(d)
+expect('FAIL  [timed]' in out, 'an unprovable capture fails instead of passing silently')
 
 out, _ = run(launch_pixels(frame(full, rails=False)), viewport_document(full, (W, H)))
 expect('FAIL  [cold] the ruled canvas' in out, 'a missing ruled canvas is rejected')

@@ -335,27 +335,28 @@ if [ -n "$ATTACH_MS" ]; then
 else
   fail "the splash view never logged its attach; timed bar evidence is unavailable"
 fi
+# One offset read maps the device clock onto the host clock, so the waits are
+# local (instant) instead of an adb round trip per iteration. The old loop asked
+# `adb shell date` up to 120 times and called uiautomator before each grab; both
+# cost seconds here and landed the grabs at 7290ms and 58277ms.
+DEV_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
+HOST_MS=$(date +%s%3N)
+OFFSET=$(( ${DEV_MS:-0} - HOST_MS ))
 for target in 1200 2900; do
   if [ -n "$ATTACH_MS" ]; then
-    for _ in $(seq 1 120); do
-      NOW_MS=$(adb shell date +%s%3N 2>/dev/null | tr -d '\r')
-      [ -n "$NOW_MS" ] || break
-      [ "$NOW_MS" -ge $((ATTACH_MS + target)) ] && break
-      sleep 0.1
+    TARGET_HOST=$(( ATTACH_MS - OFFSET + target ))
+    for _ in $(seq 1 400); do
+      [ "$(date +%s%3N)" -ge "$TARGET_HOST" ] && break
+      sleep 0.05
     done
   fi
-  splash_state; NODE_RC=$?
-  case "$NODE_RC" in
-    0) node="attached" ;;
-    1) node="gone" ;;
-    *) node="unknown" ;;
-  esac
-  # On-device capture: pulling the PNG over adb costs seconds here, which pushed
-  # the second grab past its target. The file is pulled after both are taken.
-  CAP0=$(date +%s%3N)
+  # No hierarchy dump here: uiautomator needs an idle window and costs seconds,
+  # which would move the grab. Pixel ownership decides; the node reads unknown.
+  node="unknown"
+  CAP0=$(( $(date +%s%3N) + OFFSET ))
   adb shell screencap -p "/sdcard/timed_${target}.png" >/dev/null 2>&1 || true
-  CAP1=$(date +%s%3N)
-  ELAPSED=$(( ${CAP0} - ${ATTACH_MS:-0} ))
+  CAP1=$(( $(date +%s%3N) + OFFSET ))
+  ELAPSED=$(( CAP0 - ${ATTACH_MS:-0} ))
   printf '%s %s %s %s %s\n' "$target" "$ELAPSED" "$node" "$((CAP1 - CAP0))" "${ATTACH_MS:-0}" \
     >> "${OUT}/timed_meta.txt"
 done
