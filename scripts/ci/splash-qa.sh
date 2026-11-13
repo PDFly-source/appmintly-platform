@@ -531,7 +531,16 @@ fi
 # never replay the launch splash inside the recovered window.
 launch_cold
 wait_gone "renderer-death setup launch" 15
-WEBPID=$(adb shell ps -A 2>/dev/null | awk -v pkg="$PKG" '$0 ~ pkg && /sandboxed_process/ {print $2; exit}')
+# The renderer is spawned lazily by Chromium once the page starts loading, so a
+# single sample right after the splash retires can catch the window before it
+# exists (run 43375531198 did exactly that and skipped the scenario). Poll for
+# it, and say plainly if this image never creates one.
+WEBPID=""
+for _ in $(seq 1 40); do
+  WEBPID=$(adb shell ps -A 2>/dev/null | awk -v pkg="$PKG" '$0 ~ pkg && /sandboxed_process/ {print $2; exit}')
+  [ -n "$WEBPID" ] && break
+  sleep 0.5
+done
 if [ -n "$WEBPID" ]; then
   pass "renderer-death scenario is testable (WebView renderer pid ${WEBPID})"
   adb shell kill -9 "$WEBPID" >/dev/null 2>&1
