@@ -18,6 +18,7 @@ Usage: splash_qa_analyze.py <dir> <tag> <dpi>
 """
 import json
 import os
+import re
 import sys
 import zlib
 import glob
@@ -511,6 +512,110 @@ REQUIRED = {
 SPLASH_WINDOW_MS = 3600
 
 
+def judge_timed(out_dir):
+    """Bar-fill evidence from two deterministic captures."""
+    meta = []
+    meta_path = os.path.join(out_dir, 'timed_meta.txt')
+    if os.path.exists(meta_path):
+        for line in open(meta_path, encoding='utf-8').read().splitlines():
+            parts = line.split()
+            if len(parts) >= 3:
+                try:
+                    meta.append((int(parts[0]), int(parts[1]), parts[2]))
+                except ValueError:
+                    pass
+    progress = []
+    bar_path = os.path.join(out_dir, 'bar_progress.txt')
+    if os.path.exists(bar_path):
+        for line in open(bar_path, encoding='utf-8').read().splitlines():
+            m = re.search(r't=(\d+) progress=(\d+) fillW=(\d+) track=(-?\d+),(-?\d+),(-?\d+),(-?\d+)', line)
+            if m:
+                progress.append({
+                    't': int(m.group(1)),
+                    'progress': int(m.group(2)) / 1000.0,
+                    'fill_w': int(m.group(3)),
+                    'track': (int(m.group(4)), int(m.group(5)), int(m.group(6)), int(m.group(7))),
+                })
+    if not meta:
+        print('FAIL  [timed] no timed capture metadata was written')
+        return 1
+    failures = 0
+    results = {}
+    for target, actual, node in meta:
+        path = os.path.join(out_dir, 'timed_%d.png' % target)
+        if not os.path.exists(path):
+            print('FAIL  [timed] target %dms produced no capture' % target)
+            failures += 1
+            continue
+        width, height, bpp, rows = read_png(path)
+        def px(x, y):
+            i = x * bpp
+            return rows[y][i], rows[y][i + 1], rows[y][i + 2]
+        corner = px(4, 4)
+        ours_canvas = all(abs(c - ref) <= 6 for c, ref in zip(corner, (251, 250, 247)))
+        ink = 0
+        cx, cy = width // 2, int(height * 0.45)
+        for y in range(max(0, cy - 120), min(height, cy + 120), 4):
+            for x in range(max(0, cx - 150), min(width, cx + 150), 4):
+                r, g, b = px(x, y)
+                if (r + g + b) / 3 < 140:
+                    ink += 1
+        ours = ours_canvas and ink > 200 and node == 'attached'
+        print('info  [timed] capture %dms (elapsed %dms, splash %s): corner %s, ink %d -> %s'
+              % (target, actual, node, corner, ink,
+                 'our splash surface' if ours else 'NOT our surface'))
+        near = min(progress, key=lambda p: abs(p['t'] - actual)) if progress else None
+        if not ours:
+            print('info  [timed] %dms not judged: the captured surface was not the splash' % target)
+            results[str(target)] = {'ours': False, 'elapsed_ms': actual}
+            continue
+        track = near['track'] if near else None
+        if track is None:
+            vp = load_viewport()
+            win = (vp or {}).get('window') or {}
+            vw = int(win.get('width') or width)
+            vh = int(win.get('height') or height)
+            vx, vy = int(win.get('x') or 0), int(win.get('y') or 0)
+            u = min(vw / 228.0, vh / 488.0)
+            ox = vx + (vw - 228.0 * u) / 2.0
+            oy = vy + (vh - 488.0 * u) / 2.0
+            track = (int(ox + 60 * u), int(oy + (488 - 59) * u),
+                     int(ox + 168 * u), int(oy + (488 - 54) * u))
+        x0, y0, x1, y1 = track
+        cols = 0
+        hit = 0
+        for x in range(max(0, x0), min(width, x1), 2):
+            cols += 1
+            dark = 0
+            for y in range(max(0, y0), min(height, y1)):
+                r, g, b = px(x, y)
+                if (r + g + b) / 3 < 140:
+                    dark += 1
+            if dark:
+                hit += 1
+        covered = hit / max(1, cols)
+        results[str(target)] = {
+            'ours': True, 'elapsed_ms': actual, 'fill_ratio': round(covered, 3),
+            'native_progress': near['progress'] if near else None,
+            'track': track,
+        }
+        print('info  [timed] %dms bar: fill covers %.0f%% of the track; native progress %s at t=%sms'
+              % (target, covered * 100,
+                 ('%.3f' % near['progress']) if near else 'unavailable',
+                 near['t'] if near else 'n/a'))
+        if target <= 1500:
+            good = 0.05 <= covered <= 0.65
+            label = 'the bar is mid-fill at the %dms capture (%.0f%%)' % (target, covered * 100)
+        else:
+            good = covered >= 0.85
+            label = 'the bar is fully filled at the %dms capture (%.0f%%)' % (target, covered * 100)
+        print(('PASS  [timed] ' if good else 'FAIL  [timed] ') + label)
+        if not good:
+            failures += 1
+    write_report({'timed': results, 'progress_samples': progress[:40]})
+    return failures
+
+
 def main():
     paths = sorted(glob.glob(os.path.join(OUT, f"{TAG}_*.png")))
     if not paths:
@@ -528,6 +633,9 @@ def main():
     if not frames:
         bad("no readable frames")
         return 1
+
+    if TAG == 'timed':
+        return judge_timed(OUT)
 
     required = REQUIRED.get(TAG, {'logo'})
     numeric_all = sorted((f for f in frames if f[0] is not None), key=lambda f: f[0])

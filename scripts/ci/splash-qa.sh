@@ -308,6 +308,30 @@ fi
 
 [ -s "${OUT}/am_start.txt" ] && grep -E "Status|TotalTime" "${OUT}/am_start.txt" | tee -a "$REPORT" || true
 
+# ------------------------------------------------------- timed captures (bar)
+# The burst latches the emulator surface, so one late grab cannot show the bar.
+# Two grabs at fixed offsets from the launch, each with its ACTUAL elapsed time,
+# judged only when the surface is provably ours (canvas corner, artwork ink and
+# the splash node still attached). Pixels decide the fill; the native progress
+# lines for the same window only corroborate it.
+adb shell am force-stop "$PKG" >/dev/null 2>&1 || true
+adb logcat -c >/dev/null 2>&1 || true
+: > "${OUT}/timed_meta.txt"
+T0=$(date +%s%3N)
+launch_cold
+for target in 1200 2900; do
+  elapsed=$(( $(date +%s%3N) - T0 ))
+  wait_ms=$((target - elapsed))
+  [ "$wait_ms" -gt 0 ] && sleep "$(awk -v ms="$wait_ms" 'BEGIN{printf "%.3f", ms/1000}')"
+  actual=$(( $(date +%s%3N) - T0 ))
+  shot "timed_${target}"
+  if splash_state; then node="attached"; else node="gone"; fi
+  printf '%s %s %s\n' "$target" "$actual" "$node" >> "${OUT}/timed_meta.txt"
+done
+adb logcat -d -s StudyriaSplash:I > "${OUT}/bar_progress.txt" 2>/dev/null || true
+pass "timed captures taken at fixed offsets (targets 1200/2900ms, actual elapsed recorded)"
+analyze timed "${DENSITY}"
+
 # ------------------------------------------------------------------- rotation
 ensure_landscape "before the rotated probes"
 

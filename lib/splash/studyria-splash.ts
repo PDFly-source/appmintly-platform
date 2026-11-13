@@ -136,6 +136,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -204,6 +205,7 @@ public class StudyriaSplashView extends View {
 
     private OnSplashFinishedListener listener;
     private long startNs = -1L;
+    private float barLogMs = -1000f;
     private boolean running = false;
     private boolean finished = false;
 
@@ -245,6 +247,7 @@ public class StudyriaSplashView extends View {
         if (startNs < 0L) {
             startNs = System.nanoTime();
             running = true;
+            Log.i("StudyriaSplash", "attach durationMs=" + DURATION_MS + " reducedMotion=" + reducedMotion);
             postInvalidateOnAnimation();
         }
     }
@@ -386,6 +389,18 @@ public class StudyriaSplashView extends View {
 
         final float p = reducedMotion ? 0f : easeFill(progress(t, FILL_DELAY, FILL_DUR));
         final float fillW = (right - left) * p;
+        // The bar-fill assertion reads THIS number: it is the same variable the
+        // draw call below uses, so logged progress can never disagree with the
+        // pixels. Throttled to ~4 lines a second, so 3.4s logs about 14 lines.
+        if (t - barLogMs >= 250f) {
+            barLogMs = t;
+            Log.i("StudyriaSplash", "t=" + Math.round(t)
+                    + " progress=" + Math.round(p * 1000)
+                    + " fillW=" + Math.round(fillW)
+                    + " track=" + Math.round(left) + "," + Math.round(top) + ","
+                    + Math.round(right) + "," + Math.round(bottom)
+                    + " reducedMotion=" + reducedMotion);
+        }
         if (fillW <= 0f) return;
         paint.setShader(new LinearGradient(left, top, right, top,
                 new int[]{BAR_FILL_FROM, BAR_FILL_TO}, null, Shader.TileMode.CLAMP));
